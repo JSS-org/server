@@ -23,13 +23,6 @@ import javax.annotation.Nullable;
 public interface IotDeviceMessageService {
 
     /**
-     * 初始化设备消息的 TDengine 超级表
-     *
-     * 系统启动时，会自动初始化一次
-     */
-    void defineDeviceMessageStable();
-
-    /**
      * 发送设备消息
      *
      * @param message 消息（“codec（编解码）字段” 部分字段）

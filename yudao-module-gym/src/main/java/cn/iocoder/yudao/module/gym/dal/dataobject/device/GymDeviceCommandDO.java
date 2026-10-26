@@ -19,6 +19,7 @@ public class GymDeviceCommandDO extends TenantBaseDO {
     private Long requesterId;
     private String requesterName;
     private java.time.Instant requestedAt;
+    private java.time.Instant completedAt;
     private String status;
     private String failureReason;
     private Boolean simulated;

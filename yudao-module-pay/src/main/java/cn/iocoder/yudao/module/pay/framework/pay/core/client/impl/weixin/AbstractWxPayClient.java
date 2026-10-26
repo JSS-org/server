@@ -338,6 +338,14 @@ public abstract class AbstractWxPayClient extends AbstractPayClient<WxPayClientC
                             String.format("未知的 API 版本(%s)", config.getApiVersion()));
             }
         } catch (WxPayException e) {
+            // 网络异常、系统错误时，退款可能已受理，不能误判为退款失败：网络异常抛出，系统错误返回结果未知，后续查询确认、或者使用原退款单号重新发起
+            // 关联 https://github.com/YunaiV/ruoyi-vue-pro/issues/1290
+            if (hasCause(e, IOException.class)) {
+                throw e;
+            }
+            if (ObjectUtils.equalsAny(e.getErrCode(), "SYSTEMERROR", "SYSTEM_ERROR")) {
+                return PayRefundRespDTO.waitingOf(null, reqDTO.getOutRefundNo(), e.getXmlString());
+            }
             String errorCode = getErrorCode(e);
             String errorMessage = getErrorMessage(e);
             return PayRefundRespDTO.failureOf(
@@ -457,11 +465,10 @@ public abstract class AbstractWxPayClient extends AbstractPayClient<WxPayClientC
                             String.format("未知的 API 版本(%s)", config.getApiVersion()));
             }
         } catch (WxPayException e) {
+            // 查询不到退款单：可能退款请求未受理、或者尚未生成退款单，返回结果未知，不能作为退款失败
+            // 关联 https://github.com/YunaiV/ruoyi-vue-pro/issues/1290
             if (ObjectUtils.equalsAny(e.getErrCode(), "REFUNDNOTEXIST", "RESOURCE_NOT_EXISTS")) {
-                String errorCode = getErrorCode(e);
-                String errorMessage = getErrorMessage(e);
-                return PayRefundRespDTO.failureOf(
-                        errorCode, errorMessage, outRefundNo, e.getXmlString());
+                return PayRefundRespDTO.waitingOf(null, outRefundNo, e.getXmlString());
             }
             throw e;
         }
@@ -485,8 +492,8 @@ public abstract class AbstractWxPayClient extends AbstractPayClient<WxPayClientC
                 CollUtil.findOne(
                         response.getRefundRecords(),
                         record -> record.getOutRefundNo().equals(outRefundNo));
-        if (refund == null) {
-            return PayRefundRespDTO.failureOf(outRefundNo, response);
+        if (refund == null) { // 查询不到退款单，返回结果未知
+            return PayRefundRespDTO.waitingOf(null, outRefundNo, response);
         }
         switch (refund.getRefundStatus()) {
             case "SUCCESS":

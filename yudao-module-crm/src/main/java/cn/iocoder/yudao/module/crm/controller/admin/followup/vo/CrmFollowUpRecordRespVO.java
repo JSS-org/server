@@ -2,14 +2,15 @@ package cn.iocoder.yudao.module.crm.controller.admin.followup.vo;
 
 import static cn.iocoder.yudao.module.crm.enums.DictTypeConstants.CRM_FOLLOW_UP_TYPE;
 
-import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
-import cn.idev.excel.annotation.ExcelProperty;
 import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
 import cn.iocoder.yudao.module.crm.controller.admin.business.vo.business.CrmBusinessRespVO;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import lombok.Data;
+
+import org.apache.fesod.sheet.annotation.ExcelIgnoreUnannotated;
+import org.apache.fesod.sheet.annotation.ExcelProperty;
 
 import java.time.LocalDateTime;
 import java.util.List;

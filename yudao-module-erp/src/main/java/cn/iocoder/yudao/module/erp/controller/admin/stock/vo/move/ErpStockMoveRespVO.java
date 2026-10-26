@@ -2,14 +2,15 @@ package cn.iocoder.yudao.module.erp.controller.admin.stock.vo.move;
 
 import static cn.iocoder.yudao.module.erp.enums.DictTypeConstants.AUDIT_STATUS;
 
-import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
-import cn.idev.excel.annotation.ExcelProperty;
 import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
 import cn.iocoder.yudao.framework.excel.core.convert.DictConvert;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import lombok.Data;
+
+import org.apache.fesod.sheet.annotation.ExcelIgnoreUnannotated;
+import org.apache.fesod.sheet.annotation.ExcelProperty;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

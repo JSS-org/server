@@ -71,7 +71,9 @@ def main():
         database.flyway('baseline', baseline=0, assets=ROOT / 'sql/gym')
         database.flyway('migrate', assets=ROOT / 'sql/gym')
         database.execute('init')
-        assert database.sql('SELECT COUNT(*) FROM flyway_gym_schema_history WHERE success=1') == '4'
+        gym_versions = list((ROOT / 'sql/gym/migration/mysql').glob('V*__*.sql'))
+        assert gym_versions, 'Gym migrations are missing'
+        assert database.sql('SELECT COUNT(*) FROM flyway_gym_schema_history WHERE success=1') == str(len(gym_versions) + 1)
         assert database.sql('SELECT COUNT(*) FROM flyway_jss_schema_history WHERE success=1') == '10'
         quartz = Path.home() / '.m2/repository/org/quartz-scheduler/quartz/2.5.2/quartz-2.5.2.jar'
         with zipfile.ZipFile(quartz) as archive:

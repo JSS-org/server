@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.ai1.dal.mysql.session;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
@@ -23,7 +25,7 @@ public interface Ai1SessionMapper extends BaseMapperX<Ai1SessionDO> {
         return selectPage(
                 reqVO,
                 new LambdaQueryWrapperX<Ai1SessionDO>()
-                        .eq(Ai1SessionDO::getAgentId, reqVO.getAgentId())
+                        .eqIfPresent(Ai1SessionDO::getAgentId, reqVO.getAgentId())
                         .likeIfPresent(Ai1SessionDO::getTitle, reqVO.getTitle())
                         .eqIfPresent(Ai1SessionDO::getUserId, reqVO.getUserId())
                         .orderByDesc(Ai1SessionDO::getId));
@@ -35,6 +37,17 @@ public interface Ai1SessionMapper extends BaseMapperX<Ai1SessionDO> {
                         .eq(Ai1SessionDO::getAgentId, agentId)
                         .eq(Ai1SessionDO::getUserId, userId)
                         .orderByDesc(Ai1SessionDO::getId));
+    }
+
+    default List<Long> selectUserIdListByAgentId(Long agentId) {
+        return convertList(
+                selectList(
+                        new LambdaQueryWrapperX<Ai1SessionDO>()
+                                .eq(Ai1SessionDO::getAgentId, agentId)
+                                .select(Ai1SessionDO::getUserId)
+                                .groupBy(Ai1SessionDO::getUserId)
+                                .orderByAsc(Ai1SessionDO::getUserId)),
+                Ai1SessionDO::getUserId);
     }
 
     default List<Ai1SessionDO> selectListByAgentIds(Collection<Long> agentIds) {

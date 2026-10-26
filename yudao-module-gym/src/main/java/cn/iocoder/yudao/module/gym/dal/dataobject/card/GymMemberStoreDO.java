@@ -14,5 +14,6 @@ public class GymMemberStoreDO extends TenantBaseDO {
     @TableId private Long id;
     private Long memberId;
     private Long storeId;
+    private Integer assignmentVersion;
     private java.time.Instant joinedAt;
 }

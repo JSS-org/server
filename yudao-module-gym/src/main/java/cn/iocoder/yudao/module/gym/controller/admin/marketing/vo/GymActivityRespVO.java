@@ -16,6 +16,7 @@ public class GymActivityRespVO {
     private Instant registrationEndsAt;
     private Instant startsAt;
     private Instant endsAt;
+    private Instant cancelDeadline;
     private Integer capacity;
     private Long registrationCount;
     private String coverFileId;

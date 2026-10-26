@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.pms.controller.admin.kb.content;
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
 import static cn.iocoder.yudao.framework.common.util.collection.MapUtils.findAndThen;
 import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
 
@@ -22,6 +23,7 @@ import cn.iocoder.yudao.module.pms.dal.dataobject.kb.library.PmsKnowledgeLibrary
 import cn.iocoder.yudao.module.pms.enums.kb.content.PmsKnowledgeContentLevelEnum;
 import cn.iocoder.yudao.module.pms.enums.kb.content.PmsKnowledgeDocumentTypeEnum;
 import cn.iocoder.yudao.module.pms.service.kb.content.PmsKnowledgeContentPermissionService;
+import cn.iocoder.yudao.module.pms.service.kb.content.PmsKnowledgeDocumentLabelService;
 import cn.iocoder.yudao.module.pms.service.kb.content.PmsKnowledgeDocumentService;
 import cn.iocoder.yudao.module.pms.service.kb.interaction.PmsKnowledgeDocumentLikeService;
 import cn.iocoder.yudao.module.pms.service.kb.interaction.PmsKnowledgeFavoriteService;
@@ -61,6 +63,7 @@ public class PmsKnowledgeDocumentController {
 
     @Resource private PmsKnowledgeDocumentService documentService;
     @Resource private PmsKnowledgeContentPermissionService contentPermissionService;
+    @Resource private PmsKnowledgeDocumentLabelService documentLabelService;
     @Resource private PmsKnowledgeFavoriteService favoriteService;
     @Resource private PmsKnowledgeDocumentLikeService documentLikeService;
     @Resource private PmsKnowledgeViewRecordService viewRecordService;
@@ -159,6 +162,10 @@ public class PmsKnowledgeDocumentController {
                 && Boolean.FALSE.equals(documentVO.getDownloadStatus())) {
             documentVO.setContent(null);
         }
+        // 1.3 忽略已删除的标签编号，避免编辑回显后保存被拒：https://github.com/YunaiV/ruoyi-vue-pro/issues/1275
+        Set<Long> existLabelIds =
+                documentLabelService.getDocumentLabelMap(document.getLabelIds()).keySet();
+        documentVO.setLabelIds(filterList(document.getLabelIds(), existLabelIds::contains));
 
         // 2. 一次查询并拼接创建人和点赞用户信息
         List<PmsKnowledgeDocumentLikeDO> likes =

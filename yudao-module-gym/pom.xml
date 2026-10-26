@@ -31,6 +31,13 @@
             <version>${revision}</version>
         </dependency>
 
+        <!-- 小程序会员身份：只通过 member API 关联已验证的会员账号 -->
+        <dependency>
+            <groupId>cn.iocoder.boot</groupId>
+            <artifactId>yudao-module-member</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
         <!-- 业务组件 -->
         <dependency>
             <groupId>cn.iocoder.boot</groupId>

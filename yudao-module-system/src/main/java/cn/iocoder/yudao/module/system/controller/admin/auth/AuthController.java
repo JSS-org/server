@@ -6,6 +6,7 @@ import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUti
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -18,6 +19,7 @@ import cn.iocoder.yudao.module.system.dal.dataobject.permission.MenuDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
 import cn.iocoder.yudao.module.system.enums.logger.LoginLogTypeEnum;
+import cn.iocoder.yudao.module.system.service.auth.AdminAuthQrcodeService;
 import cn.iocoder.yudao.module.system.service.auth.AdminAuthService;
 import cn.iocoder.yudao.module.system.service.auth.AuthMenuTreeCustomizer;
 import cn.iocoder.yudao.module.system.service.permission.MenuService;
@@ -36,8 +38,6 @@ import jakarta.annotation.security.PermitAll;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
-import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -50,10 +50,10 @@ import java.util.Set;
 @RestController
 @RequestMapping("/system/auth")
 @Validated
-@Slf4j
 public class AuthController {
 
     @Resource private AdminAuthService authService;
+    @Resource private AdminAuthQrcodeService authQrcodeService;
     @Resource private AdminUserService userService;
     @Resource private RoleService roleService;
     @Resource private MenuService menuService;
@@ -187,5 +187,32 @@ public class AuthController {
     public CommonResult<AuthLoginRespVO> socialQuickLogin(
             @RequestBody @Valid AuthSocialLoginReqVO reqVO) {
         return success(authService.socialLogin(reqVO));
+    }
+
+    // ========== 扫码登录相关 ==========
+
+    @PostMapping("/create-qrcode")
+    @PermitAll
+    @ApiAccessLog(requestEnable = false, responseEnable = false)
+    @Operation(summary = "生成扫码登录二维码")
+    public CommonResult<AuthQrcodeCreateRespVO> createAuthQrcode() {
+        return success(authQrcodeService.createAuthQrcode());
+    }
+
+    @PostMapping("/confirm-qrcode")
+    @Operation(summary = "手机确认扫码登录")
+    public CommonResult<Boolean> confirmAuthQrcode(
+            @RequestBody @Valid AuthQrcodeConfirmReqVO reqVO) {
+        authQrcodeService.confirmAuthQrcode(reqVO.getQrcodeId(), getLoginUserId());
+        return success(true);
+    }
+
+    @PostMapping("/qrcode-login")
+    @PermitAll
+    @ApiAccessLog(requestEnable = false, responseEnable = false)
+    @Operation(summary = "电脑轮询领取扫码登录结果")
+    public CommonResult<AuthQrcodePollRespVO> qrcodeLogin(
+            @RequestBody @Valid AuthQrcodePollReqVO reqVO) {
+        return success(authService.qrcodeLogin(reqVO));
     }
 }

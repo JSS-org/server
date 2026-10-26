@@ -109,6 +109,8 @@ public interface ErrorCodeConstants {
     ErrorCode APPROVAL_SOURCE_UNAVAILABLE = new ErrorCode(1_070_010_009, "该审批来源的实际业务执行尚未接入");
     ErrorCode APPROVAL_DECISION_FORBIDDEN = new ErrorCode(1_070_010_010, "仅指定步骤审批人可以处理申请");
     ErrorCode APPROVAL_DECISION_INVALID = new ErrorCode(1_070_010_011, "审批步骤尚未轮到、已结束或重复处理结果冲突");
+    ErrorCode APPROVAL_VERSION_CONFLICT = new ErrorCode(1_070_010_012, "审批版本已变化，请刷新后重试");
+    ErrorCode APPROVAL_SOURCE_CHANGED = new ErrorCode(1_070_010_013, "申请商品已变化，请重新发起审批");
     ErrorCode CONTRACT_TEMPLATE_NOT_EXISTS = new ErrorCode(1_070_011_001, "合同模板不存在");
     ErrorCode CONTRACT_TEMPLATE_IMMUTABLE =
             new ErrorCode(1_070_011_002, "已发布或停用的合同模板内容及PDF不可修改，请创建新版本");
@@ -130,6 +132,7 @@ public interface ErrorCodeConstants {
             new ErrorCode(1_070_012_006, "部分员工包含跨店计薪来源，请由具备全部来源门店权限的账号计算");
     ErrorCode PAYROLL_ASSIGNMENT_FROZEN =
             new ErrorCode(1_070_012_007, "该工资配置已用于确认工资，不能缩短已确认月份的覆盖期间");
+    ErrorCode PAYROLL_PUBLICATION_INVALID = new ErrorCode(1_070_012_008, "只有已确认的工资表可以发布");
     ErrorCode SALES_SETTINGS_INVALID =
             new ErrorCode(1_070_013_001, "售卡或核销设置不合法，请检查重复方案、签约审批依赖和时间范围");
     ErrorCode SALES_SETTINGS_CARD_INVALID =
@@ -170,7 +173,9 @@ public interface ErrorCodeConstants {
     ErrorCode DEVICE_COMPARTMENT_BUSY = new ErrorCode(1_070_017_005, "已占用或预留柜格不能被移除、停用或重置");
     ErrorCode DEVICE_COMMAND_INVALID = new ErrorCode(1_070_017_006, "设备指令、柜格或Idempotency-Key不合法");
     ErrorCode DEVICE_COMMAND_CONFLICT = new ErrorCode(1_070_017_007, "相同指令提交标识已用于不同内容");
+    ErrorCode DEVICE_COMMAND_NOT_EXISTS = new ErrorCode(1_070_017_008, "设备指令不存在或无权读取");
     ErrorCode EQUIPMENT_NOT_EXISTS = new ErrorCode(1_070_018_001, "器械不存在");
+    ErrorCode EQUIPMENT_SCENE_INVALID = new ErrorCode(1_070_018_006, "器械场景码无效或器械未公开");
     ErrorCode EQUIPMENT_CODE_DUPLICATE = new ErrorCode(1_070_018_002, "同一门店的器械编码已存在");
     ErrorCode EQUIPMENT_IDENTITY_IMMUTABLE = new ErrorCode(1_070_018_003, "器械门店和编码不能修改");
     ErrorCode EQUIPMENT_TUTORIAL_FILE_INVALID =
@@ -193,4 +198,77 @@ public interface ErrorCodeConstants {
     ErrorCode TRAINING_PLAN_NOT_EXISTS = new ErrorCode(1_070_021_001, "训练计划不存在");
     ErrorCode TRAINING_PLAN_INVALID = new ErrorCode(1_070_021_002, "训练计划内容或状态不合法，会员及门店不可修改");
     ErrorCode TRAINING_PLAN_FILE_INVALID = new ErrorCode(1_070_021_003, "训练计划附件须为当前会员可关联的本店训练资料");
+    ErrorCode GROUP_BUY_PROVIDER_UNCONFIGURED =
+            new ErrorCode(1_070_022_001, "当前租户门店的美团接口未启用或授权未配置");
+    ErrorCode GROUP_BUY_PROVIDER_REQUEST_FAILED = new ErrorCode(1_070_022_002, "美团接口请求失败，请稍后重试");
+    ErrorCode GROUP_BUY_PROVIDER_REJECTED =
+            new ErrorCode(1_070_022_003, "美团拒绝接口请求，请检查业务参数、授权及接口权限");
+    ErrorCode GROUP_BUY_PROVIDER_RESPONSE_INVALID = new ErrorCode(1_070_022_004, "美团接口响应格式异常");
+    ErrorCode GROUP_BUY_PROVIDER_SCENE_MISMATCH =
+            new ErrorCode(1_070_022_005, "美团门店授权业务与接口场景不匹配，请勿混用餐饮与服务零售接口");
+    ErrorCode GROUP_BUY_PROVIDER_MUTATIONS_DISABLED =
+            new ErrorCode(1_070_022_006, "美团核销、撤销与退款请求尚未启用");
+    ErrorCode GROUP_BUY_PROVIDER_RESULT_UNKNOWN =
+            new ErrorCode(1_070_022_007, "美团操作结果未确认，请先查询券或退款状态，勿直接重复操作");
+
+    // ========== 小程序身份与契约 1-070-023 ==========
+    ErrorCode MOBILE_IDENTITY_REQUIRED = new ErrorCode(1_070_023_001, "请先完成会员档案初始化");
+    ErrorCode MOBILE_IDENTITY_INVALID = new ErrorCode(1_070_023_002, "会员账号不可用或手机号尚未验证");
+    ErrorCode MOBILE_IDENTITY_CONFLICT = new ErrorCode(1_070_023_003, "该会员档案已关联其他账号，请联系门店核实");
+    ErrorCode MOBILE_IDEMPOTENCY_CONFLICT = new ErrorCode(1_070_023_004, "幂等键对应的请求内容已变化");
+    ErrorCode MOBILE_REQUEST_INVALID = new ErrorCode(1_070_023_005, "小程序请求参数不合法");
+    ErrorCode MOBILE_PHONE_IMMUTABLE = new ErrorCode(1_070_023_006, "小程序不允许修改手机号");
+    ErrorCode MOBILE_FILE_NOT_OWNED = new ErrorCode(1_070_023_007, "无权使用该文件或文件用途不符");
+    ErrorCode MOBILE_BOOKING_TIME_CONFLICT = new ErrorCode(1_070_023_008, "该会员在此时间已有预约");
+    ErrorCode MOBILE_CANCEL_DEADLINE_PASSED = new ErrorCode(1_070_023_009, "已超过自助取消截止时间，请联系门店处理");
+    ErrorCode MOBILE_VERSION_CONFLICT = new ErrorCode(1_070_023_010, "负责关系已发生变化，请刷新后重试");
+    ErrorCode MOBILE_EMPLOYEE_REQUIRED = new ErrorCode(1_070_023_011, "当前账号须关联唯一的在职员工档案");
+    ErrorCode MOBILE_PRODUCT_NOT_AVAILABLE = new ErrorCode(1_070_023_012, "商品不存在或未公开发售");
+    ErrorCode MOBILE_COACH_NOT_AVAILABLE = new ErrorCode(1_070_023_013, "教练不存在或未公开发布");
+    ErrorCode MOBILE_LESSON_QR_INVALID = new ErrorCode(1_070_023_014, "签课二维码无效或已过期");
+    ErrorCode MOBILE_LESSON_QR_UNAVAILABLE = new ErrorCode(1_070_023_015, "签课二维码未配置");
+    ErrorCode FEEDBACK_NOT_EXISTS = new ErrorCode(1_070_024_001, "反馈不存在");
+    ErrorCode FEEDBACK_INVALID = new ErrorCode(1_070_024_002, "反馈评分、附件或门店资格不符合要求");
+    ErrorCode FEEDBACK_ALREADY_REPLIED = new ErrorCode(1_070_024_003, "反馈已有回复，不能覆盖原回复");
+    ErrorCode FEEDBACK_ATTACHMENT_INVALID = new ErrorCode(1_070_024_004, "反馈附件无效或不支持安全预览");
+    ErrorCode COURSE_QUOTE_NOT_EXISTS = new ErrorCode(1_070_025_001, "报价不存在或当前会员无权查看");
+    ErrorCode COURSE_QUOTE_APPROVAL_INVALID =
+            new ErrorCode(1_070_025_002, "请使用符合当前商品、会员及申请人范围的已批准专属改价申请");
+    ErrorCode COURSE_QUOTE_UNAVAILABLE = new ErrorCode(1_070_025_003, "报价已使用、过期或商品条款已变化");
+    ErrorCode REFUND_APPLICATION_NOT_EXISTS = new ErrorCode(1_070_026_002, "退款申请不存在或无权查看");
+    ErrorCode REFUND_APPLICATION_INVALID = new ErrorCode(1_070_026_003, "退款申请状态、可退余额或实际凭据不符合要求");
+    ErrorCode REFUND_APPLICATION_OPEN = new ErrorCode(1_070_026_004, "订单已有处理中退款申请，请先查询原申请");
+    ErrorCode MOBILE_ORDER_NOT_CANCELLABLE = new ErrorCode(1_070_026_001, "仅未支付且未履约的订单可以取消");
+    ErrorCode MOBILE_NOTIFICATION_NOT_EXISTS = new ErrorCode(1_070_027_001, "通知不存在或无权查看");
+    ErrorCode MOBILE_CONVERSATION_NOT_EXISTS = new ErrorCode(1_070_028_001, "会话不存在或无权查看");
+    ErrorCode MOBILE_CONVERSATION_UNAVAILABLE = new ErrorCode(1_070_028_002, "当前门店或会员关系不支持此会话操作");
+    ErrorCode MOBILE_CONVERSATION_MESSAGE_INVALID = new ErrorCode(1_070_028_003, "已读消息不属于当前会话或不存在");
+    ErrorCode MOBILE_INVITATION_INVALID = new ErrorCode(1_070_029_001, "邀请码无效、已过期或不适用于当前会员及门店");
+    ErrorCode MOBILE_INVITATION_UNAVAILABLE = new ErrorCode(1_070_029_002, "当前会员不能为此门店创建邀请");
+    ErrorCode POINT_ENTRY_INVALID = new ErrorCode(1_070_030_001, "积分记账参数或原始流水不合法");
+    ErrorCode POINT_EVENT_CONFLICT = new ErrorCode(1_070_030_002, "积分业务事件已存在且内容不一致");
+    ErrorCode POINT_BALANCE_INSUFFICIENT = new ErrorCode(1_070_030_003, "可用积分不足");
+    ErrorCode POINT_PRODUCT_INVALID = new ErrorCode(1_070_030_004, "积分商品配置无效");
+    ErrorCode POINT_PRODUCT_NOT_EXISTS = new ErrorCode(1_070_030_005, "积分商品不存在");
+    ErrorCode POINT_PRODUCT_CONFLICT = new ErrorCode(1_070_030_006, "积分商品已更新，请重新读取后保存");
+    ErrorCode POINT_PRODUCT_UNAVAILABLE = new ErrorCode(1_070_030_007, "当前门店不可查询积分商品");
+    ErrorCode POINT_REDEMPTION_INVALID = new ErrorCode(1_070_030_008, "积分兑换发放条件不满足");
+    ErrorCode POINT_REDEMPTION_NOT_EXISTS = new ErrorCode(1_070_030_009, "积分兑换记录不存在");
+    ErrorCode RISK_SOURCE_INVALID = new ErrorCode(1_070_031_001, "风险告警来源或证据不合法");
+    ErrorCode RISK_SOURCE_CONFLICT = new ErrorCode(1_070_031_002, "风险来源事件已存在且内容不同");
+    ErrorCode RISK_ALERT_NOT_EXISTS = new ErrorCode(1_070_031_003, "风险告警不存在");
+    ErrorCode RISK_RESOLUTION_CONFLICT = new ErrorCode(1_070_031_004, "风险告警已处置或版本已变化");
+    ErrorCode COUPON_NOT_CONFIGURED = new ErrorCode(1_070_032_001, "会员团购自助兑换未配置或当前不可用");
+    ErrorCode COUPON_PROVIDER_INVALID = new ErrorCode(1_070_032_002, "团购平台返回结果无法确认，请联系门店");
+    ErrorCode COUPON_OWNERSHIP_REQUIRED = new ErrorCode(1_070_032_003, "无法确认团购券属于当前会员，请联系门店");
+    ErrorCode COUPON_VERIFICATION_NOT_EXISTS = new ErrorCode(1_070_032_005, "核销记录不存在");
+    ErrorCode COUPON_ALREADY_CLAIMED = new ErrorCode(1_070_032_006, "团购券已提交核销，请查询原记录或联系门店");
+    ErrorCode COUPON_VERIFICATION_INVALID = new ErrorCode(1_070_032_007, "核销状态或凭据无效，请联系门店核实");
+    ErrorCode COUPON_PREVIEW_INVALID = new ErrorCode(1_070_032_004, "团购预览条件已变化或无效，请重新核对");
+    ErrorCode ACTION_CONFIRMATION_UNAVAILABLE =
+            new ErrorCode(1_070_033_001, "当前账号未配置有效认证器或二次确认不可用");
+    ErrorCode ACTION_RESOURCE_UNAVAILABLE = new ErrorCode(1_070_033_002, "当前设备、柜格或门店不可操作");
+    ErrorCode ACTION_VERIFICATION_INVALID = new ErrorCode(1_070_033_003, "动态验证码无效或已使用");
+    ErrorCode ACTION_VERIFICATION_LOCKED = new ErrorCode(1_070_033_004, "验证码错误次数过多，请五分钟后重试");
+    ErrorCode ACTION_CONFIRMATION_INVALID = new ErrorCode(1_070_033_005, "二次确认令牌无效、已过期或已使用");
 }

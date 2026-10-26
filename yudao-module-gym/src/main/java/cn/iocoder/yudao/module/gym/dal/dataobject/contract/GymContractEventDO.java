@@ -18,6 +18,7 @@ public class GymContractEventDO extends TenantBaseDO {
     private String type;
     private Instant occurredAt;
     private Long actorUserId;
+    private Integer actorUserType;
     private String ip;
     private String detail;
 }

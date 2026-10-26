@@ -63,7 +63,7 @@ bash script/gym/db.sh validate
 V001__gym_schema.sql
 V002__gym_reference_data.sql
 V003__gym_legacy_backfills.sql
-V004__add_member_external_reference.sql  # 示例；新增时以实际下一个版本为准
+V017__add_member_external_reference.sql  # 示例；新增时以实际下一个未使用版本为准
 ```
 
 1. 同步最新代码，选择未使用的版本号；文件名使用 `V版本__说明.sql`，版本与说明之间是两个下划线。
@@ -118,3 +118,245 @@ PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py
 MySQL DDL 可能隐式提交，失败不代表全部回滚。工具禁用 clean、自动 baseline 和乱序迁移，也不提供 repair；不要自行删除历史记录来绕过失败。恢复应结合实际已执行内容和备份，经审查后处理。
 
 相关入口：[脚本目录说明](README.md)、[贡献指南](../../CONTRIBUTING.md)。
+
+### V011 移动签课二维码
+
+新增gym_mobile_lesson_qr（当前65张gym表），保存短时凭据哈希、签发人、预约/排期时间绑定、过期和使用信息；不为历史预约生成凭据。升级前备份并按既有migrate/validate流程执行，本批没有迁移业务库。应用另需部署签名密钥，见README的移动二维码签课配置。下一未使用迁移版本V035（V012–V018见下）。
+
+### V012 工资显式发布
+
+在gym_payroll新增可空published_at（datetime(6)）和published_by；在gym_payroll_item新增(tenant_id,employee_id,payroll_id,deleted)索引。表数不变，仍65。历史confirmed记录保持冻结、金额不变且发布时间为空，不向员工自动公开。发布属于明确后台操作，不执行历史回填。新增列需在应用部署前完成migrate/validate；创建索引的耗时与业务数据量有关，按既有备份和维护窗口流程操作。下一未使用版本V035（V013–V018见下）。
+
+### V013 活动会员取消截止
+
+为gym_activity追加可空cancel_deadline datetime(6)，无新表、索引、状态回填或角色授权。旧活动NULL保留，会员默认开始前取消；原多店关系、不限名额及报名历史不变。应用部署前migrate/validate；隔离迁移回归覆盖列精度及旧活动不被改写，业务数据库未迁移。下一未使用版本V035（V014–V018见下）。
+
+### 匿名反馈与附件（V014）
+
+应用部署前执行migrate/validate至V014。新增gym_feedback和gym_feedback_attachment，当前共67张gym表；附件(tenant_id,file_id)唯一，禁止一图重复关联多条反馈。保留平台受限会员归属，门店只读明确匿名VO；card_context默认NULL且allow_card_context默认false，不回填历史身份摘要。
+
+迁移仅注册gym:feedbacks:read、gym:feedbacks:reply两条按钮权限，不自动授予任何角色，不新增前端路由。管理员需按职责授予功能权限和整店数据范围后才能读取/回复。工作人员图片只能经反馈专用辅助下载入口获取重新编码的安全副本；通用member_文件读取限制保持。需要运行环境提供标准java.desktop/ImageIO图片编解码（可在headless服务器运行）；最大10 MiB、8192单边/2000万像素限制不替代生产并发容量评估。
+
+真实隔离MySQL/Flyway54检查通过，包括权限定义、默认不同意、附件唯一与旧库接管，临时库全部清理。本任务未迁移业务库；下一未使用版本V035（V015–V018见下）。
+
+### 器械教学公开场景码（V015）
+
+部署前migrate至V015并validate。gym_equipment新增public_scene varchar(32) NULL及(tenant_id,public_scene)唯一索引，表数仍67；原器械及教程不自动公开，不回填场景码，不新增权限/账号或角色授权。真实隔离MySQL/Flyway57检查通过，全部临时库清理；业务库未迁移。下一未使用版本V035（V016见下）。
+
+管理员有gym:equipment:write及整店范围时，可调用POST /admin-api/gym/equipment/{id}/public-scenes（无body）明确公开教程并获取scene；DELETE同路径撤销，重复调用安全。场景码本身为32位小写十六进制本地路由值，不是微信官方码图片；重新发布后须更新印刷/展示的旧码。停用器械或门店暂停访问，启用后原码恢复；要废止旧码须明确DELETE。素材复用原后台同店image/video上传，仅支持普通图片及MP4，私有/有工作用途绑定的文件不能公开。前端与真实设备渠道未改动。
+
+### 销售报表索引（V016）
+
+部署前migrate至V016并validate。为gym_financial_event增加idx_financial_store_time（租户/门店/删除标志/事件时间）和idx_financial_order_payment（租户/订单/门店/商品/员工/事件类型/删除标志/时间），支撑时间范围汇总与原付款时间读取。无新表或数据回填，历史金额/归属不修改，仍67张gym表；下一版本V035。索引构建成本取决于已有流水量，按既有备份和维护流程安排。
+
+销售报表复用gym:reports:read和整店范围，不自动授予权限；支持卡与私教的已确认财务事件，不发起渠道操作。实际生产查询计划、海量流水性能需部署环境验证。本任务只运行隔离数据库回归，未迁移业务数据库，前端未改动。
+
+### 审批决策版本（V017）
+
+部署前执行migrate至V017并validate。gym_approval新增version INT NOT NULL DEFAULT 1，旧审批保留状态、当前步骤、业务快照及历史操作，version=1只是迁移后的基线，不倒推历史处理次数。仍67表，没有权限定义、角色授权或业务数据修复。随后统一部署含版本递增逻辑的全部审批服务实例，再启用移动决策；不能在仍运行旧版审批写入代码时宣称版本校验完整。
+
+移动决策需要GET取得expectedVersion和必传Idempotency-Key，成功推进/拒绝递增，重复键保留首次响应；原后台请求格式不变但也递增同一版本。失败业务变更连同版本/步骤/幂等响应回滚。真实隔离MySQL/Flyway62检查通过，包含新库默认值、旧库pending步骤/原因保留，临时库清理；未迁移业务库。下一未使用迁移版本V035，已应用SQL保持不变。
+
+### 移动发卡申请权限（V018）
+
+V018仅新增type=3的gym:cards:issue权限定义，不创建页面路由、不写角色授权、不新增gym表，仍67表。入口还要求gym:approvals:create和整店范围；新权限只用于移动发卡申请，原后台审批授权策略不变。部署前migrate/validate（含V017审批版本字段），更新全部审批处理节点后再由管理员授权并启用移动申请，旧程序不支持新course-products开通来源。
+
+真实隔离MySQL/Flyway64检查通过，包括权限唯一及迁移不授予角色，临时库清理；业务库未迁移。后续版本从V029追加，不修改已应用文件。私教课包按冻结产品审批后发放且无固定到期日；配置了对应合同模板时生成内部未签合同，不调用真实支付或电子签约。
+
+
+### 私教报价（V019）
+
+部署先migrate/validate至V019，新建gym_course_quote，当前68张gym表；金额decimal(12,2)、签发/到期datetime(6)，租户/审批及租户/已绑定订单分别唯一，可空审批支持多条原价报价。迁移不回填历史报价，只登记type=3的gym:courses:quote权限，不授予角色或创建前端页面。更新全部审批/报价服务后再显式授权；前一批专属改价快照不能由旧审批程序处理。
+
+配置yudao.gym.mobile.quotes.share-page为小程序实际已注册的报价详情路径，默认/pages/course-quote/detail仅为预留约定；只允许/pages/下安全路径，追加quoteId参数，不含金额。本任务未改前端，未验证分享打开。报价固定24小时，一审批不换键续期；该批used_order_id仅预留、两个报价接口不消费报价；会员下单绑定已在V020批次实现（见下）。
+
+真实隔离MySQL/Flyway73检查通过，包含68表、时间精度、唯一约束、NULL审批多报价、跨租户审批唯一性、无权限自动授予及旧库无报价回填；临时库全部清理。未迁移业务库。下一迁移从V035追加，已应用文件保持不变；前文67表/64检查等为对应历史批次证据。
+
+
+### 会员订单生命周期（V020）
+
+部署先migrate/validate至V020：gym_business_order增加可空buyer_user_id、expires_at/ cancelled_at（datetime(6)）及cancellation_reason，增加tenant/member/channel/deleted/id索引。旧行保持NULL及原金额/状态，不按创建时间补造到期或取消记录；仍68张gym表，无权限/角色变更。统一更新订单/收款实例，新订单最长30分钟且不晚于报价截止，收款按可信支付发生时刻核验deadline。
+
+报价used_order_id已由会员下单事务原子绑定，取消/超时不释放；旧报价页面接口仍只创建/读取。V020阶段尚未入队；V022已接入真实会员身份自动履约，见后文，不能将会员ID冒充后台员工ID；商品目录保留完整购买链路不可用标识。真实渠道和前端未接入。
+
+真实隔离MySQL/Flyway77检查通过，含生命周期字段可空、时间精度、查询索引与旧订单金额/状态/未知时间保留；临时库清理，业务库未迁移。下一版本从V035追加，已应用文件保持不变；前文73检查为V019历史证据。
+
+
+### V021 履约任务账号类型
+
+部署前执行migrate/validate。gym_fulfillment_task新增principal_user_type INT NOT NULL DEFAULT 2，旧任务原本只允许后台账号入队，因此默认2准确保留其身份；账号ID、次数、状态、租约及失败信息不改。新后台任务显式写2，仍68张gym表，无账号/权限/角色变更，不回填或启动会员订单任务。
+
+V021执行器仅对类型2使用后台账号；当时类型1和未知类型明确失败，沿用最多8次及退避机制，不冒用同号员工。V021阶段后台重试也拒绝非2任务；V022允许真实会员任务重试但仍不能改变账号类型。对外任务响应字段不变；会员执行分支、会员入队及历史会员订单恢复已在V022实现，见下节。先完成迁移并升级全部执行器，后续才能开启会员任务，旧执行器没有身份隔离保护。业务库本批未迁移；下一版本V035，已应用迁移不修改。
+
+真实隔离MySQL/Flyway82项检查通过，覆盖旧任务身份/租约/次数保留、显式会员与同号后台身份分离、NULL类型拒绝及不伪造任务；全部临时库已清理。
+
+
+### V022 会员购买履约及历史待办恢复
+
+新增gym_course_pack.duration_minutes_snapshot（可空，不回填旧时长）和gym_contract_event.actor_user_type（非空默认2，保留旧后台事件身份）。会员购买课包保存冻结时长；旧课包及人工发放没有可靠购买快照时保留NULL。新会员购买合同事件使用1和实际会员ID，生成文件的后台uploader_id为空。仍68表，无角色授权。
+
+迁移为真实buyer_user_id、miniapp、无退款/审批、单商品数量1且未履约的缺失任务写类型1，零元/足额付款pending，未付/部分付款waiting_payment；已有任务及租约不改。资金、订单状态、策略、权益和合同都不由迁移伪造。失效会员/门店/教练、坏快照会在真实执行时失败留痕，最多8次及退避；后台有权人工重试可增加8次，但保留真实买家类型和账号。课程收款记private，实际适配未配置；私教退款/权益撤销仍待实现，不能使用旧卡退款入口。
+
+部署顺序：暂停会员订单创建和全部履约执行器（gym.commerce.fulfillment.enabled=false），按既有流程备份、migrate/validate，统一更新订单/履约/合同/预约实例，再恢复写入和执行器。不能在迁移后继续运行未入队的旧订单写入实例，不能让忽略账号类型的旧执行器处理会员任务。业务库本批未迁移；下一版本V035。内部合同仍unsigned，外部文件存储不随数据库回滚，失败后未引用blob需沿用清理流程。详情见docs/uniapp/uniapp-implementation.md的V022章节。
+
+本批真实隔离MySQL/Flyway94项检查通过，包含V021→V022恢复零元、未付、部分付及足额付款任务，跳过取消/退款/审批/多明细等不适用订单，保留旧租约与主体；重复migrate不重复入队。临时库全部清理。
+
+## V023 会员退款申请与审核
+
+新增gym_refund_application，当前69张gym表；gym_order_refund增加可空refund_application_id及查询索引。活动申请以租户/订单唯一占位；CHECK约束保证状态与占位一致、金额和版本有效。历史退款金额、凭据、时间不改，关联保持NULL，不伪造历史申请或批准记录；无新增角色授权。
+
+部署前备份并暂停会员退款/订单写入、支付退款处理、审批写入及全部履约执行器（gym.commerce.fulfillment.enabled=false），按既有流程migrate/validate至V023，统一升级相关实例再恢复。禁止让不识别活动申请的旧执行器或人工履约代码继续处理这些订单。包含V022升级时同时遵守其会员下单暂停要求；若DDL失败需核查实际状态，不假设MySQL DDL原子回滚。
+
+审批通过只到approved；退款凭据核验和实际渠道操作分开，真实渠道、私教退款及课包撤销仍待接入/实现。接口和业务边界见docs/uniapp/uniapp-api.md及uniapp-implementation.md。真实隔离MySQL/Flyway107项检查通过、全部临时库清理；业务库未迁移。下一未使用版本V035，已应用迁移保持不变。
+
+## V024 站内通知与会员意愿
+
+新增gym_mobile_notification与gym_mobile_notification_preference，当前71张gym表；记录实际业务通知与会员意愿，账号类型、租户和接收人隔离，时间为datetime(6)。唯一事件按tenant/event/recipient_type/recipient_user判定；偏好按tenant/user/template唯一。无历史通知或外部授权回填，无角色授权变更，下一未使用版本V035。
+
+部署前备份，暂停预约、合同、卡/课包发放、活动及自动履约等相关写入，migrate/validate至V024，统一升级所有相关服务实例后恢复。旧实例不会生成新站内记录，不能在切换时继续混用。通知写入失败会使所在业务事务回滚，恢复后使用原业务幂等键重试。合同远程提醒、微信/短信/App推送及设备入场通知仍未接入。
+
+真实隔离MySQL/Flyway117检查通过且临时库清理；本任务未迁移业务库，前端未改。会员偏好只保存受限业务模板意愿，不能当作真实微信订阅授权。接口/事件范围及权限细节见docs/uniapp/uniapp-api.md和uniapp-implementation.md。
+
+## V025 门店服务会话与消息
+
+新增gym_mobile_conversation、gym_mobile_message，当前73张gym表；保存按租户/会员/门店唯一的共享服务会话、真实发送人类型与账号、最新消息、会员已读游标和未读计数。消息正文最多2000字符，时间datetime(6)，历史分页及未读计数有索引；数据库约束未读非负、游标不超最新消息、发送类型合法及非空正文。无历史会话或消息回填。
+
+新增gym:messages:read和gym:messages:send权限定义，迁移不授予任何现有角色；需由有权管理员按实际工作范围明确授权后使用。只有read可查询，同时具备read/send才可创建及发送，仍执行当前门店和会员范围校验。不新增前端菜单页面、不默认恢复权限。
+
+部署前按既有流程备份，执行bash script/gym/db.sh migrate及validate至V025，再统一更新私信服务实例并开放新入口；若一起升级V024，仍执行其暂停相关业务写入及执行器的步骤。当前业务数据库未迁移。DDL失败时核对真实表和Flyway状态，不能假定自动回滚；保留备份及新消息，恢复应用时先关闭新入口，勿直接删表。
+
+真实隔离MySQL/Flyway129项检查通过且临时库全部清理。下一未使用版本V035，已应用SQL不变；前文表数及检查数是各历史批次证据。消息只保存在本服务，未接入微信客服、WebSocket或外部推送。接口范围与已读细节见docs/uniapp/uniapp-api.md的V025章节。
+
+## V026 邀请码与首次身份归属
+
+新增gym_mobile_invitation及gym_mobile_identity四个可空字段invitation_id/inviter_member_id/inviter_user_id/invitation_new_member，当前74张gym表，下一版本V035。邀请码按租户唯一，时间为datetime(6)且到期严格晚于签发，身份归属必须四项齐全或全空，邀请人与被邀账号/会员不能相同。历史invite_code保持原值，不回填归属、不生成历史邀请，不修改角色权限。
+
+部署前暂停首次建档写入，备份、migrate/validate至V026，统一更新全部身份绑定和邀请服务实例后恢复。旧实例会继续把任意文本当来源，不可混用。升级前后保留历史码和身份备份；DDL失败检查实际表/列及Flyway状态，勿假定自动回滚。业务库本批未迁移。
+
+配置yudao.gym.mobile.invitations.share-page（环境变量YUDAO_GYM_MOBILE_INVITATIONS_SHAREPAGE）为实际小程序页面，默认/pages/invitation/index是预留契约路径，未实现前端；只允许/pages/下安全路径，不含查询参数。yudao.gym.mobile.invitations.valid-days默认30，允许1～365，环境变量YUDAO_GYM_MOBILE_INVITATIONS_VALIDDAYS；已有码保留签发时页面和期限。也可直接通过应用配置文件设置上述两个属性，运行依赖不变。
+
+隔离MySQL141检查通过，含真实V025升级、旧数据保留且不伪造归属，临时库清理。邀请只记录来源，不发积分/权益或消息，微信分享页面和奖励规则尚未联调/实现。详情见docs/uniapp/uniapp-api.md的V026章节。
+
+## V027 订阅确认版本与会员查询索引
+
+gym_subscription新增可空agreement_version varchar(64)及(tenant_id,member_id,deleted,store_id,id)索引，表数仍74；下一版本V035。旧记录版本保持NULL，历史金额、状态、时间和provider_agreement_id不改，不新增协议、扣款、角色权限或演示授权。
+
+部署前备份、migrate/validate至V027，再升级使用订阅模型的相关应用实例；索引构建成本取决于协议数量，按既有维护窗口流程安排。DDL失败核对实际列/索引和Flyway状态，不能假定自动回滚。无需调用或配置第三方来完成这两个历史读取接口，本批未迁移业务库、未改前端。
+
+真实隔离MySQL144检查通过且全部临时库清理，新增3项证明版本列/索引与旧订阅事实保留。agreement_version供未来可信签约流程保存确认版本，当前无新的对外写入口，不得用当前商品配置批量填充旧协议。28签约、31解约及实际代扣状态同步仍未接入；29–30读取内部历史快照，不能据此宣称外部渠道已可用。
+
+## V028 积分账户与流水底座
+
+新增gym_point_account与gym_point_record，当前76张gym表、下一版本V035。账户按租户/会员唯一，流水按租户/业务事件键唯一且大小写敏感；数据库限制余额等于累计正向减累计负向、数值为安全整数、earn/spend符号及refund必需原流水、非空说明。记账时间datetime(6)，本人/类型/原流水有索引。无初始账户、余额或奖励历史回填，无权限或角色变更。
+
+启用新查询前按既有流程备份、migrate/validate至V028，再更新应用实例。当前无生产业务写积分，迁移不触发发分；不运行演示积分seed，不把过去消费或邀请按猜测比例补账。未来业务接入必须通过已有事务中的LedgerService，验证来源和授权，采用稳定业务键并与兑换/库存/权益保持原子性，禁止直接改账户或删流水。
+
+本批仅内部账本及会员读取；奖励规则、消费/邀请自动发放继续按用户要求暂缓，商品及兑换仍待开发。新会员读取零余额仅表示未记账，不表示奖励配置已生效。真实隔离MySQL159检查通过、临时库清理；业务库与前端未改。失败DDL核对实际表及Flyway状态，不假定自动回滚。
+
+
+## V029 积分兑换商品配置
+
+追加gym_point_product一表，当前77张gym表，下一迁移V035。商品保存固定门店/具体卡模板、所需积分、剩余库存（NULL不限、0售罄）、上架状态及版本；数据库约束非空名称、正积分/版本及安全整数上限、非负库存。无默认商品、奖励、库存消耗或历史回填。
+
+部署前备份，执行bash script/gym/db.sh migrate及validate至V029，再升级应用。迁移仅创建gym:points:products权限定义，不给已有角色授权；管理员按业务需要显式授予门店范围及功能权限，用/admin-api/gym/point-products的GET/POST/PUT配置。PUT完整替换，有限库存须传stock，省略/null改为不限；更新必传当前revision，冲突重新读取核对。停用商品不删除历史配置，禁止直接修改门店或模板归属。
+
+真实隔离MySQL/Flyway170检查通过，临时库已清理；业务库未迁移、前端未改。会员/app-api/gym/point-products只读当前有效门店商品，不扣分、不发卡；兑换62–63及消费/邀请自动赠分仍未接入。后续库存扣减必须与账本和权益同事务并递增版本，不能用配置写入替代业务兑换记录。已应用V001–V028保持不变。
+
+
+## V030 积分兑换、发卡和失败返还
+
+追加gym_point_redemption一表至78表，下一V035；商品新增reserved_stock、账户新增refund_reserve，默认0并保留已有库存、价格、版本和账本。新增请求键/扣分/卡/返还唯一索引及处理中扫描索引。迁移不补造历史兑换，不赠送或扣减真实积分，无权限及角色变化；已应用V001–V029保持不变。
+
+部署前暂停兑换入口、所有积分写入/商品配置写入及gym.points.redemption.enabled定时器，备份后migrate/validate至V030，统一升级相关实例再恢复写入与定时器。旧版写入不了解预留字段，不能与新版混用；有processing记录时不要直接回滚到旧程序或删除兑换/账本/库存数据。业务库本批未迁移。
+
+后台恢复默认开启，配置gym.points.redemption.enabled（默认true）、interval-ms（默认30000，至少1000）、initial-delay-ms（默认30000，非负）。每次扫描有效租户中等待至少30秒的processing兑换，每租户最多100条；使用真实持久化会员身份。停用定时器不阻止接口中一次即时发放，暂停兑换必须同时停入口。GET纯读；网络未知用原请求键重试或查询已知ID。长期processing需检查日志、原扣分及数据库/存储故障；恢复处理会尝试发卡或原子返还，不能手工改成failed假装已退。
+
+失败状态只在全额积分返还和库存恢复一起提交后写入；同键返回原单最新状态，不重复扣分，已failed需新键发起新兑换。商品stock是新兑换可用量，预留/完成均增加revision；后台完整更新须最新revision，并为待完成库存/版本保留空间。账户refund_reserve是数值返还空间，不额外扣余额；不能通过旧代码或直接SQL侵占。
+
+隔离MySQL189检查通过，含实际V029升级原数据保留，临时库全清理；gym895通过、server打包通过。前端未改。发卡可生成本地未签合同，外部存储blob不随数据库回滚，故障后需按既有流程清理未引用对象；真实电子签约、消费/邀请自动奖励继续暂缓。
+
+
+## V031 风控告警与处置审计
+
+新增gym_risk_alert和gym_risk_resolution，累计80张gym表，下一未使用版本V035。来源在租户/设备/事件键/类型上唯一，事件键区分大小写；状态约束open/version1或resolved/version2。每条告警只有一份处置，保留真实后台操作者、原版本及微秒时间。新增gym:risk:read和gym:risk:resolve定义，不授予现有角色，不创建历史告警/证据/处置或冻结权益。V001–V030保持不变。
+
+发布前备份并执行bash script/gym/db.sh migrate和validate至V031，再升级应用，由管理员显式授予功能权限及整店数据范围。若跨V030升级，仍需执行上节暂停积分/商品写入和恢复定时器的步骤。DDL失败核对实际表及Flyway状态；应用回退前关闭新入口并保留已记录的告警/处置，不通过删表恢复。当前业务库未迁移。
+
+真实网关验签、风险规则生产、证据采集上传及自动冻结未接入。GymRiskAlertPublisher需调用方事务且无生产调用者，不能写测试告警到业务库或用空列表证明无风险。证据采用同店risk_evidence私有类别，通用上传不接受、普通元数据/下载拒绝；专属读取须当前告警权限和实际关联。后续适配器不得改用公开image文件规避授权。
+
+隔离MySQL204检查通过且临时库清理；gym913测试、Spotless和server打包通过（打包跳过测试）。总表120/135，辅助证据读取不增加目标总数。前端未改；消费/邀请自动奖励与真实支付/签约/设备/监控继续按用户要求暂缓。
+
+
+## V032 设备命令完成时间与结果读取
+
+在gym_device_command新增completed_at datetime(6)可空列及完成约束：不早于requested_at，仅限failed/succeeded，模拟成功不能带真实完成时间。旧记录保持NULL，原status、simulated、请求人、时间和请求内容不变，不回填回执，不新增权限或角色授权。仍80张gym表，下一未使用版本V035。
+
+先备份、bash script/gym/db.sh migrate及validate至V032，再升级应用；旧后台新建未发送失败会同时保存准确完成时间，未发送本身不是开门成功。旧实例不填写新列不会伪造成功，但应统一升级以获得一致的完成时间记录。若一起包含早期V030升级，仍需按其步骤暂停积分写入与恢复定时器。DDL失败核对实际列/约束和Flyway状态，不能假定自动回滚；保留已有命令，不通过清表恢复。
+
+移动端结果GET仅本人或当前有设备读取权限及整店范围的管理者可读，模拟成功和缺少真实完成时间的成功输出unknown，不会自动重发。V032不接入真实设备发送/回执；业务数据库本批未迁移，前端未改。完整字段和权限语义见docs/uniapp/uniapp-api.md的V032章节。
+
+
+## V033 会员团购券预览
+
+新增gym_coupon_preview一表至81表，下一V035。保存用户/会员/店、券码密文与私有索引、真实平台商品ID、设置版本、映射指纹及卡模板快照、资格和微秒有效期；owner/expiry/receipt索引与正身份/有效期/可兑换快照约束。迁移不造券、预览、核销、卡或奖励，不改角色权限。先备份、migrate/validate至V033，再升级应用；本批未迁移业务库，旧SQL保持不变。
+
+移动预览默认关闭，下面是配置结构示例，ID须替换为当前租户真实数据；主密钥由安全部署配置注入，不提交真实值。`encryption-key`必须为Base64编码的恰好32字节，所有实例保持一致；不能用人类口令或临时随机启动密钥，存在待处理预览时不可直接替换密钥。当前没有自动密钥轮换或预览清理任务，后续接入核销前需按引用/状态管理过期记录，不能清理仍被事务引用的预览。
+
+```yaml
+yudao:
+  gym:
+    mobile:
+      coupons:
+        enabled: false # 完成配置和真实渠道验证后再显式开放
+        encryption-key: ${GYM_COUPON_ENCRYPTION_KEY}
+        mappings:
+          1: # tenantId
+            101: # storeId
+              123456: # 美团dealId
+                enabled: true
+                deal-group-id: 654321
+                card-template-id: 42 # 具体已发布卡模板版本ID
+```
+
+同时要求既有门店verification-settings开启、支持meituan、requireCheckin=false及当前允许时段；平台沿用yudao.gym.group-buy.meituan的enabled/开发者/门店授权，不能复用其他租户门店。移动预览不调用状态变更接口，平台mutations-enabled不需要因预览开启。各实例的映射配置须一致，配置变更会使并发旧预览拒绝保存；未来核销必须重验冻结版本和实际权益资格。
+
+仅支持美团普通单券预览，其他券型/自动签到流程/其他平台未接入。32已实现，33–34仍待实现，暂不将预览资格通过作为正式核销入口上线依据。真实授权、实券及部署HTTP未联调，前端未改。实际本地回归与隔离MySQL证据见docs/testing.md本批章节。
+
+## 会员核销适配配置准备（2026-10-26，无新迁移）
+
+本批只有内部适配器，尚无33–34移动核销/结果路由或持久化执行器。V033、81表、下一V035保持不变，未运行业务库迁移。不要仅因有以下配置而认为会员已能核销。沿用既有平台授权和预览密钥/商品映射，新增：
+
+```yaml
+yudao:
+  gym:
+    mobile:
+      coupons:
+        consumption-enabled: false
+        merchant-accounts:
+          1:
+            12:
+              account: ${GYM_COUPON_T1_S12_MERCHANT_ACCOUNT}
+              name: ${GYM_COUPON_T1_S12_MERCHANT_NAME}
+```
+
+商家系统审计账号/名称各1–128字符且无首尾空白/控制字符，此为本地约束；不使用会员ID或客户端输入，也没有跨租户/门店回退。预览enabled不自动打开消费，消费还需平台enabled/mutations-enabled及完整当前授权。所有节点配置一致；签名密钥、令牌、授权实体、商家审计账号或加密密钥变化都会使旧授权指纹不匹配。未来存在未决核销时先核实和迁移其授权关系，不能直接覆盖配置再重发消费。当前无热更新/轮换或人工确认流程，真实联调未完成。
+
+## 会员核销流水和恢复部署（V034）
+
+追加gym_coupon_verification至82张gym表，下一V035。保留V001–V033不变；新表不回填历史消费、不造卡或收入、不授权角色。按本手册备份、migrate/validate后再部署含33–34的应用；真实商家授权及实券联调尚未完成，移动consumption-enabled仍默认false。前一节配置准备现可供会员核销流程使用。
+
+恢复配置：`gym.coupons.verification.enabled=true`（默认），`interval-ms=30000`、`initial-delay-ms=30000`；interval最少1000毫秒。此执行器开关与消费开关独立。默认扫描有效租户每批最多100条，已确认但发卡失败60秒后重试，未知状态最多6次间隔60秒的只读观察后保留待核实；没有重复远程consume。停恢复器会延迟已提交请求的核实/发卡，重新启用才继续扫描。生产多实例、规模及实际HTTP尚未验证。
+
+生产启用会员消费前，应先完成真实商家行业权限/授权、普通单券/固定商品映射和端到端验证；所有节点密钥/授权配置一致。任何未决核销引用的gym_coupon_preview加密券码、scope_snapshot、固定provider_request_id及确认/观察摘要都必须保留；当前无自动清理、换钥迁移或配置热更新。直接换密钥/授权会阻止旧请求解密/查单，不能通过换键重发。scope和确认摘要不包含平台签名密钥/令牌原文。
+
+运维核实以记录id、tenant_id/store_id、provider_request_id、stage、query_count、provider_flow_id、last_error_code和确认/观察摘要为依据，使用现有受控数据库运维权限；没有新增公开管理查询/人工改成功API。prepared未消费前失去资格可failed并释放占用；sending/unknown禁止当作未消费，confirmed不得改failed或释放占用。已验券观察不能证明本次请求成功，禁止据此直接改表发卡。成功响应始终未能持久化、平台超时且无请求关联证据时，仍须平台核实及后续受控关联流程，当前无自动解决保证。
+
+本地发卡故障恢复可能创建未被数据库引用的外部合同文件，沿用私有存储孤立文件清理流程；内部合同仍unsigned，真实签约暂缓。卡起始时间取持久化核销确认时间，延迟恢复不会顺延权益期限。业务库本批未迁移，验证仅使用随机隔离MySQL并全部清理。
+
+## 认证器失败锁定与一次性确认令牌（V035）
+
+V035追加gym_action_verification_state、gym_action_confirmation，gym表由82增至84，下一V036；保持V001–V034不变。无角色授权、密钥种子、历史令牌或真实设备指令。按既有备份/migrate/validate流程升级后再部署；本次未对业务库执行迁移。
+
+账号状态唯一键保证跨设备失败预算串行；令牌摘要、账号/密钥/步数和消费指令唯一键约束一次性使用。数据库同时约束失败次数/锁定时间、设备操作与柜格组合、签发/失效/消费时间和指令引用。密钥和动态码不入表，已接受步数及已用token记录不能随意清理；逻辑删除不释放验证码步数。回滚恢复旧库前先关闭功能，恢复后换发密钥，避免恢复旧防重放状态。应用降级时保持新增表，不自动撤销已经发生的授权事实。配置说明见[认证器运行手册](README.md#设备二次确认认证器配置v035总表126)。
+
+隔离MySQL/Flyway257项检查通过，含新库、旧库升级、唯一性/状态约束、历史表/权限保留；全部临时库已清理。真实设备通信及回调仍未接入。

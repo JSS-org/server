@@ -19,6 +19,7 @@ public class GymCoursePackDO extends TenantBaseDO {
     private String name;
     private java.time.Instant startsAt;
     private java.time.Instant expiresAt;
+    private Integer durationMinutesSnapshot;
     private Integer totalSessions;
     private Integer remainingSessions;
     private Integer reservedSessions;

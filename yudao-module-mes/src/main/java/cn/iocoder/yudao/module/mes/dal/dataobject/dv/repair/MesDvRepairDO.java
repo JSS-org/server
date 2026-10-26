@@ -89,7 +89,6 @@ public class MesDvRepairDO extends BaseDO {
      */
     private Long confirmUserId;
 
-    // DONE @芋艿：sourceDocType、sourceDocId、sourceDocCode 为预留字段，对齐：暂未使用
     /**
      * 来源单据类型
      */

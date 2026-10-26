@@ -57,6 +57,8 @@ public class GymCommerceService {
     @Resource private GymPaymentReceiptVerifier receipts;
     @Resource private GymRefundReviewService refundReviews;
     @Resource private GymFulfillmentQueueService fulfillmentQueue;
+    @Resource private GymRefundApplicationService refundApplications;
+    @Resource private GymRefundApplicationMapper refundApplicationRows;
     private static final BigDecimal ZERO = new BigDecimal("0.00");
 
     /** Called by an authenticated purchase flow after resolving its member identity; never accepts a client-supplied price. */
@@ -182,13 +184,19 @@ public class GymCommerceService {
     }
 
     private GymBusinessOrderDO lockedOrder(Long id) {
+        return lockedOrder(id, false);
+    }
+
+    private GymBusinessOrderDO lockedOrder(Long id, boolean allowCourse) {
         mutex.lockStoreEntitlements();
         var row =
                 gymBusinessOrderMapper.selectOne(
                         new LambdaQueryWrapper<GymBusinessOrderDO>()
                                 .eq(GymBusinessOrderDO::getId, id)
                                 .last("FOR UPDATE"));
-        if (row == null || !"card_sale".equals(row.getBusinessType()))
+        if (row == null
+                || !("card_sale".equals(row.getBusinessType())
+                        || allowCourse && "course_sale".equals(row.getBusinessType())))
             throw exception(SALES_ORDER_NOT_EXISTS);
         scope.check(row.getStoreId());
         stores.requireStore(row.getStoreId(), false);
@@ -196,8 +204,14 @@ public class GymCommerceService {
     }
 
     private void checkBeforeVerification(Long id) {
+        checkBeforeVerification(id, false);
+    }
+
+    private void checkBeforeVerification(Long id, boolean allowCourse) {
         var row = gymBusinessOrderMapper.selectById(id);
-        if (row == null || !"card_sale".equals(row.getBusinessType()))
+        if (row == null
+                || !("card_sale".equals(row.getBusinessType())
+                        || allowCourse && "course_sale".equals(row.getBusinessType())))
             throw exception(SALES_ORDER_NOT_EXISTS);
         scope.check(row.getStoreId());
     }
@@ -243,7 +257,7 @@ public class GymCommerceService {
         event.setStoreId(order.getStoreId());
         event.setEmployeeId(order.getEmployeeId());
         event.setBusinessOrderId(order.getId());
-        event.setProductType("card");
+        event.setProductType("course_sale".equals(order.getBusinessType()) ? "private" : "card");
         event.setEventType(type);
         event.setAmount(amount);
         event.setSourceType(sourceType);
@@ -259,7 +273,8 @@ public class GymCommerceService {
                 || items.stream()
                         .anyMatch(
                                 i ->
-                                        !"card".equals(i.getProductType())
+                                        !(i.getProductType() + "_sale")
+                                                        .equals(order.getBusinessType())
                                                 || i.getPayableAmount().signum() < 0))
             throw exception(COMMERCE_RECEIPT_INVALID);
         BigDecimal before =
@@ -282,9 +297,9 @@ public class GymCommerceService {
     @Transactional(rollbackFor = Exception.class, isolation = Isolation.READ_COMMITTED)
     public GymBusinessOrderDO acceptPayment(Long orderId, String reference) {
         if (!identity(reference)) throw exception(COMMERCE_RECEIPT_INVALID);
-        checkBeforeVerification(orderId);
+        checkBeforeVerification(orderId, true);
         var receipt = receipts.payment(reference);
-        var order = lockedOrder(orderId);
+        var order = lockedOrder(orderId, true);
         receipt(order, receipt);
         var old =
                 gymOrderPaymentMapper.selectOne(
@@ -299,7 +314,8 @@ public class GymCommerceService {
                 throw exception(COMMERCE_IDEMPOTENCY_CONFLICT);
             return order;
         }
-        if (!Set.of("pending_payment", "partially_paid").contains(order.getStatus())
+        if ((order.getExpiresAt() != null && !receipt.occurredAt().isBefore(order.getExpiresAt()))
+                || !Set.of("pending_payment", "partially_paid").contains(order.getStatus())
                 || order.getPaidAmount().add(receipt.amount()).compareTo(order.getPayableAmount())
                         > 0) throw exception(COMMERCE_RECEIPT_INVALID);
         var payment = new GymOrderPaymentDO();
@@ -329,6 +345,17 @@ public class GymCommerceService {
 
     @Transactional(rollbackFor = Exception.class, isolation = Isolation.READ_COMMITTED)
     public GymBusinessOrderDO acceptRefund(Long orderId, String reference) {
+        return acceptRefund(orderId, reference, null);
+    }
+
+    @Transactional(rollbackFor = Exception.class, isolation = Isolation.READ_COMMITTED)
+    public GymBusinessOrderDO acceptRefundForApplication(
+            Long orderId, Long applicationId, String reference) {
+        refundApplications.checkForVerification(applicationId, orderId);
+        return acceptRefund(orderId, reference, applicationId);
+    }
+
+    private GymBusinessOrderDO acceptRefund(Long orderId, String reference, Long applicationId) {
         if (!identity(reference)) throw exception(COMMERCE_RECEIPT_INVALID);
         checkBeforeVerification(orderId);
         var receipt = receipts.refund(reference);
@@ -357,7 +384,8 @@ public class GymCommerceService {
                     || !payment.getId().equals(old.getPaymentId())
                     || !"succeeded".equals(old.getStatus())
                     || old.getAmount().compareTo(receipt.amount()) != 0
-                    || !old.getRefundedAt().equals(time(receipt)))
+                    || !old.getRefundedAt().equals(time(receipt))
+                    || applicationId != null && !applicationId.equals(old.getRefundApplicationId()))
                 throw exception(COMMERCE_IDEMPOTENCY_CONFLICT);
             return order;
         }
@@ -373,7 +401,11 @@ public class GymCommerceService {
         if (previous.add(receipt.amount()).compareTo(payment.getAmount()) > 0
                 || order.getRefundedAmount().add(receipt.amount()).compareTo(order.getPaidAmount())
                         > 0) throw exception(COMMERCE_RECEIPT_INVALID);
+        if (applicationId != null)
+            refundApplications.validateReceipt(
+                    applicationId, order, receipt.amount(), time(receipt));
         var refund = new GymOrderRefundDO();
+        refund.setRefundApplicationId(applicationId);
         refund.setOrderId(orderId);
         refund.setPaymentId(payment.getId());
         refund.setProvider(receipt.provider());
@@ -396,6 +428,7 @@ public class GymCommerceService {
                         : "partially_refunded");
         gymBusinessOrderMapper.updateById(order);
         refundReviews.onRefund(order, refund);
+        refundApplications.onRefund(order, refund);
         fulfillmentQueue.cancel(orderId);
         return order;
     }
@@ -410,6 +443,9 @@ public class GymCommerceService {
     private GymOrderPolicyDO readyForFulfillment(GymBusinessOrderDO order) {
         var policy = policy(order.getId());
         if (policy == null
+                || refundApplicationRows.selectCount(
+                                GymRefundApplicationDO::getActiveOrderId, order.getId())
+                        != 0
                 || order.getPaidAmount().compareTo(order.getPayableAmount()) != 0
                 || order.getRefundedAmount().signum() != 0
                 || !Set.of("paid", "pending_fulfillment").contains(order.getStatus())

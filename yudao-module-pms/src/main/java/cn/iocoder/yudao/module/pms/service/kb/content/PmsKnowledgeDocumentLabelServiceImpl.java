@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -79,6 +80,14 @@ public class PmsKnowledgeDocumentLabelServiceImpl implements PmsKnowledgeDocumen
     @Override
     public List<PmsKnowledgeDocumentLabelDO> getDocumentLabelList() {
         return documentLabelMapper.selectList();
+    }
+
+    @Override
+    public List<PmsKnowledgeDocumentLabelDO> getDocumentLabelList(Collection<Long> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
+        return documentLabelMapper.selectByIds(ids);
     }
 
     @Override

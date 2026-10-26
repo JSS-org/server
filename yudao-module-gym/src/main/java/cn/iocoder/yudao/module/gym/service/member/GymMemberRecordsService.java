@@ -28,6 +28,7 @@ import java.util.*;
 
 @Service
 public class GymMemberRecordsService {
+    @Resource private cn.iocoder.yudao.module.gym.service.file.GymWorkFileBindings workFiles;
     @Resource private GymBlacklistMapper gymBlacklistMapper;
     @Resource private GymMeasurementMapper gymMeasurementMapper;
     @Resource private GymFileMapper gymFileMapper;
@@ -270,7 +271,9 @@ public class GymMemberRecordsService {
             boolean selfOnly = broad != null && !broad.contains(req.getStoreId());
             if (file == null
                     || !req.getStoreId().equals(file.getStoreId())
-                    || !"body_report".equals(file.getCategory()))
+                    || !"body_report".equals(file.getCategory())
+                    || !workFiles.member(
+                            file.getId(), "body_report", req.getMemberId(), req.getStoreId()))
                 throw exception(MEASUREMENT_FILE_INVALID);
             if (selfOnly) {
                 if (gymMeasurementMapper.selectCount(

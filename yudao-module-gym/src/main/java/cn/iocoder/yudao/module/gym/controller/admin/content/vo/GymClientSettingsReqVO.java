@@ -5,6 +5,7 @@ import jakarta.validation.constraints.*;
 
 import lombok.Data;
 
+import java.time.Instant;
 import java.util.List;
 
 @Data
@@ -43,6 +44,60 @@ public class GymClientSettingsReqVO {
     @NotNull
     @Size(max = 100)
     private List<@NotNull @Valid Block> blocks;
+
+    @Size(max = 2000)
+    private String appBenefitText;
+
+    @Valid private Franchise franchise;
+
+    @Size(max = 50)
+    private List<@NotNull @Valid Notice> notices;
+
+    @Data
+    @io.swagger.v3.oas.annotations.media.Schema(name = "GymClientSettingsFranchise")
+    public static class Franchise {
+        @NotBlank
+        @Size(max = 5000)
+        private String introduction;
+
+        @NotBlank
+        @Size(max = 32)
+        private String phone;
+
+        @NotNull
+        @Size(min = 3, max = 3)
+        private List<@NotNull @Valid Model> models;
+    }
+
+    @Data
+    @io.swagger.v3.oas.annotations.media.Schema(name = "GymClientSettingsModel")
+    public static class Model {
+        @NotBlank
+        @Size(max = 100)
+        private String name;
+
+        @NotNull @Positive private Long previewFileId;
+
+        @Size(max = 2000)
+        private String modelUrl;
+    }
+
+    @Data
+    @io.swagger.v3.oas.annotations.media.Schema(name = "GymClientSettingsNotice")
+    public static class Notice {
+        @NotNull @Positive private Long id;
+
+        @NotBlank
+        @Size(max = 120)
+        private String title;
+
+        @NotBlank
+        @Size(max = 5000)
+        private String content;
+
+        @NotNull private Instant publishedAt;
+        private Instant expiresAt;
+    }
 
     @Data
     @io.swagger.v3.oas.annotations.media.Schema(name = "GymClientSettingsReqVOBlock")

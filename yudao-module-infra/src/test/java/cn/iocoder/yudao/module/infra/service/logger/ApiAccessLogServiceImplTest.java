@@ -89,7 +89,8 @@ public class ApiAccessLogServiceImplTest extends BaseDbUnitTest {
         apiAccessLogMapper.insert(log01);
         ApiAccessLogDO log02 =
                 randomPojo(
-                        ApiAccessLogDO.class, o -> o.setCreateTime(addTime(Duration.ofDays(-1))));
+                        ApiAccessLogDO.class,
+                        o -> o.setCreateTime(addTime(Duration.ofDays(-1)).withNano(0)));
         apiAccessLogMapper.insert(log02);
         // 准备参数
         Integer exceedDay = 2;
@@ -101,8 +102,7 @@ public class ApiAccessLogServiceImplTest extends BaseDbUnitTest {
         assertEquals(1, count);
         List<ApiAccessLogDO> logs = apiAccessLogMapper.selectList();
         assertEquals(1, logs.size());
-        // TODO @芋艿：createTime updateTime 被屏蔽，仅 win11 会复现，建议后续修复。
-        assertPojoEquals(log02, logs.get(0), "createTime", "updateTime");
+        assertPojoEquals(log02, logs.get(0));
     }
 
     @Test

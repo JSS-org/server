@@ -267,6 +267,26 @@ yudao:
   info:
     version: 1.0.0
     base-package: cn.iocoder.yudao
+  gym:
+    mobile:
+      action-confirmations:
+        enabled: false # 配置独立认证器并核对账号后显式启用
+        secrets: {} # 租户 -> 后台账号 -> Base32密钥；只通过受控外部配置注入
+      bookings:
+        cancel-before-minutes: 0 # 会员自助取消须早于开课；可配置提前分钟数，超时联系门店，不自动扣课
+      lessons:
+        qr-signing-key: ${GYM_MOBILE_LESSON_QR_SIGNING_KEY:} # Base64编码的至少32字节随机密钥，空值时二维码不可用
+        qr-ttl-seconds: 60 # 30～300秒，不能超过课程确认窗口
+        confirm-after-end-minutes: 120 # 开课后至结束后0～1440分钟内可扫码确认
+    group-buy:
+      meituan:
+        enabled: false # 健身服务零售 businessId=58，按 docs/group-buy-verification.md 配置后再联调
+        mutations-enabled: false # 核销、撤销、退款申请/审核单独启用；不会自动重试
+        developer-id: ${GYM_MEITUAN_DEVELOPER_ID:}
+        sign-key: ${GYM_MEITUAN_SIGN_KEY:}
+        connect-timeout-millis: 3000
+        read-timeout-millis: 10000
+        tenants: {} # 租户 -> stores -> 本系统门店 -> app-auth-token；凭据只在外部配置提供
   file:
     private-path-prefixes: gym/ # 禁止公开下载及前端直传；业务接口鉴权后从数据库读取
   web:
@@ -358,5 +378,7 @@ yudao:
   iot:
     message-bus:
       type: redis # 消息总线的类型
+    storage:
+      type: tdengine # 时序存储的类型：tdengine、iotdb，需要配置同名的 spring.datasource.dynamic.datasource 数据源
 
 debug: false

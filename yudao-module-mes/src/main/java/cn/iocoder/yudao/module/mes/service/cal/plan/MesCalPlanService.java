@@ -9,6 +9,7 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.cal.plan.MesCalPlanDO;
 
 import jakarta.validation.Valid;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -90,4 +91,13 @@ public interface MesCalPlanService {
      * @return 排班计划分页
      */
     PageResult<MesCalPlanDO> getPlanPage(MesCalPlanPageReqVO pageReqVO);
+
+    /**
+     * 获得指定状态、且起止日期包含指定日期的排班计划列表
+     *
+     * @param status 状态
+     * @param day    日期
+     * @return 排班计划列表
+     */
+    List<MesCalPlanDO> getPlanListByStatusAndDay(Integer status, LocalDate day);
 }

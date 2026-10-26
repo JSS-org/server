@@ -1,13 +1,13 @@
 package cn.iocoder.yudao.module.fms.controller.admin.ledger.vo.auxiliarydetail;
 
-import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
-import cn.idev.excel.annotation.ExcelProperty;
-
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import lombok.Data;
+
+import org.apache.fesod.sheet.annotation.ExcelIgnoreUnannotated;
+import org.apache.fesod.sheet.annotation.ExcelProperty;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

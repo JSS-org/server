@@ -15,6 +15,8 @@ import java.util.List;
 public class GymEmployeeSaveReqVO {
     @Positive private Long userId;
 
+    @Valid private GymPublicCoachProfileVO publicCoachProfile;
+
     @NotNull
     @Size(min = 1, max = 30)
     private List<@NotNull @Valid StoreAssignment> storeAssignments;

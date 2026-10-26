@@ -25,6 +25,7 @@ import java.util.Objects;
 
 @Service
 public class GymTrainingPlanService {
+    @Resource private cn.iocoder.yudao.module.gym.service.file.GymWorkFileBindings workFiles;
     @Resource private GymTrainingPlanMapper plans;
     @Resource private GymFileMapper files;
     @Resource private GymMemberService members;
@@ -134,7 +135,9 @@ public class GymTrainingPlanService {
         var file = files.selectById(req.getFileId());
         if (file == null
                 || !"training_plan".equals(file.getCategory())
-                || !req.getStoreId().equals(file.getStoreId()))
+                || !req.getStoreId().equals(file.getStoreId())
+                || !workFiles.member(
+                        file.getId(), "training_plan", req.getMemberId(), req.getStoreId()))
             throw exception(TRAINING_PLAN_FILE_INVALID);
         var broad = scope.readableStoreIds();
         if (broad != null && !broad.contains(req.getStoreId())) {

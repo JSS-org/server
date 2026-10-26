@@ -62,4 +62,12 @@ public interface PayWalletTransactionMapper extends BaseMapperX<PayWalletTransac
                 PayWalletTransactionDO::getBizType,
                 bizType);
     }
+
+    default PayWalletTransactionDO selectByBizForUpdate(String bizId, Integer bizType) {
+        return selectOneForUpdate(
+                PayWalletTransactionDO::getBizId,
+                bizId,
+                PayWalletTransactionDO::getBizType,
+                bizType);
+    }
 }

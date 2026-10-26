@@ -1,0 +1,1812 @@
+{
+  "objective": "全量构建这135个接口",
+  "count": 135,
+  "interfaces": [
+    {
+      "id": 1,
+      "category": "认证",
+      "method": "POST",
+      "path": "/app-api/member/auth/weixin-mini-app-login",
+      "description": "微信手机号授权登录，获取会员访问令牌和刷新令牌",
+      "implementation": "existing_source",
+      "evidence": [
+        "yudao-module-member/src/main/java/cn/iocoder/yudao/module/member/controller/app/auth/AppAuthController.java"
+      ]
+    },
+    {
+      "id": 2,
+      "category": "认证",
+      "method": "POST",
+      "path": "/app-api/member/auth/refresh-token",
+      "description": "刷新会员登录令牌",
+      "implementation": "existing_source",
+      "evidence": [
+        "yudao-module-member/src/main/java/cn/iocoder/yudao/module/member/controller/app/auth/AppAuthController.java"
+      ]
+    },
+    {
+      "id": 3,
+      "category": "认证",
+      "method": "POST",
+      "path": "/app-api/member/auth/logout",
+      "description": "退出会员登录",
+      "implementation": "existing_source",
+      "evidence": [
+        "yudao-module-member/src/main/java/cn/iocoder/yudao/module/member/controller/app/auth/AppAuthController.java"
+      ]
+    },
+    {
+      "id": 4,
+      "category": "公共及会员端",
+      "method": "POST",
+      "path": "/app-api/gym/me/profile-initializations",
+      "description": "首次登录关联或创建健身会员档案，记录潜客来源和邀请关系",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileIdentityControllerTest.java"
+      ]
+    },
+    {
+      "id": 5,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/context",
+      "description": "获取当前会员业务身份和默认门店",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileIdentityControllerTest.java"
+      ]
+    },
+    {
+      "id": 6,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/context",
+      "description": "获取员工身份、角色、权限及可访问门店",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkContextController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileWorkContextService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkContextControllerTest.java",
+        "yudao-module-system/src/test/java/cn/iocoder/yudao/module/system/api/permission/PermissionApiImplTest.java"
+      ]
+    },
+    {
+      "id": 7,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/stores",
+      "description": "查询公开营业门店，支持关键词和位置筛选",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymPublicController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobilePublicService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobilePublicControllerTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymPublicMediaTenantFilterTest.java"
+      ]
+    },
+    {
+      "id": 8,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/stores/{id}",
+      "description": "获取门店介绍、地址、营业时间、环境素材及客服信息",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymPublicController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobilePublicService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobilePublicControllerTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymPublicMediaTenantFilterTest.java"
+      ]
+    },
+    {
+      "id": 9,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/stores/{id}/home",
+      "description": "获取首页聚合数据，包括门店、人数、功能开关和公告",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymPublicController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobilePublicService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobilePublicControllerTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymPublicMediaTenantFilterTest.java"
+      ]
+    },
+    {
+      "id": 10,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/stores/{id}/occupancy",
+      "description": "获取实时在店人数、当天入场次数及数据更新时间",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymPublicController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobilePublicService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobilePublicControllerTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymPublicMediaTenantFilterTest.java"
+      ]
+    },
+    {
+      "id": 11,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/client-settings",
+      "description": "获取入口封面、App 下载福利和加盟展示配置",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymPublicController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobilePublicService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobilePublicControllerTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymPublicMediaTenantFilterTest.java"
+      ]
+    },
+    {
+      "id": 12,
+      "category": "公共及会员端",
+      "method": "POST",
+      "path": "/app-api/gym/stores/{id}/camera-play-sessions",
+      "description": "为具备资格的会员创建监控短时播放会话",
+      "implementation": "pending",
+      "evidence": [],
+      "externalIntegration": "deferred_by_user",
+      "deferredScope": "监控厂商播放会话"
+    },
+    {
+      "id": 13,
+      "category": "公共及会员端",
+      "method": "POST",
+      "path": "/app-api/gym/franchise-inquiries",
+      "description": "提交加盟意向，返回匿名受理回执",
+      "implementation": "existing_source",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/marketing/AppGymFranchiseController.java"
+      ]
+    },
+    {
+      "id": 14,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/card-products",
+      "description": "查询门店可售会员卡商品",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymCatalogController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileCatalogService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileCatalogControllerTest.java"
+      ]
+    },
+    {
+      "id": 15,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/course-products",
+      "description": "查询门店或教练可售私教商品",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymCatalogController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileCatalogService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileCatalogControllerTest.java"
+      ]
+    },
+    {
+      "id": 16,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/products/{id}",
+      "description": "获取商品详情、价格及购买限制",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymCatalogController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileCatalogService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileCatalogControllerTest.java"
+      ]
+    },
+    {
+      "id": 17,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/cards",
+      "description": "查询本人的会员卡列表",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java"
+      ]
+    },
+    {
+      "id": 18,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/cards/{id}",
+      "description": "获取本人会员卡详情、有效期和剩余次数",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java"
+      ]
+    },
+    {
+      "id": 19,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/course-packs",
+      "description": "查询本人的私教课包及剩余、预占、可用课时",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java"
+      ]
+    },
+    {
+      "id": 20,
+      "category": "公共及会员端",
+      "method": "POST",
+      "path": "/app-api/gym/orders",
+      "description": "按商品或有效报价创建待支付订单",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymOrdersController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileOrdersService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileOrdersControllerTest.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/sales/GymMemberOrderFulfillmentService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/sales/GymOrderEntitlementAccess.java"
+      ]
+    },
+    {
+      "id": 21,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/orders",
+      "description": "查询本人的订单列表",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymOrdersController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileOrdersService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileOrdersControllerTest.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/sales/GymMemberOrderFulfillmentService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/sales/GymOrderEntitlementAccess.java"
+      ]
+    },
+    {
+      "id": 22,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/orders/{id}",
+      "description": "获取本人订单支付及权益履约状态",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymOrdersController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileOrdersService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileOrdersControllerTest.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/sales/GymMemberOrderFulfillmentService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/sales/GymOrderEntitlementAccess.java"
+      ]
+    },
+    {
+      "id": 23,
+      "category": "公共及会员端",
+      "method": "POST",
+      "path": "/app-api/gym/orders/{id}/payment-sessions",
+      "description": "创建订单支付会话，返回小程序支付参数",
+      "implementation": "pending",
+      "evidence": [],
+      "externalIntegration": "deferred_by_user",
+      "deferredScope": "支付渠道支付会话"
+    },
+    {
+      "id": 24,
+      "category": "公共及会员端",
+      "method": "POST",
+      "path": "/app-api/gym/orders/{id}/cancellations",
+      "description": "取消本人未支付订单",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymOrdersController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileOrdersService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileOrdersControllerTest.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/sales/GymMemberOrderFulfillmentService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/sales/GymOrderEntitlementAccess.java"
+      ]
+    },
+    {
+      "id": 25,
+      "category": "公共及会员端",
+      "method": "POST",
+      "path": "/app-api/gym/orders/{id}/refund-applications",
+      "description": "提交订单退款申请，由服务端计算可退金额",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymRefundApplicationsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/sales/GymRefundApplicationService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileRefundControllerTest.java"
+      ]
+    },
+    {
+      "id": 26,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/refund-applications/{id}",
+      "description": "查询本人退款申请审核和退款进度",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymRefundApplicationsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/sales/GymRefundApplicationService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileRefundControllerTest.java"
+      ]
+    },
+    {
+      "id": 27,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/subscription-products",
+      "description": "查询门店连续包月商品及续费说明",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymCatalogController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileCatalogService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileCatalogControllerTest.java"
+      ]
+    },
+    {
+      "id": 28,
+      "category": "公共及会员端",
+      "method": "POST",
+      "path": "/app-api/gym/subscriptions",
+      "description": "创建连续包月订阅并发起渠道签约",
+      "implementation": "pending",
+      "evidence": [],
+      "externalIntegration": "deferred_by_user",
+      "deferredScope": "自动续费渠道签约"
+    },
+    {
+      "id": 29,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/subscriptions",
+      "description": "查询本人的连续包月订阅列表",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymSubscriptionsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileSubscriptionsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileSubscriptionsControllerTest.java"
+      ]
+    },
+    {
+      "id": 30,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/subscriptions/{id}",
+      "description": "获取本人订阅详情、周期金额、下次扣费时间及解约状态",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymSubscriptionsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileSubscriptionsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileSubscriptionsControllerTest.java"
+      ]
+    },
+    {
+      "id": 31,
+      "category": "公共及会员端",
+      "method": "POST",
+      "path": "/app-api/gym/subscriptions/{id}/termination-requests",
+      "description": "提交连续包月解约请求",
+      "implementation": "pending",
+      "evidence": [],
+      "externalIntegration": "deferred_by_user",
+      "deferredScope": "自动续费渠道解约"
+    },
+    {
+      "id": 32,
+      "category": "公共及会员端",
+      "method": "POST",
+      "path": "/app-api/gym/coupon-verification-previews",
+      "description": "校验团购券并生成核销预览，不直接消耗券",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymCouponPreviewsController.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileCouponPreviewsControllerTest.java"
+      ]
+    },
+    {
+      "id": 33,
+      "category": "公共及会员端",
+      "method": "POST",
+      "path": "/app-api/gym/coupon-verifications",
+      "description": "确认核销团购券，渠道成功后发放权益",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymCouponVerificationsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/groupbuy/GymCouponVerificationTransactions.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/groupbuy/GymCouponVerificationWorker.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileCouponVerificationsControllerTest.java"
+      ]
+    },
+    {
+      "id": 34,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/coupon-verifications/{id}",
+      "description": "查询本人团购券核销与权益发放结果",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymCouponVerificationsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/groupbuy/GymCouponVerificationTransactions.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/groupbuy/GymCouponVerificationWorker.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileCouponVerificationsControllerTest.java"
+      ]
+    },
+    {
+      "id": 35,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/coaches",
+      "description": "查询门店公开教练列表",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymCoachesController.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileCoachesControllerTest.java"
+      ]
+    },
+    {
+      "id": 36,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/coaches/{id}",
+      "description": "获取教练介绍、照片和公开资质",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymCoachesController.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileCoachesControllerTest.java"
+      ]
+    },
+    {
+      "id": 37,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/coaches/{id}/sessions",
+      "description": "查询教练可预约课程时段及剩余名额",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileBookingsServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileBookingsControllerTest.java"
+      ]
+    },
+    {
+      "id": 38,
+      "category": "公共及会员端",
+      "method": "POST",
+      "path": "/app-api/gym/bookings",
+      "description": "创建本人私教预约并预占课时",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileBookingsServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileBookingsControllerTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java"
+      ]
+    },
+    {
+      "id": 39,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/bookings",
+      "description": "查询本人的预约列表",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileBookingsServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileBookingsControllerTest.java"
+      ]
+    },
+    {
+      "id": 40,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/bookings/{id}",
+      "description": "获取本人预约详情和签到签课状态",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileBookingsServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileBookingsControllerTest.java"
+      ]
+    },
+    {
+      "id": 41,
+      "category": "公共及会员端",
+      "method": "POST",
+      "path": "/app-api/gym/bookings/{id}/cancellations",
+      "description": "在允许期限内取消本人预约并释放预占课时",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileBookingsServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileBookingsControllerTest.java"
+      ]
+    },
+    {
+      "id": 42,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/checkins",
+      "description": "查询本人的入场签到记录",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java"
+      ]
+    },
+    {
+      "id": 43,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/attendance-summary",
+      "description": "获取本人月度签到次数、活跃天数及门店排名",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymAttendanceController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileAttendanceService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileAttendanceControllerTest.java"
+      ]
+    },
+    {
+      "id": 44,
+      "category": "公共及会员端",
+      "method": "POST",
+      "path": "/app-api/gym/lesson-confirmations",
+      "description": "会员扫码签课，校验签到后幂等扣减课时",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymLessonConfirmationController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileLessonService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/course/GymLessonConfirmationService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileLessonControllerTest.java",
+        "sql/gym/migration/mysql/V011__gym_mobile_lesson_qr.sql"
+      ]
+    },
+    {
+      "id": 45,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/lesson-records",
+      "description": "查询本人的签课和课消记录",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileBookingsServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileBookingsControllerTest.java"
+      ]
+    },
+    {
+      "id": 46,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/profile",
+      "description": "获取本人昵称、头像、脱敏手机号和人脸状态",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileIdentityControllerTest.java"
+      ]
+    },
+    {
+      "id": 47,
+      "category": "公共及会员端",
+      "method": "PATCH",
+      "path": "/app-api/gym/me/profile",
+      "description": "修改本人昵称和头像，不允许修改手机号",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileIdentityControllerTest.java"
+      ]
+    },
+    {
+      "id": 48,
+      "category": "公共及会员端",
+      "method": "POST",
+      "path": "/app-api/gym/me/face-enrollments",
+      "description": "提交经身份核验的人脸照片登记或更新",
+      "implementation": "pending",
+      "evidence": [],
+      "externalIntegration": "deferred_by_user",
+      "deferredScope": "人脸设备登记及同步"
+    },
+    {
+      "id": 49,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/face-enrollments/{id}",
+      "description": "查询本人人脸登记审核及同步结果",
+      "implementation": "pending",
+      "evidence": [],
+      "externalIntegration": "deferred_by_user",
+      "deferredScope": "设备侧人脸同步结果"
+    },
+    {
+      "id": 50,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/contracts",
+      "description": "查询本人待签和历史合同列表",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java"
+      ]
+    },
+    {
+      "id": 51,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/contracts/{id}",
+      "description": "获取本人合同详情及原件、签署件信息",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java"
+      ]
+    },
+    {
+      "id": 52,
+      "category": "公共及会员端",
+      "method": "POST",
+      "path": "/app-api/gym/contracts/{id}/sign-sessions",
+      "description": "为本人合同创建电子签署会话",
+      "implementation": "pending",
+      "evidence": [],
+      "externalIntegration": "deferred_by_user",
+      "deferredScope": "电子签约渠道签署会话"
+    },
+    {
+      "id": 53,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/body-measurements",
+      "description": "查询本人的历史体测记录",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java"
+      ]
+    },
+    {
+      "id": 54,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/body-measurements/{id}",
+      "description": "获取本人体测指标及报告详情",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java"
+      ]
+    },
+    {
+      "id": 55,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/training-plans",
+      "description": "查询本人的当前及历史训练计划",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java"
+      ]
+    },
+    {
+      "id": 56,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/training-plans/{id}",
+      "description": "获取本人训练计划正文和附件",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java"
+      ]
+    },
+    {
+      "id": 57,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/fitness-summary",
+      "description": "获取本人运动档案摘要、最新体测和累计运动数据",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java"
+      ]
+    },
+    {
+      "id": 58,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/points",
+      "description": "获取本人积分余额及累计收支",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymPointsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobilePointsService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/points/GymPointLedgerService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobilePointsControllerTest.java"
+      ]
+    },
+    {
+      "id": 59,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/point-records",
+      "description": "查询本人积分获取、消费和返还流水",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymPointsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobilePointsService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/points/GymPointLedgerService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobilePointsControllerTest.java"
+      ]
+    },
+    {
+      "id": 60,
+      "category": "公共及会员端",
+      "method": "POST",
+      "path": "/app-api/gym/me/invitations",
+      "description": "生成本人邀请推广码和分享路径",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymInvitationController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileInvitationService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileIdentityService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileInvitationControllerTest.java"
+      ]
+    },
+    {
+      "id": 61,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/point-products",
+      "description": "查询门店可用积分兑换的商品",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymPointProductsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/points/GymPointProductsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobilePointProductsControllerTest.java"
+      ]
+    },
+    {
+      "id": 62,
+      "category": "公共及会员端",
+      "method": "POST",
+      "path": "/app-api/gym/point-redemptions",
+      "description": "提交积分兑换，扣减积分并发起会员卡发放",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymPointRedemptionsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobilePointRedemptionsService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/points/GymPointRedemptionTransactions.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/points/GymPointRedemptionAccess.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobilePointRedemptionsControllerTest.java"
+      ]
+    },
+    {
+      "id": 63,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/point-redemptions/{id}",
+      "description": "查询本人积分兑换及发卡结果",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymPointRedemptionsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobilePointRedemptionsService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/points/GymPointRedemptionTransactions.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/points/GymPointRedemptionAccess.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobilePointRedemptionsControllerTest.java"
+      ]
+    },
+    {
+      "id": 64,
+      "category": "公共及会员端",
+      "method": "POST",
+      "path": "/app-api/gym/feedbacks",
+      "description": "提交对门店匿名的反馈、评分或建议",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymFeedbackController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileFeedbackService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileFeedbackControllerTest.java"
+      ]
+    },
+    {
+      "id": 65,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/feedbacks",
+      "description": "查询本人反馈和门店回复",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymFeedbackController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileFeedbackService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileFeedbackControllerTest.java"
+      ]
+    },
+    {
+      "id": 66,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/activities",
+      "description": "查询门店公开活动列表",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymActivitiesController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileActivityService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileActivitiesControllerTest.java"
+      ]
+    },
+    {
+      "id": 67,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/activities/{id}",
+      "description": "获取活动详情、名额及报名截止时间",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymActivitiesController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileActivityService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileActivitiesControllerTest.java"
+      ]
+    },
+    {
+      "id": 68,
+      "category": "公共及会员端",
+      "method": "POST",
+      "path": "/app-api/gym/activities/{id}/registrations",
+      "description": "为当前会员报名活动",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymActivitiesController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileActivityService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileActivitiesControllerTest.java"
+      ]
+    },
+    {
+      "id": 69,
+      "category": "公共及会员端",
+      "method": "DELETE",
+      "path": "/app-api/gym/activities/{id}/registrations/me",
+      "description": "取消本人活动报名并释放名额",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymActivitiesController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileActivityService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileActivitiesControllerTest.java"
+      ]
+    },
+    {
+      "id": 70,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/activity-registrations",
+      "description": "查询本人活动报名记录",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymActivitiesController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileActivityService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileActivitiesControllerTest.java"
+      ]
+    },
+    {
+      "id": 71,
+      "category": "公共及会员端",
+      "method": "POST",
+      "path": "/app-api/gym/qr-resolutions",
+      "description": "解析服务端认可的器械二维码，识别门店和器械",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymEquipmentController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileEquipmentService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileEquipmentControllerTest.java"
+      ]
+    },
+    {
+      "id": 72,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/equipment/{id}/tutorials",
+      "description": "获取器械图文和视频教学",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymEquipmentController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileEquipmentService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileEquipmentControllerTest.java"
+      ]
+    },
+    {
+      "id": 73,
+      "category": "公共及会员端",
+      "method": "POST",
+      "path": "/app-api/gym/files",
+      "description": "上传会员头像、人脸或反馈图片等受控文件",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java"
+      ]
+    },
+    {
+      "id": 74,
+      "category": "工作台",
+      "method": "POST",
+      "path": "/admin-api/gym/mobile/files",
+      "description": "上传教练资料、体测报告、训练计划或合同文件",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkFilesController.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkFilesControllerTest.java"
+      ]
+    },
+    {
+      "id": 75,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/files/{id}/content",
+      "description": "下载本人有权访问的文件内容",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java"
+      ]
+    },
+    {
+      "id": 76,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/files/{id}/content",
+      "description": "下载工作台业务权限范围内的文件内容",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkFilesController.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkFilesControllerTest.java"
+      ]
+    },
+    {
+      "id": 77,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/dashboard",
+      "description": "获取本人或授权门店的业绩、签到、签课和待办概览",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileDashboardController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileDashboardService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileDashboardControllerTest.java"
+      ]
+    },
+    {
+      "id": 78,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/bookings",
+      "description": "查询本人授课或授权门店的预约列表",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkCoursesController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileWorkCoursesService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkCoursesControllerTest.java"
+      ]
+    },
+    {
+      "id": 79,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/bookings/{id}",
+      "description": "获取权限范围内的会员预约详情",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkCoursesController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileWorkCoursesService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkCoursesControllerTest.java"
+      ]
+    },
+    {
+      "id": 80,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/checkins",
+      "description": "查询负责会员或授权门店的入场签到记录",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkCoursesController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileWorkCoursesService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkCoursesControllerTest.java"
+      ]
+    },
+    {
+      "id": 81,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/lesson-records",
+      "description": "查询本人授课或授权范围内的签课记录",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkCoursesController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileWorkCoursesService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkCoursesControllerTest.java"
+      ]
+    },
+    {
+      "id": 82,
+      "category": "工作台",
+      "method": "POST",
+      "path": "/admin-api/gym/mobile/lesson-qr-codes",
+      "description": "为指定课程生成短时有效的签课二维码",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileLessonQrController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileLessonService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/course/GymLessonConfirmationService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileLessonControllerTest.java",
+        "sql/gym/migration/mysql/V011__gym_mobile_lesson_qr.sql"
+      ]
+    },
+    {
+      "id": 83,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/me/coach-profile",
+      "description": "获取教练本人的公开资料",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileCoachProfileController.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileCoachProfileControllerTest.java"
+      ]
+    },
+    {
+      "id": 84,
+      "category": "工作台",
+      "method": "PATCH",
+      "path": "/admin-api/gym/mobile/me/coach-profile",
+      "description": "修改教练本人的照片、介绍、特长和资质",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileCoachProfileController.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileCoachProfileControllerTest.java"
+      ]
+    },
+    {
+      "id": 85,
+      "category": "工作台",
+      "method": "POST",
+      "path": "/admin-api/gym/mobile/course-sessions",
+      "description": "创建私教课程排期并校验教练时间冲突",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkCourseWriteController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileWorkCourseWriteService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/course/GymBookingRules.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkCourseWriteControllerTest.java"
+      ]
+    },
+    {
+      "id": 86,
+      "category": "工作台",
+      "method": "POST",
+      "path": "/admin-api/gym/mobile/bookings",
+      "description": "为负责会员或授权门店会员创建预约",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkCourseWriteController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileWorkCourseWriteService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/course/GymBookingRules.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkCourseWriteControllerTest.java"
+      ]
+    },
+    {
+      "id": 87,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/members",
+      "description": "查询权限范围内会员，支持潜客、私教及临期权益筛选",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkMembersController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileWorkMemberQueryService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkControllerTest.java"
+      ]
+    },
+    {
+      "id": 88,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/members/{id}",
+      "description": "获取授权会员资料及当前门店权益摘要",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkMembersController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileWorkMemberQueryService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkControllerTest.java"
+      ]
+    },
+    {
+      "id": 89,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/members/{id}/follow-ups",
+      "description": "查询会员或潜在客户的跟进记录",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkControllerTest.java"
+      ]
+    },
+    {
+      "id": 90,
+      "category": "工作台",
+      "method": "POST",
+      "path": "/admin-api/gym/mobile/members/{id}/follow-ups",
+      "description": "新增跟进记录和下次联系时间",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkControllerTest.java"
+      ]
+    },
+    {
+      "id": 91,
+      "category": "工作台",
+      "method": "PUT",
+      "path": "/admin-api/gym/mobile/members/{id}/assignments",
+      "description": "分配或调整会员在指定门店的负责员工",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkControllerTest.java"
+      ]
+    },
+    {
+      "id": 92,
+      "category": "工作台",
+      "method": "POST",
+      "path": "/admin-api/gym/mobile/member-conversations",
+      "description": "创建与授权会员的站内私信会话",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileConversationsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileConversationsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileConversationsControllerTest.java"
+      ]
+    },
+    {
+      "id": 93,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/member-conversations/{id}/messages",
+      "description": "查询当前权限及会员范围内的门店服务会话消息",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileConversationsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileConversationsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileConversationsControllerTest.java"
+      ]
+    },
+    {
+      "id": 94,
+      "category": "工作台",
+      "method": "POST",
+      "path": "/admin-api/gym/mobile/member-conversations/{id}/messages",
+      "description": "向授权会员发送站内私信",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileConversationsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileConversationsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileConversationsControllerTest.java"
+      ]
+    },
+    {
+      "id": 95,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/conversations",
+      "description": "查询会员本人的站内会话及未读摘要",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymConversationsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileConversationsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileConversationsControllerTest.java"
+      ]
+    },
+    {
+      "id": 96,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/conversations/{id}/messages",
+      "description": "查询本人会话消息",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymConversationsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileConversationsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileConversationsControllerTest.java"
+      ]
+    },
+    {
+      "id": 97,
+      "category": "公共及会员端",
+      "method": "POST",
+      "path": "/app-api/gym/me/conversations/{id}/messages",
+      "description": "会员在本人会话中发送消息",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymConversationsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileConversationsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileConversationsControllerTest.java"
+      ]
+    },
+    {
+      "id": 98,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/body-measurements",
+      "description": "查询授权会员的体测记录",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkControllerTest.java"
+      ]
+    },
+    {
+      "id": 99,
+      "category": "工作台",
+      "method": "POST",
+      "path": "/admin-api/gym/mobile/body-measurements",
+      "description": "为授权会员录入体测指标和报告",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkControllerTest.java"
+      ]
+    },
+    {
+      "id": 100,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/training-plans",
+      "description": "查询授权会员的训练计划",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkControllerTest.java"
+      ]
+    },
+    {
+      "id": 101,
+      "category": "工作台",
+      "method": "POST",
+      "path": "/admin-api/gym/mobile/training-plans",
+      "description": "为授权会员创建训练计划并上传附件",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkControllerTest.java"
+      ]
+    },
+    {
+      "id": 102,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/contracts",
+      "description": "查询授权会员的合同记录",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkControllerTest.java"
+      ]
+    },
+    {
+      "id": 103,
+      "category": "工作台",
+      "method": "POST",
+      "path": "/admin-api/gym/mobile/contracts",
+      "description": "基于会员真实卡或课包权益发放合同",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkControllerTest.java"
+      ]
+    },
+    {
+      "id": 104,
+      "category": "工作台",
+      "method": "POST",
+      "path": "/admin-api/gym/mobile/card-issue-applications",
+      "description": "提交会员卡或私教卡发放审批申请",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileCardIssueController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileCardIssueService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/approval/GymApprovalService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileCardIssueControllerTest.java"
+      ]
+    },
+    {
+      "id": 105,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/reports/sales",
+      "description": "查询销售明细及会员卡、私教销售金额汇总",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileSalesReportController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileSalesReportService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileSalesReportControllerTest.java"
+      ]
+    },
+    {
+      "id": 106,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/reports/performance",
+      "description": "按员工或门店统计业绩、排名、均值及课消",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobilePerformanceController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobilePerformanceService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobilePerformanceControllerTest.java"
+      ]
+    },
+    {
+      "id": 107,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/reports/member-summary",
+      "description": "统计授权门店会员、私教会员、新客和临期权益人数",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileMemberSummaryController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileMemberSummaryService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileMemberSummaryControllerTest.java"
+      ]
+    },
+    {
+      "id": 108,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/me/payrolls",
+      "description": "查询本人已发布工资表列表",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobilePayrollController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobilePayrollService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobilePayrollControllerTest.java"
+      ]
+    },
+    {
+      "id": 109,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/me/payrolls/{id}",
+      "description": "获取本人工资明细及计算项目",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobilePayrollController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobilePayrollService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobilePayrollControllerTest.java"
+      ]
+    },
+    {
+      "id": 110,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/payrolls",
+      "description": "查询授权门店工资表，支持月份和员工筛选",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobilePayrollController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobilePayrollService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobilePayrollControllerTest.java"
+      ]
+    },
+    {
+      "id": 111,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/payrolls/{id}",
+      "description": "获取授权范围内的员工工资明细",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobilePayrollController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobilePayrollService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobilePayrollControllerTest.java"
+      ]
+    },
+    {
+      "id": 112,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/approvals",
+      "description": "查询本人申请、待审批或已处理审批列表",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileApprovalsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileApprovalsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileApprovalsControllerTest.java"
+      ]
+    },
+    {
+      "id": 113,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/approvals/{id}",
+      "description": "获取审批详情、业务摘要及步骤记录",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileApprovalsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileApprovalsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileApprovalsControllerTest.java"
+      ]
+    },
+    {
+      "id": 114,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/approval-options",
+      "description": "获取当前业务可用的审批类型和模板",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileApprovalsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileApprovalsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileApprovalsControllerTest.java"
+      ]
+    },
+    {
+      "id": 115,
+      "category": "工作台",
+      "method": "POST",
+      "path": "/admin-api/gym/mobile/approvals/{id}/decisions",
+      "description": "当前步骤指定审批人提交通过或拒绝决定",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileApprovalsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileApprovalsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileApprovalsControllerTest.java"
+      ]
+    },
+    {
+      "id": 116,
+      "category": "工作台",
+      "method": "POST",
+      "path": "/admin-api/gym/mobile/course-price-applications",
+      "description": "提交私教专属报价改价申请，不修改商品公开售价",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileCoursePriceController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileCoursePriceService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileCoursePriceControllerTest.java"
+      ]
+    },
+    {
+      "id": 117,
+      "category": "工作台",
+      "method": "POST",
+      "path": "/admin-api/gym/mobile/course-quotes",
+      "description": "依据商品现价或有效审批生成私教报价分享链接",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileCourseQuotesController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileCourseQuoteService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileCourseQuotesControllerTest.java"
+      ]
+    },
+    {
+      "id": 118,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/course-quotes/{id}",
+      "description": "会员查看适用于自己的私教报价和有效期",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymCourseQuotesController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileCourseQuoteService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileCourseQuotesControllerTest.java"
+      ]
+    },
+    {
+      "id": 119,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/feedbacks",
+      "description": "查询门店匿名反馈、评分和建议，不暴露会员身份",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileFeedbackController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileFeedbackService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileFeedbackControllerTest.java"
+      ]
+    },
+    {
+      "id": 120,
+      "category": "工作台",
+      "method": "POST",
+      "path": "/admin-api/gym/mobile/feedbacks/{id}/replies",
+      "description": "回复门店收到的反馈或评价",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileFeedbackController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileFeedbackService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileFeedbackControllerTest.java"
+      ]
+    },
+    {
+      "id": 121,
+      "category": "工作台",
+      "method": "POST",
+      "path": "/admin-api/gym/mobile/activities",
+      "description": "创建门店活动，设置名额和报名期限",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileActivityController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileActivityService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileActivitiesControllerTest.java"
+      ]
+    },
+    {
+      "id": 122,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/devices",
+      "description": "查询授权门店的门禁和柜机设备",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileDevicesController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileDevicesService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileDevicesControllerTest.java"
+      ]
+    },
+    {
+      "id": 123,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/devices/{id}/compartments",
+      "description": "查询指定柜机的柜格列表和状态",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileDevicesController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileDevicesService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileDevicesControllerTest.java"
+      ]
+    },
+    {
+      "id": 124,
+      "category": "工作台",
+      "method": "POST",
+      "path": "/admin-api/gym/mobile/devices/{id}/commands",
+      "description": "提交远程开门或开柜命令并保留操作记录",
+      "implementation": "pending",
+      "evidence": [],
+      "externalIntegration": "deferred_by_user",
+      "deferredScope": "门禁/柜机命令下发"
+    },
+    {
+      "id": 125,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/device-commands/{id}",
+      "description": "查询设备命令发送及实际执行结果",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileDeviceCommandsController.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileDeviceCommandsControllerTest.java"
+      ],
+      "externalIntegration": "deferred_by_user",
+      "deferredScope": "真实设备回执及执行状态同步；当前仅读取已持久化结果，未发送失败不代表真实设备执行"
+    },
+    {
+      "id": 126,
+      "category": "工作台",
+      "method": "POST",
+      "path": "/admin-api/gym/mobile/action-confirmations",
+      "description": "验证认证器动态码，生成绑定账号、设备、操作及柜格的一次性短时令牌",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileActionConfirmationsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileActionConfirmationsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/device/GymActionTotpTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileActionConfirmationsControllerTest.java"
+      ]
+    },
+    {
+      "id": 127,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/notifications",
+      "description": "查询员工本人可接收的工作台通知",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileNotificationsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileNotificationsService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileNotificationPublisher.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileNotificationsControllerTest.java"
+      ]
+    },
+    {
+      "id": 128,
+      "category": "公共及会员端",
+      "method": "GET",
+      "path": "/app-api/gym/me/notifications",
+      "description": "查询会员本人预约、合同、权益等通知",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymNotificationsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileNotificationsService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileNotificationPublisher.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileNotificationsControllerTest.java"
+      ]
+    },
+    {
+      "id": 129,
+      "category": "工作台",
+      "method": "POST",
+      "path": "/admin-api/gym/mobile/notifications/{id}/read",
+      "description": "将员工本人的通知标记为已读",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileNotificationsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileNotificationsService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileNotificationPublisher.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileNotificationsControllerTest.java"
+      ]
+    },
+    {
+      "id": 130,
+      "category": "公共及会员端",
+      "method": "POST",
+      "path": "/app-api/gym/me/notifications/{id}/read",
+      "description": "将会员本人的通知标记为已读",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymNotificationsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileNotificationsService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileNotificationPublisher.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileNotificationsControllerTest.java"
+      ]
+    },
+    {
+      "id": 131,
+      "category": "公共及会员端",
+      "method": "POST",
+      "path": "/app-api/gym/me/notification-preferences",
+      "description": "保存会员消息订阅意愿，不替代微信实际授权",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymNotificationsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileNotificationsService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileNotificationPublisher.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileNotificationsControllerTest.java"
+      ]
+    },
+    {
+      "id": 132,
+      "category": "设备集成",
+      "method": "POST",
+      "path": "/integration-api/gym/access-events",
+      "description": "接收已认证门禁网关的进出事件，驱动签到及风控",
+      "implementation": "pending",
+      "evidence": [],
+      "externalIntegration": "deferred_by_user",
+      "deferredScope": "门禁网关进出事件"
+    },
+    {
+      "id": 133,
+      "category": "设备集成",
+      "method": "POST",
+      "path": "/integration-api/gym/device-command-results",
+      "description": "接收设备真实执行回执，幂等更新命令状态",
+      "implementation": "pending",
+      "evidence": [],
+      "externalIntegration": "deferred_by_user",
+      "deferredScope": "设备真实执行回执"
+    },
+    {
+      "id": 134,
+      "category": "工作台",
+      "method": "GET",
+      "path": "/admin-api/gym/mobile/risk-alerts",
+      "description": "查询授权门店的门禁及异常行为告警",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileRiskController.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileRiskControllerTest.java"
+      ]
+    },
+    {
+      "id": 135,
+      "category": "工作台",
+      "method": "POST",
+      "path": "/admin-api/gym/mobile/risk-alerts/{id}/resolutions",
+      "description": "处理风控告警，记录确认违规或误报结论",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileRiskController.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileRiskControllerTest.java"
+      ]
+    }
+  ],
+  "scopeNotes": [
+    "支付/自动续费、电子签约、门禁设备和监控的真实渠道接入与联调，按用户要求暂缓；保留原135个接口的设计口径。",
+    "源码路由存在、业务测试通过、真实外部集成通过是不同验收层级；前端不修改。",
+    "134–135仅实现内部告警查询、一次处置与受控证据读取；真实设备告警生产、证据采集、风险判定及自动冻结未接入。消费/邀请积分发放规则与自动奖励按用户要求暂缓。",
+    "32已实现美团单张普通团购券的会员归属预览及加密保存，平台真实授权/联调仍待完成；33核销及34结果仍待实现，其他券型和抖音未接入。"
+  ]
+}

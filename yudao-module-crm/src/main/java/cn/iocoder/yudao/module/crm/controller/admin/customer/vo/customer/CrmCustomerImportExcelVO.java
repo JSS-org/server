@@ -2,7 +2,6 @@ package cn.iocoder.yudao.module.crm.controller.admin.customer.vo.customer;
 
 import static cn.iocoder.yudao.module.crm.enums.DictTypeConstants.*;
 
-import cn.idev.excel.annotation.ExcelProperty;
 import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
 import cn.iocoder.yudao.framework.excel.core.annotations.ExcelColumnSelect;
 import cn.iocoder.yudao.framework.excel.core.convert.AreaConvert;
@@ -13,6 +12,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import org.apache.fesod.sheet.annotation.ExcelProperty;
 
 /**
  * 客户 Excel 导入 VO

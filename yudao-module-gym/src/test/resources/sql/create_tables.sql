@@ -34,6 +34,8 @@ CREATE TABLE IF NOT EXISTS gym_employee (
   phone varchar(11) NOT NULL,
   job_title varchar(80) DEFAULT NULL,
   hired_on date NOT NULL,
+  coach_published boolean NOT NULL DEFAULT false,
+  coach_profile longtext DEFAULT NULL,
   status varchar(16) NOT NULL DEFAULT 'active',
   creator varchar(64) NOT NULL DEFAULT '',
   create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -207,6 +209,7 @@ CREATE TABLE IF NOT EXISTS gym_member_store (
   id bigint NOT NULL AUTO_INCREMENT,
   member_id bigint NOT NULL,
   store_id bigint NOT NULL,
+  assignment_version int NOT NULL DEFAULT 0,
   joined_at datetime(6) NOT NULL,
   creator varchar(64) NOT NULL DEFAULT '',
   create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -249,6 +252,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uk_member_store ON gym_member_store(tenant_id,
 CREATE UNIQUE INDEX IF NOT EXISTS uk_member_card_source ON gym_member_card(tenant_id,source_type,source_id);
 CREATE TABLE IF NOT EXISTS gym_course_product (
   id bigint NOT NULL AUTO_INCREMENT,
+  version int NOT NULL DEFAULT 1,
   store_id bigint NOT NULL, coach_id bigint NOT NULL,
   name varchar(100) NOT NULL, description varchar(2000) DEFAULT NULL, kind varchar(16) NOT NULL,
   session_count int NOT NULL, duration_minutes int NOT NULL, price decimal(12,2) NOT NULL, status varchar(16) NOT NULL,
@@ -277,6 +281,7 @@ CREATE TABLE IF NOT EXISTS gym_course_pack (
   id bigint NOT NULL AUTO_INCREMENT,
   store_id bigint NOT NULL, member_id bigint NOT NULL, course_product_id bigint NOT NULL, assigned_coach_id bigint NOT NULL,
   name varchar(100) NOT NULL, starts_at datetime(6) NOT NULL, expires_at datetime(6) DEFAULT NULL,
+  duration_minutes_snapshot int DEFAULT NULL,
   total_sessions int NOT NULL, remaining_sessions int NOT NULL, reserved_sessions int NOT NULL,
   status varchar(16) NOT NULL, price_snapshot decimal(12,2) NOT NULL,
   source_type varchar(32) NOT NULL, source_id varchar(100) NOT NULL,
@@ -294,6 +299,7 @@ CREATE TABLE IF NOT EXISTS gym_booking (
   store_id bigint NOT NULL, session_id bigint NOT NULL, member_id bigint NOT NULL,
   member_card_id bigint DEFAULT NULL, member_course_pack_id bigint DEFAULT NULL,
   status varchar(16) NOT NULL, booked_at datetime(6) NOT NULL, cancelled_at datetime(6) DEFAULT NULL,
+  cancellation_reason varchar(500) DEFAULT NULL,
   checkin_id bigint DEFAULT NULL, note varchar(2000) DEFAULT NULL,
   creator varchar(64) NOT NULL DEFAULT '',
   create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -321,7 +327,7 @@ CREATE TABLE IF NOT EXISTS gym_lesson_record (
   id bigint NOT NULL AUTO_INCREMENT,
   store_id bigint NOT NULL, member_id bigint NOT NULL, coach_id bigint NOT NULL, booking_id bigint NOT NULL,
   checkin_id bigint NOT NULL, member_card_id bigint DEFAULT NULL, member_course_pack_id bigint DEFAULT NULL,
-  session_units int NOT NULL, confirmed_at datetime(6) NOT NULL, method varchar(16) NOT NULL, status varchar(16) NOT NULL,
+  session_units int NOT NULL, remaining_lessons_after int DEFAULT NULL, confirmed_at datetime(6) NOT NULL, method varchar(16) NOT NULL, status varchar(16) NOT NULL,
   creator varchar(64) NOT NULL DEFAULT '',
   create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updater varchar(64) NOT NULL DEFAULT '',
@@ -384,6 +390,7 @@ CREATE TABLE IF NOT EXISTS gym_approval (
  attachment_ids text NOT NULL,
  status varchar(16) NOT NULL,
  current_step int NOT NULL,
+ version int NOT NULL DEFAULT 1,
  submitted_at datetime(6) NOT NULL,
  completed_at datetime(6) DEFAULT NULL,
  business_result text DEFAULT NULL,
@@ -476,6 +483,7 @@ CREATE TABLE IF NOT EXISTS gym_contract_event (
  type varchar(32) NOT NULL,
  occurred_at datetime(6) NOT NULL,
  actor_user_id bigint NOT NULL,
+ actor_user_type int NOT NULL DEFAULT 2,
  ip varchar(64) DEFAULT NULL,
  detail varchar(2000) DEFAULT NULL,
  creator varchar(64) NOT NULL DEFAULT '',
@@ -528,6 +536,10 @@ CREATE TABLE IF NOT EXISTS gym_financial_event (
  CHECK (product_type IN ('card','private'))
 );
 CREATE UNIQUE INDEX IF NOT EXISTS uk_financial_source ON gym_financial_event(tenant_id,source_type,source_id);
+-- Date-scoped sales totals and original payment timestamps; no ledger backfill or mutation.
+CREATE INDEX IF NOT EXISTS idx_financial_store_time ON gym_financial_event (tenant_id,store_id,deleted,occurred_at);
+CREATE INDEX IF NOT EXISTS idx_financial_order_payment ON gym_financial_event (tenant_id,business_order_id,store_id,product_type,employee_id,event_type,deleted,occurred_at);
+
 CREATE TABLE IF NOT EXISTS gym_payroll (
  id bigint NOT NULL AUTO_INCREMENT,
  store_id bigint NOT NULL,
@@ -539,6 +551,8 @@ CREATE TABLE IF NOT EXISTS gym_payroll (
  calculated_at datetime(6) NOT NULL,
  confirmed_at datetime(6) DEFAULT NULL,
  confirmed_by bigint DEFAULT NULL,
+ published_at datetime(6) DEFAULT NULL,
+ published_by bigint DEFAULT NULL,
  creator varchar(64) NOT NULL DEFAULT '',
  create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
  updater varchar(64) NOT NULL DEFAULT '',
@@ -660,6 +674,7 @@ CREATE TABLE IF NOT EXISTS gym_activity (
  registration_ends_at datetime(6) NOT NULL,
  starts_at datetime(6) NOT NULL,
  ends_at datetime(6) NOT NULL,
+ cancel_deadline datetime(6) DEFAULT NULL,
  capacity int DEFAULT NULL,
  cover_file_id bigint DEFAULT NULL,
  status varchar(16) NOT NULL,
@@ -774,6 +789,7 @@ CREATE TABLE IF NOT EXISTS gym_device_command (
  requester_id bigint NOT NULL,
  requester_name varchar(80) NOT NULL,
  requested_at datetime(6) NOT NULL,
+ completed_at datetime(6) DEFAULT NULL,
  status varchar(16) NOT NULL,
  failure_reason varchar(500) DEFAULT NULL,
  simulated boolean NOT NULL DEFAULT false,
@@ -787,9 +803,11 @@ CREATE TABLE IF NOT EXISTS gym_device_command (
  tenant_id bigint NOT NULL DEFAULT 0,
  PRIMARY KEY (id),
  UNIQUE KEY uk_device_command_request (tenant_id,device_id,requester_id,request_key),
- KEY idx_device_command_date (tenant_id,device_id,requested_at)
+ KEY idx_device_command_date (tenant_id,device_id,requested_at),
+ CONSTRAINT ck_device_command_completion CHECK (completed_at IS NULL OR (completed_at >= requested_at AND status IN ('failed','succeeded') AND (status <> 'succeeded' OR simulated = false)))
 );
 CREATE TABLE IF NOT EXISTS gym_equipment (
+  public_scene varchar(32) DEFAULT NULL,
  id bigint NOT NULL AUTO_INCREMENT,
  store_id bigint NOT NULL,
  code varchar(64) NOT NULL,
@@ -805,6 +823,8 @@ CREATE TABLE IF NOT EXISTS gym_equipment (
  PRIMARY KEY (id),
  UNIQUE KEY uk_equipment_code (tenant_id,store_id,code)
 );
+CREATE UNIQUE INDEX IF NOT EXISTS uk_equipment_public_scene ON gym_equipment (tenant_id, public_scene);
+
 CREATE TABLE IF NOT EXISTS gym_equipment_tutorial (
  id bigint NOT NULL AUTO_INCREMENT,
  equipment_id bigint NOT NULL,
@@ -875,6 +895,10 @@ CREATE TABLE IF NOT EXISTS gym_business_order (
  paid_amount decimal(18,2) NOT NULL,
  refunded_amount decimal(18,2) NOT NULL,
  ordered_at datetime(6) NOT NULL,
+ buyer_user_id bigint DEFAULT NULL,
+ expires_at datetime(6) DEFAULT NULL,
+ cancelled_at datetime(6) DEFAULT NULL,
+ cancellation_reason varchar(500) DEFAULT NULL,
  request_key varchar(128) NOT NULL,
  creator varchar(64) NOT NULL DEFAULT '',
  create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -885,6 +909,7 @@ CREATE TABLE IF NOT EXISTS gym_business_order (
  PRIMARY KEY (id),
  UNIQUE KEY uk_business_order_no (tenant_id,order_no),
  UNIQUE KEY uk_business_order_request (tenant_id,store_id,channel,request_key),
+ KEY idx_order_member_channel (tenant_id,member_id,channel,deleted,id),
  KEY idx_business_order_store_date (tenant_id,store_id,ordered_at)
 );
 CREATE TABLE IF NOT EXISTS gym_order_item (
@@ -927,6 +952,7 @@ CREATE TABLE IF NOT EXISTS gym_order_payment (
  KEY idx_order_payment_order (tenant_id,order_id)
 );
 CREATE TABLE IF NOT EXISTS gym_order_refund (
+ refund_application_id bigint DEFAULT NULL,
  id bigint NOT NULL AUTO_INCREMENT,
  order_id bigint NOT NULL,
  payment_id bigint NOT NULL,
@@ -958,6 +984,7 @@ CREATE TABLE IF NOT EXISTS gym_subscription (
  billing_day int NOT NULL,
  provider varchar(128) NOT NULL,
  provider_agreement_id varchar(128) DEFAULT NULL,
+ agreement_version varchar(64) DEFAULT NULL,
  requested_at datetime(6) NOT NULL,
  signed_at datetime(6) DEFAULT NULL,
  next_charge_at datetime(6) DEFAULT NULL,
@@ -971,7 +998,8 @@ CREATE TABLE IF NOT EXISTS gym_subscription (
  tenant_id bigint NOT NULL DEFAULT 0,
  PRIMARY KEY (id),
  UNIQUE KEY uk_subscription_agreement (tenant_id,provider,provider_agreement_id),
- KEY idx_subscription_store_date (tenant_id,store_id,requested_at)
+ KEY idx_subscription_store_date (tenant_id,store_id,requested_at),
+ KEY idx_subscription_member_store (tenant_id,member_id,deleted,store_id,id)
 );
 CREATE TABLE IF NOT EXISTS gym_subscription_cycle (
  id bigint NOT NULL AUTO_INCREMENT,
@@ -1067,6 +1095,7 @@ CREATE TABLE IF NOT EXISTS gym_fulfillment_task (
  id bigint NOT NULL AUTO_INCREMENT,
  order_id bigint NOT NULL,
  principal_user_id bigint NOT NULL,
+ principal_user_type int NOT NULL DEFAULT 2,
  status varchar(32) NOT NULL,
  attempt_count int NOT NULL,
  attempt_limit int NOT NULL,
@@ -1130,4 +1159,642 @@ CREATE TABLE IF NOT EXISTS gym_training_plan (
  deleted boolean NOT NULL DEFAULT false,
  tenant_id bigint NOT NULL DEFAULT 0,
  PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS gym_mobile_identity (
+  id bigint NOT NULL AUTO_INCREMENT,
+  user_id bigint NOT NULL,
+  member_id bigint NOT NULL,
+  default_store_id bigint NOT NULL,
+  source varchar(64) NOT NULL,
+  invite_code varchar(128) DEFAULT NULL,
+  invitation_id bigint DEFAULT NULL,
+  inviter_member_id bigint DEFAULT NULL,
+  inviter_user_id bigint DEFAULT NULL,
+  invitation_new_member boolean DEFAULT NULL,
+  avatar_file_id bigint DEFAULT NULL,
+  face_status varchar(16) NOT NULL DEFAULT 'unregistered',
+  creator varchar(64) NOT NULL DEFAULT '',
+  create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updater varchar(64) NOT NULL DEFAULT '',
+  update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted boolean NOT NULL DEFAULT false,
+  tenant_id bigint NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_mobile_user (tenant_id,user_id),
+  UNIQUE KEY uk_mobile_member (tenant_id,member_id),
+  KEY idx_mobile_identity_invitation (tenant_id,invitation_id),
+  CONSTRAINT ck_mobile_identity_invitation CHECK (
+   (invitation_id IS NULL AND inviter_member_id IS NULL AND inviter_user_id IS NULL AND invitation_new_member IS NULL)
+   OR (invitation_id IS NOT NULL AND inviter_member_id IS NOT NULL AND inviter_user_id IS NOT NULL AND invitation_new_member IS NOT NULL AND inviter_member_id<>member_id AND inviter_user_id<>user_id)
+  )
+);
+
+CREATE TABLE IF NOT EXISTS gym_mobile_request (
+  id bigint NOT NULL AUTO_INCREMENT,
+  user_type int NOT NULL,
+  user_id bigint NOT NULL,
+  operation varchar(100) NOT NULL,
+  request_key varchar(128) NOT NULL,
+  request_hash char(64) NOT NULL,
+  response_json longtext DEFAULT NULL,
+  creator varchar(64) NOT NULL DEFAULT '',
+  create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updater varchar(64) NOT NULL DEFAULT '',
+  update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted boolean NOT NULL DEFAULT false,
+  tenant_id bigint NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_mobile_request (tenant_id,user_type,user_id,operation,request_key)
+);
+
+-- Separate member ownership from gym_file.uploader_id, which denotes a system administrator.
+CREATE TABLE IF NOT EXISTS gym_mobile_file_owner (
+  id bigint NOT NULL AUTO_INCREMENT,
+  file_id bigint NOT NULL,
+  member_id bigint NOT NULL,
+  purpose varchar(32) NOT NULL,
+  creator varchar(64) NOT NULL DEFAULT '',
+  create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updater varchar(64) NOT NULL DEFAULT '',
+  update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted boolean NOT NULL DEFAULT false,
+  tenant_id bigint NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_mobile_file (tenant_id,file_id)
+);
+
+CREATE TABLE IF NOT EXISTS gym_member_followup (
+ id bigint NOT NULL AUTO_INCREMENT, member_id bigint NOT NULL, store_id bigint NOT NULL,
+ employee_id bigint NOT NULL, content varchar(2000) NOT NULL, next_contact_at datetime(6) DEFAULT NULL,
+ creator varchar(64) NOT NULL DEFAULT '', create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '', update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT false, tenant_id bigint NOT NULL DEFAULT 0, PRIMARY KEY(id)
+);
+
+CREATE TABLE IF NOT EXISTS gym_mobile_work_file (
+  id bigint NOT NULL AUTO_INCREMENT,
+  file_id bigint NOT NULL,
+  store_id bigint NOT NULL,
+  purpose varchar(32) NOT NULL,
+  member_id bigint DEFAULT NULL,
+  employee_id bigint DEFAULT NULL,
+  creator varchar(64) NOT NULL DEFAULT '',
+  create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updater varchar(64) NOT NULL DEFAULT '',
+  update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted boolean NOT NULL DEFAULT false,
+  tenant_id bigint NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_mobile_work_file (tenant_id,file_id),
+  KEY idx_mobile_work_file_member (tenant_id,member_id,store_id),
+  KEY idx_mobile_work_file_employee (tenant_id,employee_id)
+);
+
+-- Short-lived, signed QR grants bound to an exact booking and session revision.
+CREATE TABLE IF NOT EXISTS gym_mobile_lesson_qr (
+ id bigint NOT NULL AUTO_INCREMENT,
+ token_hash varchar(64) NOT NULL,
+ issuer_user_id bigint NOT NULL,
+ store_id bigint NOT NULL,
+ coach_id bigint NOT NULL,
+ session_id bigint NOT NULL,
+ booking_id bigint NOT NULL,
+ member_id bigint NOT NULL,
+ booking_booked_at datetime(6) NOT NULL,
+ session_starts_at datetime(6) NOT NULL,
+ session_ends_at datetime(6) NOT NULL,
+ expires_at datetime(6) NOT NULL,
+ used_at datetime(6) DEFAULT NULL,
+ lesson_record_id bigint DEFAULT NULL,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT false,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY (id),
+ UNIQUE KEY uk_mobile_lesson_qr_token (tenant_id,token_hash),
+ KEY idx_mobile_lesson_qr_booking (tenant_id,booking_id),
+ KEY idx_mobile_lesson_qr_expiry (expires_at)
+);
+
+CREATE TABLE IF NOT EXISTS gym_feedback (
+ id bigint NOT NULL AUTO_INCREMENT,
+ store_id bigint NOT NULL,
+ member_id bigint NOT NULL,
+ type varchar(16) NOT NULL,
+ content varchar(2000) NOT NULL,
+ rating int DEFAULT NULL,
+ allow_card_context boolean NOT NULL DEFAULT false,
+ card_context text DEFAULT NULL,
+ status varchar(16) NOT NULL,
+ submitted_at datetime(6) NOT NULL,
+ reply varchar(2000) DEFAULT NULL,
+ replied_by bigint DEFAULT NULL,
+ replied_at datetime(6) DEFAULT NULL,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT false,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY (id),
+ KEY idx_feedback_member (tenant_id,member_id,submitted_at,id),
+ KEY idx_feedback_store (tenant_id,store_id,status,submitted_at,id)
+);
+CREATE TABLE IF NOT EXISTS gym_feedback_attachment (
+ id bigint NOT NULL AUTO_INCREMENT,
+ feedback_id bigint NOT NULL,
+ file_id bigint NOT NULL,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT false,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY (id),
+ UNIQUE KEY uk_feedback_attachment_file (tenant_id,file_id),
+ KEY idx_feedback_attachment_feedback (tenant_id,feedback_id)
+);
+
+-- One immutable 24-hour quote per approved special-price application; no historical quote backfill.
+CREATE TABLE IF NOT EXISTS gym_course_quote (
+ id bigint NOT NULL AUTO_INCREMENT,
+ store_id bigint NOT NULL,
+ product_id bigint NOT NULL,
+ product_version int NOT NULL,
+ member_id bigint DEFAULT NULL,
+ approval_id bigint DEFAULT NULL,
+ issuer_user_id bigint NOT NULL,
+ amount decimal(12,2) NOT NULL,
+ terms_snapshot text NOT NULL,
+ issued_at datetime(6) NOT NULL,
+ expires_at datetime(6) NOT NULL,
+ used_order_id bigint DEFAULT NULL,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT false,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY (id),
+ UNIQUE KEY uk_course_quote_approval (tenant_id,approval_id),
+ UNIQUE KEY uk_course_quote_order (tenant_id,used_order_id),
+ KEY idx_course_quote_member (tenant_id,member_id,expires_at)
+);
+
+CREATE TABLE IF NOT EXISTS gym_refund_application (
+ id bigint NOT NULL AUTO_INCREMENT,
+ order_id bigint NOT NULL,
+ store_id bigint NOT NULL,
+ member_id bigint NOT NULL,
+ requester_user_id bigint NOT NULL,
+ active_order_id bigint DEFAULT NULL,
+ status varchar(32) NOT NULL,
+ requested_amount decimal(18,2) NOT NULL,
+ refunded_amount decimal(18,2) NOT NULL DEFAULT 0,
+ reason varchar(500) NOT NULL,
+ version int NOT NULL DEFAULT 1,
+ submitted_at datetime(6) NOT NULL,
+ reviewer_user_id bigint DEFAULT NULL,
+ reviewed_at datetime(6) DEFAULT NULL,
+ review_note varchar(500) DEFAULT NULL,
+ failure_reason varchar(500) DEFAULT NULL,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT false,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY (id),
+ UNIQUE KEY uk_refund_application_active (tenant_id,active_order_id),
+ KEY idx_refund_application_store (tenant_id,store_id,status,deleted,id),
+ KEY idx_refund_application_member (tenant_id,member_id,requester_user_id,deleted,id),
+ KEY idx_refund_application_order (tenant_id,order_id,deleted,id),
+ CONSTRAINT ck_refund_application_active CHECK (
+  (status IN ('pending_review','approved','partially_refunded') AND active_order_id IS NOT NULL AND active_order_id=order_id)
+  OR (status IN ('refunded','rejected','closed') AND active_order_id IS NULL)),
+ CONSTRAINT ck_refund_application_money CHECK (requested_amount>0 AND refunded_amount>=0 AND refunded_amount<=requested_amount AND version>=1)
+);
+
+CREATE INDEX IF NOT EXISTS idx_refund_application_receipt ON gym_order_refund(tenant_id,refund_application_id,deleted,id);
+
+-- In-app records only; preferences do not prove third-party delivery authorization.
+CREATE TABLE IF NOT EXISTS gym_mobile_notification (
+ id bigint NOT NULL AUTO_INCREMENT,
+ recipient_type int NOT NULL,
+ recipient_user_id bigint NOT NULL,
+ member_id bigint NOT NULL,
+ store_id bigint NOT NULL,
+ type varchar(32) NOT NULL,
+ source_type varchar(32) NOT NULL,
+ business_id bigint NOT NULL,
+ target_id bigint NOT NULL,
+ event_kind varchar(32) NOT NULL,
+ event_key varchar(64) NOT NULL,
+ occurred_at datetime(6) NOT NULL,
+ title varchar(120) NOT NULL,
+ content varchar(1000) NOT NULL,
+ published_at datetime(6) NOT NULL,
+ read_at datetime(6) DEFAULT NULL,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT false,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY (id),
+ UNIQUE KEY uk_mobile_notification_event (tenant_id,event_key,recipient_type,recipient_user_id),
+ KEY idx_mobile_notification_inbox (tenant_id,recipient_type,recipient_user_id,deleted,read_at,id),
+ KEY idx_mobile_notification_source (tenant_id,source_type,business_id,deleted,id),
+ CONSTRAINT ck_mobile_notification_recipient CHECK (recipient_type IN (1,2)),
+ CONSTRAINT ck_mobile_notification_type CHECK (type IN ('booking','contract','member_card','course_pack','activity'))
+);
+
+CREATE TABLE IF NOT EXISTS gym_mobile_notification_preference (
+ id bigint NOT NULL AUTO_INCREMENT,
+ user_id bigint NOT NULL,
+ member_id bigint NOT NULL,
+ template_key varchar(32) NOT NULL,
+ enabled boolean NOT NULL,
+ saved_at datetime(6) NOT NULL,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT false,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY (id),
+ UNIQUE KEY uk_mobile_notification_preference (tenant_id,user_id,template_key),
+ CONSTRAINT ck_mobile_notification_preference CHECK (template_key IN ('booking','contract','entitlement','activity'))
+);
+
+-- One store service conversation per member; no historical messages or role grants.
+CREATE TABLE IF NOT EXISTS gym_mobile_conversation (
+ id bigint NOT NULL AUTO_INCREMENT,
+ store_id bigint NOT NULL,
+ member_id bigint NOT NULL,
+ creator_user_id bigint NOT NULL,
+ initiated_at datetime(6) NOT NULL,
+ last_message_id bigint DEFAULT NULL,
+ member_read_message_id bigint NOT NULL DEFAULT 0,
+ member_unread_count int NOT NULL DEFAULT 0,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT false,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY (id),
+ UNIQUE KEY uk_mobile_conversation_member_store (tenant_id,member_id,store_id),
+ KEY idx_mobile_conversation_inbox (tenant_id,member_id,deleted,last_message_id,id),
+ CONSTRAINT ck_mobile_conversation_read CHECK (member_unread_count>=0 AND member_read_message_id>=0 AND member_read_message_id<=COALESCE(last_message_id,0))
+);
+
+CREATE TABLE IF NOT EXISTS gym_mobile_message (
+ id bigint NOT NULL AUTO_INCREMENT,
+ conversation_id bigint NOT NULL,
+ sender_type int NOT NULL,
+ sender_user_id bigint NOT NULL,
+ content varchar(2000) NOT NULL,
+ sent_at datetime(6) NOT NULL,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT false,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY (id),
+ KEY idx_mobile_message_history (tenant_id,conversation_id,deleted,id),
+ KEY idx_mobile_message_unread (tenant_id,conversation_id,sender_type,deleted,id),
+ CONSTRAINT ck_mobile_message_sender CHECK (sender_type IN (1,2)),
+ CONSTRAINT ck_mobile_message_content CHECK (CHAR_LENGTH(TRIM(content))>0)
+);
+
+-- First-time verified invitation attribution; no historical code validation or reward grants.
+CREATE TABLE IF NOT EXISTS gym_mobile_invitation (
+ id bigint NOT NULL AUTO_INCREMENT,
+ store_id bigint NOT NULL,
+ inviter_member_id bigint NOT NULL,
+ inviter_user_id bigint NOT NULL,
+ invite_code char(32) NOT NULL,
+ share_page varchar(200) NOT NULL,
+ issued_at datetime(6) NOT NULL,
+ expires_at datetime(6) NOT NULL,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT false,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY (id),
+ UNIQUE KEY uk_mobile_invitation_code (tenant_id,invite_code),
+ KEY idx_mobile_invitation_owner (tenant_id,inviter_member_id,store_id,deleted,id),
+ CONSTRAINT ck_mobile_invitation_expiry CHECK (expires_at>issued_at)
+);
+
+-- No reward policy, producers, initial balances, or historical point backfill.
+CREATE TABLE IF NOT EXISTS gym_point_account (
+ id bigint NOT NULL AUTO_INCREMENT,
+ member_id bigint NOT NULL,
+ balance bigint NOT NULL DEFAULT 0,
+ total_earned bigint NOT NULL DEFAULT 0,
+ total_spent bigint NOT NULL DEFAULT 0,
+ refund_reserve bigint NOT NULL DEFAULT 0,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT false,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ CONSTRAINT ck_point_account_refund CHECK (refund_reserve>=0 AND total_earned+refund_reserve<=9007199254740991),
+ PRIMARY KEY (id),
+ UNIQUE KEY uk_point_account_member (tenant_id,member_id),
+ CONSTRAINT ck_point_account_totals CHECK (total_earned BETWEEN 0 AND 9007199254740991 AND total_spent BETWEEN 0 AND 9007199254740991 AND balance=total_earned-total_spent)
+);
+
+CREATE TABLE IF NOT EXISTS gym_point_record (
+ id bigint NOT NULL AUTO_INCREMENT,
+ account_id bigint NOT NULL,
+ member_id bigint NOT NULL,
+ business_key varchar(128) NOT NULL,
+ type varchar(16) NOT NULL,
+ delta bigint NOT NULL,
+ balance_after bigint NOT NULL,
+ reason varchar(200) NOT NULL,
+ original_record_id bigint DEFAULT NULL,
+ posted_at datetime(6) NOT NULL,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT false,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY (id),
+ UNIQUE KEY uk_point_record_event (tenant_id,business_key),
+ KEY idx_point_record_member (tenant_id,member_id,deleted,id),
+ KEY idx_point_record_type (tenant_id,member_id,deleted,type,id),
+ KEY idx_point_record_reversal (tenant_id,original_record_id,deleted,id),
+ CONSTRAINT ck_point_record_delta CHECK (delta<>0 AND delta BETWEEN -9007199254740991 AND 9007199254740991 AND balance_after BETWEEN -9007199254740991 AND 9007199254740991),
+ CONSTRAINT ck_point_record_type CHECK ((type='earn' AND delta>0 AND original_record_id IS NULL) OR (type='spend' AND delta<0 AND original_record_id IS NULL) OR (type='refund' AND original_record_id IS NOT NULL)),
+ CONSTRAINT ck_point_record_reason CHECK (CHAR_LENGTH(TRIM(reason))>0)
+);
+
+CREATE TABLE IF NOT EXISTS gym_point_product (
+ id bigint NOT NULL AUTO_INCREMENT,
+ store_id bigint NOT NULL,
+ card_product_id bigint NOT NULL,
+ name varchar(100) NOT NULL,
+ required_points bigint NOT NULL,
+ stock int DEFAULT NULL,
+ enabled boolean NOT NULL DEFAULT FALSE,
+ revision bigint NOT NULL DEFAULT 1,
+ reserved_stock int NOT NULL DEFAULT 0,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT FALSE,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ CONSTRAINT ck_point_product_reserved CHECK (reserved_stock>=0 AND (stock IS NULL OR CAST(stock AS BIGINT)+reserved_stock<=2147483647) AND revision+reserved_stock<=9007199254740991),
+ PRIMARY KEY (id),
+ KEY idx_point_product_store (tenant_id,store_id,deleted,enabled,id),
+ CONSTRAINT ck_point_product_cost CHECK (required_points BETWEEN 1 AND 9007199254740991),
+ CONSTRAINT ck_point_product_stock CHECK (stock IS NULL OR stock>=0),
+ CONSTRAINT ck_point_product_revision CHECK (revision BETWEEN 1 AND 9007199254740991),
+ CONSTRAINT ck_point_product_name CHECK (CHAR_LENGTH(TRIM(name))>0)
+);
+
+CREATE TABLE IF NOT EXISTS gym_point_redemption (
+ id bigint NOT NULL AUTO_INCREMENT,
+ user_id bigint NOT NULL,
+ request_key varchar(128) NOT NULL,
+ member_id bigint NOT NULL,
+ store_id bigint NOT NULL,
+ product_id bigint NOT NULL,
+ product_revision bigint NOT NULL,
+ required_points bigint NOT NULL,
+ stock_reserved boolean NOT NULL,
+ template_snapshot longtext NOT NULL,
+ status varchar(16) NOT NULL,
+ debit_record_id bigint DEFAULT NULL,
+ refund_record_id bigint DEFAULT NULL,
+ member_card_id bigint DEFAULT NULL,
+ requested_at datetime(6) NOT NULL,
+ completed_at datetime(6) DEFAULT NULL,
+ failure_code int DEFAULT NULL,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT FALSE,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY(id),
+ UNIQUE KEY uk_point_redemption_request(tenant_id,user_id,request_key),
+ UNIQUE KEY uk_point_redemption_debit(tenant_id,debit_record_id),
+ UNIQUE KEY uk_point_redemption_card(tenant_id,member_card_id),
+ UNIQUE KEY uk_point_redemption_refund(tenant_id,refund_record_id),
+ KEY idx_point_redemption_member(tenant_id,user_id,member_id,deleted,id),
+ KEY idx_point_redemption_pending(tenant_id,status,deleted,requested_at,id),
+ CONSTRAINT ck_point_redemption_cost CHECK(required_points BETWEEN 1 AND 9007199254740991 AND product_revision BETWEEN 1 AND 9007199254740991),
+ CONSTRAINT ck_point_redemption_state CHECK(
+  (status='processing' AND member_card_id IS NULL AND refund_record_id IS NULL AND completed_at IS NULL AND failure_code IS NULL)
+  OR (status='succeeded' AND debit_record_id IS NOT NULL AND member_card_id IS NOT NULL AND refund_record_id IS NULL AND completed_at IS NOT NULL AND failure_code IS NULL)
+  OR (status='failed' AND debit_record_id IS NOT NULL AND member_card_id IS NULL AND refund_record_id IS NOT NULL AND completed_at IS NOT NULL AND failure_code IS NOT NULL))
+);
+
+-- Internal alert records and immutable human dispositions; no fabricated gateway events or auto freezes.
+CREATE TABLE IF NOT EXISTS gym_risk_alert (
+ id bigint NOT NULL AUTO_INCREMENT,
+ store_id bigint NOT NULL,
+ device_id bigint NOT NULL,
+ member_id bigint DEFAULT NULL,
+ type varchar(32) NOT NULL,
+ source_event_key varchar(128) NOT NULL,
+ source_snapshot longtext NOT NULL,
+ occurred_at datetime(6) NOT NULL,
+ evidence_file_ids text NOT NULL,
+ status varchar(16) NOT NULL DEFAULT 'open',
+ version int NOT NULL DEFAULT 1,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT FALSE,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY(id),
+ UNIQUE KEY uk_risk_alert_source(tenant_id,device_id,source_event_key,type),
+ KEY idx_risk_alert_store(tenant_id,store_id,deleted,status,occurred_at,id),
+ CONSTRAINT ck_risk_alert_type CHECK(type IN ('multiple_entry','tailgating','blacklist','overnight','debt')),
+ CONSTRAINT ck_risk_alert_state CHECK((status='open' AND version=1) OR (status='resolved' AND version=2))
+);
+CREATE TABLE IF NOT EXISTS gym_risk_resolution (
+ id bigint NOT NULL AUTO_INCREMENT,
+ alert_id bigint NOT NULL,
+ operator_user_id bigint NOT NULL,
+ result varchar(32) NOT NULL,
+ note varchar(2000) NOT NULL,
+ previous_version int NOT NULL,
+ resolved_at datetime(6) NOT NULL,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT FALSE,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY(id),
+ UNIQUE KEY uk_risk_resolution_alert(tenant_id,alert_id),
+ CONSTRAINT ck_risk_resolution_result CHECK(result IN ('confirmed','false_positive')),
+ CONSTRAINT ck_risk_resolution_audit CHECK(operator_user_id>0 AND previous_version=1 AND CHAR_LENGTH(TRIM(note))>0)
+);
+
+CREATE TABLE IF NOT EXISTS gym_coupon_preview (
+ id bigint NOT NULL AUTO_INCREMENT,
+ user_id bigint NOT NULL,
+ member_id bigint NOT NULL,
+ store_id bigint NOT NULL,
+ platform varchar(16) NOT NULL,
+ coupon_hash char(64) NOT NULL,
+ coupon_ciphertext varchar(512) NOT NULL,
+ deal_id bigint NOT NULL,
+ deal_group_id bigint NOT NULL,
+ card_template_id bigint DEFAULT NULL,
+ mapping_fingerprint char(64) NOT NULL,
+ settings_revision bigint NOT NULL,
+ template_snapshot longtext DEFAULT NULL,
+ product_name varchar(200) NOT NULL,
+ redeemable boolean NOT NULL,
+ reason varchar(200) DEFAULT NULL,
+ issued_at datetime(6) NOT NULL,
+ expires_at datetime(6) NOT NULL,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT false,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY(id),
+ KEY idx_coupon_preview_owner(tenant_id,user_id,member_id,deleted,id),
+ KEY idx_coupon_preview_expiry(tenant_id,expires_at),
+ KEY idx_coupon_preview_receipt(tenant_id,platform,coupon_hash),
+ CONSTRAINT ck_coupon_preview_identity CHECK(user_id>0 AND member_id>0 AND store_id>0 AND deal_id>0 AND deal_group_id>0 AND platform='meituan'),
+ CONSTRAINT ck_coupon_preview_time CHECK(expires_at>issued_at AND settings_revision>0),
+ CONSTRAINT ck_coupon_preview_result CHECK((redeemable=true AND reason IS NULL AND card_template_id IS NOT NULL AND card_template_id>0 AND template_snapshot IS NOT NULL) OR (redeemable=false AND reason IS NOT NULL AND CHAR_LENGTH(TRIM(reason))>0))
+);
+
+-- Durable single-voucher claims and exact-request provider proof. No historical/fabricated consumption.
+CREATE TABLE IF NOT EXISTS gym_coupon_verification (
+ id bigint NOT NULL AUTO_INCREMENT,
+ user_id bigint NOT NULL,
+ member_id bigint NOT NULL,
+ store_id bigint NOT NULL,
+ preview_id bigint NOT NULL,
+ request_key varchar(128) NOT NULL,
+ provider_request_id varchar(128) NOT NULL,
+ platform varchar(16) NOT NULL,
+ coupon_hash char(64) NOT NULL,
+ claimed_coupon_hash char(64) DEFAULT NULL,
+ scope_snapshot longtext NOT NULL,
+ template_snapshot longtext NOT NULL,
+ card_template_id bigint NOT NULL,
+ deal_id bigint NOT NULL,
+ deal_group_id bigint NOT NULL,
+ status varchar(16) NOT NULL,
+ stage varchar(16) NOT NULL,
+ confirmation_snapshot longtext DEFAULT NULL,
+ provider_flow_id varchar(128) DEFAULT NULL,
+ member_card_id bigint DEFAULT NULL,
+ verification_id bigint DEFAULT NULL,
+ requested_at datetime(6) NOT NULL,
+ consume_started_at datetime(6) DEFAULT NULL,
+ confirmed_at datetime(6) DEFAULT NULL,
+ completed_at datetime(6) DEFAULT NULL,
+ next_check_at datetime(6) NOT NULL,
+ query_count int NOT NULL DEFAULT 0,
+ observation_snapshot longtext DEFAULT NULL,
+ last_error_code int DEFAULT NULL,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT false,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY(id),
+ UNIQUE KEY uk_coupon_verification_request(tenant_id,user_id,request_key),
+ UNIQUE KEY uk_coupon_verification_preview(tenant_id,preview_id),
+ UNIQUE KEY uk_coupon_verification_claim(tenant_id,platform,claimed_coupon_hash),
+ UNIQUE KEY uk_coupon_verification_provider(tenant_id,provider_request_id),
+ UNIQUE KEY uk_coupon_verification_flow(tenant_id,platform,provider_flow_id),
+ UNIQUE KEY uk_coupon_verification_card(tenant_id,member_card_id),
+ UNIQUE KEY uk_coupon_verification_legacy(tenant_id,verification_id),
+ KEY idx_coupon_verification_owner(tenant_id,user_id,member_id,deleted,id),
+ KEY idx_coupon_verification_due(tenant_id,status,deleted,next_check_at,id),
+ CONSTRAINT ck_coupon_verification_ids CHECK(user_id>0 AND member_id>0 AND store_id>0 AND preview_id>0 AND card_template_id>0 AND deal_id>0 AND deal_group_id>0 AND platform='meituan'),
+ CONSTRAINT ck_coupon_verification_query CHECK(query_count BETWEEN 0 AND 6),
+ CONSTRAINT ck_coupon_verification_time CHECK(
+  (consume_started_at IS NULL OR consume_started_at>=requested_at)
+  AND (confirmed_at IS NULL OR (consume_started_at IS NOT NULL AND confirmed_at>=consume_started_at))
+  AND (completed_at IS NULL OR completed_at>=requested_at)
+  AND (completed_at IS NULL OR confirmed_at IS NULL OR completed_at>=confirmed_at)),
+ CONSTRAINT ck_coupon_verification_claim CHECK(
+  (status='failed' AND claimed_coupon_hash IS NULL) OR
+  (status IN ('processing','succeeded') AND claimed_coupon_hash IS NOT NULL AND claimed_coupon_hash=coupon_hash)),
+ CONSTRAINT ck_coupon_verification_state CHECK(
+  (status='processing' AND stage IN ('prepared','sending','unknown','confirmed') AND member_card_id IS NULL AND verification_id IS NULL AND completed_at IS NULL)
+  OR (status='succeeded' AND stage='fulfilled' AND member_card_id IS NOT NULL AND member_card_id>0 AND verification_id IS NOT NULL AND verification_id>0 AND completed_at IS NOT NULL)
+  OR (status='failed' AND stage='rejected' AND member_card_id IS NULL AND verification_id IS NULL AND completed_at IS NOT NULL AND last_error_code IS NOT NULL)),
+ CONSTRAINT ck_coupon_verification_proof CHECK(
+  (stage IN ('confirmed','fulfilled') AND confirmed_at IS NOT NULL AND confirmation_snapshot IS NOT NULL AND CHAR_LENGTH(TRIM(confirmation_snapshot))>2 AND provider_flow_id IS NOT NULL AND CHAR_LENGTH(TRIM(provider_flow_id))>0)
+  OR (stage IN ('prepared','sending','unknown','rejected') AND confirmed_at IS NULL AND confirmation_snapshot IS NULL AND provider_flow_id IS NULL)),
+ CONSTRAINT ck_coupon_verification_dispatch CHECK((stage='prepared' AND consume_started_at IS NULL) OR (stage IN ('sending','unknown','confirmed','fulfilled') AND consume_started_at IS NOT NULL) OR stage='rejected')
+);
+
+-- Independent authenticator step-up only; no credential seeds, command dispatch or role grants.
+CREATE TABLE IF NOT EXISTS gym_action_verification_state (
+ id bigint NOT NULL AUTO_INCREMENT,
+ user_id bigint NOT NULL,
+ failure_count int NOT NULL DEFAULT 0,
+ locked_until datetime(6) DEFAULT NULL,
+ last_attempt_at datetime(6) DEFAULT NULL,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT false,
+ tenant_id bigint NOT NULL,
+ PRIMARY KEY(id),
+ UNIQUE KEY uk_action_verification_user(tenant_id,user_id),
+ CONSTRAINT ck_action_verification_ids CHECK(user_id>0 AND tenant_id>0),
+ CONSTRAINT ck_action_verification_failures CHECK(failure_count BETWEEN 0 AND 5),
+ CONSTRAINT ck_action_verification_lock CHECK((failure_count<5 AND locked_until IS NULL) OR (failure_count=5 AND locked_until IS NOT NULL AND last_attempt_at IS NOT NULL AND locked_until>last_attempt_at))
+);
+CREATE TABLE IF NOT EXISTS gym_action_confirmation (
+ id bigint NOT NULL AUTO_INCREMENT,
+ user_id bigint NOT NULL,
+ store_id bigint NOT NULL,
+ device_id bigint NOT NULL,
+ compartment_id bigint DEFAULT NULL,
+ action varchar(16) NOT NULL,
+ token_hash char(64) NOT NULL,
+ credential_fingerprint char(64) NOT NULL,
+ verification_counter bigint NOT NULL,
+ issued_at datetime(6) NOT NULL,
+ expires_at datetime(6) NOT NULL,
+ consumed_at datetime(6) DEFAULT NULL,
+ consumed_command_id bigint DEFAULT NULL,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT false,
+ tenant_id bigint NOT NULL,
+ PRIMARY KEY(id),
+ UNIQUE KEY uk_action_confirmation_token(token_hash),
+ UNIQUE KEY uk_action_confirmation_counter(tenant_id,user_id,credential_fingerprint,verification_counter),
+ UNIQUE KEY uk_action_confirmation_command(tenant_id,consumed_command_id),
+ CONSTRAINT ck_action_confirmation_ids CHECK(user_id>0 AND store_id>0 AND device_id>0 AND tenant_id>0 AND verification_counter>=0),
+ CONSTRAINT ck_action_confirmation_action CHECK((action='open_door' AND compartment_id IS NULL) OR (action='open_locker' AND compartment_id IS NOT NULL AND compartment_id>0)),
+ CONSTRAINT ck_action_confirmation_expiry CHECK(expires_at>issued_at),
+ CONSTRAINT ck_action_confirmation_consumed CHECK((consumed_at IS NULL AND consumed_command_id IS NULL) OR (consumed_at IS NOT NULL AND consumed_command_id IS NOT NULL AND consumed_command_id>0 AND consumed_at>=issued_at AND consumed_at<expires_at))
 );

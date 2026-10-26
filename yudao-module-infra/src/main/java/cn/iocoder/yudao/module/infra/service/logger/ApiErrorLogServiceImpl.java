@@ -4,11 +4,13 @@ import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionU
 import static cn.iocoder.yudao.module.infra.dal.dataobject.logger.ApiErrorLogDO.REQUEST_PARAMS_MAX_LENGTH;
 import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.API_ERROR_LOG_NOT_FOUND;
 import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.API_ERROR_LOG_PROCESSED;
+import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.API_ERROR_LOG_PROCESS_STATUS_INVALID;
 
 import cn.iocoder.yudao.framework.common.biz.infra.logger.dto.ApiErrorLogCreateReqDTO;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.framework.common.util.string.StrUtils;
+import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
 import cn.iocoder.yudao.framework.tenant.core.util.TenantUtils;
 import cn.iocoder.yudao.module.infra.controller.admin.logger.vo.apierrorlog.ApiErrorLogPageReqVO;
@@ -76,14 +78,25 @@ public class ApiErrorLogServiceImpl implements ApiErrorLogService {
         if (!ApiErrorLogProcessStatusEnum.INIT.getStatus().equals(errorLog.getProcessStatus())) {
             throw exception(API_ERROR_LOG_PROCESSED);
         }
+        if (!ApiErrorLogProcessStatusEnum.DONE.getStatus().equals(processStatus)
+                && !ApiErrorLogProcessStatusEnum.IGNORE.getStatus().equals(processStatus)) {
+            throw exception(API_ERROR_LOG_PROCESS_STATUS_INVALID);
+        }
         // 标记处理
-        apiErrorLogMapper.updateById(
-                ApiErrorLogDO.builder()
-                        .id(id)
-                        .processStatus(processStatus)
-                        .processUserId(processUserId)
-                        .processTime(LocalDateTime.now())
-                        .build());
+        int changed =
+                apiErrorLogMapper.update(
+                        ApiErrorLogDO.builder()
+                                .id(id)
+                                .processStatus(processStatus)
+                                .processUserId(processUserId)
+                                .processTime(LocalDateTime.now())
+                                .build(),
+                        new LambdaQueryWrapperX<ApiErrorLogDO>()
+                                .eq(ApiErrorLogDO::getId, id)
+                                .eq(
+                                        ApiErrorLogDO::getProcessStatus,
+                                        ApiErrorLogProcessStatusEnum.INIT.getStatus()));
+        if (changed != 1) throw exception(API_ERROR_LOG_PROCESSED);
     }
 
     @Override

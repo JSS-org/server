@@ -1899,3 +1899,15 @@ Redis程序仍读取拒绝，真实公告CRUD/备注/权限/租户与完整商�
 服务器及依赖测试编译成功；菜单/角色/权限专项82项中74项执行通过、八项MySQL条件跳过，零失败/错误，`.runtime/menu-regression-final.log`，含MenuServiceImplTest20、RoleServiceImplTest22、PermissionServiceTest24、PermissionControllerTest5、PermissionApiImplTest3。旧权限缓存查询测试的随机状态/父编号不代表有效授权菜单，现显式启用根节点并加入停用/孤儿排除断言后通过。五个变更Java定向Spotless检查、Python编译与差异检查通过，不计全仓Spotless或全量verify。
 
 权限编号缓存已有全局ignore-cache配置，菜单更新/删除继续清空该缓存；冷查询现读取完整树以核对祖先。角色反查缓存仍沿用既有租户缓存规则，不能以无Redis的MySQL测试认定跨租户缓存已验。需恢复Redis后运行实际菜单CRUD、同一员工Token的自身/祖先停用恢复、删除权限、套餐和并发改上级/增删竞争，再做冷缓存性能与完整商城/工作台HTTP/H5。整合验收版本保持原值。
+
+## 2026-10-27 API日志处理竞争与Long处理人（V011）
+
+`python script/jss/verify_apilog_services.py` 只在已归属 MySQL8.4.9:13316 的 `jss_apilog_service_verify_<12位随机值>` 中加载两张原始infra日志DDL，再应用V011；装配生产两Service/Mapper、租户/分页SQL及事务环境，无业务替身、HTTP或Redis。脚本配置/报告路径启动错误已修正，不计业务证据；有效修复前六项中三通过、两失败、一错误，14.497秒：非法状态不拒绝并写处理元数据、六个竞争处理者全成功、Long管理员号写入旧int列报超范围，见 `.runtime/apilog-services-before-executed.log`、`.runtime/apilog-services-before.xml`。
+
+最终六项全部通过，零失败/错误/跳过，14.039秒，`.runtime/apilog-services-final.log`、`.runtime/jss-mysql/apilog-service-test.xml`。覆盖两类实际创建/完整筛选/日期/0/分页、双租户列表/详情/处理边界、INIT到DONE/IGNORE终态保护与非法目标无写入、9007199254740993处理人入库/VO保真、外层回滚、六线程只一胜者。隔离SQL触发器在UPDATE前短暂延迟制造重叠，不使用Mapper替身；失败者不改胜者状态/员工/时间。报告计数/时效检查并保存实际XML，finally核验归属、删随机库，残留0。
+
+`python script/jss/verify_migrations.py` 最终十三项实际Flyway生命周期检查通过，`.runtime/apilog-migrations-verified.log`：框架基座 → baseline0/V001–V011；受管V009→V010公告保留，继而受管V010→V011类型扩展，旧最大int/NULL/0/负值与正文保留，写入Long后重复migrate/validate不丢失；其余账号/授权不seed、校验和和误初始化/前置表保护继续通过。最初升级测试行漏原DDL必填请求字段，修正完整夹具后重新全过，不视作生产迁移SQL失败。三类迁移随机库残留0，V001–V010未改写，开发库/运行包未升级。
+
+服务器及依赖测试编译通过；API访问/错误日志常规专项15项中九项H2执行通过（3+6）、六项MySQL条件跳过，零失败/错误，`.runtime/apilog-regression.log`。既有成功用例从随机三状态改为只取DONE/IGNORE，INIT不是合法处理目标。六个变更Java定向Spotless、四Python编译和差异检查通过，无全量verify或新增HTTP证据。HTTP隔离工具的JSS历史计数改为迁移数量+显式baseline0，避免版本追加后硬编码失真。
+
+真实H5准备使用仅src/test/专用profile的异常探针经真实异常处理器与异步日志API产生记录，检查UI读/处理、同记录双请求只一成功、租户隔离和无权限接口；不直接写表伪造HTTP日志，不新增生产Controller。Redis仍不可读，探针/实际异步链/HTTP/RBAC/原生导出与留存脱敏待实跑；最新工作台九HTTP加浏览器启动仍十项JUnit，真实H5增至十六项（十三文件），商城十三HTTP/三H5不变。必须先备份+migrate/validate V011再部署包含本批API日志处理的代码，整合验收版本不前移。

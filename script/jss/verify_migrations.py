@@ -56,6 +56,8 @@ def main():
         assert managed.sql("SELECT CONCAT(title,'|',content,'|',remark) FROM system_notice WHERE id=1") == 'Legacy notice|<p>Original content</p>|'
         managed.sql("UPDATE system_notice SET remark='retained remark' WHERE id=1")
         checks.append('V010 adds an empty remark without changing existing notice content')
+        assert managed.sql("SELECT data_type FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='infra_api_error_log' AND column_name='process_user_id'") == 'bigint'
+        checks.append('V011 widens error-log processor IDs on fresh initialization')
         assert managed.sql("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='must_not_override_jss_history'") == '0'
         checks.append('inherited Flyway environment cannot override the history table')
         assert managed.sql('SELECT COUNT(*) FROM system_users') == '0'
@@ -84,14 +86,29 @@ def main():
                     shutil.copy2(file, prior / 'migration/mysql' / file.name)
             upgrade.flyway('baseline', baseline=0, assets=prior)
             upgrade.flyway('migrate', assets=prior)
-        assert upgrade.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='system_notice' AND column_name='remark'") == '0'
+            assert upgrade.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='system_notice' AND column_name='remark'") == '0'
+            shutil.copy2(ASSETS / 'migration/mysql/V010__system_notice_remark.sql', prior / 'migration/mysql/V010__system_notice_remark.sql')
+            upgrade.flyway('migrate', assets=prior)
+        assert upgrade.sql("SELECT CONCAT(title,'|',content,'|',remark) FROM system_notice WHERE id=1") == 'Before upgrade|<p>Keep me</p>|'
+        checks.append('managed V009 upgrades to V010 without rewriting existing notices')
+        assert upgrade.sql("SELECT data_type FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='infra_api_error_log' AND column_name='process_user_id'") == 'int'
+        columns = 'id,trace_id,application_name,request_method,request_url,request_params,user_ip,user_agent,exception_time,exception_message,exception_root_cause_message,exception_stack_trace,exception_class_name,exception_file_name,exception_method_name,exception_line_number,process_status,process_user_id,tenant_id'
+        def legacy_row(identifier, actor):
+            return f"({identifier},'legacy','migration-test','POST','/synthetic','{{}}','127.0.0.1','test','2026-10-27 00:00:00','message','root','stack','Test','Test.java','run',0,1,{actor},1)"
+        upgrade.sql('INSERT INTO infra_api_error_log (' + columns + ') VALUES ' + ','.join([legacy_row(1, 2147483647), legacy_row(2, 'NULL'), legacy_row(3, 0), legacy_row(4, -1)]))
         upgrade.execute('migrate')
+        assert upgrade.sql("SELECT data_type FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='infra_api_error_log' AND column_name='process_user_id'") == 'bigint'
+        assert upgrade.sql("SELECT GROUP_CONCAT(COALESCE(process_user_id,'NULL') ORDER BY id) FROM infra_api_error_log") == '2147483647,NULL,0,-1'
+        assert upgrade.sql("SELECT GROUP_CONCAT(exception_message ORDER BY id) FROM infra_api_error_log") == 'message,message,message,message'
+        upgrade.sql('UPDATE infra_api_error_log SET process_user_id=9007199254740993 WHERE id=1')
         assert upgrade.sql("SELECT CONCAT(title,'|',content,'|',remark) FROM system_notice WHERE id=1") == 'Before upgrade|<p>Keep me</p>|'
         upgrade.sql("UPDATE system_notice SET remark='kept after upgrade' WHERE id=1")
         upgrade.execute('migrate')
         upgrade.execute('validate')
         assert upgrade.sql("SELECT remark FROM system_notice WHERE id=1") == 'kept after upgrade'
-        checks.append('managed V009 upgrades to V010 without rewriting notices, then migrate/validate preserve remarks')
+        assert upgrade.sql('SELECT process_user_id FROM infra_api_error_log WHERE id=1') == '9007199254740993'
+        assert upgrade.sql("SELECT GROUP_CONCAT(COALESCE(process_user_id,'NULL') ORDER BY id) FROM infra_api_error_log WHERE id>1") == 'NULL,0,-1'
+        checks.append('managed V010 upgrades to V011, preserving int/null/zero/negative actors and content, then repeat migrate/validate retain Long IDs and remarks')
         os.environ['JSS_DB_NAME'] = database
         try:
             managed.execute('init')

@@ -14,10 +14,13 @@
 | V008 | 购物车、订单/明细/日志、售后/日志、配送与交易配置、佣金的 15 张表；不创建业务数据或启用配置 |
 | V009 | 商品与交易的日统计表，按租户/日期及商品建立有效快照唯一键；不生成统计数据 |
 | V010 | 框架 system_notice 增加200字符备注，旧公告默认空备注；保留原标题/正文和历史迁移校验和 |
+| V011 | infra_api_error_log处理人编号从int扩为可空bigint，保持默认0/NULL及原日志正文，匹配Long管理员编号 |
 
 先准备已有 system/infra 框架基座，再显式指定迁移连接：
 
 包含 V010 的服务器代码读写公告时需要 remark 列，须先备份并 `migrate`/`validate` 到 V010，再部署新运行包。框架基座必须含 system_notice；此迁移不重放初始化SQL，不修改既有公告正文，也不在应用启动时自动执行。当前开发库/运行jar未由本批升级。
+
+包含本批API日志处理代码须先备份并迁移/校验到V011；框架基座须含infra_api_access_log/infra_api_error_log。处理人DO本已使用Long，旧MySQL列和管理VO仍为int/Integer，V011只扩大处理人列，保留可空/默认0以及所有既有日志内容，VO同步Long。V001–V010不改写，实际演练含受管V010升级V011、旧最大int/NULL/0/负值保留及超JS安全整数的Long写入/重复迁移/validate。没有对开发库或运行服务执行此升级。
 
 ```powershell
 $env:JSS_DB_HOST = '127.0.0.1'

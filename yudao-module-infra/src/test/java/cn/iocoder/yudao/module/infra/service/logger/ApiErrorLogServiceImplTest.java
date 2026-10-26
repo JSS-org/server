@@ -112,7 +112,7 @@ public class ApiErrorLogServiceImplTest extends BaseDbUnitTest {
         apiErrorLogMapper.insert(apiErrorLogDO);
         // 准备参数
         Long id = apiErrorLogDO.getId();
-        Integer processStatus = randomEle(ApiErrorLogProcessStatusEnum.values()).getStatus();
+        Integer processStatus = randomEle(new Integer[] {1, 2});
         Long processUserId = randomLongId();
 
         // 调用

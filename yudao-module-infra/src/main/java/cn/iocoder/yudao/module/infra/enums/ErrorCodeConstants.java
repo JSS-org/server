@@ -31,6 +31,7 @@ public interface ErrorCodeConstants {
     // ========== API 错误日志 1-001-002-000 ==========
     ErrorCode API_ERROR_LOG_NOT_FOUND = new ErrorCode(1_001_002_000, "API 错误日志不存在");
     ErrorCode API_ERROR_LOG_PROCESSED = new ErrorCode(1_001_002_001, "API 错误日志已处理");
+    ErrorCode API_ERROR_LOG_PROCESS_STATUS_INVALID = new ErrorCode(1_001_002_002, "处理状态只能是已处理或已忽略");
 
     // ========= 文件相关 1-001-003-000 =================
     ErrorCode FILE_PATH_EXISTS = new ErrorCode(1_001_003_000, "文件路径已存在");

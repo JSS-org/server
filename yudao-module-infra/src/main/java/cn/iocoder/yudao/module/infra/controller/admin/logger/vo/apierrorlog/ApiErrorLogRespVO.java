@@ -115,7 +115,7 @@ public class ApiErrorLogRespVO {
 
     @Schema(description = "处理用户编号", example = "233")
     @ExcelProperty("处理用户编号")
-    private Integer processUserId;
+    private Long processUserId;
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     @ExcelProperty("创建时间")

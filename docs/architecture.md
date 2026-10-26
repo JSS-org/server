@@ -798,3 +798,11 @@ main接入upstream/master-jdk25 70ad21ad6c，同时保留移动接口分支f27ce
 移动公告列表/详情/编辑 → 原工作台安全链 → NoticeController → NoticeServiceImpl → 生产NoticeMapper及租户插件 → system_notice。JSS V010只为既有框架表新增remark varchar(200)默认空字符串，VO/DO和H2基座同步；部署服务器代码前必须显式migrate/validate，不在启动时迁移，不重放原框架SQL。既有客户端省略备注时更新保持原值，显式空字符串可清空；管理VO返回备注，DO的@JsonIgnore防止原WebSocket实体推送带出新后台备注。
 
 批删在REQUIRED事务中去重、整批校验当前租户可见记录并核对影响数；混合外租户/缺失目标整体拒绝。前端富文本使用既有mp-html解析器，再白名单生成rich-text节点，保存不改写原正文。既有在线推送API/消息协议不在本批实际调用或验收，实时消息及授权边界仍需独立检查。
+
+## API日志查询与处理编号（2026-10-27，JSS V011）
+
+移动API访问/错误日志四页 → 原工作台安全链 → 原infra两个日志Controller → Service/Mapper及租户SQL → infra_api_access_log/infra_api_error_log。访问按beginTime、错误按exceptionTime过滤；处理人取安全上下文的管理员编号，不接受前端传入。错误只允许INIT变为DONE/IGNORE，按id+INIT条件更新并核对影响数；并发失败者返回已处理，不覆盖胜者的状态、员工或时间。原外层事务可回滚处理更新。
+
+JSS V011将已有process_user_id从int拓宽到nullable bigint default0，管理VO由Integer同步Long，DO的Long不变。部署前显式备份+migrate/validate，旧正文、旧int/NULL/0不重写；框架前置加入两张API日志表。API日志仍受租户SQL隔离，不能因DO继承BaseDO而推定共享；后台导出权限与查询/处理权限分离。应用启动不自动迁移，留存/脱敏、实际异步生成与HTTP/Redis仍需验收。
+
+隔离HTTP用例另注册仅测试源码/专用jss-http-fixture profile的故障探针，用于经真实异常处理器产生访问/错误日志；初始化器要求已归属随机库及loopback。没有新增生产Controller或主动发送外部消息。

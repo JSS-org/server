@@ -4559,3 +4559,38 @@ MenuController原接口继续调用MenuServiceImpl与MenuMapper；菜单仍@Tena
 ### 未做 / 后续
 
 Redis程序仍不可读，真实菜单HTTP/H5/RBAC/套餐/缓存恢复、并发改层级和增删竞争、其他模块与真机/发布继续未完成；八项Service不能替代这些证据。前端菜单四页及真实用例在独立仓库继续，整合验收版本不前移。
+
+## [2026-10-27 03:40 ~ 04:20] API错误日志处理竞争与Long编号V011
+
+### 意图
+
+继续P5 API访问/错误日志迁入，修复大管理员编号溢出和多个处理者互相覆盖，保留当前租户及原日志内容，并补齐可审阅的实际迁移/事务证据。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `sql/jss/migration/mysql/V011__api_error_log_process_user_long.sql` | 新增 | 处理人列拓宽为nullable bigint default0，保留历史值/正文 |
+| `ApiErrorLogRespVO.java` | 修改 | 处理人Integer改Long，与DO/管理员ID一致 |
+| `ApiErrorLogServiceImpl.java`、infra `ErrorCodeConstants.java` | 修改 | 只允许DONE/IGNORE；按id+INIT条件更新并校验影响数，返回稳定冲突/无效状态错误 |
+| `JssApiLogMySqlServiceIT.java`、`verify_apilog_services.py` | 新增 | 六项实际Service/Mapper/租户/处理竞争及隔离库清理，保存报告 |
+| `ApiErrorLogServiceImplTest.java` | 修改 | 成功处理用例不再随机发送非法INIT目标 |
+| `database.py`、`verify_migrations.py`、`verify_workspace_http.py` | 修改 | 日志框架前置、V010→V011实演和动态历史数，保留显式baseline/校验和保护 |
+| `JssWorkspaceHttpIT.java` | 修改 | 只在测试源码/专用profile的隔离上下文注册故障探针，供实际异步日志H5准备 |
+| `sql/jss/README.md`、architecture/testing/CHANGELOG | 更新/追加 | 依赖、部署顺序、数据保留与验证边界 |
+
+### 结构关系
+
+原两个日志Controller继续调用Service/Mapper；错误处理人仍由安全上下文提供。单条状态更新以SQL条件实现竞争控制，不增加锁表/版本字段；原外层事务可回滚。V011扩展既有列并同步VO，DO原Long及租户SQL不改。框架基座要求两日志表，JSS仍由显式CLI迁移，不在应用启动时执行；测试探针不属于生产接口。
+
+### 验证证据
+
+有效修复前六项实际MySQL三通过/两失败/一错误；最终六项全过14.039秒，含六线程只有一成功、Long字段/VO、双租户和外层回滚，随机库残留0，见 `.runtime/apilog-services-final.log`、`.runtime/jss-mysql/apilog-service-test.xml`。十三项实际Flyway生命周期全过，含受管V010升级V011与最大int/NULL/0/负值/正文保留、Long写入及重复迁移/validate，`.runtime/apilog-migrations-verified.log`；迁移随机库残留0。服务器及依赖测试编译、九项H2通过/六项MySQL条件跳过，`.runtime/apilog-regression.log`；六Java定向Spotless、四Python编译和差异检查通过。无新增全量verify/HTTP/RBAC/Redis结果。
+
+### 影响面 / 风险
+
+必须先备份+migrate/validate V011，再部署对应服务器/前端；V001–V010未改写，开发库及运行jar未升级。INIT/越界/空目标现在拒绝，处理终态不能重写；竞争失败者不覆盖胜者的状态、员工或时间。Long响应沿用既有编号序列化契约。MySQL扩列可能需要元数据锁，需在实际部署环境评估执行窗口；API日志留存/脱敏与真实异步生成仍待验。
+
+### 未做 / 后续
+
+Redis程序仍不可读，最新商城/工作台HTTP/H5、测试探针、异步链、真实RBAC/并发、原生导出/真机/发布继续未完成。前端已准备四页和十类统一导出，具体证据见独立仓库；当前整合验收版本不前移，完整目标继续。

@@ -46,10 +46,10 @@ import javax.sql.DataSource;
         matches = "jss_http_verify_[0-9a-f]{12}")
 @ContextConfiguration(initializers = JssHttpFixtures.class)
 @SpringBootTest(
-        classes = YudaoServerApplication.class,
+        classes = {YudaoServerApplication.class, JssWorkspaceHttpIT.ApiLogProbe.class},
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {
-            "spring.profiles.active=local",
+            "spring.profiles.active=local,jss-http-fixture",
             "server.address=127.0.0.1",
             "spring.quartz.auto-startup=false",
             "spring.boot.admin.client.enabled=false",
@@ -66,6 +66,20 @@ import javax.sql.DataSource;
             "mybatis-plus.configuration.log-impl=org.apache.ibatis.logging.nologging.NoLoggingImpl"
         })
 class JssWorkspaceHttpIT {
+    /** Only compiled into tests and activated in this guarded disposable HTTP context. */
+    @org.springframework.web.bind.annotation.RestController
+    @org.springframework.context.annotation.Profile("jss-http-fixture")
+    public static class ApiLogProbe {
+        @org.springframework.web.bind.annotation.GetMapping(
+                "/admin-api/infra/jss-it/api-log-failure")
+        @org.springframework.security.access.prepost.PreAuthorize(
+                "@ss.hasPermission('infra:api-error-log:query')")
+        public Object fail(
+                @org.springframework.web.bind.annotation.RequestParam("marker") String marker) {
+            throw new IllegalStateException("JSS isolated API log probe: " + marker);
+        }
+    }
+
     @Autowired private Environment environment;
     @Autowired private DataSource datasource;
     @Autowired private StringRedisTemplate redis;

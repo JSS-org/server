@@ -269,6 +269,9 @@ yudao:
     base-package: cn.iocoder.yudao
   gym:
     mobile:
+      action-confirmations:
+        enabled: false # 配置独立认证器并核对账号后显式启用
+        secrets: {} # 租户 -> 后台账号 -> Base32密钥；只通过受控外部配置注入
       bookings:
         cancel-before-minutes: 0 # 会员自助取消须早于开课；可配置提前分钟数，超时联系门店，不自动扣课
       lessons:

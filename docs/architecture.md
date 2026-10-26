@@ -778,3 +778,11 @@ GymCouponVerificationAccess只接受当前本人、confirmed阶段、匹配请�
 数据库锁顺序为通用幂等键（提交时）→租户权益互斥→核销记录→实际门店/会员/权益；网络在事务外。prepared→sending只有一个赢家，进程在sending崩溃也禁止重发。同步凭据本地保存最多立即重试2次；结果未知保留占用，查询租约先提交、再解密并读取平台，每60秒最多6次观察，观察不能授权发卡。confirmed恢复无预览时效/消费开关要求，但保留当前会员资格校验；失败延后60秒，不返还已消费券。
 
 独立GymCouponVerificationTimer默认30秒扫描有效租户到期任务，每租户最多100条，以nextCheckAt排序防止长期失败任务永久占据队首；用持久化会员账号执行并在finally恢复上下文。无共享默认调度器替换，无真实平台回调/人工确认入口。V034新增一表至82表，旧表/权限不变；预览与核销关联用于恢复，不得清理未决核销引用的加密预览。
+
+## 设备操作认证器与一次性授权（2026-10-26，V035）
+
+GymMobileActionConfirmationsController → GymMobileActionConfirmationsService → GymActionTotp / GymActionVerificationStateMapper / GymActionConfirmationMapper。TOTP依赖JCA，不新增认证服务供应商依赖；密钥按租户及后台账号从GymActionConfirmationProperties读取，默认关闭且没有默认凭据。GymMobileWorkAccess、PermissionApi和GymDataScope共同限制有效管理员、设备操作权限和整店范围，设备及柜格身份从数据库读取。
+
+签发入口禁止外层事务，内部TransactionTemplate按READ_COMMITTED执行；锁设备后通过账号唯一行ensure+FOR UPDATE串行化校验。失败结果作为值返回，先提交失败次数/300秒锁定再抛业务异常。通过时写入token摘要、凭据指纹、已接受步数、设备/动作/柜格与120秒有效期。历史最大步数查询包括逻辑删除记录；不保存明文token、验证码或密钥，不缓存可重放成功响应。
+
+消费入口要求外层事务，按设备→门店/柜格→指令→token顺序加锁并重读指令，拒绝外层事务的过时queued快照；重查账号、权限、范围、资源与当前密钥指纹，绑定真实queued且非模拟的本人指令；同事务更新唯一consumedCommandId和consumedAt，失败回滚不丢令牌。未来命令写入必须使用同一事务，且在网络派发前完成消费；当前该入口只在隔离测试调用，生产设备通信、事件/回执接口仍暂缓。现有后台命令的诚实失败记录逻辑不变。V035增加两表至84表，无历史补写或角色授权；异常处理与访问日志不暴露动态码和令牌。

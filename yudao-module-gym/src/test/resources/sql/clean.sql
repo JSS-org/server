@@ -100,3 +100,6 @@ DELETE FROM gym_risk_alert;
 
 DELETE FROM gym_coupon_preview;
 DELETE FROM gym_coupon_verification;
+
+DELETE FROM gym_action_confirmation;
+DELETE FROM gym_action_verification_state;

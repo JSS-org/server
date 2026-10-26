@@ -64,6 +64,11 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.framework.mobile.GymActionConfirmationProperties.class,
+    cn.iocoder.yudao.module.gym.service.device.GymActionTotp.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileActionConfirmationsService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileActionConfirmationsController
+            .class,
     cn.iocoder.yudao.module.gym.framework.mobile.GymMobileCouponProperties.class,
     cn.iocoder.yudao.module.gym.framework.groupbuy.meituan.GymMeituanProperties.class,
     cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponCipher.class,
@@ -22416,5 +22421,594 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
                                                 cvRequest(f.preview()), "coupon-no-outer-tx")));
         assertEquals(0, cvRows.selectCount());
         verifyNoInteractions(couponClient);
+    }
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileActionConfirmationsService
+            actionConfirmations;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.framework.mobile.GymActionConfirmationProperties actionProperties;
+
+    @Resource cn.iocoder.yudao.module.gym.dal.mysql.device.GymActionConfirmationMapper actionRows;
+    @Resource cn.iocoder.yudao.module.gym.dal.mysql.device.GymDeviceCommandMapper actionCommands;
+    static final String ACTION_TEST_SECRET = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ";
+
+    Long actionFixture() {
+        stores.create(store(101L, "A"));
+        when(permissions.hasAnyPermissions(1L, "gym:devices:command")).thenReturn(true);
+        actionProperties.setEnabled(true);
+        actionProperties.setSecrets(Map.of(1L, Map.of(1L, ACTION_TEST_SECRET)));
+        when(businessClock.now()).thenReturn(java.time.Instant.ofEpochSecond(59));
+        return Long.valueOf(
+                deviceService
+                        .createDevice(deviceRequest(101L, "door", "totp-test-device"))
+                        .getId());
+    }
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymActionConfirmationVO.Request
+            actionRequest(Long device, String code) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymActionConfirmationVO
+                        .Request();
+        req.setResourceId(device);
+        req.setAction("open_door");
+        req.setVerificationCode(code);
+        return req;
+    }
+
+    org.springframework.transaction.support.TransactionTemplate actionTransaction() {
+        return new org.springframework.transaction.support.TransactionTemplate(
+                applicationContext.getBean(
+                        org.springframework.transaction.PlatformTransactionManager.class));
+    }
+
+    Long actionCommand(Long device, Long slot) {
+        var row = new cn.iocoder.yudao.module.gym.dal.dataobject.device.GymDeviceCommandDO();
+        row.setDeviceId(device);
+        row.setCompartmentId(slot);
+        row.setCommand(slot == null ? "open_door" : "open_locker");
+        row.setReason("isolated test only");
+        row.setRequesterId(1L);
+        row.setRequesterName("isolated tester");
+        row.setRequestedAt(businessClock.now());
+        row.setStatus("queued");
+        row.setSimulated(false);
+        row.setRequestKey(java.util.UUID.randomUUID().toString());
+        row.setRequestHash("test-only");
+        actionCommands.insert(row);
+        return row.getId();
+    }
+
+    void consumeAction(String token, Long command) {
+        actionTransaction().executeWithoutResult(s -> actionConfirmations.consume(token, command));
+    }
+
+    @Test
+    void actionConfirmationIssuesMinimalRandomTokenAndNoCommandOrPlaintext() {
+        Long d = actionFixture();
+        var result = actionConfirmations.create(actionRequest(d, "287082"));
+        assertTrue(result.confirmationToken().matches("[A-Za-z0-9_-]{43}"));
+        assertEquals(
+                java.time.Instant.ofEpochSecond(179),
+                java.time.OffsetDateTime.parse(result.expiresAt()).toInstant());
+        assertEquals(0, actionCommands.selectCount());
+        assertEquals(1, actionRows.selectCount());
+        var row = actionRows.selectList().getFirst();
+        assertNotEquals(result.confirmationToken(), row.getTokenHash());
+        assertEquals(64, row.getTokenHash().length());
+        assertEquals(1L, row.getVerificationCounter());
+        assertEquals(d, row.getDeviceId());
+        assertEquals(101L, row.getStoreId());
+        assertFalse(result.toString().contains(result.confirmationToken()));
+    }
+
+    @Test
+    void actionConfirmationDisabledMissingAndMalformedCredentialFailClosed() {
+        Long d = actionFixture();
+        actionProperties.setEnabled(false);
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "287082")),
+                ACTION_CONFIRMATION_UNAVAILABLE);
+        actionProperties.setEnabled(true);
+        actionProperties.setSecrets(Map.of());
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "287082")),
+                ACTION_CONFIRMATION_UNAVAILABLE);
+        actionProperties.setSecrets(Map.of(1L, Map.of(1L, "bad-secret")));
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "287082")),
+                ACTION_CONFIRMATION_UNAVAILABLE);
+        assertEquals(0, actionRows.selectCount());
+    }
+
+    @Test
+    void actionConfirmationRequiresPermissionActiveAdminAndFullStoreScope() {
+        Long d = actionFixture();
+        when(permissions.hasAnyPermissions(1L, "gym:devices:command")).thenReturn(false);
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "287082")),
+                cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants
+                        .FORBIDDEN);
+        when(permissions.hasAnyPermissions(1L, "gym:devices:command")).thenReturn(true);
+        personalScope(1L);
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "287082")), STORE_NO_PERMISSION);
+        headquarters();
+        var account = workAccounts.getUser(1L);
+        account.setStatus(1);
+        when(workAccounts.getUser(1L)).thenReturn(account);
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "287082")),
+                MOBILE_IDENTITY_INVALID);
+        assertEquals(0, actionRows.selectCount());
+    }
+
+    @Test
+    void actionConfirmationTenantAndMemberTokensCannotIssue() {
+        Long d = actionFixture();
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "287082")),
+                MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        qrMemberLogin();
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "287082")),
+                MOBILE_IDENTITY_INVALID);
+        assertEquals(0, actionRows.selectCount());
+    }
+
+    @Test
+    void actionConfirmationWrongDeviceTypeInactiveStoreAndDoorSlotReject() {
+        Long d = actionFixture();
+        var req = actionRequest(d, "287082");
+        req.setCompartmentId(1L);
+        assertServiceException(() -> actionConfirmations.create(req), MOBILE_REQUEST_INVALID);
+        req.setAction("open_locker");
+        assertServiceException(() -> actionConfirmations.create(req), ACTION_RESOURCE_UNAVAILABLE);
+        redemptionJdbc().update("UPDATE gym_store SET status='inactive' WHERE id=101");
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "287082")),
+                ACTION_RESOURCE_UNAVAILABLE);
+        assertEquals(0, actionRows.selectCount());
+    }
+
+    @Test
+    void actionConfirmationWrongAttemptsCommitAndFifthLocksWithoutExtendingDeadline() {
+        Long d = actionFixture();
+        for (int i = 0; i < 4; i++)
+            assertServiceException(
+                    () -> actionConfirmations.create(actionRequest(d, "000000")),
+                    ACTION_VERIFICATION_INVALID);
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "000000")),
+                ACTION_VERIFICATION_LOCKED);
+        when(businessClock.now()).thenReturn(java.time.Instant.ofEpochSecond(60));
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "359152")),
+                ACTION_VERIFICATION_LOCKED);
+        assertEquals(
+                5,
+                redemptionJdbc()
+                        .queryForObject(
+                                "SELECT failure_count FROM gym_action_verification_state",
+                                Integer.class));
+        assertEquals(
+                java.time.Instant.ofEpochSecond(359),
+                redemptionJdbc()
+                        .queryForObject(
+                                "SELECT locked_until FROM gym_action_verification_state",
+                                java.sql.Timestamp.class)
+                        .toInstant());
+        assertEquals(0, actionRows.selectCount());
+    }
+
+    @Test
+    void actionConfirmationLockExpiryStartsFreshFailureBudgetAndSuccessResets() {
+        Long d = actionFixture();
+        for (int i = 0; i < 5; i++)
+            assertThrows(
+                    cn.iocoder.yudao.framework.common.exception.ServiceException.class,
+                    () -> actionConfirmations.create(actionRequest(d, "000000")));
+        when(businessClock.now()).thenReturn(java.time.Instant.ofEpochSecond(359));
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "000000")),
+                ACTION_VERIFICATION_INVALID);
+        assertEquals(
+                1,
+                redemptionJdbc()
+                        .queryForObject(
+                                "SELECT failure_count FROM gym_action_verification_state",
+                                Integer.class));
+        when(businessClock.now()).thenReturn(java.time.Instant.ofEpochSecond(1234567890));
+        actionConfirmations.create(actionRequest(d, "005924"));
+        assertEquals(
+                0,
+                redemptionJdbc()
+                        .queryForObject(
+                                "SELECT failure_count FROM gym_action_verification_state",
+                                Integer.class));
+        assertNull(
+                redemptionJdbc()
+                        .queryForObject(
+                                "SELECT locked_until FROM gym_action_verification_state",
+                                java.sql.Timestamp.class));
+    }
+
+    @Test
+    void actionConfirmationAcceptedCodeCannotReplayEvenAfterLogicalDeletion() {
+        Long d = actionFixture();
+        actionConfirmations.create(actionRequest(d, "287082"));
+        redemptionJdbc().update("UPDATE gym_action_confirmation SET deleted=TRUE");
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "287082")),
+                ACTION_VERIFICATION_INVALID);
+        assertEquals(
+                1,
+                redemptionJdbc()
+                        .queryForObject(
+                                "SELECT COUNT(*) FROM gym_action_confirmation", Integer.class));
+    }
+
+    @Test
+    void actionConfirmationNextStepIssuesDifferentTokenAndBackwardClockRejects() {
+        Long d = actionFixture();
+        var a = actionConfirmations.create(actionRequest(d, "287082"));
+        when(businessClock.now()).thenReturn(java.time.Instant.ofEpochSecond(60));
+        var b = actionConfirmations.create(actionRequest(d, "359152"));
+        assertNotEquals(a.confirmationToken(), b.confirmationToken());
+        when(businessClock.now()).thenReturn(java.time.Instant.ofEpochSecond(59));
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "755224")),
+                ACTION_CONFIRMATION_UNAVAILABLE);
+        assertEquals(2, actionRows.selectCount());
+    }
+
+    @Test
+    void actionConfirmationOneTokenConsumesOnceInActualCommandTransaction() {
+        Long d = actionFixture();
+        var result = actionConfirmations.create(actionRequest(d, "287082"));
+        Long command =
+                actionTransaction()
+                        .execute(
+                                status -> {
+                                    Long id = actionCommand(d, null);
+                                    actionConfirmations.consume(result.confirmationToken(), id);
+                                    return id;
+                                });
+        assertEquals(command, actionRows.selectList().getFirst().getConsumedCommandId());
+        assertServiceException(
+                () -> consumeAction(result.confirmationToken(), command),
+                ACTION_CONFIRMATION_INVALID);
+        assertServiceException(
+                () -> consumeAction(result.confirmationToken(), actionCommand(d, null)),
+                ACTION_CONFIRMATION_INVALID);
+    }
+
+    @Test
+    void actionConfirmationCommandRollbackRestoresUnusedToken() {
+        Long d = actionFixture();
+        var token = actionConfirmations.create(actionRequest(d, "287082")).confirmationToken();
+        assertThrows(
+                IllegalStateException.class,
+                () ->
+                        actionTransaction()
+                                .executeWithoutResult(
+                                        status -> {
+                                            Long id = actionCommand(d, null);
+                                            actionConfirmations.consume(token, id);
+                                            throw new IllegalStateException("test rollback");
+                                        }));
+        assertEquals(0, actionCommands.selectCount());
+        assertNull(actionRows.selectList().getFirst().getConsumedAt());
+        consumeAction(token, actionCommand(d, null));
+        assertNotNull(actionRows.selectList().getFirst().getConsumedAt());
+    }
+
+    @Test
+    void actionConfirmationExpiryIsExclusiveAndCannotConsumeBeforeIssuance() {
+        Long d = actionFixture();
+        var token = actionConfirmations.create(actionRequest(d, "287082")).confirmationToken();
+        Long command = actionCommand(d, null);
+        when(businessClock.now()).thenReturn(java.time.Instant.ofEpochSecond(58));
+        assertServiceException(() -> consumeAction(token, command), ACTION_CONFIRMATION_INVALID);
+        when(businessClock.now()).thenReturn(java.time.Instant.ofEpochSecond(179));
+        assertServiceException(() -> consumeAction(token, command), ACTION_CONFIRMATION_INVALID);
+        assertNull(actionRows.selectList().getFirst().getConsumedAt());
+    }
+
+    @Test
+    void actionConfirmationCredentialRotationAndDisableRevokePendingToken() {
+        Long d = actionFixture();
+        var token = actionConfirmations.create(actionRequest(d, "287082")).confirmationToken();
+        Long command = actionCommand(d, null);
+        actionProperties.setSecrets(Map.of(1L, Map.of(1L, "A".repeat(32))));
+        assertServiceException(() -> consumeAction(token, command), ACTION_CONFIRMATION_INVALID);
+        actionProperties.setEnabled(false);
+        assertServiceException(
+                () -> consumeAction(token, command), ACTION_CONFIRMATION_UNAVAILABLE);
+        assertNull(actionRows.selectList().getFirst().getConsumedAt());
+    }
+
+    @Test
+    void actionConfirmationPermissionRevocationBlocksConsumption() {
+        Long d = actionFixture();
+        var token = actionConfirmations.create(actionRequest(d, "287082")).confirmationToken();
+        Long command = actionCommand(d, null);
+        when(permissions.hasAnyPermissions(1L, "gym:devices:command")).thenReturn(false);
+        assertServiceException(
+                () -> consumeAction(token, command),
+                cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants
+                        .FORBIDDEN);
+        assertNull(actionRows.selectList().getFirst().getConsumedAt());
+    }
+
+    @Test
+    void actionConfirmationCannotAuthorizeAnotherDeviceUserOrSimulatedCommand() {
+        Long d = actionFixture();
+        var token = actionConfirmations.create(actionRequest(d, "287082")).confirmationToken();
+        Long other =
+                Long.valueOf(
+                        deviceService
+                                .createDevice(deviceRequest(101L, "door", "other-device"))
+                                .getId());
+        assertServiceException(
+                () -> consumeAction(token, actionCommand(other, null)),
+                ACTION_CONFIRMATION_INVALID);
+        Long command = actionCommand(d, null);
+        redemptionJdbc().update("UPDATE gym_device_command SET requester_id=2 WHERE id=?", command);
+        assertServiceException(() -> consumeAction(token, command), ACTION_CONFIRMATION_INVALID);
+        redemptionJdbc()
+                .update(
+                        "UPDATE gym_device_command SET requester_id=1,simulated=TRUE WHERE id=?",
+                        command);
+        assertServiceException(() -> consumeAction(token, command), ACTION_CONFIRMATION_INVALID);
+        redemptionJdbc()
+                .update(
+                        "UPDATE gym_device_command SET simulated=FALSE,status='failed' WHERE id=?",
+                        command);
+        assertServiceException(() -> consumeAction(token, command), ACTION_CONFIRMATION_INVALID);
+        assertNull(actionRows.selectList().getFirst().getConsumedAt());
+    }
+
+    @Test
+    void actionConfirmationLockerTokenBindsExactConfiguredCompartment() {
+        actionFixture();
+        Long locker =
+                Long.valueOf(
+                        deviceService
+                                .createDevice(deviceRequest(101L, "locker", "locker-action"))
+                                .getId());
+        deviceService.saveCompartments(locker, compartments("1", "2"));
+        var slots = deviceService.device(locker).getCompartments();
+        Long first = Long.valueOf(slots.get(0).getId()),
+                second = Long.valueOf(slots.get(1).getId());
+        var req = actionRequest(locker, "287082");
+        req.setAction("open_locker");
+        req.setCompartmentId(first);
+        var token = actionConfirmations.create(req).confirmationToken();
+        assertServiceException(
+                () -> consumeAction(token, actionCommand(locker, second)),
+                ACTION_CONFIRMATION_INVALID);
+        consumeAction(token, actionCommand(locker, first));
+        assertNotNull(actionRows.selectList().getFirst().getConsumedAt());
+    }
+
+    @Test
+    void actionConfirmationTransactionBoundariesAreEnforced() {
+        Long d = actionFixture();
+        actionTransaction()
+                .executeWithoutResult(
+                        status ->
+                                assertThrows(
+                                        org.springframework.transaction
+                                                .IllegalTransactionStateException.class,
+                                        () ->
+                                                actionConfirmations.create(
+                                                        actionRequest(d, "287082"))));
+        assertThrows(
+                org.springframework.transaction.IllegalTransactionStateException.class,
+                () -> actionConfirmations.consume("a".repeat(43), 1L));
+        assertEquals(0, actionRows.selectCount());
+    }
+
+    @Test
+    void actionConfirmationConcurrentSameCodeAcrossDevicesIssuesOneToken() throws Exception {
+        Long d = actionFixture();
+        stores.create(store(102L, "B"));
+        Long other =
+                Long.valueOf(
+                        deviceService
+                                .createDevice(deviceRequest(102L, "door", "parallel-action"))
+                                .getId());
+        try (var pool = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            var start = new java.util.concurrent.CountDownLatch(1);
+            var futures = new ArrayList<java.util.concurrent.Future<Boolean>>();
+            for (Long id : List.of(d, other))
+                futures.add(
+                        pool.submit(
+                                () -> {
+                                    TenantContextHolder.setTenantId(1L);
+                                    loginAs(1L);
+                                    try {
+                                        start.await();
+                                        actionConfirmations.create(actionRequest(id, "287082"));
+                                        return true;
+                                    } catch (
+                                            cn.iocoder.yudao.framework.common.exception
+                                                            .ServiceException
+                                                    e) {
+                                        assertEquals(
+                                                ACTION_VERIFICATION_INVALID.getCode(), e.getCode());
+                                        return false;
+                                    } finally {
+                                        cleanupContext();
+                                    }
+                                }));
+            start.countDown();
+            int successes = 0;
+            for (var f : futures) if (f.get(20, java.util.concurrent.TimeUnit.SECONDS)) successes++;
+            assertEquals(1, successes);
+        }
+        assertEquals(1, actionRows.selectCount());
+    }
+
+    @Test
+    void actionConfirmationConcurrentConsumersCannotReuseToken() throws Exception {
+        Long d = actionFixture();
+        var token = actionConfirmations.create(actionRequest(d, "287082")).confirmationToken();
+        var ids = List.of(actionCommand(d, null), actionCommand(d, null));
+        try (var pool = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            var start = new java.util.concurrent.CountDownLatch(1);
+            var futures = new ArrayList<java.util.concurrent.Future<Boolean>>();
+            for (Long id : ids)
+                futures.add(
+                        pool.submit(
+                                () -> {
+                                    TenantContextHolder.setTenantId(1L);
+                                    loginAs(1L);
+                                    try {
+                                        start.await();
+                                        consumeAction(token, id);
+                                        return true;
+                                    } catch (
+                                            cn.iocoder.yudao.framework.common.exception
+                                                            .ServiceException
+                                                    e) {
+                                        assertEquals(
+                                                ACTION_CONFIRMATION_INVALID.getCode(), e.getCode());
+                                        return false;
+                                    } finally {
+                                        cleanupContext();
+                                    }
+                                }));
+            start.countDown();
+            int successes = 0;
+            for (var f : futures) if (f.get(20, java.util.concurrent.TimeUnit.SECONDS)) successes++;
+            assertEquals(1, successes);
+        }
+        assertNotNull(actionRows.selectList().getFirst().getConsumedAt());
+    }
+
+    @Test
+    void actionConfirmationIndependentAdministratorNeedsOwnCredential() {
+        Long d = actionFixture();
+        actionConfirmations.create(actionRequest(d, "287082"));
+        loginAs(2L);
+        when(permissions.hasAnyPermissions(2L, "gym:devices:command")).thenReturn(true);
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "287082")),
+                ACTION_CONFIRMATION_UNAVAILABLE);
+        actionProperties.setSecrets(
+                Map.of(1L, Map.of(1L, ACTION_TEST_SECRET, 2L, ACTION_TEST_SECRET)));
+        actionConfirmations.create(actionRequest(d, "287082"));
+        assertEquals(2, actionRows.selectCount());
+        assertEquals(
+                2,
+                redemptionJdbc()
+                        .queryForObject(
+                                "SELECT COUNT(*) FROM gym_action_verification_state",
+                                Integer.class));
+    }
+
+    @Test
+    void actionConfirmationLogicalDeletionCannotResetLockout() {
+        Long d = actionFixture();
+        for (int i = 0; i < 5; i++)
+            assertThrows(
+                    cn.iocoder.yudao.framework.common.exception.ServiceException.class,
+                    () -> actionConfirmations.create(actionRequest(d, "000000")));
+        redemptionJdbc().update("UPDATE gym_action_verification_state SET deleted=TRUE");
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "287082")),
+                ACTION_VERIFICATION_LOCKED);
+        assertEquals(0, actionRows.selectCount());
+    }
+
+    @Test
+    void actionConfirmationInactiveDeviceRejectsExistingToken() {
+        Long d = actionFixture();
+        var token = actionConfirmations.create(actionRequest(d, "287082")).confirmationToken();
+        Long command = actionCommand(d, null);
+        redemptionJdbc().update("UPDATE gym_device SET status='inactive' WHERE id=?", d);
+        assertServiceException(() -> consumeAction(token, command), ACTION_RESOURCE_UNAVAILABLE);
+        assertNull(actionRows.selectList().getFirst().getConsumedAt());
+    }
+
+    @Test
+    void actionConfirmationMalformedInputDoesNotConsumeFailureBudget() {
+        Long d = actionFixture();
+        for (String code : List.of("", "123", "1234567", "abcdef"))
+            assertServiceException(
+                    () -> actionConfirmations.create(actionRequest(d, code)),
+                    MOBILE_REQUEST_INVALID);
+        assertEquals(
+                0,
+                redemptionJdbc()
+                        .queryForObject(
+                                "SELECT COUNT(*) FROM gym_action_verification_state",
+                                Integer.class));
+    }
+
+    @Test
+    void actionConfirmationTenantCannotReadOtherTenantsTokenOrCommand() {
+        Long d = actionFixture();
+        var token = actionConfirmations.create(actionRequest(d, "287082")).confirmationToken();
+        Long command = actionCommand(d, null);
+        actionProperties.setSecrets(
+                Map.of(1L, Map.of(1L, ACTION_TEST_SECRET), 2L, Map.of(1L, ACTION_TEST_SECRET)));
+        var login =
+                cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser();
+        login.setTenantId(2L);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> consumeAction(token, command), ACTION_CONFIRMATION_INVALID);
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "287082")), DEVICE_NOT_EXISTS);
+        assertEquals(0, actionRows.selectCount());
+    }
+
+    @Test
+    void actionConfirmationConsumesCurrentCommandStateNotEarlierTransactionSnapshot() {
+        Long d = actionFixture();
+        var token = actionConfirmations.create(actionRequest(d, "287082")).confirmationToken();
+        Long command = actionCommand(d, null);
+        var tx = actionTransaction();
+        tx.setIsolationLevel(
+                org.springframework.transaction.TransactionDefinition.ISOLATION_REPEATABLE_READ);
+        var failure =
+                assertThrows(
+                        org.apache.ibatis.exceptions.PersistenceException.class,
+                        () ->
+                                tx.executeWithoutResult(
+                                        status -> {
+                                            assertEquals(
+                                                    "queued",
+                                                    actionCommands.selectById(command).getStatus());
+                                            try (var pool =
+                                                    java.util.concurrent.Executors
+                                                            .newSingleThreadExecutor()) {
+                                                pool.submit(
+                                                                () ->
+                                                                        redemptionJdbc()
+                                                                                .update(
+                                                                                        "UPDATE gym_device_command SET status='sent' WHERE id=?",
+                                                                                        command))
+                                                        .get(
+                                                                10,
+                                                                java.util.concurrent.TimeUnit
+                                                                        .SECONDS);
+                                            } catch (Exception e) {
+                                                throw new AssertionError(e);
+                                            }
+                                            actionConfirmations.consume(token, command);
+                                        }));
+        Throwable cause = failure;
+        while (!(cause instanceof java.sql.SQLException) && cause.getCause() != null)
+            cause = cause.getCause();
+        assertInstanceOf(java.sql.SQLException.class, cause);
+        assertEquals("40001", ((java.sql.SQLException) cause).getSQLState());
+        assertServiceException(() -> consumeAction(token, command), ACTION_CONFIRMATION_INVALID);
+        assertNull(actionRows.selectList().getFirst().getConsumedAt());
     }
 }

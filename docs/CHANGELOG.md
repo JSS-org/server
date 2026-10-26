@@ -3489,3 +3489,59 @@ V034新增一表至82表，下一V035；已应用V001–V033未改，无历史�
 ### 未做 / 后续
 
 当前120新增本地验证、4复用源码、11项目标未实现。真实授权/实券、部署HTTP、外部存储、多实例和压力尚未验证；未知结果最多6次观察后仍处理中，缺请求关联凭据/成功确认始终无法落库时没有自动或人工强制成功方案，需受信外部核实与后续关联流程。无现金收入、积分赠送、自动签到或真实签约。支付/续费、电子签约、真实设备/监控和消费/邀请自动奖励按用户要求暂缓；仅本地小步提交，不推送。
+
+## [2026-10-26 12:43 ~ 13:14] 设备认证器二次确认与一次性令牌（V035）
+
+### 意图
+
+按用户选择采用认证器动态验证码，完成总表126，给未来设备命令提供真实二次授权；继续按用户要求跳过实际设备厂商接入，保持前端不变并小步本地提交。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `docs/CHANGELOG.md` | 修改 | 同步接口数量、契约、配置、结构或验证证据 |
+| `docs/README.md` | 修改 | 同步接口数量、契约、配置、结构或验证证据 |
+| `docs/architecture.md` | 修改 | 同步接口数量、契约、配置、结构或验证证据 |
+| `docs/gym-full-api-progress.md` | 修改 | 同步接口数量、契约、配置、结构或验证证据 |
+| `docs/testing.md` | 修改 | 同步接口数量、契约、配置、结构或验证证据 |
+| `docs/uniapp/api-implementation.json` | 修改 | 同步接口数量、契约、配置、结构或验证证据 |
+| `docs/uniapp/uniapp-api-summary.md` | 修改 | 同步接口数量、契约、配置、结构或验证证据 |
+| `docs/uniapp/uniapp-api.md` | 修改 | 同步接口数量、契约、配置、结构或验证证据 |
+| `docs/uniapp/uniapp-implementation.md` | 修改 | 同步接口数量、契约、配置、结构或验证证据 |
+| `script/gym/DATABASE.md` | 修改 | 同步接口数量、契约、配置、结构或验证证据 |
+| `script/gym/README.md` | 修改 | 同步接口数量、契约、配置、结构或验证证据 |
+| `script/gym/verify-migrations.py` | 修改 | 隔离MySQL新增15检查，总计257 |
+| `sql/gym/migration/mysql/V035__gym_action_confirmations.sql` | 新增 | 追加两表及唯一性/状态约束至84表 |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileActionConfirmationsController.java` | 新增 | 鉴权、最小响应、禁缓存及敏感错误处理 |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/vo/GymActionConfirmationVO.java` | 新增 | 认证器请求与令牌响应，拒绝额外字段 |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/dal/dataobject/device/GymActionConfirmationDO.java` | 新增 | 绑定主体、设备/柜格、摘要及消费时间 |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/dal/dataobject/device/GymActionVerificationStateDO.java` | 新增 | 持久化账号失败次数和锁定截止 |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/dal/mysql/device/GymActionConfirmationMapper.java` | 新增 | 包括逻辑删除历史的已接受步数查询 |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/dal/mysql/device/GymActionVerificationStateMapper.java` | 新增 | 账号唯一状态行加锁及失败计数更新 |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/enums/ErrorCodeConstants.java` | 修改 | 增加二次验证与消费错误码 |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/framework/mobile/GymActionConfirmationProperties.java` | 新增 | 租户/后台账号独立密钥配置，默认关闭 |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/device/GymActionTotp.java` | 新增 | 规范Base32、TOTP与常数时间比较 |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileActionConfirmationsService.java` | 新增 | 持久化失败锁定、签发和事务内一次消费 |
+| `yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileActionConfirmationsControllerTest.java` | 新增 | 3项请求绑定和敏感响应测试 |
+| `yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java` | 修改 | 新增25项身份、锁定、并发及事务测试 |
+| `yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/device/GymActionTotpTest.java` | 新增 | 9项RFC向量和边界测试 |
+| `yudao-module-gym/src/test/resources/sql/clean.sql` | 修改 | 清理两张测试表 |
+| `yudao-module-gym/src/test/resources/sql/create_tables.sql` | 修改 | 同步H2最终表结构 |
+| `yudao-server/src/main/resources/application.yaml` | 修改 | 默认关闭且不设置凭据 |
+
+### 结构关系
+
+Controller→Service→TOTP/Mapper；配置按租户及后台账号取独立密钥，无默认值。签发禁止外层事务，内部READ_COMMITTED按设备/门店/柜格→账号状态锁定，失败计数先提交再报错，成功生成120秒token并只存摘要。动态码最大接受步数含逻辑删除历史。消费要求外层事务、锁定重读指令与token，与真实queued非模拟指令原子提交；生产设备写入/派发尚未调用该入口。V035追加两表至84，下一V036，旧迁移及角色授权不变；architecture同步。
+
+### 验证证据
+
+最终`mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' -Dsurefire.failIfNoSpecifiedTests=false -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'`成功：gym1057项、member4通过/1项既有跳过。新增37项，含RFC向量、跨门店并发防重放、账号/租户隔离、失败锁定、命令消费及回滚。`PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py`257检查通过，随机库清理；`mvn -B -ntp -pl yudao-server -am package -DskipTests`成功但跳过测试。覆盖脚本125/135，缺10，`git diff --check`通过；日志与H2快照冲突验证边界见testing。原始uniapp.md内容及暂存状态、旧迁移、dashboard保持不变。
+
+### 影响面 / 风险
+
+部署需先备份并迁移至V035，再受控配置独立认证器；默认关闭且缺配置明确拒绝。动态码及token只通过受保护请求传输，不保存敏感明文或成功响应缓存。5次连续无效/重放锁定300秒；密钥轮换不重置锁定，当前指纹不符的token不能消费。恢复旧数据库可能丢失防重放事实，应先关闭功能并换发密钥后恢复使用。未修改前端、业务库、现有后台命令诚实失败行为或授予权限。
+
+### 未做 / 后续
+
+尚无真实手机认证器配置/联调、自助绑定/恢复码、生产设备指令消费者、厂商通信/网关事件/回执；支付/续费、电子签约、监控及积分自动奖励规则继续按用户要求暂缓。未进行部署HTTP、多节点或压力验收，未push。总计135项、源码覆盖125项，不宣称已全量上线。

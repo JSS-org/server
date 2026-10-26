@@ -1458,3 +1458,24 @@ git diff --check
 真实隔离MySQL/Flyway242检查通过，新增20检查覆盖空核销表、微秒初始状态、请求/预览/跨店券占用唯一及大小写/租户隔离、查询上限、有效身份/派发时间/占用约束、NULL凭据/流水不能确认、已确认不能伪装未消费失败、成功必须关联卡和旧核销、平台流水不可重复、失败释放仅供新预览、恢复/查询/关联索引、旧库不造核销。新增一表至82表，随机库全部清理；V001–V033未改，未迁移业务库或调整角色。
 
 日志：`/tmp/uniapp-coupon-workflow-focused.log`（28通过）、`/tmp/uniapp-coupon-workflow-final-tests.log`（12:40:05）、`/tmp/uniapp-coupon-workflow-migrations.log`（242检查）、`/tmp/uniapp-coupon-workflow-package.log`（12:41:00）。初期修正了访问日志注解应标方法、测试预览方法名/订单表名/JsonUtils导入，未放宽业务校验；修正后专项及全量通过。没有真实商家授权/实券、部署HTTP、外部文件存储、多实例或压力验证，未知结果的受信外部关联仍未接入。前端未改。
+
+## 2026-10-26 认证器二次确认与一次性令牌（V035，总表126）
+
+最终命令及证据：
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py
+python3 script/gym/verify-uniapp-api-coverage.py --show-missing
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+git diff --check
+```
+
+完整gym1057项通过（组织服务605项），member选定4项通过、1项既有禁用跳过；新增37项=25项真实H2/权限/事务业务测试+9项TOTP测试（含6个RFC向量）+3项MVC。最终日志`/tmp/uniapp-action-final-tests.log`在13:13:02成功；Spotless通过。MySQL/Flyway257项检查通过，所有随机临时库清理，未迁移业务库；日志`/tmp/uniapp-action-migrations.log`。打包日志`/tmp/uniapp-action-package.log`，打包跳过测试，不能代替上述测试。路由核对125/135，缺10项，不声明全量上线。
+
+覆盖：RFC 6238 SHA1向量按6位取模、前导0、时间窗口、规范Base32、相邻码碰撞防重放；有效后台身份、权限/SELF/租户隔离、配置关闭/缺失；持久化失败锁定、期限不延长、到期重置、逻辑删除不重置、时钟回退；跨门店并发签发只成功一次；绑定设备/柜格/操作、令牌过期、密钥/权限撤销、模拟及非queued指令拒绝；一次消费/并发消费、外层事务回滚、拒绝过时queued快照；最小响应、禁缓存、敏感请求/异常不回显。
+
+快照回归在H2 REPEATABLE_READ下由数据库返回SQLState40001并回滚，随后新事务明确拒绝sent指令；该用例验证失败关闭及令牌未消费，不冒充MySQL多节点并发联调。初次并发测试的线程内Mockito重复配置已改为主线程预配置，最终全量通过。隔离MySQL验证的是迁移、唯一性/检查约束与旧库保留；未进行真实认证器手机、生产数据库、设备厂商、部署HTTP或多节点压力验证。旧V001–V034和原始uniapp.md的内容/暂存状态保持不变，dashboard工作区干净。

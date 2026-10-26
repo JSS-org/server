@@ -1669,9 +1669,15 @@
       "category": "工作台",
       "method": "POST",
       "path": "/admin-api/gym/mobile/action-confirmations",
-      "description": "验证二次确认凭据，生成绑定设备和操作的短时令牌",
-      "implementation": "pending",
-      "evidence": []
+      "description": "验证认证器动态码，生成绑定账号、设备、操作及柜格的一次性短时令牌",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileActionConfirmationsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileActionConfirmationsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/device/GymActionTotpTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileActionConfirmationsControllerTest.java"
+      ]
     },
     {
       "id": 127,

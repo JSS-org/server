@@ -1749,3 +1749,52 @@ CREATE TABLE IF NOT EXISTS gym_coupon_verification (
   OR (stage IN ('prepared','sending','unknown','rejected') AND confirmed_at IS NULL AND confirmation_snapshot IS NULL AND provider_flow_id IS NULL)),
  CONSTRAINT ck_coupon_verification_dispatch CHECK((stage='prepared' AND consume_started_at IS NULL) OR (stage IN ('sending','unknown','confirmed','fulfilled') AND consume_started_at IS NOT NULL) OR stage='rejected')
 );
+
+-- Independent authenticator step-up only; no credential seeds, command dispatch or role grants.
+CREATE TABLE IF NOT EXISTS gym_action_verification_state (
+ id bigint NOT NULL AUTO_INCREMENT,
+ user_id bigint NOT NULL,
+ failure_count int NOT NULL DEFAULT 0,
+ locked_until datetime(6) DEFAULT NULL,
+ last_attempt_at datetime(6) DEFAULT NULL,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT false,
+ tenant_id bigint NOT NULL,
+ PRIMARY KEY(id),
+ UNIQUE KEY uk_action_verification_user(tenant_id,user_id),
+ CONSTRAINT ck_action_verification_ids CHECK(user_id>0 AND tenant_id>0),
+ CONSTRAINT ck_action_verification_failures CHECK(failure_count BETWEEN 0 AND 5),
+ CONSTRAINT ck_action_verification_lock CHECK((failure_count<5 AND locked_until IS NULL) OR (failure_count=5 AND locked_until IS NOT NULL AND last_attempt_at IS NOT NULL AND locked_until>last_attempt_at))
+);
+CREATE TABLE IF NOT EXISTS gym_action_confirmation (
+ id bigint NOT NULL AUTO_INCREMENT,
+ user_id bigint NOT NULL,
+ store_id bigint NOT NULL,
+ device_id bigint NOT NULL,
+ compartment_id bigint DEFAULT NULL,
+ action varchar(16) NOT NULL,
+ token_hash char(64) NOT NULL,
+ credential_fingerprint char(64) NOT NULL,
+ verification_counter bigint NOT NULL,
+ issued_at datetime(6) NOT NULL,
+ expires_at datetime(6) NOT NULL,
+ consumed_at datetime(6) DEFAULT NULL,
+ consumed_command_id bigint DEFAULT NULL,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT false,
+ tenant_id bigint NOT NULL,
+ PRIMARY KEY(id),
+ UNIQUE KEY uk_action_confirmation_token(token_hash),
+ UNIQUE KEY uk_action_confirmation_counter(tenant_id,user_id,credential_fingerprint,verification_counter),
+ UNIQUE KEY uk_action_confirmation_command(tenant_id,consumed_command_id),
+ CONSTRAINT ck_action_confirmation_ids CHECK(user_id>0 AND store_id>0 AND device_id>0 AND tenant_id>0 AND verification_counter>=0),
+ CONSTRAINT ck_action_confirmation_action CHECK((action='open_door' AND compartment_id IS NULL) OR (action='open_locker' AND compartment_id IS NOT NULL AND compartment_id>0)),
+ CONSTRAINT ck_action_confirmation_expiry CHECK(expires_at>issued_at),
+ CONSTRAINT ck_action_confirmation_consumed CHECK((consumed_at IS NULL AND consumed_command_id IS NULL) OR (consumed_at IS NOT NULL AND consumed_command_id IS NOT NULL AND consumed_command_id>0 AND consumed_at>=issued_at AND consumed_at<expires_at))
+);

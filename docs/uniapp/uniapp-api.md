@@ -616,7 +616,7 @@ Content-Type: application/json
 | `GET W/devices/{id}/compartments` | 有柜格查看权限的管理者 | `P` | `Page<{id:ID,number:string,status:string}>` |
 | `POST W/devices/{id}/commands`（幂等） | 有远程操作权限的管理者 | `command:open_door或open_locker,compartmentId?:ID,reason:string,confirmationToken:string` | `DeviceCommand` |
 | `GET W/device-commands/{id}` | 发起人或授权管理者 | 无 | `DeviceCommand` |
-| `POST W/action-confirmations` | 有相应操作权限的管理者 | `action:open_door或open_locker,resourceId:ID,verificationCode:string` | `{confirmationToken:string,expiresAt:DateTime}`；verificationCode 来自已配置的二次验证渠道 |
+| `POST W/action-confirmations` | 有相应操作权限的管理者 | `action:open_door或open_locker,resourceId:ID,compartmentId?:ID,verificationCode:string` | `{confirmationToken:string,expiresAt:DateTime}`；已实现认证器TOTP，开柜必须绑定柜格，详见文末V035约定 |
 
 `DeviceCommand`：`id,deviceId,command,status:queued或sent或succeeded或failed或unknown,requestedAt,completedAt?,failureReason?`。
 
@@ -1383,3 +1383,38 @@ Idempotency-Key为8–128位字母/数字/下划线/连字符，大小写敏感�
 发卡时冻结模板不随后续价格、权益或下架变化而重算，起始时间取持久化的本地核销确认时刻。账号/档案、门店、关系及购卡限制仍须有效；暂时不具备资格或本地写入失败时保持confirmed。恢复不要求预览未过期，也不再次调用consume；卡、会员阶段、门店关联、适用内部unsigned合同、通知、gym_verification及结果原子提交。外部文件blob无法随SQL回滚，未引用文件须清理。没有生成现金订单/收入/积分奖励/签到，没有真实电子签约。
 
 错误1070032005记录不存在/不属于本人，1070032006同券已占用，1070032007状态或消费凭据无效。其余会员/预览/幂等/平台错误沿用原约定。V034新增持久化核销表；部署和恢复开关见[数据库手册](../../script/gym/DATABASE.md)。
+
+## 设备操作二次确认（V035，总表126）
+
+`POST /admin-api/gym/mobile/action-confirmations`，后台令牌及`tenant-id`必需，无幂等请求头。要求当前有效后台账号、`gym:devices:command`及设备所属门店整店数据范围；会员令牌或SELF负责关系不够。请求只接受下表字段，客户端不能指定用户、门店、有效期、校验结果或令牌。
+
+| 字段 | 类型 / 必需 | 约定 |
+| --- | --- | --- |
+| action | string / 是 | `open_door`或`open_locker` |
+| resourceId | ID / 是 | 当前租户设备ID |
+| compartmentId | ID / 开柜必需 | 属于该柜机、configured=true且status=available的柜格；开门禁止传 |
+| verificationCode | string / 是 | 认证器显示的6位ASCII数字，保留前导0；不接受密码、短信码或其他渠道凭据 |
+
+门店和设备必须active，设备类型必须匹配操作。设备是否online不作为本接口成功依据；本接口仅验证操作授权，**没有发送指令，也不能证明设备可达或已经打开**。
+
+统一响应`data={confirmationToken:string,expiresAt:DateTime}`，仅这两个字段。token为密码学随机32字节的Base64URL无填充串（43字符），只在本次成功响应提供；有效期120秒，右端不含。响应`Cache-Control: private, no-store`。明文token、验证码和密钥不进入业务表；表内仅存token的SHA-256摘要及密钥指纹用于轮换校验，请求/响应访问日志关闭，异常响应不回显敏感内容。
+
+用户已选择认证器动态验证码。采用[RFC 6238](https://www.rfc-editor.org/rfc/rfc6238.html)的TOTP和[RFC 4226](https://www.rfc-editor.org/rfc/rfc4226.html)的HOTP计算：HMAC-SHA1、6位、Unix时间每30秒一步，接受当前及前后各一步。每个租户/后台账号必须显式配置独立随机密钥；默认关闭、无全局默认密钥。校验时间取后端业务时钟。每个账号、密钥指纹持久化已接受的最大步数；小于或等于它的验证码不能再使用，令牌使用、过期或逻辑删除均不释放已接受步数。相邻步偶然出现相同数字时也不重用已接受的码。
+
+同一租户账号在所有设备间共享失败计数：无效/已使用的动态码连续5次后锁定300秒，锁定期间请求不延长截止时间；到期后重置失败预算，有效验证清零。失败计数独立提交后才返回业务错误，不能因为HTTP错误而回滚。格式不合法或无操作权限的请求不签发令牌。响应丢失也不能用已接受的动态码重签，等待下一步有效码重试；没有保存明文响应的幂等缓存。
+
+| 业务码 | 含义 |
+| --- | --- |
+| 1070033001 | 功能关闭、当前租户/账号未配置有效认证器、时钟回退等导致不可用 |
+| 1070033002 | 当前门店、设备、类型或柜格不可操作 |
+| 1070033003 | 动态验证码错误、超出允许时间窗口或已使用 |
+| 1070033004 | 失败次数触发临时锁定 |
+| 1070033005 | 内部消费令牌时发现过期、已用、主体/资源/动作不符等 |
+
+已有身份、整店范围、设备不存在、参数校验错误码继续适用。无鉴权的HTTP拒绝由既有安全过滤器处理；业务响应沿用统一code协议。
+
+内部`GymMobileActionConfirmationsService.consume(token,commandId)`要求外层事务，把一次令牌消费与真实queued指令记录写入原子提交；同一令牌即使对同一指令也不能再消费。消费时重新校验有效账号、权限、整店范围、门店/设备/柜格、密钥指纹、发起人及指令的设备/动作/柜格；拒绝simulated、非queued、已完成、先于令牌签发或晚于当前时间的指令。事务失败会同时撤销令牌消费和本事务创建的指令。
+
+**该消费者目前没有接入生产指令写入。总表124、132、133仍待接入**，仅测试中构造隔离queued记录验证原子性。既有后台设备命令入口仍按原行为记录“未发送”的失败结果；不会因为126已实现就变成真实下发。后续124应先处理指令幂等重放，再在新指令事务中消费token，提交后才由真实适配器派发，不能在网络调用之后才校验token。
+
+配置、密钥发放/轮换和迁移要求见[运行手册](../../script/gym/README.md#设备二次确认认证器配置v035总表126)。未开发自助绑定、重置或恢复码接口；未部署真实认证器凭据，未进行真实手机认证器/设备联调。

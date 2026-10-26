@@ -265,4 +265,10 @@ public interface ErrorCodeConstants {
     ErrorCode COUPON_ALREADY_CLAIMED = new ErrorCode(1_070_032_006, "团购券已提交核销，请查询原记录或联系门店");
     ErrorCode COUPON_VERIFICATION_INVALID = new ErrorCode(1_070_032_007, "核销状态或凭据无效，请联系门店核实");
     ErrorCode COUPON_PREVIEW_INVALID = new ErrorCode(1_070_032_004, "团购预览条件已变化或无效，请重新核对");
+    ErrorCode ACTION_CONFIRMATION_UNAVAILABLE =
+            new ErrorCode(1_070_033_001, "当前账号未配置有效认证器或二次确认不可用");
+    ErrorCode ACTION_RESOURCE_UNAVAILABLE = new ErrorCode(1_070_033_002, "当前设备、柜格或门店不可操作");
+    ErrorCode ACTION_VERIFICATION_INVALID = new ErrorCode(1_070_033_003, "动态验证码无效或已使用");
+    ErrorCode ACTION_VERIFICATION_LOCKED = new ErrorCode(1_070_033_004, "验证码错误次数过多，请五分钟后重试");
+    ErrorCode ACTION_CONFIRMATION_INVALID = new ErrorCode(1_070_033_005, "二次确认令牌无效、已过期或已使用");
 }

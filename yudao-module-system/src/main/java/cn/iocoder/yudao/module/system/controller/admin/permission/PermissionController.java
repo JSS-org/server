@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.system.controller.admin.permission;
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.DEPT_NOT_FOUND;
 import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.ROLE_NOT_EXISTS;
 import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.USER_NOT_EXISTS;
 
@@ -11,7 +12,10 @@ import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.permission.PermissionAssignRoleDataScopeReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.permission.PermissionAssignRoleMenuReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.permission.PermissionAssignUserRoleReqVO;
+import cn.iocoder.yudao.module.system.dal.dataobject.dept.DeptDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleDO;
+import cn.iocoder.yudao.module.system.enums.permission.DataScopeEnum;
+import cn.iocoder.yudao.module.system.service.dept.DeptService;
 import cn.iocoder.yudao.module.system.service.permission.PermissionService;
 import cn.iocoder.yudao.module.system.service.permission.RoleService;
 import cn.iocoder.yudao.module.system.service.tenant.TenantService;
@@ -28,6 +32,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 @Tag(name = "管理后台 - 权限")
@@ -39,12 +45,14 @@ public class PermissionController {
     @Resource private TenantService tenantService;
     @Resource private AdminUserService userService;
     @Resource private RoleService roleService;
+    @Resource private DeptService deptService;
 
     @Operation(summary = "获得角色拥有的菜单编号")
     @Parameter(name = "roleId", description = "角色编号", required = true)
     @GetMapping("/list-role-menus")
     @PreAuthorize("@ss.hasPermission('system:permission:assign-role-menu')")
     public CommonResult<Set<Long>> getRoleMenuList(@RequestParam("roleId") Long roleId) {
+        validateVisibleRole(roleId);
         return success(permissionService.getRoleMenuListByRoleId(roleId));
     }
 
@@ -53,13 +61,14 @@ public class PermissionController {
     @PreAuthorize("@ss.hasPermission('system:permission:assign-role-menu')")
     public CommonResult<Boolean> assignRoleMenu(
             @Validated @RequestBody PermissionAssignRoleMenuReqVO reqVO) {
+        validateVisibleRole(reqVO.getRoleId());
+        Set<Long> selectedMenuIds = new HashSet<>(CollUtil.emptyIfNull(reqVO.getMenuIds()));
         // 开启多租户的情况下，需要过滤掉未开通的菜单
         tenantService.handleTenantMenu(
-                menuIds ->
-                        reqVO.getMenuIds().removeIf(menuId -> !CollUtil.contains(menuIds, menuId)));
+                menuIds -> selectedMenuIds.removeIf(menuId -> !CollUtil.contains(menuIds, menuId)));
 
         // 执行菜单的分配
-        permissionService.assignRoleMenu(reqVO.getRoleId(), reqVO.getMenuIds());
+        permissionService.assignRoleMenu(reqVO.getRoleId(), selectedMenuIds);
         return success(true);
     }
 
@@ -68,9 +77,22 @@ public class PermissionController {
     @PreAuthorize("@ss.hasPermission('system:permission:assign-role-data-scope')")
     public CommonResult<Boolean> assignRoleDataScope(
             @Valid @RequestBody PermissionAssignRoleDataScopeReqVO reqVO) {
-        permissionService.assignRoleDataScope(
-                reqVO.getRoleId(), reqVO.getDataScope(), reqVO.getDataScopeDeptIds());
+        validateVisibleRole(reqVO.getRoleId());
+        Set<Long> deptIds =
+                DataScopeEnum.DEPT_CUSTOM.getScope().equals(reqVO.getDataScope())
+                        ? CollUtil.emptyIfNull(reqVO.getDataScopeDeptIds())
+                        : Collections.emptySet();
+        if (!deptIds.isEmpty()
+                && !convertSet(deptService.getDeptList(deptIds), DeptDO::getId)
+                        .containsAll(deptIds)) {
+            throw exception(DEPT_NOT_FOUND);
+        }
+        permissionService.assignRoleDataScope(reqVO.getRoleId(), reqVO.getDataScope(), deptIds);
         return success(true);
+    }
+
+    private void validateVisibleRole(Long roleId) {
+        if (roleService.getRole(roleId) == null) throw exception(ROLE_NOT_EXISTS);
     }
 
     @Operation(summary = "获得管理员拥有的角色编号列表")

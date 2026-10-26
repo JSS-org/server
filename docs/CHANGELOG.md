@@ -4359,3 +4359,33 @@ App 模板详情/列表中不可领取时 `canTake` 为 false，已有个人券�
 ### 未做 / 后续
 
 Redis 程序读取仍 WinError 5；最新实际 HTTP/H5、岗位与用户关联及更多数据范围仍待实跑。四项 Service 不替代完整授权链或前端验收；无新完整 verify/真机/发布结果，整合验收版本不前移，完整目标继续进行中。
+
+## [2026-10-27 00:16 ~ 00:25] 角色授权先校验当前可见目标及整批部门
+
+### 意图
+
+为 P5 角色管理补齐服务端接口前置校验，避免用外租户/缺失角色 ID 读写菜单关联，以及自定义数据范围带入不可见部门。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `.../system/controller/admin/permission/PermissionController.java` | 修改 | 三个角色授权接口核验目标；自定义部门整批核验；非自定义清空部门；保留套餐过滤 |
+| `.../system/controller/admin/permission/PermissionControllerTest.java` | 新增 | 五项控制器前置校验/分配参数回归，协作者均为替身 |
+| `docs/testing.md`、`docs/CHANGELOG.md` | 修改 | 记录有效复现、测试夹具纠正与实际验收边界 |
+
+### 结构关系
+
+沿用工作台/后台认证 → PermissionController → RoleService/DeptService 当前范围查询 → PermissionService。目标校验在原菜单套餐过滤与分配之前；实际分配、缓存失效及数据权限规则保持原链路。没有新对外接口、表、迁移或权限码。
+
+### 验证证据
+
+有效首轮五项中一通过/四失败、零错误/跳过，`.runtime/role-grants-before-valid.log`；先前 TenantMenuHandler 的测试夹具类型误用已纠正，不计该次为业务复现。最终专项命令见 testing：51 项全过、零失败/错误/跳过，其中五项纯控制器、22 项角色与24 项部门 H2 Service，`.runtime/role-grants-after.log`。30 模块依赖及服务器测试编译、两个 Java 定向 Spotless 和差异检查通过。
+
+### 影响面 / 风险
+
+不可见角色/部门现在返回既有业务错误，非自定义范围不再保留旧部门 ID。租户菜单套餐仍过滤未开通项，未扩大调用者权限，也未改变内置角色的原 Service 保护。测试不包含真实租户 SQL、RBAC 过滤器或 Redis，不能据此宣称这些授权生命周期已实跑。无开发库、运行服务或部署变更。
+
+### 未做 / 后续
+
+Redis 程序读取仍 WinError 5，恢复后须实际运行菜单授权、套餐边界、同 Token 的数据范围变化和撤权，以及最新商城/工作台回归。角色页面和导出、更多管理模块、真机/原生包仍未完成，整合验收版本不前移。

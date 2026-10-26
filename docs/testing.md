@@ -1797,3 +1797,15 @@ python script/jss/verify_post_services.py
 岗位/部门专项共 41 项中 37 项 H2 执行通过、四项实际 MySQL 用例条件跳过，零失败/错误；30 模块依赖与服务器测试编译成功，`.runtime/posts-regression.log`。实际 MySQL 结果以独立脚本为准，未将常规专项的四项跳过计为通过；两个 Java 定向 Spotless、Python 编译与差异检查通过。这不是全量 verify、HTTP 安全链或实际前端验收。
 
 Redis 已安装程序读取本轮仍 WinError 5，最新商城/工作台真实 HTTP/H5 回归尚未执行。岗位移动页面与绑定/授权/用户岗位关联需独立实际验收；整合版本保持 a0a583c44a，开发库、运行服务及发布未变。
+
+## 2026-10-27 角色授权接口的目标与部门校验
+
+新增五项 `PermissionControllerTest`，直接调用控制器，协作者为 Mockito 替身，不包含 HTTP 过滤器、真实租户 SQL、Redis 或 RBAC。首个有效复现五项中一通过、四失败、零错误/跳过，`.runtime/role-grants-before-valid.log`：不可见角色可读取菜单关联、可收到菜单/数据授权请求，自定义数据范围包含不可见部门未被整批拒绝，非自定义范围仍向服务层传递旧部门 ID。最初一次测试夹具误将 TenantMenuHandler 当作 Consumer，已更正；该次夹具错误不计业务复现证据。
+
+`PermissionController` 现在先用当前租户的 RoleService.getRole 核验目标，再读取/设置菜单或数据范围；自定义范围整批查询可见部门，任一缺失返回已有 DEPT_NOT_FOUND。非自定义范围统一传空部门集合。菜单分配继续保留原租户套餐过滤，并复制请求集合以接受 null/不可变集合，无新增权限或数据表。
+
+```powershell
+.runtime/maven-integration.cmd -B -ntp -Pjss-mall -pl yudao-server -am test '-Dtest=PermissionControllerTest,RoleServiceImplTest,DeptServiceImplTest' '-Dsurefire.failIfNoSpecifiedTests=false' '-Dspotless.skip=true'
+```
+
+最终 51 项全过、零失败/错误/跳过：五项纯控制器前置校验，22 项角色 Service、24 项部门 Service 使用 H2；`.runtime/role-grants-after.log`。30 模块依赖与服务器测试编译成功，两个 Java 定向 Spotless 通过。此结果不是实际角色授权 HTTP、缓存失效或数据范围过滤验收；Redis 安装程序读取仍为 WinError 5，真实回归待恢复后执行。角色移动 UI、租户套餐及实际授权生命周期的完整结果另记，整合验收版本不变。

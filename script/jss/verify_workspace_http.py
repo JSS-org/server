@@ -90,7 +90,7 @@ def main():
         report = ROOT / 'yudao-server/target/surefire-reports/TEST-cn.iocoder.yudao.server.integration.JssWorkspaceHttpIT.xml'
         assert report.stat().st_mtime >= started
         suite = ET.parse(report).getroot()
-        assert suite.attrib['tests'] == '3' and all(suite.attrib[k] == '0' for k in ['errors', 'failures', 'skipped']), suite.attrib
+        assert suite.attrib['tests'] == '5' and all(suite.attrib[k] == '0' for k in ['errors', 'failures', 'skipped']), suite.attrib
         for case in suite.findall('testcase'):
             print('PASS ' + case.attrib['name'])
         print('Full server HTTP login/domain isolation verified with real MySQL and Redis')

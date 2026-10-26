@@ -389,4 +389,207 @@ class JssWorkspaceHttpIT {
                 0);
         expectCode(api("GET", "/admin-api/system/auth/get-permission-info", null, token, 1), 401);
     }
+
+    private long menuId(String permission) throws Exception {
+        try (var connection = datasource.getConnection();
+                var statement =
+                        connection.prepareStatement(
+                                "SELECT id FROM system_menu WHERE permission=? AND deleted=b'0'")) {
+            statement.setString(1, permission);
+            try (var rows = statement.executeQuery()) {
+                assertTrue(rows.next());
+                long id = rows.getLong(1);
+                assertFalse(rows.next());
+                return id;
+            }
+        }
+    }
+
+    private void assignMenus(String reviewer, List<Long> menus) throws Exception {
+        expectCode(
+                api(
+                        "POST",
+                        "/admin-api/system/permission/assign-role-menu",
+                        Map.of("roleId", 23004, "menuIds", menus),
+                        reviewer,
+                        1),
+                0);
+    }
+
+    private void updateMutableRole(String reviewer, int status) throws Exception {
+        expectCode(
+                api(
+                        "PUT",
+                        "/admin-api/system/role/update",
+                        Map.of(
+                                "id",
+                                23004,
+                                "name",
+                                "HTTP mutable role",
+                                "code",
+                                "jss_http_mutable",
+                                "sort",
+                                4,
+                                "status",
+                                status),
+                        reviewer,
+                        1),
+                0);
+    }
+
+    private void assertCapability(String member, boolean allowed) throws Exception {
+        var context = data(api("GET", "/app-api/jss/auth/context", null, member, 1));
+        assertEquals(allowed, ((Map<?, ?>) context.get("capabilities")).get("workspace"));
+        expectCode(api("GET", "/app-api/member/user/get", null, member, 1), 0);
+    }
+
+    @Test
+    void liveRoleMenusRoleStatusAndUserRoleAssignmentsRevokeExistingWorkspaceAccess()
+            throws Exception {
+        String reviewer = login("admin", "jssitreviewer");
+        String member = login("member", "13800009004");
+        expectCode(
+                api(
+                        "POST",
+                        "/admin-api/jss/identity/bind",
+                        Map.of(
+                                "memberUserId",
+                                23004,
+                                "adminUserId",
+                                23004,
+                                "reason",
+                                "Review mutable RBAC fixture"),
+                        reviewer,
+                        1),
+                0);
+        long entry = menuId("jss:workspace:access");
+        long query = menuId("system:user:query");
+        String original = issueWorkspace(member);
+        expectCode(
+                api("GET", "/admin-api/system/user/page?pageNo=1&pageSize=10", null, original, 1),
+                0);
+        assignMenus(reviewer, List.of(entry));
+        expectCode(
+                api("GET", "/admin-api/system/user/page?pageNo=1&pageSize=10", null, original, 1),
+                403);
+        assertCapability(member, true);
+        var permissionInfo =
+                data(api("GET", "/admin-api/system/auth/get-permission-info", null, original, 1));
+        assertFalse(((List<?>) permissionInfo.get("permissions")).contains("system:user:query"));
+        assignMenus(reviewer, List.of());
+        expectCode(
+                api("GET", "/admin-api/system/user/page?pageNo=1&pageSize=10", null, original, 1),
+                401);
+        assertCapability(member, false);
+        expectCode(api("POST", "/app-api/jss/auth/workspace-session", null, member, 1), 403);
+        assignMenus(reviewer, List.of(entry, query));
+        assertCapability(member, true);
+        expectCode(
+                api("GET", "/admin-api/system/user/page?pageNo=1&pageSize=10", null, original, 1),
+                401);
+        String enabled = issueWorkspace(member);
+        expectCode(
+                api("GET", "/admin-api/system/user/page?pageNo=1&pageSize=10", null, enabled, 1),
+                0);
+        updateMutableRole(reviewer, 1);
+        expectCode(
+                api("GET", "/admin-api/system/user/page?pageNo=1&pageSize=10", null, enabled, 1),
+                401);
+        assertCapability(member, false);
+        updateMutableRole(reviewer, 0);
+        expectCode(
+                api("GET", "/admin-api/system/user/page?pageNo=1&pageSize=10", null, enabled, 1),
+                401);
+        String assigned = issueWorkspace(member);
+        expectCode(
+                api("GET", "/admin-api/system/user/page?pageNo=1&pageSize=10", null, assigned, 1),
+                0);
+        expectCode(
+                api(
+                        "POST",
+                        "/admin-api/system/permission/assign-user-role",
+                        Map.of("userId", 23004, "roleIds", List.of()),
+                        reviewer,
+                        1),
+                0);
+        expectCode(
+                api("GET", "/admin-api/system/user/page?pageNo=1&pageSize=10", null, assigned, 1),
+                401);
+        assertCapability(member, false);
+        expectCode(
+                api(
+                        "POST",
+                        "/admin-api/system/permission/assign-user-role",
+                        Map.of("userId", 23004, "roleIds", List.of(23004)),
+                        reviewer,
+                        1),
+                0);
+        expectCode(
+                api("GET", "/admin-api/system/user/page?pageNo=1&pageSize=10", null, assigned, 1),
+                401);
+        expectCode(
+                api(
+                        "GET",
+                        "/admin-api/system/user/page?pageNo=1&pageSize=10",
+                        null,
+                        issueWorkspace(member),
+                        1),
+                0);
+    }
+
+    @Test
+    void disablingBoundEmployeeInvalidatesWorkspaceWithoutLoggingOutTheMember() throws Exception {
+        String reviewer = login("admin", "jssitreviewer");
+        String member = login("member", "13800009005");
+        expectCode(
+                api(
+                        "POST",
+                        "/admin-api/jss/identity/bind",
+                        Map.of(
+                                "memberUserId",
+                                23005,
+                                "adminUserId",
+                                23005,
+                                "reason",
+                                "Review employee status fixture"),
+                        reviewer,
+                        1),
+                0);
+        String token = issueWorkspace(member);
+        expectCode(
+                api("GET", "/admin-api/system/user/page?pageNo=1&pageSize=10", null, token, 1), 0);
+        expectCode(
+                api(
+                        "PUT",
+                        "/admin-api/system/user/update-status",
+                        Map.of("id", 23005, "status", 1),
+                        reviewer,
+                        1),
+                0);
+        expectCode(
+                api("GET", "/admin-api/system/user/page?pageNo=1&pageSize=10", null, token, 1),
+                401);
+        assertCapability(member, false);
+        expectCode(api("POST", "/app-api/jss/auth/workspace-session", null, member, 1), 403);
+        expectCode(
+                api(
+                        "PUT",
+                        "/admin-api/system/user/update-status",
+                        Map.of("id", 23005, "status", 0),
+                        reviewer,
+                        1),
+                0);
+        assertCapability(member, true);
+        expectCode(
+                api("GET", "/admin-api/system/user/page?pageNo=1&pageSize=10", null, token, 1),
+                401);
+        expectCode(
+                api(
+                        "GET",
+                        "/admin-api/system/user/page?pageNo=1&pageSize=10",
+                        null,
+                        issueWorkspace(member),
+                        1),
+                0);
+    }
 }

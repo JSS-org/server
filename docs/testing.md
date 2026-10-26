@@ -1530,3 +1530,21 @@ git diff --check
 默认启用的server依赖链全部运行：2018项，1999通过、0失败/错误、19跳过；其中infra跳过10、system跳过8、member跳过1，gym1062项全过。未启用的其他业务模块没有编译/测试，不用此结果宣称全部可选模块已验收。测试日志`/tmp/server-main-merged-tests.log`，14:02:40 BUILD SUCCESS。打包成功，日志`/tmp/server-main-merged-package.log`，14:03:49；打包跳过测试。隔离MySQL/Flyway257项检查通过、全部随机库清理，日志`/tmp/server-main-merged-migrations.log`。
 
 原功能分支的gym源码、SQL迁移、脚本及uniapp契约与合并结果逐字节一致；所有V001–V035保留。新旧上游依赖与本地权限菜单扩展一起验证，环境连接参数保留。源码目标映射125/135，剩余10项仍为已授权暂缓；真实渠道联调及上线验收不在这次合并验证内。工作区原始uniapp.md通过独立stash保护，最终按原内容与原暂存状态恢复，不提交或推送该文件。
+
+## 2026-10-26 JSS 合并主线接续复测（尚未通过）
+
+对 `e548c85428704aa30dc3e50ab71667fa3e1a5ec2` 重跑 30 模块 `jss-mall verify`。当前受限执行环境的 Java 用户目录与开发用户不同，原 Maven 缓存已只读复制到工作区忽略目录 `.runtime/maven-repository`，未调整生产依赖版本。测试 JVM 的临时目录也须位于工作区：
+
+```powershell
+& D:\Project\JSS\.tools\apache-maven-3.9.11\bin\mvn.cmd -o -B -ntp `
+  '-Dmaven.repo.local=D:/Project/JSS/JSS-server/.runtime/maven-repository' `
+  '-DargLine=-Djava.io.tmpdir=D:/Project/JSS/JSS-server/.runtime/java-temp' `
+  -Pjss-mall -pl yudao-server -am verify `
+  '-Dspotless.skip=true' '-Djss.build.final-name=yudao-server-main-merge'
+```
+
+最新运行 `16:00:17 +08:00` 结束：基础模块及 infra 通过，infra 为 245 项、0 失败/错误、10 项既有跳过；其中代码生成 17 项通过。system 缺少以下缓存依赖，后续模块全部未执行：`spring-boot-starter-mail:4.1.2`、微信 MP/Miniapp starter `4.8.6-20261010.094603`、`captcha-spring-boot-starter:2.0.0`、`jcl-over-slf4j:2.0.20`。在线构建另已确认下载受当前环境网络权限限制。日志 `.runtime/main-merge-verify-resumed.log`；这不是完整构建成功。
+
+统计 Mapper 复测同样止于上述依赖解析，日志 `.runtime/main-merge-statistics-resumed.log`，随机 schema 已清理。隔离 Redis 启动本机 WinGet 包中的程序返回 `WinError 5`，本轮真实 HTTP/H5 没有开始，不能沿用合并前的通过报告。只读检查确认 HTTP/统计随机 schema 均无残留；开发库、默认运行 jar 和原服务未替换。
+
+兄弟前端已准备第 3 个真实浏览器场景，覆盖用户 CRUD、状态、密码、角色与写权限撤销后的接口拒绝；仅通过静态类型检查和用例发现，尚无真实运行结果。环境恢复后先完成完整构建，再运行 `script/jss/verify_workspace_http.py --browser` 和 `script/jss/verify_statistics_mappers.py`。仍须核对 JUnit 10 项、Playwright 3 项、日志脱敏及清理结果，然后才更新整合版本。

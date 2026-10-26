@@ -34,6 +34,10 @@ public class LoginLogServiceImpl implements LoginLogService {
     @Override
     public void createLoginLog(LoginLogCreateReqDTO reqDTO) {
         LoginLogDO loginLog = BeanUtils.toBean(reqDTO, LoginLogDO.class);
+        // Scheduled logout has no browser context, but the production column is NOT NULL.
+        if (loginLog.getUserAgent() == null) {
+            loginLog.setUserAgent("");
+        }
         loginLogMapper.insert(loginLog);
     }
 }

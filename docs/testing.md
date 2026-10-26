@@ -1809,3 +1809,22 @@ Redis 已安装程序读取本轮仍 WinError 5，最新商城/工作台真实 H
 ```
 
 最终 51 项全过、零失败/错误/跳过：五项纯控制器前置校验，22 项角色 Service、24 项部门 Service 使用 H2；`.runtime/role-grants-after.log`。30 模块依赖与服务器测试编译成功，两个 Java 定向 Spotless 通过。此结果不是实际角色授权 HTTP、缓存失效或数据范围过滤验收；Redis 安装程序读取仍为 WinError 5，真实回归待恢复后执行。角色移动 UI、租户套餐及实际授权生命周期的完整结果另记，整合验收版本不变。
+
+## 2026-10-27 审计查询实际 MySQL 与无浏览器登录日志
+
+新增 `script/jss/verify_audit_services.py` 与 `JssAuditMySqlServiceIT`。仅连接已确认归属的 MySQL 8.4.9:13316，在 `jss_audit_service_verify_<12 位随机值>` 中载入原框架 SQL 的 system_login_log/system_operate_log DDL；装配生产 LoginLog/OperateLog Service、Mapper、字段填充、SQL 注入器及租户/分页插件，不使用业务替身或 Redis/HTTP。脚本遮盖数据库密码、检查报告时效/四项计数和零失败/错误/跳过，finally 再核验归属并删除随机 schema。
+
+首个有效运行四项中三通过、一错误（零失败/跳过），`.runtime/audit-services-before-valid.log`：DTO 允许 UA 缺失，定时退出未提供 UA 时实际 MySQL 因 `Field 'user_agent' doesn't have a default value` 拒绝写入。最初新测试的继承链式 setter 导致编译失败已纠正，不计为业务复现。LoginLogServiceImpl 现在仅将 null UA 归一为空字符串，已有值原样保留，无表结构变更。
+
+```powershell
+$env:JSS_MAVEN_COMMAND='D:/Project/JSS/JSS-server/.runtime/maven-integration.cmd'
+python script/jss/verify_audit_services.py
+.runtime/maven-integration.cmd -B -ntp -Pjss-mall -pl yudao-server -am test-compile '-DskipTests' '-Dspotless.skip=true'
+.runtime/maven-integration.cmd -B -ntp -Pjss-mall -pl yudao-module-system -am test '-Dtest=LoginLogServiceImplTest,OperateLogServiceImplTest,JssAuditMySqlServiceIT' '-Dsurefire.failIfNoSpecifiedTests=false' '-Dspotless.skip=true'
+```
+
+最终实际 MySQL 四项全过、零失败/错误/跳过，报告 `.runtime/audit-services-final.xml` 和日志 `.runtime/audit-services-final.log`。覆盖账号/IP/布尔结果/时间组合与分页、操作人/业务大整数精确筛选、模块/操作名/操作内容和时间组合、两个租户的列表/详情隔离、社交登录及定时退出缺失可选账号/UA。脚本随机 schema 已清理。
+
+常规日志专项九项中五项 H2 通过、四项实际 MySQL 条件跳过，零失败/错误；`.runtime/audit-regression-valid.log`，实际结果以独立脚本为准。服务器30模块依赖和测试编译成功（`.runtime/audit-compile.log`），两个 Java 定向 Spotless、Python 编译与差异检查通过。首次专项命令的 PowerShell 未引用带点 Maven 参数错误已修正，未计作执行通过。
+
+Redis 安装程序读取仍 WinError 5，本批不包含实际 HTTP/RBAC/日志异步生成、详情名称翻译、导出或前端验收。没有新完整 verify、开发库/运行服务、部署或真机变更；前端新增审计查询四页及实际 H5 用例另行记录，整合验收版本未前移。

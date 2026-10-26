@@ -4389,3 +4389,36 @@ Redis 程序读取仍 WinError 5；最新实际 HTTP/H5、岗位与用户关联�
 ### 未做 / 后续
 
 Redis 程序读取仍 WinError 5，恢复后须实际运行菜单授权、套餐边界、同 Token 的数据范围变化和撤权，以及最新商城/工作台回归。角色页面和导出、更多管理模块、真机/原生包仍未完成，整合验收版本不前移。
+
+## [2026-10-27 00:49 ~ 01:13] 实际 MySQL 核对审计查询并修复无浏览器日志写入
+
+### 意图
+
+接续整合计划 P5 的移动审计查询，以生产 DDL 和服务核对筛选、分页与租户边界，修复 DTO 允许省略 UA 而生产表无法写入的矛盾。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `.../system/service/logger/LoginLogServiceImpl.java` | 修改 | 第37行起将 null userAgent 写为空字符串，保留已有值 |
+| `.../system/integration/JssAuditMySqlServiceIT.java` | 新增 | 四项实际 Service/Mapper/租户分页 SQL 与可选 UA 回归 |
+| `script/jss/verify_audit_services.py` | 新增 | 原始双表 DDL、隔离随机 schema、报告时效/计数检查、凭证遮盖及清理 |
+| `docs/testing.md`、`docs/CHANGELOG.md` | 修改 | 复现步骤、实际/H2/HTTP边界和后续项 |
+
+### 结构关系
+
+保持 LoginLogController/OperateLogController → 原 Service → 生产 Mapper/租户与分页插件 → 数据库。写入仍由 LoginLogServiceImpl 转换 DTO 后插入，仅补足生产列的非空契约。独立测试直接装配生产对象和 MySQL，不经过 HTTP 或业务替身；没有接口、表、权限或迁移变化。
+
+### 验证证据
+
+有效复现四项中三通过/一错误（user_agent 无默认值），零失败/跳过，`.runtime/audit-services-before-valid.log`；先前测试继承 setter 编译错误不计业务证据。修复后独立脚本最终四项实际 MySQL 全过、零失败/错误/跳过，`.runtime/audit-services-final.log` 和保存的实际 XML。社交及定时退出两类缺失 UA 均已验证，其他覆盖和命令见 testing，随机 schema 已清理。
+
+日志 H2 专项五项通过、四项实际 MySQL 条件跳过，零失败/错误，`.runtime/audit-regression-valid.log`；服务器30模块依赖与测试编译成功，两个 Java 定向格式、Python 编译及差异检查通过。首次专项命令参数引用错误已更正，未把失败命令或条件跳过登记为通过。
+
+### 影响面 / 风险
+
+无浏览器上下文的登录/退出日志现在可写入，查询字段与既有 UA 原值不变。缺失 UA 不伪造客户端标识；可选账号仍采用原数据库默认值。测试验证租户 SQL，不代替服务端鉴权、日志异步投递或保留/脱敏策略验收。无开发数据、运行服务或发布变更。
+
+### 未做 / 后续
+
+Redis 程序读取仍 WinError 5，恢复后需串行执行商城/工作台真实 HTTP/H5，包含新增审计页面及无权限/跨租户拒绝。详情名称翻译、统一导出、更多管理模块和真机未完成；整合验收版本不前移，完整目标继续进行中。

@@ -1,5 +1,17 @@
 # JSS 隔离数据库验证
 
+## 完整后端 HTTP 认证
+
+先启动上述工具管理的 MySQL 13316 与 Redis 16379，再运行：
+
+```powershell
+python script/jss/verify_workspace_http.py
+```
+
+脚本在随机独立 schema 导入受控框架基线，通过实际 Flyway 执行 Gym/JSS 迁移，准备临时测试身份，启动 `jss-mall` 的完整 `YudaoServerApplication`。使用真实密码、OAuth、MySQL、Redisson 和 HTTP 安全过滤链，关闭 mock token；不会向现有开发库写入用户、角色或绑定。测试验证未绑定会员的工作台能力关闭、同手机号/ID/会员分组不自动升级、会员 Token 被管理接口拒绝、会员退出不影响独立管理会话。没有替换控制器或安全组件。
+
+该命令会经运行 ID 核对后重启任务专用 Redis，以隔离框架缓存；请在其他隔离 Redis 测试结束后串行运行。凭证仅经子进程环境传递，脱敏日志位于忽略目录 `.runtime/jss-http/workspace-http-test.log`。结束后删除自己的随机库并停止本次 Redis；现有 3306、6379、48080 服务不受影响。默认单元测试不会运行这一环境门控的集成测试。绑定/撤权/RBAC 的 HTTP 组合仍待后续补齐。
+
 ## 隔离 Redis
 
 `redis_sandbox.py` 管理本仓库 `.runtime/jss-redis` 下的独立 Redis，默认仅监听 `127.0.0.1:16379`，拒绝默认业务端口 6379。要求先安装可运行的 Redis；不在 PATH 时用 `--redis-server` 或 `JSS_REDIS_SERVER` 指定可执行文件。首次使用示例：

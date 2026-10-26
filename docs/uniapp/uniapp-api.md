@@ -1247,3 +1247,24 @@ balance是当前净余额；totalEarned是全部正向流水累计，包含返�
 账本支持在原积分已消费后冲回earn形成负余额，表示积分欠额，不伪装为可用积分；负余额时不能继续支出，后续真实正向记账先抵扣欠额。这是内部记账能力，本阶段没有启用退款赠分冲回政策。记账与账户更新在调用方业务事务中共同提交或回滚，同一租户互斥和行锁防止并发超扣/超返；记录不提供修改、删除或直接改余额入口。
 
 V028新增gym_point_account及gym_point_record，当前76张gym表，不为历史会员建账户、不补算消费/邀请积分。消费/邀请奖励规则与自动发放仍按用户要求暂缓，当前无生产业务自动调用记账服务；61–63商品与兑换尚未实现。测试中的记账数据只用于隔离测试，不导入业务库，也不当作真实奖励来源。
+
+
+### 积分兑换商品配置与查询（V029，总表61）
+
+`GET /app-api/gym/point-products`要求当前有效会员身份、营业门店及本人门店关系。必填`storeId`，支持`pageNo`/`pageSize`（最大200）。仅列出当前租户、指定门店启用且库存大于0或无限库存的商品，关联卡模板必须仍为published且适用于该店；过滤在商品分页前完成，按商品ID升序，total为过滤后的总数。未配置时返回真实空列表。
+
+响应保持五字段`{id,name,requiredPoints,stock,cardProductId}`：id是独立积分商品ID，cardProductId是具体卡模板版本ID，均为字符串；requiredPoints为1～9007199254740991的整数；stock为当前剩余件数，null明确表示不限库存，0表示售罄且不出现在会员目录。查询不会创建积分账户、扣分、预占库存或发卡；目录可见不等同已经支持兑换。
+
+商品通过以下后台辅助接口配置，不计入135项移动接口数量。均要求有效后台登录、`gym:points:products`功能权限及请求门店的数据范围；会员身份即使同号后台账号有权限也不能调用管理服务。
+
+| 方法与路径 | 请求 | 返回 |
+| --- | --- | --- |
+| GET `/admin-api/gym/point-products` | `storeId,pageNo?,pageSize?` | Page of AdminPointProduct，ID降序，包含下架和售罄商品 |
+| POST `/admin-api/gym/point-products` | SavePointProduct，revision必须省略或null | AdminPointProduct，新版本1 |
+| PUT `/admin-api/gym/point-products/{id}` | SavePointProduct，revision必填且等于最新值 | AdminPointProduct，发生变化则版本递增 |
+
+SavePointProduct为完整配置：`storeId:ID,cardProductId:ID,name:string,requiredPoints:int,stock:int?,enabled:boolean,revision:int?`。name去首尾空白后非空，最多100字符；requiredPoints范围如上；stock为0～2147483647或null，PUT省略stock也代表改为不限库存，因此保存有限库存时必须明确传值。创建时显式选择enabled，不提供默认上架。新建配置必须引用本租户适用该店的真实模板，启用时还必须已发布。门店和模板一经创建不能修改，改用新模板需新建商品并下架原商品；允许同一模板有多个独立商品，不按名称或模板自动合并。
+
+AdminPointProduct包含`id,storeId,cardProductId,name,requiredPoints,stock,enabled,revision`。修改以租户互斥及商品行锁串行，旧revision拒绝覆盖；同版本完全同值请求不递增版本。版本也为安全整数。下架既有商品不依赖模板当前有效，模板删除/归档后仍可下架；再次上架必须重新核验。该后台POST没有幂等重放承诺，网络结果未知时先查询商品，避免重复新建。
+
+错误码：1070030004配置无效或试图修改固定归属；1070030005商品不存在/不属于请求门店；1070030006版本冲突；1070030007会员无法查询该门店。基础身份、权限、字段校验沿用既有错误。V029只增加产品表和权限定义，不自动授予角色、填商品、赠积分或发卡。62–63兑换及结果尚未实现；后续必须在同一业务事务校验当前商品版本和库存，将扣分、库存、实际权益及失败处理与原业务记录一致保存。

@@ -3216,3 +3216,41 @@ V028新增两表，当前76表、下一V029；先备份并migrate/validate再开
 ### 未做 / 后续
 
 当前111项新增本地实现、4项复用源码、20项待开发。61–63商品及兑换、真实发卡和失败返还业务尚未接入；内部账本测试不代表完整兑换验收。消费/邀请自动奖励、退款自动积分冲回和历史补发按已确认边界暂缓；支付、签约、设备及监控外部服务继续暂缓。未做部署HTTP、多节点或规模联调，仅本地小步提交，不推送。
+
+## [2026-10-26 09:30 ~ 09:42] 积分兑换商品配置与会员目录
+
+### 意图
+
+完成135项总表61，并提供真实后台配置来源，作为下一步积分兑换事务的商品与库存依据。不根据卡片现金价格推算积分成本，不将商品查询等同于兑换成功；积分自动奖励继续按用户要求暂缓。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `controller/app/mobile/AppGymPointProductsController.java`、`vo/GymMobilePointProductsVO.java` | 新增 | 本人门店积分商品目录，五字段及分页参数 |
+| `controller/admin/points/GymPointProductsController.java`、`vo/GymPointProductVO.java` | 新增 | 后台列表、新建和完整更新，专属功能权限 |
+| `service/points/GymPointProductsService.java` | 新增 | 真实模板/门店核验、身份及范围、版本冲突、库存可空与SQL分页 |
+| `dal/dataobject/points/GymPointProductDO.java`、`dal/mysql/points/GymPointProductMapper.java` | 新增 | 固定归属、成本、库存、上架状态及版本持久化 |
+| `enums/ErrorCodeConstants.java` | 修改 | 配置无效、不存在、版本冲突、门店不可用四类错误 |
+| `sql/gym/migration/mysql/V029__gym_point_products.sql`、H2建表/清理、`script/gym/verify-migrations.py` | 新增/修改 | 一表至77表、权限定义、约束/索引及11项隔离检查 |
+| `GymMobileMemberServiceTest.java`、`GymOrganizationServiceTest.java`、`GymMobilePointProductsControllerTest.java` | 修改/新增 | 10业务、1项功能权限、3项MVC测试 |
+| `docs/uniapp/`契约、总表、实施进度和机器清单 | 修改 | 116/135、后台辅助接口、库存/版本语义与兑换未完成边界 |
+| `docs/architecture.md`、`docs/testing.md`、`script/gym/README.md`、`script/gym/DATABASE.md` | 修改 | 调用关系、证据、部署及下一版本V030 |
+
+Java相对路径位于yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym；测试位于同模块src/test。
+
+### 结构关系
+
+会员和后台Controller进入同一ProductsService的不同方法。会员身份及门店关系检查后，先筛出当前可用模板，再在商品SQL加入租户/门店/启用/库存条件后分页。后台独立权限加门店数据范围，禁止会员账号使用；修改按租户互斥→门店→商品→模板锁，校验最新版本后整体保存。模板失效可下架商品，不能重新启用；固定门店及模板不得改写。商品目录不调用积分账本或现有发卡服务。
+
+### 验证证据
+
+Spotless通过，完整gym869项通过（会员专项69、组织服务511），member4通过及1项既有禁用跳过；新增14项。覆盖真实字段、权限/租户、适用模板和库存过滤后的分页、无副作用、旧版本、并发三次仅一次更新及失败回滚。早期夹具重复全局主键问题修正后重新运行完整回归。隔离MySQL/Flyway170检查通过且临时库全部清理；server package -DskipTests成功（打包跳过测试）。源码覆盖Contract135/mapped116/missing19；git diff --check通过，命令与日志见docs/testing.md本批章节。
+
+### 影响面 / 风险
+
+V029新增一表至77表，下一V030；先备份、migrate/validate再升级应用。新增gym:points:products定义，不自动授予已有角色，不回填商品/奖励。后台PUT完整替换，stock省略/null改为不限库存，有限库存必须传明确值；旧版本拒绝，固定归属改变须另建商品。同模板允许多个独立商品，后台POST不承诺幂等，结果未知先查列表。当前模板候选在内存检查，大规模性能未测。业务库、前端和用户原始uniapp.md内容/暂存状态保持。
+
+### 未做 / 后续
+
+112项新增本地实现、4项复用源码、19项仍待开发；三个后台辅助接口不计入135项。62–63兑换扣分/库存消耗/真实发卡及结果仍待接入，目录查询不宣称兑换闭环完成。消费/邀请自动奖励以及已确认的外部服务继续暂缓。未做部署HTTP、多节点或规模联调；仅本地小步提交，不推送。

@@ -44,6 +44,8 @@ import java.util.*;
 import java.util.concurrent.*;
 
 @Import({
+    cn.iocoder.yudao.module.gym.service.points.GymPointProductsService.class,
+    GymDataScope.class,
     GymMobileIdentityService.class,
     GymMobileInvitationService.class,
     GymMobileSubscriptionsService.class,
@@ -59,6 +61,9 @@ import java.util.concurrent.*;
     GymMobileMemberServiceTest.Config.class
 })
 class GymMobileMemberServiceTest extends BaseDbUnitTest {
+    @Resource cn.iocoder.yudao.module.gym.service.points.GymPointProductsService pointProducts;
+    @Resource cn.iocoder.yudao.module.gym.dal.mysql.card.GymCardTemplateMapper pointTemplates;
+    @MockitoBean cn.iocoder.yudao.module.system.api.permission.PermissionApi pointPermissions;
     @Resource GymMobileIdentityService identities;
     @Resource GymMobileInvitationService invitations;
     @Resource GymMobileSubscriptionsService mobileSubscriptions;
@@ -1792,5 +1797,318 @@ class GymMobileMemberServiceTest extends BaseDbUnitTest {
                 () -> postPoints(member, "test:too-much", "earn", 1, null), POINT_ENTRY_INVALID);
         assertEquals(max, mobilePoints.balance().totalEarned());
         assertEquals(1L, mobilePoints.records(pointQuery(null)).getTotal());
+    }
+
+    void pointAdmin() {
+        login(1L, 10L, 2);
+        var scope =
+                new cn.iocoder.yudao.framework.common.biz.system.permission.dto
+                        .DeptDataPermissionRespDTO();
+        scope.setDeptIds(Set.of(101L));
+        when(pointPermissions.getDeptDataPermission(10L)).thenReturn(scope);
+    }
+
+    Long pointTemplate(String scope, String ids, String status) {
+        var t = new cn.iocoder.yudao.module.gym.dal.dataobject.card.GymCardTemplateDO();
+        t.setName("真实次卡");
+        t.setKind("count");
+        t.setIncludedUses(10);
+        t.setPrice(new BigDecimal("100"));
+        t.setAccessScope(scope);
+        t.setStoreIds(ids);
+        t.setStatus(status);
+        t.setVersion(1);
+        pointTemplates.insert(t);
+        t.setFamilyId(t.getId());
+        pointTemplates.updateById(t);
+        return t.getId();
+    }
+
+    cn.iocoder.yudao.module.gym.controller.admin.points.vo.GymPointProductVO.Save pointProduct(
+            Long card) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.admin.points.vo.GymPointProductVO.Save();
+        req.setStoreId(101L);
+        req.setCardProductId(card);
+        req.setName(" 次卡兑换 ");
+        req.setRequiredPoints(100L);
+        req.setEnabled(true);
+        req.setStock(5);
+        return req;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobilePointProductsVO.Query
+            productQuery(Long store) {
+        var q =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobilePointProductsVO
+                        .Query();
+        q.setStoreId(store);
+        return q;
+    }
+
+    @Test
+    void pointProductsConfiguredCatalogHasRealFieldsAndNoAccountingSideEffects() {
+        initialize();
+        pointAdmin();
+        var req = pointProduct(pointTemplate("all", "[]", "published"));
+        var configured = pointProducts.save(null, req);
+        assertEquals(1, configured.revision());
+        assertEquals("次卡兑换", configured.name());
+        assertEquals(1L, pointProducts.manage(productQuery(101L)).getTotal());
+        login(1L, 10L, 1);
+        var result = pointProducts.catalog(productQuery(101L));
+        assertEquals(1L, result.getTotal());
+        var product = result.getList().getFirst();
+        assertEquals(configured.id(), product.id());
+        assertEquals(req.getCardProductId().toString(), product.cardProductId());
+        assertEquals(100, product.requiredPoints());
+        assertEquals(5, product.stock());
+        pointProducts.catalog(productQuery(101L));
+        assertEquals(5, jdbc.queryForObject("SELECT stock FROM gym_point_product", Integer.class));
+        for (var table : List.of("gym_point_record", "gym_point_account", "gym_member_card"))
+            assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM " + table, Integer.class));
+    }
+
+    @Test
+    void pointProductsUpdatesRequireCurrentRevisionAndPreserveExplicitUnlimitedStock() {
+        pointAdmin();
+        var req = pointProduct(pointTemplate("all", "[]", "published"));
+        Long id = Long.valueOf(pointProducts.save(null, req).id());
+        assertServiceException(() -> pointProducts.save(id, req), POINT_PRODUCT_INVALID);
+        req.setRevision(1L);
+        assertEquals(1, pointProducts.save(id, req).revision());
+        req.setStock(null);
+        req.setRequiredPoints(9007199254740991L);
+        var result = pointProducts.save(id, req);
+        assertEquals(2, result.revision());
+        assertNull(result.stock());
+        assertNull(jdbc.queryForObject("SELECT stock FROM gym_point_product", Integer.class));
+        req.setStock(20);
+        assertServiceException(() -> pointProducts.save(id, req), POINT_PRODUCT_CONFLICT);
+        assertEquals(
+                9007199254740991L,
+                pointProducts.manage(productQuery(101L)).getList().getFirst().requiredPoints());
+        req.setRevision(2L);
+        req.setStock(0);
+        assertEquals(3, pointProducts.save(id, req).revision());
+    }
+
+    @Test
+    void pointProductsCannotMoveStoreOrChangeTemplateAndTenantIdsStayIsolated() {
+        pointAdmin();
+        var req = pointProduct(pointTemplate("all", "[]", "published"));
+        Long id = Long.valueOf(pointProducts.save(null, req).id());
+        req.setRevision(1L);
+        req.setCardProductId(pointTemplate("all", "[]", "published"));
+        assertServiceException(() -> pointProducts.save(id, req), POINT_PRODUCT_INVALID);
+        req.setStoreId(102L);
+        assertServiceException(() -> pointProducts.save(id, req), STORE_NO_PERMISSION);
+        assertServiceException(() -> pointProducts.manage(productQuery(102L)), STORE_NO_PERMISSION);
+        login(2L, 10L, 2);
+        store(202L, "active");
+        var otherScope =
+                new cn.iocoder.yudao.framework.common.biz.system.permission.dto
+                        .DeptDataPermissionRespDTO();
+        otherScope.setDeptIds(Set.of(202L));
+        when(pointPermissions.getDeptDataPermission(10L)).thenReturn(otherScope);
+        req.setStoreId(202L);
+        assertEquals(0L, pointProducts.manage(productQuery(202L)).getTotal());
+        assertServiceException(() -> pointProducts.save(id, req), POINT_PRODUCT_NOT_EXISTS);
+        req.setRevision(null);
+        assertServiceException(() -> pointProducts.save(null, req), POINT_PRODUCT_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        assertServiceException(() -> pointProducts.manage(productQuery(202L)), STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void pointProductsMemberCannotManageEvenIfSystemPermissionsWereAccidentallyPresent() {
+        initialize();
+        var req = pointProduct(pointTemplate("all", "[]", "published"));
+        pointAdmin();
+        login(1L, 10L, 1);
+        assertServiceException(() -> pointProducts.save(null, req), STORE_NO_PERMISSION);
+        assertServiceException(() -> pointProducts.manage(productQuery(101L)), STORE_NO_PERMISSION);
+        assertEquals(
+                0, jdbc.queryForObject("SELECT COUNT(*) FROM gym_point_product", Integer.class));
+    }
+
+    @Test
+    void pointProductsValidateConfigurationAndNeverCreatePartialProduct() {
+        pointAdmin();
+        var req = pointProduct(pointTemplate("selected", "[102]", "published"));
+        assertServiceException(() -> pointProducts.save(null, req), POINT_PRODUCT_INVALID);
+        req.setCardProductId(pointTemplate("all", "[]", "draft"));
+        assertServiceException(() -> pointProducts.save(null, req), POINT_PRODUCT_INVALID);
+        req.setCardProductId(99999L);
+        assertServiceException(() -> pointProducts.save(null, req), POINT_PRODUCT_INVALID);
+        req.setCardProductId(pointTemplate("all", "[]", "published"));
+        req.setStock(-1);
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> pointProducts.save(null, req));
+        req.setStock(5);
+        req.setRequiredPoints(0L);
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> pointProducts.save(null, req));
+        req.setRequiredPoints(9007199254740992L);
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> pointProducts.save(null, req));
+        req.setRequiredPoints(1L);
+        req.setName(" ");
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> pointProducts.save(null, req));
+        assertEquals(
+                0, jdbc.queryForObject("SELECT COUNT(*) FROM gym_point_product", Integer.class));
+    }
+
+    @Test
+    void pointProductsCatalogFiltersBeforePaginationAndIncludesOnlyEligibleTemplates() {
+        initialize();
+        pointAdmin();
+        Long valid = pointTemplate("selected", "[101]", "published");
+        var req = pointProduct(valid);
+        req.setStock(0);
+        pointProducts.save(null, req);
+        req.setStock(5);
+        req.setEnabled(false);
+        pointProducts.save(null, req);
+        req.setEnabled(true);
+        var first = pointProducts.save(null, req);
+        req.setStock(null);
+        var second = pointProducts.save(null, req);
+        Long archived = pointTemplate("all", "[]", "published");
+        req.setCardProductId(archived);
+        pointProducts.save(null, req);
+        jdbc.update("UPDATE gym_card_template SET status='archived' WHERE id=?", archived);
+        // Corrupt/out-of-band and other-tenant rows must not become visible or alter totals.
+        jdbc.update(
+                "INSERT INTO gym_point_product(store_id,card_product_id,name,required_points,stock,enabled,tenant_id) VALUES(101,?,'foreign',1,3,TRUE,2)",
+                valid);
+        Long outside = pointTemplate("selected", "[102]", "published");
+        jdbc.update(
+                "INSERT INTO gym_point_product(store_id,card_product_id,name,required_points,stock,enabled,tenant_id) VALUES(101,?,'outside',1,3,TRUE,1)",
+                outside);
+        login(1L, 10L, 1);
+        var q = productQuery(101L);
+        q.setPageSize(1);
+        assertEquals(2L, pointProducts.catalog(q).getTotal());
+        assertEquals(first.id(), pointProducts.catalog(q).getList().getFirst().id());
+        q.setPageNo(2);
+        assertEquals(second.id(), pointProducts.catalog(q).getList().getFirst().id());
+        assertNull(pointProducts.catalog(q).getList().getFirst().stock());
+        q.setPageNo(3);
+        assertTrue(pointProducts.catalog(q).getList().isEmpty());
+        assertEquals(2L, pointProducts.catalog(q).getTotal());
+        jdbc.update("UPDATE gym_card_template SET deleted=TRUE WHERE id=?", valid);
+        assertEquals(0L, pointProducts.catalog(productQuery(101L)).getTotal());
+    }
+
+    @Test
+    void pointProductsCatalogRequiresCurrentIdentityActiveStoreAndMembership() {
+        assertThrows(
+                cn.iocoder.yudao.framework.common.exception.ServiceException.class,
+                () -> pointProducts.catalog(productQuery(101L)));
+        Long member = initialize();
+        assertEquals(0L, pointProducts.catalog(productQuery(101L)).getTotal());
+        login(1L, 10L, 2);
+        assertThrows(
+                cn.iocoder.yudao.framework.common.exception.ServiceException.class,
+                () -> pointProducts.catalog(productQuery(101L)));
+        login(1L, 10L, 1);
+        store(102L, "active");
+        assertServiceException(
+                () -> pointProducts.catalog(productQuery(102L)), POINT_PRODUCT_UNAVAILABLE);
+        jdbc.update("UPDATE gym_store SET status='inactive' WHERE id=101");
+        assertServiceException(
+                () -> pointProducts.catalog(productQuery(101L)), POINT_PRODUCT_UNAVAILABLE);
+        jdbc.update("UPDATE gym_store SET status='active' WHERE id=101");
+        jdbc.update("UPDATE gym_member_store SET deleted=TRUE WHERE member_id=?", member);
+        assertServiceException(
+                () -> pointProducts.catalog(productQuery(101L)), POINT_PRODUCT_UNAVAILABLE);
+        login(2L, 10L, 1);
+        assertThrows(
+                cn.iocoder.yudao.framework.common.exception.ServiceException.class,
+                () -> pointProducts.catalog(productQuery(101L)));
+    }
+
+    @Test
+    void pointProductsCanDisableAfterTemplateRemovalWithoutReactivation() {
+        initialize();
+        pointAdmin();
+        var req = pointProduct(pointTemplate("all", "[]", "published"));
+        Long id = Long.valueOf(pointProducts.save(null, req).id());
+        jdbc.update("UPDATE gym_card_template SET deleted=TRUE WHERE id=?", req.getCardProductId());
+        req.setRevision(1L);
+        req.setEnabled(false);
+        assertEquals(2, pointProducts.save(id, req).revision());
+        req.setRevision(2L);
+        req.setEnabled(true);
+        assertServiceException(() -> pointProducts.save(id, req), POINT_PRODUCT_INVALID);
+        assertFalse(pointProducts.manage(productQuery(101L)).getList().getFirst().enabled());
+    }
+
+    @Test
+    void pointProductsConcurrentConfigEditsCannotOverwriteEachOther() throws Exception {
+        pointAdmin();
+        Long card = pointTemplate("all", "[]", "published");
+        Long id = Long.valueOf(pointProducts.save(null, pointProduct(card)).id());
+        try (var executor = Executors.newFixedThreadPool(3)) {
+            var tasks = new ArrayList<Callable<Boolean>>();
+            for (int i = 0; i < 3; i++) {
+                final int n = i;
+                tasks.add(
+                        () -> {
+                            login(1L, 10L, 2);
+                            try {
+                                var req = pointProduct(card);
+                                req.setRevision(1L);
+                                req.setStock(10 + n);
+                                try {
+                                    pointProducts.save(id, req);
+                                    return true;
+                                } catch (
+                                        cn.iocoder.yudao.framework.common.exception.ServiceException
+                                                e) {
+                                    assertEquals(POINT_PRODUCT_CONFLICT.getCode(), e.getCode());
+                                    return false;
+                                }
+                            } finally {
+                                clear();
+                            }
+                        });
+            }
+            int successes = 0;
+            for (var f : executor.invokeAll(tasks)) if (f.get(10, TimeUnit.SECONDS)) successes++;
+            assertEquals(1, successes);
+        }
+        assertEquals(2, pointProducts.manage(productQuery(101L)).getList().getFirst().revision());
+    }
+
+    @Test
+    void pointProductsFailedUpdateRollsBackStockPriceAndRevision() {
+        pointAdmin();
+        var req = pointProduct(pointTemplate("all", "[]", "published"));
+        Long id = Long.valueOf(pointProducts.save(null, req).id());
+        req.setRevision(1L);
+        req.setStock(20);
+        req.setRequiredPoints(200L);
+        jdbc.execute(
+                "ALTER TABLE gym_point_product ADD CONSTRAINT test_point_product_failure CHECK (stock<=10)");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () -> pointProducts.save(id, req));
+        } finally {
+            jdbc.execute(
+                    "ALTER TABLE gym_point_product DROP CONSTRAINT test_point_product_failure");
+        }
+        var result = pointProducts.manage(productQuery(101L)).getList().getFirst();
+        assertEquals(1, result.revision());
+        assertEquals(5, result.stock());
+        assertEquals(100, result.requiredPoints());
+        assertEquals(2, pointProducts.save(id, req).revision());
     }
 }

@@ -247,4 +247,8 @@ public interface ErrorCodeConstants {
     ErrorCode POINT_ENTRY_INVALID = new ErrorCode(1_070_030_001, "积分记账参数或原始流水不合法");
     ErrorCode POINT_EVENT_CONFLICT = new ErrorCode(1_070_030_002, "积分业务事件已存在且内容不一致");
     ErrorCode POINT_BALANCE_INSUFFICIENT = new ErrorCode(1_070_030_003, "可用积分不足");
+    ErrorCode POINT_PRODUCT_INVALID = new ErrorCode(1_070_030_004, "积分商品配置无效");
+    ErrorCode POINT_PRODUCT_NOT_EXISTS = new ErrorCode(1_070_030_005, "积分商品不存在");
+    ErrorCode POINT_PRODUCT_CONFLICT = new ErrorCode(1_070_030_006, "积分商品已更新，请重新读取后保存");
+    ErrorCode POINT_PRODUCT_UNAVAILABLE = new ErrorCode(1_070_030_007, "当前门店不可查询积分商品");
 }

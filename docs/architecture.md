@@ -717,3 +717,12 @@ AppGymPointsController→MobilePointsService→IdentityService→PointAccount/Po
 GymPointLedgerService.append为内部MANDATORY方法，必须由已核验来源/授权的业务事务调用，当前没有生产调用者或对外写接口。锁顺序为租户互斥→会员→同键旧流水→账户→原流水及已发生冲回；查询均锁定当前数据，串行校验余额与原额上限。新流水、累计正负收支和净余额同事务；重复同载荷返回首次流水和当时余额，变更载荷拒绝。earn正向、spend负向且不超支、refund反向关联原earn/spend；不允许修改或删除既有流水。原earn已消费后的冲回可形成负余额，后续支出拒绝，账本忠实保留欠额。
 
 V028两表使当前gym表数76，数据库约束账户恒等式、计数边界、单笔符号/类型及必需原流水。未接消费/邀请或退款自动积分钩子，未造历史账户，未改Card/Commerce/Identity业务；商品与兑换仍待后续，自动奖励暂缓保持。
+
+
+## 积分兑换商品（V029）
+
+会员AppGymPointProductsController与后台GymPointProductsController分别进入GymPointProductsService的catalog/manage/save。会员读取调用IdentityService验证真实会员及有效账号，再检查当前门店关系；后台以独立功能权限、账号类型/租户和GymDataScope门店范围控制。两个分支都用同一产品持久化表，不复用现金销售价格或虚构兑换订单。
+
+产品固定关联store_id与card_product_id（具体卡模板版本），维护required_points、可空剩余stock、enabled和revision。修改遵循租户业务互斥→门店→商品→模板锁；旧版本拒绝、同值不更新、失败全部回滚。模板下架/删除后可下架商品，不能以过期模板重新启用。会员目录读取有效模板ID后在产品SQL分页前加入全部商品过滤，查询无账户、库存或权益写副作用。
+
+当前只完成配置和目录，不把库存配置当作已完成库存消费。后续62–63须以真实兑换记录连接LedgerService和受控会员发卡入口，加入库存版本递增及失败一致性；不能绕过现有后台授权或冒充已支付订单。V029新增一表至77表、一个权限定义，未授予角色、未接入自动奖励。

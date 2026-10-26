@@ -50,6 +50,8 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.service.points.GymPointProductsService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.points.GymPointProductsController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileConversationsService.class,
     cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymConversationsController.class,
     cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileConversationsController.class,
@@ -20276,5 +20278,28 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
                 jakarta.validation.ConstraintViolationException.class,
                 () -> mobileConversations.staffMessages(id, q));
         assertEquals(0, conversationMessages.selectCount());
+    }
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.points.GymPointProductsController
+            pointProductController;
+
+    @Test
+    void pointProductManagementRequiresDedicatedFunctionPermissionForEveryOperation() {
+        var query =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobilePointProductsVO
+                        .Query();
+        query.setStoreId(101L);
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.admin.points.vo.GymPointProductVO.Save();
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> pointProductController.page(query));
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> pointProductController.create(req));
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> pointProductController.update(1L, req));
     }
 }

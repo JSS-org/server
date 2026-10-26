@@ -92,3 +92,5 @@ DELETE FROM gym_mobile_conversation;
 DELETE FROM gym_mobile_invitation;
 DELETE FROM gym_point_record;
 DELETE FROM gym_point_account;
+
+DELETE FROM gym_point_product;

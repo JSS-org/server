@@ -765,8 +765,13 @@
       "method": "GET",
       "path": "/app-api/gym/point-products",
       "description": "查询门店可用积分兑换的商品",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymPointProductsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/points/GymPointProductsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobilePointProductsControllerTest.java"
+      ]
     },
     {
       "id": 62,

@@ -1343,3 +1343,14 @@ git diff --check
 真实隔离MySQL/Flyway159检查通过且临时库全部清理，本批新增15项覆盖账户零默认、租户会员唯一及隔离、余额恒等式/非负累计/安全整数上限、业务键唯一/大小写/租户、零值及符号/原流水/说明约束、微秒时间、分页索引、旧库不补造积分。V001–V027未修改，当前76表；业务库未迁移、无角色变更。
 
 日志：/tmp/uniapp-point-ledger-focused.log（会员专项59通过）、/tmp/uniapp-point-ledger-final-tests.log（全量）、/tmp/uniapp-point-ledger-migrations.log、/tmp/uniapp-point-ledger-package.log。内部append仅由测试在隔离事务调用，当前无生产奖励/兑换调用者；不能据测试声称实际消费或邀请已发积分。前端未改，未做部署HTTP、多节点、规模或兑换闭环联调。
+
+
+## 积分兑换商品（2026-10-26，V029）
+
+复现命令沿用上节全量Gym/Member、Spotless、隔离MySQL、server package和源码覆盖命令。新增10项会员/配置业务、1项后台功能权限、3项MVC；最终gym869通过（会员专项69、组织服务511），member4通过及1项既有禁用跳过。Spotless及server打包成功（打包跳过测试），覆盖116/135、缺19；git diff --check通过。
+
+业务覆盖真实配置字段及查询无账本/发卡/库存副作用、完整替换与null不限库存、旧版本冲突和同值不变、固定门店/模板、跨租户及会员不能管理、参数/模板适用性、上架/库存/模板过滤后分页总数、当前身份/门店关系、模板删除仍可下架、三并发仅一次更新、写失败时库存/成本/版本整体回滚。后台三个操作均验证独立权限拒绝；MVC校验五字段、整数精度、ID字符串、分页参数、完整配置和输入拒绝。
+
+隔离MySQL/Flyway170检查通过且临时库全部清理，本批新增11项：不造默认商品、禁用/无限库存/版本默认、零成本/超安全整数/负库存/无效版本/空名拒绝、售罄及最大成本保留、查询索引、独立权限定义、旧库不造商品；既有角色快照检查仍通过。V001–V028不变，业务库未迁移。
+
+日志：/tmp/uniapp-point-products-focused-final.log（69通过）、/tmp/uniapp-point-products-final-tests.log、/tmp/uniapp-point-products-migrations.log、/tmp/uniapp-point-products-package.log。最初两轮发现测试夹具重复使用全局模板族ID/门店ID，已修正为独立真实主键，保留业务断言后重跑。尚未证明62–63兑换、真实发卡和失败返还闭环；无部署HTTP、多节点及规模性能验证。

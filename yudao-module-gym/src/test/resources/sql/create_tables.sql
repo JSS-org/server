@@ -1536,3 +1536,26 @@ CREATE TABLE IF NOT EXISTS gym_point_record (
  CONSTRAINT ck_point_record_type CHECK ((type='earn' AND delta>0 AND original_record_id IS NULL) OR (type='spend' AND delta<0 AND original_record_id IS NULL) OR (type='refund' AND original_record_id IS NOT NULL)),
  CONSTRAINT ck_point_record_reason CHECK (CHAR_LENGTH(TRIM(reason))>0)
 );
+
+CREATE TABLE IF NOT EXISTS gym_point_product (
+ id bigint NOT NULL AUTO_INCREMENT,
+ store_id bigint NOT NULL,
+ card_product_id bigint NOT NULL,
+ name varchar(100) NOT NULL,
+ required_points bigint NOT NULL,
+ stock int DEFAULT NULL,
+ enabled boolean NOT NULL DEFAULT FALSE,
+ revision bigint NOT NULL DEFAULT 1,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT FALSE,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY (id),
+ KEY idx_point_product_store (tenant_id,store_id,deleted,enabled,id),
+ CONSTRAINT ck_point_product_cost CHECK (required_points BETWEEN 1 AND 9007199254740991),
+ CONSTRAINT ck_point_product_stock CHECK (stock IS NULL OR stock>=0),
+ CONSTRAINT ck_point_product_revision CHECK (revision BETWEEN 1 AND 9007199254740991),
+ CONSTRAINT ck_point_product_name CHECK (CHAR_LENGTH(TRIM(name))>0)
+);

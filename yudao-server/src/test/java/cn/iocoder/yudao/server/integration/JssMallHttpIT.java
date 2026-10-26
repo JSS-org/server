@@ -41,7 +41,7 @@ import java.util.stream.Stream;
 
 import javax.sql.DataSource;
 
-/** Real catalog, cart and unpaid order lifecycle on disposable MySQL and owned Redis. */
+/** Real catalog, cart, wallet payment, fulfillment and refunds on disposable MySQL and owned Redis. */
 @EnabledIfEnvironmentVariable(
         named = "JSS_TEST_HTTP_SCHEMA",
         matches = "jss_http_verify_[0-9a-f]{12}")
@@ -83,6 +83,7 @@ class JssMallHttpIT {
     private long otherAddress;
     private long spu;
     private long sku;
+    private long carrier;
     private String name;
     private final String image =
             "1".equals(System.getenv("JSS_TEST_BROWSER"))
@@ -280,23 +281,54 @@ class JssMallHttpIT {
         ok(api("PUT", "/admin-api/trade/config/save", config, admin, 1));
         String callback =
                 "http://127.0.0.1:" + environment.getRequiredProperty("local.server.port");
+        long payApp =
+                number(
+                        ok(
+                                api(
+                                        "POST",
+                                        "/admin-api/pay/app/create",
+                                        Map.of(
+                                                "appKey",
+                                                "mall",
+                                                "name",
+                                                "隔离商城验收",
+                                                "status",
+                                                0,
+                                                "orderNotifyUrl",
+                                                callback + "/app-api/trade/order/update-paid",
+                                                "refundNotifyUrl",
+                                                callback
+                                                        + "/admin-api/trade/after-sale/update-refunded"),
+                                        admin,
+                                        1)));
         ok(
                 api(
                         "POST",
-                        "/admin-api/pay/app/create",
+                        "/admin-api/pay/channel/create",
                         Map.of(
-                                "appKey",
-                                "mall",
-                                "name",
-                                "隔离商城验收",
+                                "appId",
+                                payApp,
+                                "code",
+                                "wallet",
                                 "status",
                                 0,
-                                "orderNotifyUrl",
-                                callback + "/app-api/trade/order/update-paid",
-                                "refundNotifyUrl",
-                                callback + "/app-api/trade/after-sale/update-refunded"),
+                                "feeRate",
+                                0D,
+                                "config",
+                                "{\"name\":\"isolated-wallet\"}"),
                         admin,
                         1));
+        carrier =
+                number(
+                        ok(
+                                api(
+                                        "POST",
+                                        "/admin-api/trade/delivery/express/create",
+                                        Map.of(
+                                                "code", "JSSIT", "name", "隔离测试物流", "sort", 1,
+                                                "status", 0),
+                                        admin,
+                                        1)));
         address = createAddress(buyer, "买家甲");
         otherAddress = createAddress(other, "买家乙");
     }
@@ -621,6 +653,310 @@ class JssMallHttpIT {
         assertEquals(
                 existingOrders,
                 number(get("/app-api/trade/order/page?pageNo=1&pageSize=10", buyer).get("total")));
+    }
+
+    private Map<String, Object> awaitField(String path, String token, String field, long expected)
+            throws Exception {
+        long deadline = System.nanoTime() + Duration.ofSeconds(20).toNanos();
+        Map<String, Object> result;
+        do {
+            result = get(path, token);
+            if (number(result.get(field)) == expected) return result;
+            Thread.sleep(50);
+        } while (System.nanoTime() < deadline);
+        assertEquals(expected, number(result.get(field)), "Timed out waiting for " + field);
+        return result;
+    }
+
+    private void awaitNotify(int type, long dataId) throws Exception {
+        long deadline = System.nanoTime() + Duration.ofSeconds(20).toNanos();
+        do {
+            var tasks =
+                    list(
+                            get(
+                                            "/admin-api/pay/notify/page?pageNo=1&pageSize=10&type="
+                                                    + type
+                                                    + "&dataId="
+                                                    + dataId,
+                                            admin)
+                                    .get("list"));
+            if (tasks.size() == 1 && number(tasks.get(0).get("status")) == 10) {
+                assertEquals(1, number(tasks.get(0).get("notifyTimes")));
+                return;
+            }
+            Thread.sleep(50);
+        } while (System.nanoTime() < deadline);
+        fail("Expected one successful real HTTP payment callback");
+    }
+
+    private long walletBalance(String token) throws Exception {
+        return number(get("/app-api/pay/wallet/get", token).get("balance"));
+    }
+
+    private Map<String, Object> ledger(String token) throws Exception {
+        return get("/app-api/pay/wallet-transaction/page?pageNo=1&pageSize=100", token);
+    }
+
+    private record PaidOrder(
+            long order, long payOrder, long balanceBeforePayment, long ledgerBeforePayment) {}
+
+    private PaidOrder createWalletPaidOrder() throws Exception {
+        // Real administrative test credit; no external payment provider or fabricated pay status.
+        ok(
+                api(
+                        "PUT",
+                        "/admin-api/pay/wallet/update-balance",
+                        Map.of("userId", 23006, "balance", 10000),
+                        admin,
+                        1));
+        ok(
+                api(
+                        "PUT",
+                        "/admin-api/pay/wallet/update-balance",
+                        Map.of("userId", 23006, "balance", -50),
+                        admin,
+                        1));
+        long beforePayment = walletBalance(buyer);
+        long ledgerBefore = number(ledger(buyer).get("total"));
+        var otherWallet = get("/admin-api/pay/wallet/get?userId=23007", admin);
+        long otherBalance = number(otherWallet.get("balance"));
+        var created =
+                object(
+                        ok(
+                                api(
+                                        "POST",
+                                        "/app-api/trade/order/create",
+                                        orderBody(List.of(Map.of("skuId", sku, "count", 1))),
+                                        buyer,
+                                        1)));
+        long order = number(created.get("id"));
+        long payOrder = number(created.get("payOrderId"));
+        assertNull(ok(api("GET", "/app-api/pay/order/get?id=" + payOrder, null, other, 1)));
+        rejected(
+                api(
+                        "POST",
+                        "/app-api/pay/order/submit",
+                        Map.of("id", payOrder, "channelCode", "wallet"),
+                        other,
+                        1));
+        rejected(
+                api(
+                        "POST",
+                        "/app-api/trade/order/update-paid",
+                        Map.of("merchantOrderId", String.valueOf(order), "payOrderId", payOrder),
+                        null,
+                        1));
+        assertEquals(
+                0, number(get("/app-api/trade/order/get-detail?id=" + order, buyer).get("status")));
+        var payment =
+                object(
+                        ok(
+                                api(
+                                        "POST",
+                                        "/app-api/pay/order/submit",
+                                        Map.of(
+                                                "id",
+                                                payOrder,
+                                                "channelCode",
+                                                "wallet",
+                                                "channelExtras",
+                                                Map.of(
+                                                        "walletId",
+                                                        String.valueOf(otherWallet.get("id")))),
+                                        buyer,
+                                        1)));
+        assertEquals(10, number(payment.get("status")));
+        var detail = awaitField("/app-api/trade/order/get-detail?id=" + order, buyer, "status", 10);
+        assertEquals(true, detail.get("payStatus"));
+        assertEquals(1299, number(detail.get("payPrice")));
+        awaitNotify(1, payOrder);
+        assertEquals(beforePayment - 1299, walletBalance(buyer));
+        assertEquals(otherBalance, walletBalance(other));
+        assertEquals(ledgerBefore + 1, number(ledger(buyer).get("total")));
+        assertEquals(7, stock());
+        rejected(
+                api(
+                        "POST",
+                        "/app-api/pay/order/submit",
+                        Map.of("id", payOrder, "channelCode", "wallet"),
+                        buyer,
+                        1));
+        ok(
+                api(
+                        "POST",
+                        "/app-api/trade/order/update-paid",
+                        Map.of("merchantOrderId", String.valueOf(order), "payOrderId", payOrder),
+                        null,
+                        1));
+        assertEquals(beforePayment - 1299, walletBalance(buyer));
+        assertEquals(ledgerBefore + 1, number(ledger(buyer).get("total")));
+        return new PaidOrder(order, payOrder, beforePayment, ledgerBefore);
+    }
+
+    private long applyAfterSale(PaidOrder paid, int way) throws Exception {
+        var detail = get("/app-api/trade/order/get-detail?id=" + paid.order(), buyer);
+        long item = number(list(detail.get("items")).get(0).get("id"));
+        var body =
+                Map.of(
+                        "orderItemId",
+                        item,
+                        "way",
+                        way,
+                        "refundPrice",
+                        1299,
+                        "applyReason",
+                        "隔离测试退款",
+                        "applyDescription",
+                        "实际钱包退款验收");
+        rejected(api("POST", "/app-api/trade/after-sale/create", body, other, 1));
+        rejected(
+                api(
+                        "POST",
+                        "/app-api/trade/after-sale/create",
+                        Map.of(
+                                "orderItemId",
+                                item,
+                                "way",
+                                way,
+                                "refundPrice",
+                                1300,
+                                "applyReason",
+                                "隔离测试退款"),
+                        buyer,
+                        1));
+        long id = number(ok(api("POST", "/app-api/trade/after-sale/create", body, buyer, 1)));
+        assertNull(ok(api("GET", "/app-api/trade/after-sale/get?id=" + id, null, other, 1)));
+        rejected(api("DELETE", "/app-api/trade/after-sale/cancel?id=" + id, null, other, 1));
+        assertEquals(
+                10, number(get("/app-api/trade/after-sale/get?id=" + id, buyer).get("status")));
+        return id;
+    }
+
+    private void finishWalletRefund(PaidOrder paid, long afterSale) throws Exception {
+        ok(api("PUT", "/admin-api/trade/after-sale/refund?id=" + afterSale, null, admin, 1));
+        awaitField("/app-api/trade/after-sale/get?id=" + afterSale, buyer, "status", 50);
+        long refundId =
+                number(
+                        get("/admin-api/trade/after-sale/get-detail?id=" + afterSale, admin)
+                                .get("payRefundId"));
+        awaitNotify(2, refundId);
+        var detail = get("/app-api/trade/order/get-detail?id=" + paid.order(), buyer);
+        assertEquals(40, number(detail.get("status")));
+        assertEquals(20, number(detail.get("refundStatus")));
+        assertEquals(1299, number(detail.get("refundPrice")));
+        assertEquals(paid.balanceBeforePayment(), walletBalance(buyer));
+        assertEquals(paid.ledgerBeforePayment() + 2, number(ledger(buyer).get("total")));
+        var transactions = list(ledger(buyer).get("list"));
+        assertEquals(4, number(transactions.get(0).get("bizType")));
+        assertEquals(1299, number(transactions.get(0).get("price")));
+        assertEquals(3, number(transactions.get(1).get("bizType")));
+        assertEquals(-1299, number(transactions.get(1).get("price")));
+        assertEquals(8, stock());
+        rejected(api("PUT", "/admin-api/trade/after-sale/refund?id=" + afterSale, null, admin, 1));
+        rejected(
+                api(
+                        "POST",
+                        "/admin-api/trade/after-sale/update-refunded",
+                        Map.of(
+                                "merchantOrderId",
+                                String.valueOf(paid.order()),
+                                "merchantRefundId",
+                                String.valueOf(afterSale),
+                                "payRefundId",
+                                refundId),
+                        null,
+                        1));
+        assertEquals(paid.balanceBeforePayment(), walletBalance(buyer));
+        assertEquals(paid.ledgerBeforePayment() + 2, number(ledger(buyer).get("total")));
+        assertEquals(8, stock());
+    }
+
+    @Test
+    void walletPaymentAndPreShipmentRefundUseRealLedgerAndCallbacks() throws Exception {
+        PaidOrder paid = createWalletPaidOrder();
+        rejected(api("DELETE", "/app-api/trade/order/cancel?id=" + paid.order(), null, buyer, 1));
+        assertEquals(7, stock());
+        long afterSale = applyAfterSale(paid, 10);
+        ok(api("PUT", "/admin-api/trade/after-sale/agree?id=" + afterSale, null, admin, 1));
+        assertEquals(
+                40,
+                number(get("/app-api/trade/after-sale/get?id=" + afterSale, buyer).get("status")));
+        finishWalletRefund(paid, afterSale);
+    }
+
+    @Test
+    void paidOrderDeliveryReceiptAndReturnRefundRestoreWalletAndInventory() throws Exception {
+        PaidOrder paid = createWalletPaidOrder();
+        rejected(api("PUT", "/app-api/trade/order/receive?id=" + paid.order(), null, buyer, 1));
+        ok(
+                api(
+                        "PUT",
+                        "/admin-api/trade/order/delivery",
+                        Map.of(
+                                "id",
+                                paid.order(),
+                                "logisticsId",
+                                carrier,
+                                "logisticsNo",
+                                "JSS" + name),
+                        admin,
+                        1));
+        assertEquals(
+                20,
+                number(
+                        get("/app-api/trade/order/get-detail?id=" + paid.order(), buyer)
+                                .get("status")));
+        rejected(api("PUT", "/app-api/trade/order/receive?id=" + paid.order(), null, other, 1));
+        ok(api("PUT", "/app-api/trade/order/receive?id=" + paid.order(), null, buyer, 1));
+        assertEquals(
+                30,
+                number(
+                        get("/app-api/trade/order/get-detail?id=" + paid.order(), buyer)
+                                .get("status")));
+        long afterSale = applyAfterSale(paid, 20);
+        ok(api("PUT", "/admin-api/trade/after-sale/agree?id=" + afterSale, null, admin, 1));
+        assertEquals(
+                20,
+                number(get("/app-api/trade/after-sale/get?id=" + afterSale, buyer).get("status")));
+        var delivery =
+                Map.of("id", afterSale, "logisticsId", carrier, "logisticsNo", "RETURN" + name);
+        rejected(api("PUT", "/app-api/trade/after-sale/delivery", delivery, other, 1));
+        ok(api("PUT", "/app-api/trade/after-sale/delivery", delivery, buyer, 1));
+        assertEquals(
+                30,
+                number(get("/app-api/trade/after-sale/get?id=" + afterSale, buyer).get("status")));
+        ok(api("PUT", "/admin-api/trade/after-sale/receive?id=" + afterSale, null, admin, 1));
+        assertEquals(
+                40,
+                number(get("/app-api/trade/after-sale/get?id=" + afterSale, buyer).get("status")));
+        finishWalletRefund(paid, afterSale);
+    }
+
+    @Test
+    void insufficientWalletBalanceKeepsOrderUnpaidAndCanStillCancel() throws Exception {
+        long balanceBefore = walletBalance(other);
+        assertEquals(0, balanceBefore);
+        long ledgerBefore = number(ledger(other).get("total"));
+        var body = orderBody(List.of(Map.of("skuId", sku, "count", 1)));
+        body.put("addressId", otherAddress);
+        var created = object(ok(api("POST", "/app-api/trade/order/create", body, other, 1)));
+        long order = number(created.get("id"));
+        long payOrder = number(created.get("payOrderId"));
+        rejected(
+                api(
+                        "POST",
+                        "/app-api/pay/order/submit",
+                        Map.of("id", payOrder, "channelCode", "wallet"),
+                        other,
+                        1));
+        assertEquals(balanceBefore, walletBalance(other));
+        assertEquals(ledgerBefore, number(ledger(other).get("total")));
+        assertEquals(
+                0, number(get("/app-api/trade/order/get-detail?id=" + order, other).get("status")));
+        assertEquals(0, number(get("/app-api/pay/order/get?id=" + payOrder, other).get("status")));
+        assertEquals(7, stock());
+        ok(api("DELETE", "/app-api/trade/order/cancel?id=" + order, null, other, 1));
+        assertEquals(8, stock());
     }
 
     @AfterAll

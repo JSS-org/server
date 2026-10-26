@@ -1641,3 +1641,13 @@ python script/jss/verify_workspace_http.py --suite mall
 已有 3 件时加入 Integer.MAX_VALUE 件，原 int 加法溢出为负数，未触发库存不足异常。新增 `CartServiceImplTest.testAddCart_mergeCannotOverflowToNegativeQuantity` 先复现失败，`.runtime/mall-cart-overflow-before.log`；改用 long 合并并在库存校验后转 int，交易模块专项回归 72 项（56 执行通过、16 既有条件跳过，0 失败/错误），`.runtime/mall-cart-overflow-after.log`。
 
 再次执行 `python script/jss/verify_workspace_http.py --suite mall --browser` 成功，本轮 JUnit 五项全过、无跳过（四项 HTTP + 一项 H5 启动），新增真实极端数量请求被拒绝且原购物项/库存保持不变，正常 UI 购物和取消恢复继续通过；日志 `.runtime/mall-cart-overflow-http.log`。Java 定向 Spotless 和差异检查通过；工具的本轮报告、日志密码扫描与随机库/Redis 清理检查通过。未重复完整 30 模块构建，没有新增第三方支付或物流证据。
+
+## 2026-10-26 钱包真实扣款、履约及售后退款
+
+商城 suite 增为七项实际 HTTP；启用 `--browser` 时预期八项 JUnit（加一项浏览器启动）。新增钱包支付与发货前退款、发货/本人收货/退货退款、余额不足三项，原商品/购物车/非法订单/未支付取消继续运行。配置和测试余额通过实际管理 API 建立，内部钱包扣款/退款走生产 WalletPayClient，并由 PayNotifyService 向随机端口实际发出支付及退款 HTTP 通知；不直接写支付状态、调用服务替代回调或伪造渠道结果。
+
+首轮复现同一会员第二次手工调账业务号冲突；`PayWalletControllerTest` 先失败，再由每个手工请求独立 UUID 修复。支付模块命令 `mvn -Pjss-mall -pl yudao-module-pay -am test '-Dtest=cn.iocoder.yudao.module.pay.**' '-Dsurefire.failIfNoSpecifiedTests=false' '-Dspotless.skip=true'` 通过，353 项中 312 执行通过、41 既有条件跳过，无失败/错误；`.runtime/mall-wallet-pay-unit.log`。没有修改或移除支付/退款流水唯一约束。
+
+最终 `python script/jss/verify_workspace_http.py --suite mall --browser` 八项全过、无失败/错误/跳过；`.runtime/mall-wallet-http.log`。每次支付 1299 分实际扣本人余额且只增一笔支出流水；另一会员余额不变，客户端传入的他人钱包 ID 被覆盖。真实支付通知成功一次后交易状态 10；重复支付或重复通知不重复扣款。两种售后均经实际退款通知完成，状态 50、交易全额退款关闭，余额恢复、流水 -1299/+1299、库存 8→7→8；重复退款和回调不重复入账/回库存。他人支付单读写、伪造未支付通知、他人售后操作、超额退款、未发货提前收货均拒绝；余额不足无扣款，保留未支付并可取消。
+
+回调查询使用真实管理通知分页，要求成功且通知次数为 1；业务状态通过不带 sync 的查询等待实际回调结果。App 售后 DTO 不暴露内部退款编号，测试通过管理详情 API 查询该编号。物流公司/单号是业务发货/退货状态的隔离数据，没有向外部物流平台发请求。原 H5 未支付购物场景继续通过，H5 钱包付款/售后页面仍待扩展；第三方支付与充值渠道不计作已验证。Java 定向格式、差异、报告时效、日志密码扫描和随机库/专用 Redis 清理通过，没有改动开发服务或宣称完整 30 模块重跑。

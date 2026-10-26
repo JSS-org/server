@@ -28,6 +28,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @Tag(name = "管理后台 - 用户钱包")
 @RestController
 @RequestMapping("/pay/wallet")
@@ -69,9 +71,10 @@ public class PayWalletController {
         }
 
         // 更新钱包余额
+        // 手工调账没有外部业务单，每次请求使用独立编号，避免同一用户的后续调账冲突。
         payWalletService.addWalletBalance(
                 wallet.getId(),
-                String.valueOf(updateReqVO.getUserId()),
+                UUID.randomUUID().toString(),
                 PayWalletBizTypeEnum.UPDATE_BALANCE,
                 updateReqVO.getBalance());
         return success(true);

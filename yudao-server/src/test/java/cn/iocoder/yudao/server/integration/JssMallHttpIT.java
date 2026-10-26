@@ -775,6 +775,10 @@ class JssMallHttpIT {
                         admin,
                         1));
         assertEquals(
+                false,
+                get("/app-api/promotion/coupon-template/get?id=" + templateId, other)
+                        .get("canTake"));
+        assertEquals(
                 1_013_004_006,
                 number(
                         api(

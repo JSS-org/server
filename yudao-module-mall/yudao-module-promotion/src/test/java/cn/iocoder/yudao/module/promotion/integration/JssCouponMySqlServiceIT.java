@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.framework.mybatis.core.handler.DefaultDBFieldHandler;
+import cn.iocoder.yudao.framework.mybatis.core.injector.YudaoSqlInjector;
 import cn.iocoder.yudao.framework.tenant.config.TenantProperties;
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
 import cn.iocoder.yudao.framework.tenant.core.db.TenantDatabaseInterceptor;
@@ -27,7 +28,6 @@ import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.core.MybatisSqlSessionFactoryBuilder;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.config.GlobalConfig;
-import com.baomidou.mybatisplus.core.injector.DefaultSqlInjector;
 import com.baomidou.mybatisplus.core.toolkit.GlobalConfigUtils;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.TenantLineInnerInterceptor;
@@ -115,7 +115,7 @@ class JssCouponMySqlServiceIT {
                     new GlobalConfig()
                             .setDbConfig(new GlobalConfig.DbConfig().setIdType(IdType.AUTO))
                             .setMetaObjectHandler(new DefaultDBFieldHandler())
-                            .setSqlInjector(new DefaultSqlInjector()));
+                            .setSqlInjector(new YudaoSqlInjector()));
             var plugins = new MybatisPlusInterceptor();
             plugins.addInnerInterceptor(
                     new TenantLineInnerInterceptor(
@@ -181,6 +181,39 @@ class JssCouponMySqlServiceIT {
                         .setDiscountPrice(200);
         templates.insert(template);
         return template;
+    }
+
+    @Test
+    void takeAvailabilityMatchesTemplateStateQuotaTypeAndMemberLimit() {
+        var available = template(5, 1);
+        var empty = template(1, 1);
+        claim(empty.getId(), 82L);
+        var disabled = template(5, 1);
+        templates.updateById(new CouponTemplateDO().setId(disabled.getId()).setStatus(1));
+        var expired = template(5, 1);
+        templates.updateById(
+                new CouponTemplateDO()
+                        .setId(expired.getId())
+                        .setValidEndTime(LocalDateTime.now().minusMinutes(1)));
+        var adminOnly = template(5, 1);
+        templates.updateById(new CouponTemplateDO().setId(adminOnly.getId()).setTakeType(2));
+        var snapshots =
+                templates.selectByIds(
+                        List.of(
+                                available.getId(),
+                                empty.getId(),
+                                disabled.getId(),
+                                expired.getId(),
+                                adminOnly.getId()));
+        var guest = service.getUserCanCanTakeMap(null, snapshots);
+        assertEquals(true, guest.get(available.getId()));
+        for (var template : List.of(empty, disabled, expired, adminOnly)) {
+            assertEquals(false, guest.get(template.getId()), template.getName());
+        }
+        claim(available.getId(), 80L);
+        assertEquals(false, service.getUserCanCanTakeMap(80L, snapshots).get(available.getId()));
+        assertEquals(true, service.getUserCanCanTakeMap(81L, snapshots).get(available.getId()));
+        assertEquals(false, service.getUserCanCanTakeMap(81L, snapshots).get(disabled.getId()));
     }
 
     private Map<Long, List<Long>> claim(long template, Long... users) {

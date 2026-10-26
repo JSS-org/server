@@ -445,9 +445,27 @@ public class CouponServiceImpl implements CouponService {
 
     @Override
     public Map<Long, Boolean> getUserCanCanTakeMap(Long userId, List<CouponTemplateDO> templates) {
-        // 1. 未登录时，都显示可以领取
+        // 1. 无论是否登录，展示状态都必须满足直接领取的模板状态、余量和有效期条件。
         Map<Long, Boolean> userCanTakeMap =
-                convertMap(templates, CouponTemplateDO::getId, templateId -> true);
+                convertMap(
+                        templates,
+                        CouponTemplateDO::getId,
+                        template ->
+                                CommonStatusEnum.isEnable(template.getStatus())
+                                        && CouponTakeTypeEnum.isUser(template.getTakeType())
+                                        && (couponTemplateService.isTotalCountUnlimited(
+                                                        template.getTotalCount())
+                                                || template.getTakeCount()
+                                                        < template.getTotalCount())
+                                        && (CouponTemplateValidityTypeEnum.TERM
+                                                        .getType()
+                                                        .equals(template.getValidityType())
+                                                || CouponTemplateValidityTypeEnum.DATE
+                                                                .getType()
+                                                                .equals(template.getValidityType())
+                                                        && template.getValidEndTime() != null
+                                                        && !LocalDateTimeUtils.beforeNow(
+                                                                template.getValidEndTime())));
         if (userId == null) {
             return userCanTakeMap;
         }
@@ -458,13 +476,15 @@ public class CouponServiceImpl implements CouponService {
                         templates,
                         CouponTemplateDO::getId,
                         template ->
-                                !couponTemplateService.isTakeLimitCountUnlimited(
-                                        template.getTakeLimitCount()));
+                                Boolean.TRUE.equals(userCanTakeMap.get(template.getId()))
+                                        && !couponTemplateService.isTakeLimitCountUnlimited(
+                                                template.getTakeLimitCount()));
         // 2.2 检查用户领取的数量是否超过限制
         if (CollUtil.isNotEmpty(templateIds)) {
             Map<Long, Integer> couponTakeCountMap =
                     this.getTakeCountMapByTemplateIds(templateIds, userId);
             for (CouponTemplateDO template : templates) {
+                if (!templateIds.contains(template.getId())) continue;
                 Integer takeCount = couponTakeCountMap.get(template.getId());
                 userCanTakeMap.put(
                         template.getId(),

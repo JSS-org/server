@@ -4231,3 +4231,35 @@ H5 尚只有未支付取消，接下来补会员 UI 钱包付款及售后退款�
 ### 未做 / 后续
 
 新增实际 HTTP 用例尚未执行，Redis 程序读取仍为 `WinError 5`。恢复后商城要求十三项 HTTP、两项 H5 无失败/错误/跳过，再继续优惠券 H5、注册/赠券及其他营销。完整构建、统计、其他管理迁移、第三方和真机发布继续保留，整合验收版本不前移。
+
+## [2026-10-26 22:33 ~ 22:45] 修复不可领取优惠券仍显示可领取
+
+### 意图
+
+将优惠券详情/列表的 `canTake` 与实际领取条件对齐，避免会员和游客看到停用、过期、耗尽或仅指定发放的模板仍可领取。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `.../promotion/service/coupon/CouponServiceImpl.java` | 修改 | 先检查模板状态/类型/期限/总量，再叠加个人限领，不覆盖已拒绝模板 |
+| `.../promotion/integration/JssCouponMySqlServiceIT.java` | 修改 | 增加可领取状态场景，使用生产 SQL 注入器验证次数聚合查询 |
+| `script/jss/verify_coupon_services.py` | 修改 | 实际 Service 用例数为七项 |
+| `yudao-server/.../JssMallHttpIT.java` | 修改 | 待运行 HTTP 场景追加停用后 `canTake=false` |
+| `docs/testing.md`、`docs/CHANGELOG.md` | 修改 | 区分新 Service 结果和既有专项/待运行 HTTP |
+
+### 结构关系
+
+沿用 App 模板查询 → CouponService 可领取映射 → 生产 Mapper 的个人领取次数聚合。展示布尔值不预留额度；实际领取仍由前一提交的模板行锁、限领校验和事务保护。本次没有新接口、字段、依赖或迁移。
+
+### 验证证据
+
+新增实际 MySQL 场景先一失败：真实领取后总量已耗尽，但游客 `canTake` 仍为 true；原六项继续通过，`.runtime/mall-coupon-availability-before-valid-fixture.log`。修复后 `python script/jss/verify_coupon_services.py` 七项全过、零失败/错误/跳过，13.76 秒；覆盖耗尽、停用、到期、仅指定发放、本人限领及另一会员可领，原事务/并发六项继续通过。日志 `.runtime/mall-coupon-availability-after.log`。三个 Java 定向格式、Python 编译及服务器全依赖测试编译通过；差异检查和随机库清理通过。
+
+### 影响面 / 风险
+
+App 模板详情/列表中不可领取时 `canTake` 为 false，已有个人券本身的使用状态不受影响。前端不能把所有 false 都解释为“已领取”；兄弟前端同步调整提示。未运行新的真实 HTTP/H5、压力测试或全量 verify，没有变更开发库/服务、jar 或部署。
+
+### 未做 / 后续
+
+恢复 Redis 程序读取/运行权限后执行包含订单、支付及优惠券的十三项实际 HTTP、两项 H5，以及工作台回归。注册/购买赠券、其他营销、统计、管理模块和平台发布继续未完成。

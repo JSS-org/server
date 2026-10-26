@@ -1737,3 +1737,13 @@ python script/jss/verify_coupon_services.py
 营销专项 94 项中 20 执行通过、74 既有/条件跳过；交易优惠计算一项通过，合计 21 执行通过、74 跳过，零失败/错误，完整依赖及服务器测试编译成功；`.runtime/mall-coupon-promotion-regression.log`。其中六项新真实测试在无环境变量的常规回归中条件跳过，其真实结果以独立脚本为准，不能重复计数。八个变更 Java 定向 Spotless、Python 编译和差异检查通过。
 
 `JssMallHttpIT` 已补一个尚未执行的实际优惠券用例：管理 API 创建仅适用本轮商品的券，会员领券/限领/归属拒绝，1299−200=1099 分结算、服务端重算和支付单金额，用券后拒绝重复下单且失败无订单/库存副作用，两轮取消返还后再用，停用模板拒绝发券。脚本新预期十三项 HTTP、带浏览器十四项 JUnit，实际 H5 仍两项。该 HTTP 用例与前轮订单/支付竞争均因本机 Redis 程序读取权限 `WinError 5` 尚未运行；无新的 HTTP/H5、全量 verify 或发布结论，开发库/服务与整合验收版本未改动。
+
+## 2026-10-26 优惠券可领取展示状态
+
+新增第七项实际 MySQL Service 场景，先以真实领取耗尽一张限量券，再读取 `getUserCanCanTakeMap`，复现已经耗尽的模板对游客仍返回 `true`；七项中六通过/一失败，零错误/跳过，`.runtime/mall-coupon-availability-before-valid-fixture.log`。原方法仅限制个人领取次数，未检查模板状态、总量、期限及领取类型。
+
+现在游客与会员均先检查启用、直接领取、未到期和剩余总量，再叠加个人限领，个人次数查询不能把停用等模板重新改为可领取。新的真实测试使用生产 `YudaoSqlInjector`，也验证已领会员为 false、另一会员为 true、停用/过期/仅指定发放模板为 false；原六项 Service/事务测试同时继续通过。
+
+`python script/jss/verify_coupon_services.py` 最终七项全过，零失败/错误/跳过，13.76 秒，`.runtime/mall-coupon-availability-after.log`；同脚本仍校验归属/清理随机库。三个 Java 定向格式、Python 编译、全依赖与服务器测试编译通过，`.runtime/mall-coupon-availability-format-check.log`、`mall-coupon-availability-compile.log`。上一节 21 项执行通过/74 跳过的营销专项仍对应 `7dd945ca30`，未冒充本次全量回归。
+
+已有待运行的优惠券 HTTP 场景追加停用后另一会员读到 `canTake=false`；HTTP 数量仍为十三项，带浏览器十四项 JUnit。真实 HTTP/H5 和其他营销、注册/赠券依旧待后续验收，整合验收版本不变。

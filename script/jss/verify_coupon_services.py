@@ -41,10 +41,10 @@ def main():
         report = ROOT / 'yudao-module-mall/yudao-module-promotion/target/surefire-reports/TEST-cn.iocoder.yudao.module.promotion.integration.JssCouponMySqlServiceIT.xml'
         assert report.stat().st_mtime >= started
         suite = ET.parse(report).getroot()
-        assert suite.attrib['tests'] == '6' and all(suite.attrib[key] == '0' for key in ['errors', 'failures', 'skipped']), suite.attrib
+        assert suite.attrib['tests'] == '7' and all(suite.attrib[key] == '0' for key in ['errors', 'failures', 'skipped']), suite.attrib
         for case in suite.findall('testcase'):
             print('PASS ' + case.attrib['name'])
-        print(f'6 production coupon service tests passed on MySQL {live["version"]}:{live["port"]}')
+        print(f'7 production coupon service tests passed on MySQL {live["version"]}:{live["port"]}')
     finally:
         status()
         sql(f'DROP DATABASE `{database}`;')

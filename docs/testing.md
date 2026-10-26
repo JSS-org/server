@@ -1479,3 +1479,16 @@ git diff --check
 覆盖：RFC 6238 SHA1向量按6位取模、前导0、时间窗口、规范Base32、相邻码碰撞防重放；有效后台身份、权限/SELF/租户隔离、配置关闭/缺失；持久化失败锁定、期限不延长、到期重置、逻辑删除不重置、时钟回退；跨门店并发签发只成功一次；绑定设备/柜格/操作、令牌过期、密钥/权限撤销、模拟及非queued指令拒绝；一次消费/并发消费、外层事务回滚、拒绝过时queued快照；最小响应、禁缓存、敏感请求/异常不回显。
 
 快照回归在H2 REPEATABLE_READ下由数据库返回SQLState40001并回滚，随后新事务明确拒绝sent指令；该用例验证失败关闭及令牌未消费，不冒充MySQL多节点并发联调。初次并发测试的线程内Mockito重复配置已改为主线程预配置，最终全量通过。隔离MySQL验证的是迁移、唯一性/检查约束与旧库保留；未进行真实认证器手机、生产数据库、设备厂商、部署HTTP或多节点压力验证。旧V001–V034和原始uniapp.md的内容/暂存状态保持不变，dashboard工作区干净。
+
+## 2026-10-26 审查修复：私教销售名称
+
+新增2个参数化H2用例，使用会员私教订单及受信收款测试凭据产生财务事件，分别覆盖新course与历史private明细；课程更名后仍返回成交名称快照，无筛选/按course筛选均正确，金额与订单数不变。修复前2项中course用例失败（预期私教产品、实际null），证据`/tmp/uniapp-review-sales-red.log`。修复后运行：
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='GymOrganizationServiceTest#mobileSalesReport*' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+```
+
+销售报表9项通过、Spotless通过，证据`/tmp/uniapp-review-sales-green.log`（13:43:11 BUILD SUCCESS）；`git diff --check`通过。本批无DDL/配置/协议变更，不重复运行迁移；真实渠道及前端不在本次修复范围。

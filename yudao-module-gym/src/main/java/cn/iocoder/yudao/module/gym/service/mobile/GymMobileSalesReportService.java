@@ -40,6 +40,11 @@ public class GymMobileSalesReportService {
         return v.setScale(2, RoundingMode.HALF_UP).toPlainString();
     }
 
+    // Financial events retain the legacy private type; mobile order items use course.
+    private static String financialProductType(String type) {
+        return "course".equals(type) ? "private" : type;
+    }
+
     private static String average(BigDecimal v, long n) {
         return n == 0 ? "0.00" : money(v.divide(BigDecimal.valueOf(n), 2, RoundingMode.HALF_UP));
     }
@@ -76,7 +81,7 @@ public class GymMobileSalesReportService {
                         ids,
                         req.getStartDate().atStartOfDay(GymDateRange.ZONE).toInstant(),
                         req.getEndDate().atStartOfDay(GymDateRange.ZONE).toInstant(),
-                        "course".equals(req.getProductType()) ? "private" : req.getProductType(),
+                        financialProductType(req.getProductType()),
                         req.getEmployeeId());
         var totals = reports.totals(q);
         long total = reports.count(q);
@@ -113,8 +118,9 @@ public class GymMobileSalesReportService {
                                                                     i ->
                                                                             r.getProductType()
                                                                                     .equals(
-                                                                                            i
-                                                                                                    .getProductType()))
+                                                                                            financialProductType(
+                                                                                                    i
+                                                                                                            .getProductType())))
                                                             .map(
                                                                     GymOrderItemDO
                                                                             ::getProductNameSnapshot)

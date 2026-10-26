@@ -23011,4 +23011,49 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
         assertServiceException(() -> consumeAction(token, command), ACTION_CONFIRMATION_INVALID);
         assertNull(actionRows.selectList().getFirst().getConsumedAt());
     }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"course", "private"})
+    void mobileSalesReportCourseNamesUseFrozenSnapshotAcrossItemTypeVersions(String itemType) {
+        when(businessClock.now()).thenReturn(java.time.Instant.parse("2026-06-10T02:00:00Z"));
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        var created = mobileOrders.create(memberOrder(ids, "course"), "report-course-snapshot");
+        Long orderId = Long.valueOf(created.id());
+        var order = orderRows().selectById(orderId);
+        loginAs(1L);
+        when(receiptVerifier.payment("report-course-receipt"))
+                .thenReturn(receipt(order, "REPORT-COURSE-PAYMENT", null, "40.00"));
+        commerce.acceptPayment(orderId, "report-course-receipt");
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.sales.GymOrderItemMapper.class);
+        var item =
+                mapper.selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.sales.GymOrderItemDO::getOrderId,
+                        orderId);
+        String frozenName = item.getProductNameSnapshot();
+        assertNotNull(frozenName);
+        assertEquals("course", item.getProductType());
+        item.setProductType(itemType);
+        mapper.updateById(item);
+        var patch =
+                new cn.iocoder.yudao.module.gym.controller.admin.course.vo
+                        .GymCourseProductSaveReqVO();
+        patch.setName("更名后的课程不能覆盖成交快照");
+        courses.patchProduct(ids.get(3), patch);
+        var query = mobileSalesQuery();
+        for (boolean filtered : List.of(false, true)) {
+            query.setProductType(filtered ? "course" : null);
+            var result = mobileSalesReports.sales(query);
+            assertEquals(1, result.total());
+            var row = result.list().getFirst();
+            assertEquals(frozenName, row.productName());
+            assertEquals("course", row.productType());
+            assertEquals(order.getOrderNo(), row.orderNo());
+            assertEquals("40.00", row.paidAmount());
+            assertEquals("40.00", result.summary().courseAmount());
+            assertEquals(1, result.summary().courseOrderCount());
+        }
+    }
 }

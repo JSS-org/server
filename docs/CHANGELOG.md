@@ -3545,3 +3545,35 @@ Controller→Service→TOTP/Mapper；配置按租户及后台账号取独立密�
 ### 未做 / 后续
 
 尚无真实手机认证器配置/联调、自助绑定/恢复码、生产设备指令消费者、厂商通信/网关事件/回执；支付/续费、电子签约、监控及积分自动奖励规则继续按用户要求暂缓。未进行部署HTTP、多节点或压力验收，未push。总计135项、源码覆盖125项，不宣称已全量上线。
+
+## [2026-10-26 13:41 ~ 13:44] 修复私教销售报表的商品名称映射
+
+### 意图
+
+修复代码审查确认的P2问题：财务private与移动订单course类型不一致，导致成交商品名称丢失。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileSalesReportService.java` | 修改 | 私教类型统一映射，兼容历史明细并读取名称快照 |
+| `yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java` | 修改 | 新增2项当前/历史类型及课程更名回归 |
+| `docs/testing.md` | 修改 | 记录先复现失败、修复后9项通过的证据 |
+| `docs/uniapp/uniapp-implementation.md` | 修改 | 更新报表行为和修复边界 |
+| `docs/CHANGELOG.md` | 修改 | 追加本条记录 |
+
+### 结构关系
+
+原Controller→Service→报表聚合/订单明细Mapper关系不变。请求筛选和订单明细匹配共用course→private转换，名称仍取订单冻结快照。纯bugfix，无架构或API结构变化。
+
+### 验证证据
+
+新增用例修复前course分支失败（期望私教产品、实际null）；修复后`mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test -Dtest='GymOrganizationServiceTest#mobileSalesReport*' -Dsurefire.failIfNoSpecifiedTests=false -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'`销售9项通过；日志`/tmp/uniapp-review-sales-red.log`、`/tmp/uniapp-review-sales-green.log`。`git diff --check`通过。
+
+### 影响面 / 风险
+
+只修复销售名称投影；不改金额、归属、权限、历史订单、当前商品或数据库结构。兼容course及private订单明细。前端和原始uniapp.md内容及暂存状态保留。
+
+### 未做 / 后续
+
+另一项风控处置摘要稳定性问题在后续独立提交修复；本批未运行全量回归或打包。真实第三方接入及自动积分奖励仍按约定暂缓，未迁移业务库、未push。

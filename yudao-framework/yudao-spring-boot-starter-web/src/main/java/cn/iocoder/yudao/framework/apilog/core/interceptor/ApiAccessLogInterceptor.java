@@ -4,6 +4,8 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.resource.ResourceUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
+import cn.iocoder.yudao.framework.apilog.core.filter.ApiAccessLogFilter;
 import cn.iocoder.yudao.framework.common.util.servlet.ServletUtils;
 import cn.iocoder.yudao.framework.common.util.spring.SpringUtils;
 
@@ -50,13 +52,21 @@ public class ApiAccessLogInterceptor implements HandlerInterceptor {
         if (!SpringUtils.isProd()) {
             Map<String, String> queryString = ServletUtils.getParamMap(request);
             String requestBody = ServletUtils.getBody(request);
-            if (CollUtil.isEmpty(queryString) && StrUtil.isEmpty(requestBody)) {
+            ApiAccessLog annotation =
+                    handlerMethod == null
+                            ? null
+                            : handlerMethod.getMethodAnnotation(ApiAccessLog.class);
+            String[] sanitizeKeys = annotation == null ? null : annotation.sanitizeKeys();
+            boolean logParams = annotation == null || annotation.requestEnable();
+            if (!logParams || (CollUtil.isEmpty(queryString) && StrUtil.isEmpty(requestBody))) {
                 log.info("[preHandle][开始请求 URL({}) 无参数]", request.getRequestURI());
             } else {
                 log.info(
                         "[preHandle][开始请求 URL({}) 参数({})]",
                         request.getRequestURI(),
-                        StrUtil.blankToDefault(requestBody, queryString.toString()));
+                        StrUtil.blankToDefault(
+                                ApiAccessLogFilter.sanitizeJson(requestBody, sanitizeKeys),
+                                ApiAccessLogFilter.sanitizeMap(queryString, sanitizeKeys)));
             }
             // 计时
             StopWatch stopWatch = new StopWatch();

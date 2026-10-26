@@ -47,7 +47,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.*;
 
 import javax.sql.DataSource;
 
@@ -230,6 +232,178 @@ class JssMemberLevelMySqlServiceIT {
 
     private void error(int code, Runnable action) {
         assertEquals(code, assertThrows(ServiceException.class, action::run).getCode());
+    }
+
+    private void parallelFromSameSnapshot(Long userId, java.util.function.IntConsumer action)
+            throws Exception {
+        var executor = Executors.newFixedThreadPool(6);
+        var ready = new CyclicBarrier(6);
+        var futures = new ArrayList<Future<?>>();
+        try {
+            for (int index = 0; index < 6; index++) {
+                int participant = index;
+                futures.add(
+                        executor.submit(
+                                () -> {
+                                    TenantContextHolder.setTenantId(1L);
+                                    try {
+                                        var tx =
+                                                new TransactionTemplate(
+                                                        context.getBean(
+                                                                DataSourceTransactionManager
+                                                                        .class));
+                                        tx.execute(
+                                                status -> {
+                                                    // Establish both a repeatable-read snapshot and
+                                                    // the MyBatis first-level cache.
+                                                    assertNotNull(users.selectById(userId));
+                                                    try {
+                                                        ready.await(10, TimeUnit.SECONDS);
+                                                    } catch (Exception e) {
+                                                        throw new RuntimeException(e);
+                                                    }
+                                                    action.accept(participant);
+                                                    return null;
+                                                });
+                                    } finally {
+                                        TenantContextHolder.clear();
+                                    }
+                                }));
+            }
+            for (var future : futures) future.get(20, TimeUnit.SECONDS);
+        } finally {
+            executor.shutdownNow();
+            assertTrue(executor.awaitTermination(10, TimeUnit.SECONDS));
+        }
+    }
+
+    @Test
+    void concurrentExperienceEventsUseCurrentRowsAfterAnEarlierSnapshot() throws Exception {
+        Long level = create(1);
+        var user = member();
+        users.updateById(new MemberUserDO().setId(user.getId()).setExperience(90));
+        parallelFromSameSnapshot(
+                user.getId(),
+                index ->
+                        service.addExperience(
+                                user.getId(),
+                                10,
+                                MemberExperienceBizTypeEnum.SIGN_IN,
+                                "concurrent-" + index));
+        assertEquals(150, users.selectById(user.getId()).getExperience());
+        assertEquals(level, users.selectById(user.getId()).getLevelId());
+        assertEquals(
+                List.of(100, 110, 120, 130, 140, 150),
+                jdbc.queryForList(
+                        "SELECT total_experience FROM member_experience_record ORDER BY id",
+                        Integer.class));
+        assertEquals(1, count("member_level_record"));
+        assertEquals(6, count("member_experience_record"));
+        assertEquals(
+                10,
+                jdbc.queryForObject("SELECT experience FROM member_level_record", Integer.class));
+    }
+
+    @Test
+    void concurrentSameLevelAssignmentsOnlyWriteOneActualChange() throws Exception {
+        Long level = create(1);
+        var user = member();
+        parallelFromSameSnapshot(
+                user.getId(), index -> service.updateUserLevel(assign(user.getId(), level)));
+        assertEquals(100, users.selectById(user.getId()).getExperience());
+        assertEquals(1, count("member_level_record"));
+        assertEquals(1, count("member_experience_record"));
+    }
+
+    @Test
+    void experienceOverflowRejectsWithoutChangingAnyTable() {
+        var user = member();
+        users.updateById(new MemberUserDO().setId(user.getId()).setExperience(Integer.MAX_VALUE));
+        assertThrows(
+                ServiceException.class,
+                () ->
+                        service.addExperience(
+                                user.getId(), 1, MemberExperienceBizTypeEnum.SIGN_IN, "overflow"));
+        assertEquals(Integer.MAX_VALUE, users.selectById(user.getId()).getExperience());
+        assertEquals(0, count("member_experience_record"));
+        assertEquals(0, count("member_level_record"));
+    }
+
+    @Test
+    void clampedDeductionsRecordOnlyTheExperienceActuallyRemoved() {
+        var user = member();
+        users.updateById(new MemberUserDO().setId(user.getId()).setExperience(5));
+        service.addExperience(
+                user.getId(),
+                Integer.MIN_VALUE,
+                MemberExperienceBizTypeEnum.ORDER_GIVE_CANCEL,
+                "large-deduction");
+        assertEquals(0, users.selectById(user.getId()).getExperience());
+        assertEquals(
+                -5,
+                jdbc.queryForObject(
+                        "SELECT experience FROM member_experience_record", Integer.class));
+        assertEquals(
+                0,
+                jdbc.queryForObject(
+                        "SELECT total_experience FROM member_experience_record", Integer.class));
+    }
+
+    @Test
+    void cancellingAnAlreadyCancelledLevelDoesNotCreateMoreRecords() {
+        Long level = create(1);
+        var user = member();
+        service.updateUserLevel(assign(user.getId(), level));
+        service.updateUserLevel(assign(user.getId(), null));
+        service.updateUserLevel(assign(user.getId(), null));
+        service.updateUserLevel(assign(user.getId(), 0L));
+        assertEquals(2, count("member_experience_record"));
+        assertEquals(2, count("member_level_record"));
+    }
+
+    @Test
+    void missingMemberExperienceUsesTheBusinessErrorAndNoWrites() {
+        error(
+                USER_NOT_EXISTS.getCode(),
+                () ->
+                        service.addExperience(
+                                9223372036854775807L,
+                                1,
+                                MemberExperienceBizTypeEnum.SIGN_IN,
+                                "missing"));
+        assertEquals(0, count("member_experience_record"));
+    }
+
+    @Test
+    void nullExperienceIsRejectedAsABusinessErrorWithoutWrites() {
+        var user = member();
+        assertThrows(
+                ServiceException.class,
+                () ->
+                        service.addExperience(
+                                user.getId(), null, MemberExperienceBizTypeEnum.SIGN_IN, "null"));
+        assertEquals(0, count("member_experience_record"));
+    }
+
+    @Test
+    void deductionBelowEveryEnabledThresholdRemovesTheOldLevel() {
+        Long level = create(1);
+        var user = member();
+        service.updateUserLevel(assign(user.getId(), level));
+        service.addExperience(
+                user.getId(), 100, MemberExperienceBizTypeEnum.ORDER_GIVE_CANCEL, "cancel-all");
+        assertEquals(0L, users.selectById(user.getId()).getLevelId());
+        assertEquals(0, users.selectById(user.getId()).getExperience());
+        assertEquals(
+                0L,
+                jdbc.queryForObject(
+                        "SELECT level_id FROM member_level_record ORDER BY id DESC LIMIT 1",
+                        Long.class));
+        assertEquals(
+                -100,
+                jdbc.queryForObject(
+                        "SELECT experience FROM member_level_record ORDER BY id DESC LIMIT 1",
+                        Integer.class));
     }
 
     @Test

@@ -20,6 +20,9 @@ import java.util.List;
  */
 public interface MemberUserService {
 
+    /** Lock and read the current tenant's member row; call within an existing transaction. */
+    MemberUserDO getUserForUpdate(Long id);
+
     /**
      * 通过手机查询用户
      *

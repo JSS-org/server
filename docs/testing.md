@@ -1931,3 +1931,13 @@ Redis程序仍读取拒绝，真实公告CRUD/备注/权限/租户与完整商�
 常规 `mvn -o -Pjss-mall -pl yudao-server -am test -Dtest=MemberLevelServiceImplTest,MemberLevelRecordServiceImplTest,MemberExperienceRecordServiceImplTest,JssMemberLevelMySqlServiceIT -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true`（本机wrapper）实际仅现有MemberLevelServiceImplTest十二项H2执行通过、新专项七项条件跳过，零失败/错误；不存在的两记录Service单测名不代表额外测试，服务器及依赖测试编译通过，见 `.runtime/member-level-regression.log`。新增Java定向Spotless和Python编译通过，没有生产代码/迁移/全量verify变化。
 
 前端准备一个实际H5用例，通过真实会员登录/审核绑定、等级页面CRUD、数据库文件存储multipart上传及取回字节、外租户目标和每类五接口权限拒绝。仅对已守卫的隔离库临时创建DB文件配置/切主，finally清理自建文件/等级、恢复原主配置、删除自建配置、撤销自建绑定/登出；无API拦截或Token注入。工作台现十五文件十九项H5，仅类型/发现通过，Redis仍不可读，实际文件HTTP/缓存、完整HTTP/RBAC/原生上传和并发经验仍待验；整合验收版本及V011部署前置不变。
+
+## 2026-10-27 会员经验并发、整数与变动记录
+
+`python script/jss/verify_member_level_services.py` 已从七项扩为十五项，仍仅在归属MySQL8.4.9:13316的随机四表库执行生产Service/Mapper/租户SQL和事务，无业务替身/Redis/HTTP。有效修复前十五项七通过、八失败，16.449秒：六事务预读同一RR快照后各加10，最终90→100而非150；同级人工调级写六组记录；MAX+1溢出未拒绝；只扣5却记录MIN_VALUE；重复取消、无会员/空增量错误与最低门槛清级策略不符。见 `.runtime/member-experience-before.log`、`member-experience-before.xml`。
+
+最终十五项全过，零失败/错误/跳过，16.661秒，随机库残留0，`.runtime/member-experience-after.log`、`member-experience-after.xml`、`.runtime/jss-mysql/member-level-service-test.xml`。六线程各先建立旧快照和MyBatis一级缓存，再屏障后调用生产事务；FOR UPDATE当前读使独立事件累计总额依次100/110/120/130/140/150，只一次跨级。同级人工调级只一组记录，重复null/0取消不重复写。long中间值防溢出；不足扣减按实际移除值记录，等级配置复制不再覆盖实际变动量，最后SQL失败/外层回滚仍通过。
+
+最低门槛采用已向用户说明的默认策略：存在启用配置但经验低于全部门槛时清为无等级0；尚未收到相反偏好，并非用户已确认策略。全部配置停用/不存在时保留原行为，不据此宣称该策略已获产品确认。历史记录不重写，通知TODO仍未实现。当前十五项尚不保证相同bizType/bizId重投幂等、并发配置变更/分配/删除或完整订单奖励链。
+
+常规 `mvn -o -Pjss-mall -pl yudao-server -am test -Dtest=MemberLevelServiceImplTest,MemberUserServiceImplTest,MemberUserServiceImplStatusTest,JssMemberLevelMySqlServiceIT -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true`：30项中14执行通过（12H2、2Mockito状态测试），16跳过（15条件MySQL、1既有Disabled），零失败/错误；服务器及30模块依赖测试编译通过，`.runtime/member-experience-regression.log`。五Java定向Spotless apply/check和Python编译通过，格式日志编码已归一并保留raw副本，无新增全量verify/HTTP/Redis/H5证据。无迁移修改，V011部署前置保留，整合验收版本不前移。

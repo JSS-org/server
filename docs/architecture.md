@@ -806,3 +806,9 @@ main接入upstream/master-jdk25 70ad21ad6c，同时保留移动接口分支f27ce
 JSS V011将已有process_user_id从int拓宽到nullable bigint default0，管理VO由Integer同步Long，DO的Long不变。部署前显式备份+migrate/validate，旧正文、旧int/NULL/0不重写；框架前置加入两张API日志表。API日志仍受租户SQL隔离，不能因DO继承BaseDO而推定共享；后台导出权限与查询/处理权限分离。应用启动不自动迁移，留存/脱敏、实际异步生成与HTTP/Redis仍需验收。
 
 隔离HTTP用例另注册仅测试源码/专用jss-http-fixture profile的故障探针，用于经真实异常处理器产生访问/错误日志；初始化器要求已归属随机库及loopback。没有新增生产Controller或主动发送外部消息。
+
+## 会员经验与人工调级的并发边界（2026-10-27）
+
+原MemberLevelService的加减经验/人工调级两个REQUIRED事务先经MemberUserService.getUserForUpdate调用生产Mapper的FOR UPDATE当前读，锁定当前租户可见会员行；该锁同时覆盖经验记录、等级变更记录和最终会员更新。它避免旧RR快照/MyBatis缓存导致覆盖，也使同级调级和重复取消按已提交值判断。锁持续到调用方外层事务完成，调用方不能把getUserForUpdate当普通无事务查询。
+
+经验计算用long中间值，超int正上限拒绝，不足扣减到0；两个新变动记录都写实际差额，不再被等级配置的门槛覆盖。最低启用门槛以下暂按无等级0处理，全部配置不存在/停用保留原行为；用户策略偏好未确认。接口结构、表及历史迁移不变，不重写旧记录。相同业务事件的重投幂等、配置竞争、通知和完整HTTP仍有独立待办。

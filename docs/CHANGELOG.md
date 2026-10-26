@@ -4654,3 +4654,35 @@ Redis程序仍不可读，最新商城/工作台HTTP/H5、测试探针、异步�
 ### 未做 / 后续
 
 Redis仍不可读，无新增HTTP/H5/RBAC、原生上传、完整verify或部署。前端新增等级H5仅类型/发现通过，工作台待实跑十九项；商城十三HTTP/三H5与V011部署前置不变，最近整合验收版本不前移。
+
+## [2026-10-27 05:01 ~ 05:11] 修复会员经验覆盖、溢出和实际变动记录
+
+### 意图
+
+继续P4/A15与会员等级迁移的实际业务核对，处理经验累加和人工调级在并发旧快照下丢失数量/重复记账，以及int溢出和扣减记录失真。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| MemberUserService.java / MemberUserServiceImpl.java | 修改 | 增加要求外层事务的租户会员FOR UPDATE当前读 |
+| MemberLevelServiceImpl.java | 修改 | 两入口先锁会员、long计算/溢出拒绝、实际差额记录、null/0取消去重及最低门槛清级 |
+| member/enums/ErrorCodeConstants.java | 修改 | 空经验与超出int范围的明确业务错误 |
+| JssMemberLevelMySqlServiceIT.java / verify_member_level_services.py | 修改 | 原七项扩至十五项，含六线程旧快照竞争及边界/记录核对 |
+| docs/architecture.md / testing.md / CHANGELOG.md | 更新/追加 | 事务范围、证据和策略假设/未验边界 |
+
+### 结构关系
+
+等级Service原事务→会员Service当前读锁→原三Service/四Mapper→两记录与会员更新，锁覆盖调用方外层事务。没有Redis或额外锁服务；历史DDL/迁移不变。未找到会员及空增量改为业务错误；非零请求扣到0时仍记录实际差额（可能为0）。
+
+### 验证证据
+
+有效修复前十五项七通过/八失败16.449秒，`.runtime/member-experience-before.log`及XML；最终十五项全过16.661秒，零失败/错误/跳过，随机库残留0，`.runtime/member-experience-after.log`、`member-experience-after.xml`。包括六次独立+10从90精确到150/连续余额及一次跨级，六并发同级仅一变动，MAX溢出无写入、MIN扣减记实际-5、重复取消、最低门槛清级、双租户及两种回滚。常规14项执行通过（12H2/2Mockito），16既有/条件跳过，零失败/错误，服务器与依赖测试编译成功，`.runtime/member-experience-regression.log`。五Java定向Spotless、Python编译和差异检查通过，无新全量verify/HTTP结果。
+
+### 影响面 / 风险
+
+两入口同会员串行并持锁至外层事务结束，需继续验证订单/签到锁顺序与完整吞吐。超int上限现在拒绝并回滚；历史错误记录不重写。存在启用配置但低于最低门槛暂按无等级0实现，已说明默认假设但用户尚未确认；全部停用/无配置维持原行为。相同业务事件重投幂等尚未完成。
+
+### 未做 / 后续
+
+Redis程序仍不可读，真实HTTP/H5/RBAC、订单/签到完整奖励链、配置竞争、通知TODO和真机发布继续待验。无新迁移或开发库/运行包升级，V011部署前置和整合验收版本保持不变。

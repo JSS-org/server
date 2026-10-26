@@ -51,6 +51,8 @@ public interface ErrorCodeConstants {
     ErrorCode LEVEL_HAS_USER = new ErrorCode(1_004_011_005, "用户等级下存在用户，无法删除");
 
     ErrorCode EXPERIENCE_BIZ_NOT_SUPPORT = new ErrorCode(1_004_011_201, "用户经验业务类型不支持");
+    ErrorCode EXPERIENCE_CHANGE_INVALID = new ErrorCode(1_004_011_202, "用户经验变动值不能为空");
+    ErrorCode EXPERIENCE_OUT_OF_RANGE = new ErrorCode(1_004_011_203, "用户经验超出可用整数范围");
 
     // ========== 用户分组 1-004-012-000 ==========
     ErrorCode GROUP_NOT_EXISTS = new ErrorCode(1_004_012_000, "用户分组不存在");

@@ -47,11 +47,11 @@ def main():
         report = ROOT / 'yudao-module-member/target/surefire-reports/TEST-cn.iocoder.yudao.module.member.integration.JssMemberLevelMySqlServiceIT.xml'
         assert report.stat().st_mtime >= started
         suite = ET.parse(report).getroot()
-        assert suite.attrib['tests'] == '7' and all(suite.attrib[key] == '0' for key in ['errors', 'failures', 'skipped']), suite.attrib
+        assert suite.attrib['tests'] == '15' and all(suite.attrib[key] == '0' for key in ['errors', 'failures', 'skipped']), suite.attrib
         shutil.copyfile(report, RUNTIME / 'member-level-service-test.xml')
         for case in suite.findall('testcase'):
             print('PASS ' + case.attrib['name'])
-        print(f'7 production member level tests passed on MySQL {live["version"]}:{live["port"]} in {suite.attrib["time"]} seconds')
+        print(f'15 production member level tests passed on MySQL {live["version"]}:{live["port"]} in {suite.attrib["time"]} seconds')
     finally:
         status()
         sql(f'DROP DATABASE `{database}`;')

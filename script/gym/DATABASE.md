@@ -321,3 +321,22 @@ yudao:
 同时要求既有门店verification-settings开启、支持meituan、requireCheckin=false及当前允许时段；平台沿用yudao.gym.group-buy.meituan的enabled/开发者/门店授权，不能复用其他租户门店。移动预览不调用状态变更接口，平台mutations-enabled不需要因预览开启。各实例的映射配置须一致，配置变更会使并发旧预览拒绝保存；未来核销必须重验冻结版本和实际权益资格。
 
 仅支持美团普通单券预览，其他券型/自动签到流程/其他平台未接入。32已实现，33–34仍待实现，暂不将预览资格通过作为正式核销入口上线依据。真实授权、实券及部署HTTP未联调，前端未改。实际本地回归与隔离MySQL证据见docs/testing.md本批章节。
+
+## 会员核销适配配置准备（2026-10-26，无新迁移）
+
+本批只有内部适配器，尚无33–34移动核销/结果路由或持久化执行器。V033、81表、下一V034保持不变，未运行业务库迁移。不要仅因有以下配置而认为会员已能核销。沿用既有平台授权和预览密钥/商品映射，新增：
+
+```yaml
+yudao:
+  gym:
+    mobile:
+      coupons:
+        consumption-enabled: false
+        merchant-accounts:
+          1:
+            12:
+              account: ${GYM_COUPON_T1_S12_MERCHANT_ACCOUNT}
+              name: ${GYM_COUPON_T1_S12_MERCHANT_NAME}
+```
+
+商家系统审计账号/名称各1–128字符且无首尾空白/控制字符，此为本地约束；不使用会员ID或客户端输入，也没有跨租户/门店回退。预览enabled不自动打开消费，消费还需平台enabled/mutations-enabled及完整当前授权。所有节点配置一致；签名密钥、令牌、授权实体、商家审计账号或加密密钥变化都会使旧授权指纹不匹配。未来存在未决核销时先核实和迁移其授权关系，不能直接覆盖配置再重发消费。当前无热更新/轮换或人工确认流程，真实联调未完成。

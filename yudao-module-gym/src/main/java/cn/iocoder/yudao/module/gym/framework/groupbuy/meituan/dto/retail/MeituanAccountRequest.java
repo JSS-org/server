@@ -14,10 +14,10 @@ import lombok.Setter;
 @Setter
 public class MeituanAccountRequest {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    @Schema(description = "服务端填入当前登录员工 ID", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "服务端填入商家系统操作账号；后台入口取当前员工 ID", accessMode = Schema.AccessMode.READ_ONLY)
     private String appShopAccount;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    @Schema(description = "服务端填入当前登录员工昵称", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "服务端填入商家系统操作人名称；后台入口取当前员工昵称", accessMode = Schema.AccessMode.READ_ONLY)
     private String appShopAccountName;
 }

@@ -3410,3 +3410,40 @@ V033新增一表至81表、下一V034，无历史券/预览/权限/角色回填�
 ### 未做 / 后续
 
 当前118项新增本地实现、4项复用源码、13项仍待开发。32只支持美团普通单张团购券，无自动签到；其他券型、抖音、33核销提交/真实发卡/未知结果补查和34本人结果仍待实现。redeemable仅是预览资格，不代表核销或发卡成功。真实授权、实券、部署HTTP、多实例与规模未联调；既定支付/续费、签约、设备、监控及积分自动奖励暂缓保持。仅本地小步提交，不推送。
+
+## [2026-10-26 11:30 ~ 12:27] 会员单券核销凭据与查单观察适配
+
+### 意图
+
+为目标33–34先完成可独立验证的小步平台边界，避免只凭OP_SUCCESS或已验券查询误发权益。真实消费的持久化占券、派发和本地履约留在下一业务批次，接口计数不提前增加。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `service/groupbuy/GymMemberCouponConsumption.java` | 新增 | 固定单券消费、授权指纹重查、严格成功确认及不同类型的只读观察 |
+| `service/groupbuy/GymCouponCipher.java` | 修改 | 新增独立authorization用途HMAC，不改变既有券加密/索引 |
+| `framework/mobile/GymMobileCouponProperties.java` | 修改 | 默认关闭消费开关、精确租户/店商家审计账号配置 |
+| `framework/groupbuy/meituan/dto/retail/MeituanAccountRequest.java` | 修改 | 补充商家系统操作账号语义，保留客户端不可写约束 |
+| `GymMemberCouponConsumptionTest.java`、`GymMeituanConfigurationTest.java` | 新增/修改 | 49项HTTP适配/异常/事务边界和2项配置绑定增量测试 |
+| `docs/architecture.md`、`docs/testing.md`、两份团购说明 | 修改 | 组件关系、官方依据、证据与未知结果限制 |
+| `docs/uniapp/uniapp-api.md`、`uniapp-implementation.md` | 修改 | 记录内部准备及992测试，33–34仍待实现、122/135不变 |
+| `script/gym/README.md`、`script/gym/DATABASE.md` | 修改 | 消费独立开关、商家审计账号及授权变化运维边界 |
+
+Java相对路径在yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym，测试在同模块src/test/java的framework/groupbuy/meituan。
+
+### 结构关系
+
+内部适配器复用Client/Transport；调用者提供持久化requestId和scope，消费固定count=1并检查精确券/商品及真实流水/订单。scope使用用途分离HMAC绑定租户、店、开发者凭据和商家账号；不自动生成或重发请求。同步Confirmation与只读Observation独立，后者无法证明本次requestId消费。网络方法NEVER事务；当前没有生产编排或HTTP调用者，原后台16项行为未改变。
+
+### 验证证据
+
+新增51测试，完整gym992通过、0失败/错误/跳过；member4通过及1项既有禁用跳过。Spotless通过，server package -DskipTests成功（打包跳过测试），源码映射122/135、缺13，git diff --check通过。MockRestServiceServer验证真实签名/表单及超时不重发，真实Spring事务代理/H2验证外层事务禁止网络。详见testing日志及复现命令。无迁移变更，本批未重跑MySQL；V033的222检查仅保留历史证据。
+
+### 影响面 / 风险
+
+无SQL/权限/角色变更，V033/81表/下一V034不变。新增开关默认false，仅开启预览不能消费；商家账号不能由会员ID代替。授权/密钥变化将拒绝旧scope，当前无动态配置或自动换权流程。官方getconsumed缺少本次请求关联凭据，观察不能认定发卡成功；结果未知必须留待后续持久化和受信核实流程。前端、业务库及用户原始uniapp.md内容/暂存状态保留。
+
+### 未做 / 后续
+
+当前118项新增本地实现、4项复用源码、13项待开发。33–34持久化核销、占券并发、一次派发、真实发卡/合同与恢复仍待实现，适配器没有生产调用者。未对真实平台发核销请求，实券、部署HTTP、多节点、换权未验证。支付/续费、电子签约、真实设备/监控和消费/邀请积分自动奖励继续按用户要求暂缓。仅本地小步提交，不推送。

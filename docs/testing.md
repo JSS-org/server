@@ -1413,3 +1413,23 @@ git diff --check
 真实隔离MySQL/Flyway222检查通过，新增10项覆盖空预览表、合法平台/版本、严格到期、可兑换必须非空卡及模板快照、不可兑换必须说明、微秒身份记录及3索引，旧库升级不造历史预览。新增一表至81表、下一V034；V001–V032保持不变，所有临时库清理，业务库未迁移。
 
 最终日志：`/tmp/uniapp-coupon-preview-final-tests.log`（11:24:57）、`/tmp/uniapp-coupon-preview-migrations.log`、`/tmp/uniapp-coupon-preview-package.log`（11:25:29）。预览不证明33核销/34结果已实现，也不证明真实渠道、实券、部署HTTP、轮换密钥、多实例或规模场景已通过。前端未改。
+
+## 会员单券消费与查单适配准备（2026-10-26，无迁移）
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py --show-missing
+git diff --check
+```
+
+新增49项GymMemberCouponConsumptionTest及2项配置绑定测试，完整gym992通过、0失败/错误/跳过（组织服务556、会员专项84保持）；member所选4通过，1项既有禁用跳过。Spotless及server依赖打包通过，打包阶段跳过测试。源码覆盖Contract135/mapped122/missing13不变；本批为未接通业务编排的内部适配，不能计为33–34路由实现。
+
+新增测试使用真实GymMeituanRetailClient/Transport和MockRestServiceServer拦截HTTP，不访问外网。验证签名、表单、固定requestId、count=1、显式商家审计身份与不发送会员资料；确认凭据不含明文券码/手机号/令牌。18种缺失/不匹配/多条/关联券/标识无效响应保持未知；超时只发一次，不隐式重试/查单。公共参数拒绝与业务/JSON/空响应分开判定。7种授权变化阻止旧scope消费及查询；移动消费独立开关、商家配置/密钥缺失、平台变更开关、租户/店无回退及行业错误在HTTP前拒绝。
+
+只读getConsumed在关闭移动消费/平台mutation后仍可查原授权，但其观察类型不含本次requestId或消费流水，不能充当Confirmation。不相关券/商品/类型及不完整订单拒绝。真实Spring事务代理结合H2事务验证两个网络方法在外层事务中拒绝执行。配置绑定验证预览开启不启动消费及精确租户/门店商家账号映射。
+
+日志：`/tmp/uniapp-coupon-consumption-focused.log`（专项49通过）、`/tmp/uniapp-coupon-consumption-final-tests.log`（12:24:38）、`/tmp/uniapp-coupon-consumption-package.log`（12:26:08）。本批无SQL、表或权限变更，未重复运行MySQL迁移检查，上一批222检查仍为V033历史证据。没有真实平台/实券、部署HTTP、多节点或热更新验证；没有会员核销API、占券/持久化幂等、发卡或恢复证据。前端及业务库未改。

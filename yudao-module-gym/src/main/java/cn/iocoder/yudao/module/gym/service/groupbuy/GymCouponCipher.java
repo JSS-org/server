@@ -37,6 +37,17 @@ public class GymCouponCipher {
         key("encrypt");
     }
 
+    /** Opaque fingerprint for frozen provider authorization; never persist the source credentials. */
+    public String authorizationFingerprint(String source) {
+        try {
+            var mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(key("authorization"), "HmacSHA256"));
+            return HexFormat.of().formatHex(mac.doFinal(source.getBytes(StandardCharsets.UTF_8)));
+        } catch (GeneralSecurityException e) {
+            throw exception(COUPON_NOT_CONFIGURED);
+        }
+    }
+
     public String hash(Long tenant, String platform, String code) {
         try {
             var mac = Mac.getInstance("HmacSHA256");

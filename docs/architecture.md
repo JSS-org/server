@@ -762,3 +762,9 @@ GymMobileDeviceCommandsController → GymMobileDeviceCommandsService → GymDevi
 AppGymCouponPreviewsController → GymMobileCouponPreviewsService（NEVER事务）→ GymCouponPreviewTransactions.begin只读身份/门店/设置检查 → GymMemberCouponProvider复用GymMeituanRetailClient.prepare及必要的mobileReceipts → Transactions.save重查并持久化。网络位于数据库事务外；归属只接受可信完整手机号相同或平台本人券列表精确包含，掩码后缀和客户端手机号均不能授权。两个平台接口的platform编码显式转换。设置/身份/映射在网络前后变化时拒绝保存。
 
 配置GymMobileCouponProperties按租户/门店/dealId精确映射具体卡模板，默认关闭。模板快照、设置版本及映射指纹与会员预览同事务保存；不触发consume、CardService、账本、签到或通知。GymCouponCipher从32字节配置主密钥按用途派生AES和HMAC密钥，用随机GCM nonce与租户/门店/用户AAD保护券码，索引用租户/平台HMAC，数据库不保存明文券码或手机号。V033新增gym_coupon_preview至81表，无权限/角色及历史回填。当前只完成32，33–34核销和结果仍待实现，真实渠道联调尚未完成。
+
+## 会员单券核销适配准备（2026-10-26，无迁移）
+
+GymMemberCouponConsumption → GymMeituanRetailClient → GymMeituanTransport。当前没有生产业务调用者或新增路由，不替代会员身份、占券、幂等流水或发卡授权。consume使用外部编排已冻结的requestId和scope，固定单券；scope由精确租户/门店商家审计配置和平台授权生成，用GymCouponCipher独立authorization用途HMAC绑定。移动消费开关独立于预览且默认关闭，配置变化时拒绝旧scope。
+
+Confirmation只来自对应同步consume成功且精确单券/商品/流水验证后的响应；Observation只来自getConsumed，类型不含本次requestId和消费流水，不能进入发卡授权。两个网络方法NEVER事务，无自动重试。发生超时/歧义时返回结果未知；持久化状态流转与恢复仍未连接。原后台身份填充及16项入口保持原行为，无数据库或权限迁移，仍V033/81表。

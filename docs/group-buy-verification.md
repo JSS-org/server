@@ -99,3 +99,17 @@ enabled 控制平台调用；mutations-enabled 额外控制6项状态变更请�
 移动总表32新增`POST /app-api/gym/coupon-verification-previews`，复用真实服务零售prepare及必要的querybymobile，检查当前会员手机号归属、门店设置、普通单券及具体卡模板映射后加密持久化预览。详细契约与暂缓边界见[小程序接口文档](uniapp/uniapp-api.md)末尾V033章节，配置见[数据库手册](../script/gym/DATABASE.md)。平台prepare和手机号查询的platform枚举相反，显式转换，不沿用同一个数字。
 
 此增量只写gym_coupon_preview，不改变原16项后台请求框架，不核销、不发权益、不生成财务或签到；33–34核销与本人结果仍待实现。当前普通单券/美团以外场景不宣称已支持，真实授权和实券联调尚未完成，移动开关默认关闭。
+
+## 2026-10-26 会员核销适配准备（尚未接通33–34）
+
+新增内部`GymMemberCouponConsumption`，复用真实Client/Transport构造单券consume与getConsumed。它没有HTTP入口、持久化核销流水或生产调用者；不检查会员身份、不占券、不发卡。将其连接到会员API前，必须由业务编排完成本人资格检查、持久化唯一占券、固定requestId、只发送一次及本地发卡事务。当前路由覆盖仍122/135，不因适配器而增加接口数。
+
+consume固定count=1，使用业务层事先保存的requestId；适配器不生成、不修改、不自动重发该值。平台操作账号来自当前租户/门店显式merchant-accounts配置，不把会员ID伪装为商家员工。后台16项入口仍使用原有当前员工身份，不改变其权限或请求行为。appShopAccount字段的OpenAPI说明补充了平台商家系统操作账号含义，客户端仍不可注入。
+
+平台OP_SUCCESS还必须包含恰好一条结果：原券码、dealId、dealGroupId完全相同，bizType=0、tgTimesCardFlag=false、dealQuantity为空或1，无关联券，且flowId/orderId非空。否则抛1070022007结果未知；网络/格式/业务异常同样不能当成确定失败，更不能发卡。仅原传输层明确的发送前配置拒绝或公共参数拒绝保留其确定错误码。成功确认只保留HMAC券摘要、商品、固定requestId、授权指纹、流水/订单/追踪标识；不保留手机号或明文券码。标识限长和无控制字符是本地防御约束，不声称是官方长度上限。
+
+查询已验券仅返回Observation（券摘要、商品、订单、traceId），与Confirmation使用不同类型；即使券码/商品一致，也不能据此认定是本次requestId消费，更不能自动发卡或重复核销。官方getconsumed未提供与本次requestId直接关联的凭据；未来未知态应继续处理中并交由受信核实流程，不以“已验”或一次查询错误自动收敛为成功/失败。
+
+新增独立consumption-enabled默认false；启用预览不会开启核销。消费另需移动总开关、平台enabled/mutations-enabled、精确租户门店授权、businessId=58、商家审计账号及32字节密钥。授权指纹使用独立用途HMAC，覆盖租户/店、开发者、签名密钥、令牌、业务编号、realOpBizCode及商家审计账号/名称；不保存凭据原文。配置变化后旧scope拒绝发送/查询。关闭移动或mutation开关仍可只读查询已有scope，但平台查询授权必须可用且一致。部署配置目前无热更新，不能把进程内属性并发改写当作受支持的换权流程。
+
+网络方法显式NEVER事务，禁止在数据库事务内调用。49项真实HTTP组装/模拟响应及2项配置绑定增量测试通过；未发真实核销请求，未验证实券。持久化核销、未知结果恢复与33–34仍待后续小步实现。

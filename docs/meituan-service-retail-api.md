@@ -74,3 +74,9 @@ consume 还支持平台文档中的 orderId，以及 thirdDeviceId、thirdDevice
 通过官方页面重新核对：[prepare](https://developer.meituan.com/docs/api/ddzh-tuangou-receipt-prepare)的platform是1美团/2点评，[querybymobile](https://developer.meituan.com/docs/api/ddzh-tuangou-receipt-querybymobile)则是1点评/2美团。新会员归属适配器显式转换，不能直接透传。prepare的receiptEndDate是毫秒时间戳，verificationType=1才在适用时段；普通单券业务检查独立于公共OP_SUCCESS。上述字段说明来自官方参数表，不能直接用包含多种券型示意值的整份示例作为可兑换业务样本。
 
 本次新增会员预览并加密保存，原16项后台Client/DTO未修改；其他券型、消费核销及结果同步并不因预览实现而完成。见[会员契约V033](uniapp/uniapp-api.md)。
+
+## 2026-10-26 单券消费与查单凭据复核
+
+[consume官方参数](https://developer.meituan.com/docs/api/ddzh-tuangou-receipt-consume)将requestId用于幂等标识，appShopAccount/appShopAccountName是商家系统的操作账号及名称，仅用于操作记录。文档未在本次可见参数中给出可据以自动重发的幂等有效期。会员适配固定count=1、沿用调用者的持久化requestId并显式配置商家审计账号，不使用会员ID作为商家员工。
+
+consume成功明细含flowId及orderId；[getconsumed官方参数](https://developer.meituan.com/docs/api/ddzh-tuangou-receipt-getconsumed)含orderId、verifyAccount、verifyChannel及verifyTime，但本次可见响应字段没有requestId/flowId。由此推断，仅查到同券已验不足以证明本次请求成功。新适配器将同步消费确认与只读查单观察分成两个类型，观察结果不能充当发卡依据。仍需真实授权、实券及可信关联核实流程；平台字段表不是生产联调证据。

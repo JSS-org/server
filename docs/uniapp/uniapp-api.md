@@ -1329,3 +1329,18 @@ RiskResolution为`{result,note,operatorUserId:ID,resolvedAt:DateTime}`，未处�
 queued/sent仅表示持久化发送状态，不等于开门。succeeded只有非模拟记录且有不早于requestedAt的完成时间时才输出；历史success缺少完成时间、模拟成功/发送或非约定状态都映射unknown，completedAt=null，提示核实且不要自动重发。failed表示已有失败记录，即使历史完成时间为空也保留failed。failed/succeeded之外不返回完成时间，queued/sent不返回failureReason；unknown返回统一说明。失败原因只透出当前服务端定义的5种“未发送”说明，其他厂商/未知字符串统一为“设备指令未完成，请联系门店核实”，避免凭据或内部错误泄漏。
 
 V032新增可空微秒字段completed_at，旧记录保持null，不从update_time推断或回填，不改变历史status/simulated。新增本地未发送失败在原事务内记录确切结束时间；数据库约束完成时间不早于请求、仅用于failed/succeeded且模拟成功不能带完成时间。未来可信回执生产者必须先校验来源及真实执行结果，再更新状态和时间；当前没有该生产者。GET不创建命令、不发送、重试、修改硬件或覆盖历史结果。前端未改。
+
+
+## 会员团购预览（V033，总表32）
+
+`POST A/coupon-verification-previews`已实现；请求JSON只接受`{storeId:ID,platform:"meituan",couponCode:string}`，券码1–128位字母/数字，不去掉前导零、不转数值，不接受客户端memberId、手机号或状态。当前只接美团服务零售渠道，抖音等拒绝。返回5字段`{previewId:ID,productName:string,redeemable:boolean,reason:string?,expiresAt:DateTime}`，不返回明文券码、手机号、平台用户标识、卡模板或凭据。按已登录用户5次/60秒配置框架限流；实际Redis限流部署联调尚未执行。访问日志关闭请求和响应内容。
+
+会员必须完成初始化且账号/档案有效，当前店营业且有会员门店关系，未处于禁止购买的有效黑名单。门店既有verification-settings须enabled=true、supportedChannels包含meituan、requireCheckin=false，allowedStart/allowedEnd按上海时区[start,end)；需自动签到的核销流程尚未实现，因此该配置暂不开放自助预览。移动自助总开关、32字节Base64加密密钥及精确租户/门店映射还需显式配置，平台沿用现有授权配置，无跨门店/租户回退。
+
+调用[输码验券校验](https://developer.meituan.com/docs/api/ddzh-tuangou-receipt-prepare)后核对返回券码、dealId和dealGroupId。平台返回完整手机号时必须与当前会员已验证手机号完全相同；完整手机号不同直接拒绝。掩码/缺失手机号不能证明归属，须通过[手机号查询可用团购券](https://developer.meituan.com/docs/api/ddzh-tuangou-receipt-querybymobile)用服务端账号手机号查询该商品并找到完全相同券码。该查询每页30、从offset=0开始，最多10页；超出范围仍未找到时拒绝自助核销。prepare.platform为1美团/2点评，querybymobile.platform为1点评/2美团，显式反转；未知平台值不能用于掩码归属验证。平台消息或私人券列表不透出。
+
+当前可兑换条件：bizType=0、tgTimesCardFlag=false、dealType=0、count=1、无组合/关联券、dealQuantity为空或1、verificationType=1，receiptEndDate按官方毫秒时间戳且尚未到期。目标映射按租户→门店→dealId配置并匹配dealGroupId，指向具体已发布卡模板版本，正次数/天数且适用该店。非支持券型、非适用时段、已过期/未知有效期、未配置可用卡分别返回redeemable=false及服务端明确原因。卡的现金价格不是团购核销收入，不在此计算收入或权益。
+
+网络请求位于数据库事务之外，完成后重查身份/手机号/设置版本/商品映射，再保存预览及模板快照。有效预览到期为min(签发后5分钟,券到期)，无效预览保留5分钟仅用于解释；expiresAt不是平台券有效期展示。每次POST生成独立预览，无核销/占券副作用。券码私有加密保存，响应仅有预览ID。持有该ID不能跨账号使用，后续33提交仍须检查归属、有效期、当前资格及平台状态。33核销提交及34结果尚未实现，本批redeemable=true只表示预览时资格通过，不代表核销发卡成功或33已经可调用。
+
+新错误1070032001：移动自助配置或当前门店时段不可用；1070032002：平台结果无法确认；1070032003：无法验证本人券归属；1070032004：资格/预览条件改变或无效。网络/平台未配置错误沿用1070022xxx，超时不会返回虚构预览成功。V033为唯一新表迁移，不回填旧券或核销记录。

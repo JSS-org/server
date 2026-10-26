@@ -3370,3 +3370,43 @@ V032新增可空列及约束，仍80表、下一V033，无角色或权限变更�
 ### 未做 / 后续
 
 当前117项新增本地实现、4项复用源码、14项待开发。124命令下发、126二次验证及132–133网关事件/回执仍待实现，真实设备通信继续按用户要求暂缓；当前已记录failed只代表实际未发送失败。支付/续费、签约、监控、消费/邀请积分自动奖励仍暂缓。未做真实硬件、部署HTTP、多节点或规模验证；仅本地小步提交，不推送。
+
+
+## [2026-10-26 10:55 ~ 11:29] 会员团购券归属预览与私有加密保存
+
+### 意图
+
+推进135项目标32，复用现有美团服务零售客户端，先验证当前会员确实拥有团购券，再建立可供后续核销使用的短时预览。原后台任意券查询不能直接作为会员授权；本批不提前把33核销或34结果视为完成。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `controller/app/mobile/AppGymCouponPreviewsController.java`、`vo/GymMobileCouponPreviewVO.java` | 新增 | 预览POST、5字段响应、限流、敏感日志关闭及额外字段拒绝 |
+| `service/mobile/GymMobileCouponPreviewsService.java`、`service/groupbuy/GymCouponPreviewTransactions.java` | 新增 | 网络与事务分离、会员/配置重查、真实模板/单券资格与快照保存 |
+| `service/groupbuy/GymMemberCouponProvider.java` | 新增 | 可信手机号归属、本人券分页、平台枚举反转及结果校验 |
+| `service/groupbuy/GymCouponCipher.java`、`framework/mobile/GymMobileCouponProperties.java` | 新增 | 用途分离的AES-GCM/HMAC、账号/店/租户认证数据及精确商品映射 |
+| `dal/dataobject/groupbuy/GymCouponPreviewDO.java`、`dal/mysql/groupbuy/GymCouponPreviewMapper.java` | 新增 | 私有预览模型和Mapper |
+| `enums/ErrorCodeConstants.java` | 修改 | 未配置、平台结果无效、归属不符和预览变化四类错误 |
+| `sql/gym/migration/mysql/V033__gym_coupon_previews.sql`、H2建表/清理、`script/gym/verify-migrations.py` | 新增/修改 | 一表至81表、快照/有效期约束、索引及10项隔离检查 |
+| `GymMobileMemberServiceTest.java`、`GymMobileCouponPreviewsControllerTest.java` | 修改/新增 | 15业务及3MVC，覆盖加密、归属、配置、事务和无核销副作用 |
+| `docs/uniapp/`契约、总表、实施与机器清单 | 修改 | 122/135、支持范围及33–34仍待实现边界 |
+| `docs/architecture.md`、`docs/testing.md`、团购两份说明、`script/gym/README.md`、`script/gym/DATABASE.md` | 修改 | 调用关系、官方字段复核、证据、部署配置和下一V034 |
+
+Java相对路径在yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym，测试在同模块src/test。
+
+### 结构关系
+
+Controller进入无事务编排，先独立只读核对会员、门店/关系、购卡黑名单和验券设置，再由Provider调用prepare及必要的本人手机号查券；完整手机号不同或未找到精确券码拒绝。prepare与querybymobile平台编码相反，显式转换。平台请求完成后另开事务，重查账号/手机号/设置版本/映射并保存冻结模板与加密预览。AES-GCM绑定租户、门店、用户，派生HMAC用于券索引；不调用消费、发卡、签到、财务或积分服务。
+
+### 验证证据
+
+完整gym941通过（会员专项84、组织服务556），member4通过及1项既有禁用跳过；Spotless通过，新增18项。真实隔离MySQL/Flyway222检查通过且临时库清理；server package -DskipTests成功（打包跳过测试）。源码覆盖Contract135/mapped122/missing13；git diff --check通过。首次测试密钥字节数错误修正后全量通过，未放宽生产32字节约束。官方prepare/querybymobile字段通过浏览器可见参数表复核，来源链接和测试日志见API文档及testing。
+
+### 影响面 / 风险
+
+V033新增一表至81表、下一V034，无历史券/预览/权限/角色回填。部署先备份、migrate/validate再升级，移动入口默认关闭，需32字节Base64密钥、精确租户/门店商品映射及既有平台授权和验券配置。所有节点配置须一致，未提供自动密钥轮换/过期清理；不能直接换钥使已保存券不可解密。最多10页本人券查询，超过300条尚未匹配时拒绝自助，规模与真实Redis限流未验证。业务库未迁移，前端及用户原始uniapp.md内容/暂存状态保留。
+
+### 未做 / 后续
+
+当前118项新增本地实现、4项复用源码、13项仍待开发。32只支持美团普通单张团购券，无自动签到；其他券型、抖音、33核销提交/真实发卡/未知结果补查和34本人结果仍待实现。redeemable仅是预览资格，不代表核销或发卡成功。真实授权、实券、部署HTTP、多实例与规模未联调；既定支付/续费、签约、设备、监控及积分自动奖励暂缓保持。仅本地小步提交，不推送。

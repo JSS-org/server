@@ -44,6 +44,11 @@ import java.util.*;
 import java.util.concurrent.*;
 
 @Import({
+    cn.iocoder.yudao.module.gym.framework.mobile.GymMobileCouponProperties.class,
+    cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponCipher.class,
+    cn.iocoder.yudao.module.gym.service.groupbuy.GymMemberCouponProvider.class,
+    cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponPreviewTransactions.class,
+    GymMobileCouponPreviewsService.class,
     cn.iocoder.yudao.module.gym.service.points.GymPointProductsService.class,
     GymDataScope.class,
     GymMobileIdentityService.class,
@@ -125,6 +130,9 @@ class GymMobileMemberServiceTest extends BaseDbUnitTest {
 
     @BeforeEach
     void setup() {
+        couponProperties.setEnabled(false);
+        couponProperties.setEncryptionKey(null);
+        couponProperties.setMappings(new HashMap<>());
         login(1L, 10L, 1);
         invitationProperties.setSharePage("/pages/invitation/index");
         invitationProperties.setValidDays(30);
@@ -2110,5 +2118,428 @@ class GymMobileMemberServiceTest extends BaseDbUnitTest {
         assertEquals(5, result.stock());
         assertEquals(100, result.requiredPoints());
         assertEquals(2, pointProducts.save(id, req).revision());
+    }
+
+    @Resource GymMobileCouponPreviewsService couponPreviews;
+    @Resource cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponCipher couponCipher;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.framework.mobile.GymMobileCouponProperties couponProperties;
+
+    @Resource cn.iocoder.yudao.module.gym.dal.mysql.groupbuy.GymCouponPreviewMapper couponRows;
+    @Resource cn.iocoder.yudao.module.gym.dal.mysql.sales.GymSalesSettingMapper couponSettings;
+
+    @MockitoBean
+    cn.iocoder.yudao.module.gym.framework.groupbuy.meituan.GymMeituanRetailClient couponClient;
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileCouponPreviewVO.Request
+            couponReq() {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileCouponPreviewVO
+                        .Request();
+        req.setStoreId(101L);
+        req.setPlatform("meituan");
+        req.setCouponCode("0012345678901");
+        return req;
+    }
+
+    <T>
+            cn.iocoder.yudao.module.gym.framework.groupbuy.meituan.dto.MeituanResponse<T>
+                    couponResponse(T data) {
+        var r = new cn.iocoder.yudao.module.gym.framework.groupbuy.meituan.dto.MeituanResponse<T>();
+        r.setCode("OP_SUCCESS");
+        r.setData(data);
+        return r;
+    }
+
+    cn.iocoder.yudao.module.gym.framework.groupbuy.meituan.dto.retail.MeituanRetailResponses.Prepare
+            couponFixture() {
+        initialize();
+        couponProperties.setEnabled(true);
+        couponProperties.setEncryptionKey(
+                Base64.getEncoder()
+                        .encodeToString(
+                                "0123456789abcdef0123456789abcdef"
+                                        .getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        var mapping =
+                new cn.iocoder.yudao.module.gym.framework.mobile.GymMobileCouponProperties
+                        .Mapping();
+        mapping.setEnabled(true);
+        mapping.setDealGroupId(8L);
+        mapping.setCardTemplateId(pointTemplate("all", "[]", "published"));
+        couponProperties.setMappings(
+                new HashMap<>(
+                        Map.of(
+                                1L,
+                                new HashMap<>(Map.of(101L, new HashMap<>(Map.of(7L, mapping)))))));
+        couponSetting(true, false, null, null);
+        var p =
+                new cn.iocoder.yudao.module.gym.framework.groupbuy.meituan.dto.retail
+                        .MeituanRetailResponses.Prepare();
+        p.setReceiptCode(couponReq().getCouponCode());
+        p.setDealId(7L);
+        p.setDealGroupId(8L);
+        p.setDealTitle("真实团购次卡");
+        p.setMobile("13800000001");
+        p.setCount(1);
+        p.setBizType(0);
+        p.setDealType(0);
+        p.setTgTimesCardFlag(false);
+        p.setVerificationType(1);
+        p.setReceiptEndDate(NOW.plusSeconds(600).toEpochMilli());
+        p.setPlatform(1);
+        when(couponClient.prepare(eq(1L), eq(101L), any())).thenReturn(couponResponse(p));
+        return p;
+    }
+
+    void couponSetting(boolean enabled, boolean checkin, String start, String end) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.admin.sales.vo
+                        .GymVerificationSettingsReqVO();
+        req.setEnabled(enabled);
+        req.setRequireCheckin(checkin);
+        req.setSupportedChannels(List.of("meituan"));
+        req.setAllowedStart(start);
+        req.setAllowedEnd(end);
+        var rows = couponSettings.selectList();
+        var row =
+                rows.isEmpty()
+                        ? new cn.iocoder.yudao.module.gym.dal.dataobject.sales.GymSalesSettingDO()
+                        : rows.getFirst();
+        row.setStoreId(101L);
+        row.setKind("verification-settings");
+        row.setRevision(row.getRevision() == null ? 1L : row.getRevision() + 1);
+        row.setContent(cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(req));
+        if (row.getId() == null) couponSettings.insert(row);
+        else couponSettings.updateById(row);
+    }
+
+    cn.iocoder.yudao.module.gym.framework.groupbuy.meituan.dto.retail.MeituanRetailResponses
+                    .MobileReceipts
+            couponList(String... codes) {
+        var r =
+                new cn.iocoder.yudao.module.gym.framework.groupbuy.meituan.dto.retail
+                        .MeituanRetailResponses.MobileReceipts();
+        r.setResult(
+                Arrays.stream(codes)
+                        .map(
+                                code -> {
+                                    var item =
+                                            new cn.iocoder.yudao.module.gym.framework.groupbuy
+                                                    .meituan.dto.retail.MeituanRetailResponses
+                                                    .UserReceipt();
+                                    item.setSerialNumber(code);
+                                    return item;
+                                })
+                        .toList());
+        return r;
+    }
+
+    @Test
+    void couponPreviewPersistsOwnedEncryptedSnapshotWithoutConsumingOrIssuing() {
+        couponFixture();
+        var result = couponPreviews.preview(couponReq());
+        assertTrue(result.redeemable());
+        assertNull(result.reason());
+        assertEquals("2026-10-23T12:05+08:00", result.expiresAt());
+        var row = couponRows.selectById(result.previewId());
+        assertEquals(10L, row.getUserId());
+        assertEquals(101L, row.getStoreId());
+        assertEquals(
+                couponReq().getCouponCode(),
+                couponCipher.open(row.getCouponCiphertext(), 1L, 101L, 10L));
+        assertFalse(row.getCouponCiphertext().contains(couponReq().getCouponCode()));
+        assertEquals(64, row.getCouponHash().length());
+        assertEquals(64, row.getMappingFingerprint().length());
+        assertTrue(row.getTemplateSnapshot().contains("真实次卡"));
+        assertFalse(
+                cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(result)
+                        .contains("13800000001"));
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM gym_member_card", Integer.class));
+        assertEquals(
+                0, jdbc.queryForObject("SELECT COUNT(*) FROM gym_verification", Integer.class));
+        verify(couponClient, never()).consume(anyLong(), anyLong(), any());
+        verify(couponClient, never()).mobileReceipts(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void couponPreviewMaskedPhoneRequiresOwnedListAndInvertsPlatformCode() {
+        var p = couponFixture();
+        p.setMobile("138****0001");
+        var platforms = new ArrayList<Integer>();
+        var offsets = new ArrayList<Integer>();
+        when(couponClient.mobileReceipts(anyLong(), anyLong(), any()))
+                .thenAnswer(
+                        inv -> {
+                            var r =
+                                    (cn.iocoder.yudao.module.gym.framework.groupbuy.meituan.dto
+                                                    .retail.MeituanMobileReceiptsRequest)
+                                            inv.getArgument(2);
+                            assertEquals("13800000001", r.getMobile());
+                            assertEquals(30, r.getLimit());
+                            platforms.add(r.getPlatform());
+                            offsets.add(r.getOffset());
+                            return couponResponse(
+                                    r.getOffset() == 0
+                                            ? couponList(
+                                                    Collections.nCopies(30, "other")
+                                                            .toArray(String[]::new))
+                                            : couponList(p.getReceiptCode()));
+                        });
+        assertTrue(couponPreviews.preview(couponReq()).redeemable());
+        assertEquals(List.of(2, 2), platforms);
+        assertEquals(List.of(0, 30), offsets);
+        p.setPlatform(2);
+        platforms.clear();
+        offsets.clear();
+        assertTrue(couponPreviews.preview(couponReq()).redeemable());
+        assertEquals(List.of(1, 1), platforms);
+    }
+
+    @Test
+    void couponPreviewRejectsOtherFullPhoneWithoutLeakingProductOrLookingUp() {
+        var p = couponFixture();
+        p.setMobile("13800000002");
+        assertServiceException(
+                () -> couponPreviews.preview(couponReq()), COUPON_OWNERSHIP_REQUIRED);
+        verify(couponClient, never()).mobileReceipts(anyLong(), anyLong(), any());
+        assertEquals(0, couponRows.selectCount());
+    }
+
+    @Test
+    void couponPreviewOwnershipLookupIsBoundedAndNeverAcceptsSuffixMatch() {
+        var p = couponFixture();
+        p.setMobile("138****0001");
+        when(couponClient.mobileReceipts(anyLong(), anyLong(), any()))
+                .thenReturn(
+                        couponResponse(
+                                couponList(
+                                        Collections.nCopies(30, "other").toArray(String[]::new))));
+        assertServiceException(
+                () -> couponPreviews.preview(couponReq()), COUPON_OWNERSHIP_REQUIRED);
+        verify(couponClient, times(10)).mobileReceipts(anyLong(), anyLong(), any());
+        assertEquals(0, couponRows.selectCount());
+    }
+
+    @Test
+    void couponPreviewRejectsMalformedProviderResultAndNeverSavesAnAssumedSuccess() {
+        var p = couponFixture();
+        p.setReceiptCode("other");
+        assertServiceException(() -> couponPreviews.preview(couponReq()), COUPON_PROVIDER_INVALID);
+        p.setReceiptCode(couponReq().getCouponCode());
+        p.setMobile(null);
+        p.setPlatform(9);
+        assertServiceException(
+                () -> couponPreviews.preview(couponReq()), COUPON_OWNERSHIP_REQUIRED);
+        p.setPlatform(1);
+        var invalid = couponList();
+        invalid.setResult(null);
+        when(couponClient.mobileReceipts(anyLong(), anyLong(), any()))
+                .thenReturn(couponResponse(invalid));
+        assertServiceException(() -> couponPreviews.preview(couponReq()), COUPON_PROVIDER_INVALID);
+        assertEquals(0, couponRows.selectCount());
+    }
+
+    @Test
+    void couponPreviewDisabledMissingKeyAndTenantMappingFailBeforeNetwork() {
+        couponFixture();
+        couponProperties.setEnabled(false);
+        assertServiceException(() -> couponPreviews.preview(couponReq()), COUPON_NOT_CONFIGURED);
+        couponProperties.setEnabled(true);
+        couponProperties.setEncryptionKey("invalid-key");
+        assertServiceException(() -> couponPreviews.preview(couponReq()), COUPON_NOT_CONFIGURED);
+        couponProperties.setMappings(
+                new HashMap<>(Map.of(2L, couponProperties.getMappings().get(1L))));
+        assertServiceException(() -> couponPreviews.preview(couponReq()), COUPON_NOT_CONFIGURED);
+        verifyNoInteractions(couponClient);
+        assertEquals(0, couponRows.selectCount());
+    }
+
+    @Test
+    void couponPreviewRespectsStoreVerificationConfigurationAndTimeWindow() {
+        couponFixture();
+        couponSetting(false, false, null, null);
+        assertServiceException(() -> couponPreviews.preview(couponReq()), COUPON_NOT_CONFIGURED);
+        couponSetting(true, true, null, null);
+        assertServiceException(() -> couponPreviews.preview(couponReq()), COUPON_NOT_CONFIGURED);
+        couponSetting(true, false, "12:01", "13:00");
+        assertServiceException(() -> couponPreviews.preview(couponReq()), COUPON_NOT_CONFIGURED);
+        couponSetting(true, false, "11:00", "12:00");
+        assertServiceException(() -> couponPreviews.preview(couponReq()), COUPON_NOT_CONFIGURED);
+        verifyNoInteractions(couponClient);
+        couponSetting(true, false, "12:00", "13:00");
+        assertTrue(couponPreviews.preview(couponReq()).redeemable());
+    }
+
+    @Test
+    void couponPreviewRejectsInactiveStoreAndRevokedMembership() {
+        couponFixture();
+        jdbc.update("UPDATE gym_store SET status='inactive' WHERE id=101");
+        assertServiceException(() -> couponPreviews.preview(couponReq()), COUPON_PREVIEW_INVALID);
+        jdbc.update("UPDATE gym_store SET status='active' WHERE id=101");
+        jdbc.update("UPDATE gym_member_store SET deleted=true");
+        assertServiceException(() -> couponPreviews.preview(couponReq()), COUPON_PREVIEW_INVALID);
+        verifyNoInteractions(couponClient);
+    }
+
+    @Test
+    void couponPreviewRejectsEffectivePurchaseBlacklistButNotExpiredRestriction() {
+        couponFixture();
+        Long member = identities.requireMemberId();
+        jdbc.update(
+                "INSERT INTO gym_blacklist(member_id,block_entry,block_purchase,reason,starts_at,ends_at,tenant_id) VALUES(?,false,true,'fixture',?,?,1)",
+                member,
+                java.sql.Timestamp.from(NOW),
+                java.sql.Timestamp.from(NOW.plusSeconds(1)));
+        assertServiceException(() -> couponPreviews.preview(couponReq()), COUPON_PREVIEW_INVALID);
+        verifyNoInteractions(couponClient);
+        jdbc.update("UPDATE gym_blacklist SET ends_at=?", java.sql.Timestamp.from(NOW));
+        assertTrue(couponPreviews.preview(couponReq()).redeemable());
+    }
+
+    @Test
+    void couponPreviewOnlyMappedPublishedApplicableCardsAreRedeemable() {
+        var p = couponFixture();
+        var mapping = couponProperties.store(1L, 101L).get(7L);
+        mapping.setEnabled(false);
+        assertFalse(couponPreviews.preview(couponReq()).redeemable());
+        mapping.setEnabled(true);
+        mapping.setDealGroupId(9L);
+        assertFalse(couponPreviews.preview(couponReq()).redeemable());
+        mapping.setDealGroupId(8L);
+        var card = pointTemplates.selectById(mapping.getCardTemplateId());
+        card.setStatus("draft");
+        pointTemplates.updateById(card);
+        assertFalse(couponPreviews.preview(couponReq()).redeemable());
+        card.setStatus("published");
+        card.setAccessScope("selected");
+        card.setStoreIds("[102]");
+        pointTemplates.updateById(card);
+        assertFalse(couponPreviews.preview(couponReq()).redeemable());
+        card.setStoreIds("[101]");
+        pointTemplates.updateById(card);
+        assertTrue(couponPreviews.preview(couponReq()).redeemable());
+        var result = couponRows.selectList().getFirst();
+        assertNull(result.getCardTemplateId());
+        assertNull(result.getTemplateSnapshot());
+    }
+
+    @Test
+    void couponPreviewUnsupportedVoucherExpiredOrNotInWindowIsExplicitlyNonRedeemable() {
+        var p = couponFixture();
+        p.setCount(2);
+        assertFalse(couponPreviews.preview(couponReq()).redeemable());
+        p.setCount(1);
+        p.setBizType(205);
+        assertFalse(couponPreviews.preview(couponReq()).redeemable());
+        p.setBizType(0);
+        p.setTgTimesCardFlag(true);
+        assertFalse(couponPreviews.preview(couponReq()).redeemable());
+        p.setTgTimesCardFlag(false);
+        p.setVerificationType(2);
+        assertFalse(couponPreviews.preview(couponReq()).redeemable());
+        p.setVerificationType(1);
+        p.setReceiptEndDate(NOW.toEpochMilli());
+        assertFalse(couponPreviews.preview(couponReq()).redeemable());
+        p.setReceiptEndDate(NOW.plusSeconds(2).toEpochMilli());
+        assertEquals("2026-10-23T12:00:02+08:00", couponPreviews.preview(couponReq()).expiresAt());
+        verify(couponClient, never()).consume(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void couponPreviewRechecksIdentityAndConfigurationAfterNetwork() {
+        var p = couponFixture();
+        when(couponClient.prepare(anyLong(), anyLong(), any()))
+                .thenAnswer(
+                        inv -> {
+                            couponSetting(true, false, null, null);
+                            return couponResponse(p);
+                        });
+        assertServiceException(() -> couponPreviews.preview(couponReq()), COUPON_PREVIEW_INVALID);
+        when(couponClient.prepare(anyLong(), anyLong(), any()))
+                .thenAnswer(
+                        inv -> {
+                            couponProperties.store(1L, 101L).get(7L).setEnabled(false);
+                            return couponResponse(p);
+                        });
+        assertServiceException(() -> couponPreviews.preview(couponReq()), COUPON_PREVIEW_INVALID);
+        when(couponClient.prepare(anyLong(), anyLong(), any()))
+                .thenAnswer(
+                        inv -> {
+                            users.getUser(10L).setStatus(1);
+                            return couponResponse(p);
+                        });
+        assertServiceException(() -> couponPreviews.preview(couponReq()), MOBILE_IDENTITY_INVALID);
+        assertEquals(0, couponRows.selectCount());
+    }
+
+    @Test
+    void couponPreviewEncryptionAuthenticatesContextUsesFreshNonceAndKeepsLeadingZero() {
+        couponFixture();
+        var req = couponReq();
+        String a = couponCipher.seal(req.getCouponCode(), 1L, 101L, 10L),
+                b = couponCipher.seal(req.getCouponCode(), 1L, 101L, 10L);
+        assertNotEquals(a, b);
+        assertEquals(req.getCouponCode(), couponCipher.open(a, 1L, 101L, 10L));
+        assertServiceException(() -> couponCipher.open(a, 2L, 101L, 10L), COUPON_PREVIEW_INVALID);
+        assertServiceException(() -> couponCipher.open(a, 1L, 102L, 10L), COUPON_PREVIEW_INVALID);
+        assertServiceException(() -> couponCipher.open(a, 1L, 101L, 11L), COUPON_PREVIEW_INVALID);
+        assertServiceException(
+                () -> couponCipher.open("v1.bad.bad", 1L, 101L, 10L), COUPON_PREVIEW_INVALID);
+        assertNotEquals(
+                couponCipher.hash(1L, "meituan", req.getCouponCode()),
+                couponCipher.hash(2L, "meituan", req.getCouponCode()));
+    }
+
+    @Test
+    void couponPreviewNetworkRunsOutsideTransactionAndSaveFailureLeavesNoLocalRecord() {
+        var p = couponFixture();
+        when(couponClient.prepare(anyLong(), anyLong(), any()))
+                .thenAnswer(
+                        inv -> {
+                            assertFalse(
+                                    org.springframework.transaction.support
+                                            .TransactionSynchronizationManager
+                                            .isActualTransactionActive());
+                            return couponResponse(p);
+                        });
+        jdbc.execute(
+                "ALTER TABLE gym_coupon_preview ADD CONSTRAINT test_no_preview CHECK (user_id<0)");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () -> couponPreviews.preview(couponReq()));
+        } finally {
+            jdbc.execute("ALTER TABLE gym_coupon_preview DROP CONSTRAINT test_no_preview");
+        }
+        assertEquals(0, couponRows.selectCount());
+        assertTrue(couponPreviews.preview(couponReq()).redeemable());
+        var tx = new org.springframework.transaction.support.TransactionTemplate(pointTransactions);
+        assertThrows(
+                org.springframework.transaction.IllegalTransactionStateException.class,
+                () -> tx.execute(s -> couponPreviews.preview(couponReq())));
+    }
+
+    @Test
+    void couponPreviewRejectsUninitializedAdminDisabledAndInvalidRequestBeforeNetwork() {
+        assertServiceException(() -> couponPreviews.preview(couponReq()), MOBILE_IDENTITY_REQUIRED);
+        couponFixture();
+        login(1L, 10L, 2);
+        assertServiceException(() -> couponPreviews.preview(couponReq()), MOBILE_IDENTITY_INVALID);
+        login(1L, 10L, 1);
+        users.getUser(10L).setStatus(1);
+        assertServiceException(() -> couponPreviews.preview(couponReq()), MOBILE_IDENTITY_INVALID);
+        users.getUser(10L).setStatus(0);
+        var req = couponReq();
+        req.setPlatform("douyin");
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> couponPreviews.preview(req));
+        req.setPlatform("meituan");
+        req.setCouponCode("abc xyz");
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> couponPreviews.preview(req));
+        verifyNoInteractions(couponClient);
     }
 }

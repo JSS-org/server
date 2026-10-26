@@ -4,7 +4,7 @@
 
 健身业务使用美团 **服务零售 → 团购核销 API**。本轮已按该目录全部16项实现 Controller → Service → 平台 Client → 共享表单 POST 传输，包括验券准备、核销、撤销、历史/商品/手机号查询、次卡、退款相关请求。逐项官方来源、路径、参数、类型和文档差异见 [完整 API 清单](meituan-service-retail-api.md)。
 
-交付范围是请求框架：不改前端，不要求真实跑通，不写核销结果、发卡、退款财务或其他业务表；真实商户授权、平台联调、回调、状态补查调度和本地履约未接入。默认关闭接口及状态变更请求，未配置时明确报错，不返回模拟成功。
+后台16项交付范围是请求框架：不改前端，不要求真实跑通，不写核销结果、发卡、退款财务或其他业务表；真实商户授权、平台联调、回调、状态补查调度和本地履约未接入。默认关闭接口及状态变更请求，未配置时明确报错，不返回模拟成功。
 
 先前已提交的 `/admin-api/gym/group-buy/meituan/coupon-history/query` 是餐饮历史接口，现已在 OpenAPI 标记 deprecated，保留原结构用于兼容，且仅接受明确配置的 businessId=1。新服务零售路径位于 `/admin-api/gym/group-buy/meituan/retail`，业务编号固定58。服务端核对授权业务编号，混用时拒绝；不能只换编号调用餐饮路径。
 
@@ -92,3 +92,10 @@ enabled 控制平台调用；mutations-enabled 额外控制6项状态变更请�
 本轮逐项本地契约、MVC、权限及异常回归见 [testing.md](testing.md)。还需在正确的服务零售行业权限、门店授权和平台测试条件下完成真实联调，再设计本地核销流水、凭证留存、结果补查、权益映射与幂等发放、退款审批衔接和对账。本次没有把上述后续能力当作请求框架已经实现。
 
 官方共同协议：[公共请求参数](https://developer.meituan.com/docs/biz/biz-comm-sys-param-req)、[签名规则](https://developer.meituan.com/docs/biz/comm-dev-isv-sign-rule)。
+
+
+## 2026-10-26 会员预览增量（V033）
+
+移动总表32新增`POST /app-api/gym/coupon-verification-previews`，复用真实服务零售prepare及必要的querybymobile，检查当前会员手机号归属、门店设置、普通单券及具体卡模板映射后加密持久化预览。详细契约与暂缓边界见[小程序接口文档](uniapp/uniapp-api.md)末尾V033章节，配置见[数据库手册](../script/gym/DATABASE.md)。平台prepare和手机号查询的platform枚举相反，显式转换，不沿用同一个数字。
+
+此增量只写gym_coupon_preview，不改变原16项后台请求框架，不核销、不发权益、不生成财务或签到；33–34核销与本人结果仍待实现。当前普通单券/美团以外场景不宣称已支持，真实授权和实券联调尚未完成，移动开关默认关闭。

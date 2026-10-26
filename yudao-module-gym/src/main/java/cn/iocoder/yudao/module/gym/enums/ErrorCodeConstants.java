@@ -258,4 +258,8 @@ public interface ErrorCodeConstants {
     ErrorCode RISK_SOURCE_CONFLICT = new ErrorCode(1_070_031_002, "风险来源事件已存在且内容不同");
     ErrorCode RISK_ALERT_NOT_EXISTS = new ErrorCode(1_070_031_003, "风险告警不存在");
     ErrorCode RISK_RESOLUTION_CONFLICT = new ErrorCode(1_070_031_004, "风险告警已处置或版本已变化");
+    ErrorCode COUPON_NOT_CONFIGURED = new ErrorCode(1_070_032_001, "会员团购自助兑换未配置或当前不可用");
+    ErrorCode COUPON_PROVIDER_INVALID = new ErrorCode(1_070_032_002, "团购平台返回结果无法确认，请联系门店");
+    ErrorCode COUPON_OWNERSHIP_REQUIRED = new ErrorCode(1_070_032_003, "无法确认团购券属于当前会员，请联系门店");
+    ErrorCode COUPON_PREVIEW_INVALID = new ErrorCode(1_070_032_004, "团购预览条件已变化或无效，请重新核对");
 }

@@ -97,3 +97,5 @@ DELETE FROM gym_point_product;
 DELETE FROM gym_point_redemption;
 DELETE FROM gym_risk_resolution;
 DELETE FROM gym_risk_alert;
+
+DELETE FROM gym_coupon_preview;

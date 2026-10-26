@@ -67,3 +67,10 @@ consume 还支持平台文档中的 orderId，以及 thirdDeviceId、thirdDevice
 平台共同业务编号按当前文档为58。平台授权、退款能力是否对当前商户行业开放，仍须实际申请；目录中有文档不表示当前应用已获权。公共签名、租户门店范围、身份填充、错误处理及配置见 [团购业务说明](group-buy-verification.md)。
 
 `yudao-module-gym/src/test/resources/meituan/retail-contracts.json` 独立列出上述16个接口的文档来源、路径、参数和响应样例。客户端测试对每项检查真实组装的表单 POST；MVC 测试逐项覆盖路由、实际 Service 调用、权限及门店拒绝，并验证调用方不能伪造操作人。它们是本地模拟证据，不代表平台真实联调。具体命令和结果见 [testing.md](testing.md)。
+
+
+## 2026-10-26 会员预览适配复核
+
+通过官方页面重新核对：[prepare](https://developer.meituan.com/docs/api/ddzh-tuangou-receipt-prepare)的platform是1美团/2点评，[querybymobile](https://developer.meituan.com/docs/api/ddzh-tuangou-receipt-querybymobile)则是1点评/2美团。新会员归属适配器显式转换，不能直接透传。prepare的receiptEndDate是毫秒时间戳，verificationType=1才在适用时段；普通单券业务检查独立于公共OP_SUCCESS。上述字段说明来自官方参数表，不能直接用包含多种券型示意值的整份示例作为可兑换业务样本。
+
+本次新增会员预览并加密保存，原16项后台Client/DTO未修改；其他券型、消费核销及结果同步并不因预览实现而完成。见[会员契约V033](uniapp/uniapp-api.md)。

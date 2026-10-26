@@ -419,8 +419,12 @@
       "method": "POST",
       "path": "/app-api/gym/coupon-verification-previews",
       "description": "校验团购券并生成核销预览，不直接消耗券",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymCouponPreviewsController.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileCouponPreviewsControllerTest.java"
+      ]
     },
     {
       "id": 33,
@@ -1784,6 +1788,7 @@
   "scopeNotes": [
     "支付/自动续费、电子签约、门禁设备和监控的真实渠道接入与联调，按用户要求暂缓；保留原135个接口的设计口径。",
     "源码路由存在、业务测试通过、真实外部集成通过是不同验收层级；前端不修改。",
-    "134–135仅实现内部告警查询、一次处置与受控证据读取；真实设备告警生产、证据采集、风险判定及自动冻结未接入。消费/邀请积分发放规则与自动奖励按用户要求暂缓。"
+    "134–135仅实现内部告警查询、一次处置与受控证据读取；真实设备告警生产、证据采集、风险判定及自动冻结未接入。消费/邀请积分发放规则与自动奖励按用户要求暂缓。",
+    "32已实现美团单张普通团购券的会员归属预览及加密保存，平台真实授权/联调仍待完成；33核销及34结果仍待实现，其他券型和抖音未接入。"
   ]
 }

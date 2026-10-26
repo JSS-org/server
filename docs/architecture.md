@@ -755,3 +755,10 @@ V030新增gym_point_redemption并扩展原账户/商品，当前78表。需要�
 GymMobileDeviceCommandsController → GymMobileDeviceCommandsService → GymDeviceCommandMapper，以租户和有效后台身份读取既有命令。本人历史按requesterId授权；他人需PermissionApi的gym:devices:read及GymDataScope整店范围，并核对不可迁移归属的设备记录。无当前设备记录时他人不可读；本人历史不依赖当前门店/设备可用性。服务层承担“本人或管理者”完整授权，不在Controller附加会排除本人历史的固定功能权限。
 
 查询只投影7字段，失败原因白名单、模拟/缺失完成证据的成功降为unknown；不调用发送器。V032为gym_device_command增加completed_at及状态/时间约束，不修改历史记录。既有GymDeviceService在未发送失败事务内记真实结束时间；真实设备回执仍无生产写入者。未来回执须校验真实来源，不能用更新时间替代完成时间。表数仍80，无新增权限或角色变更。
+
+
+## 会员团购预览（2026-10-26，V033）
+
+AppGymCouponPreviewsController → GymMobileCouponPreviewsService（NEVER事务）→ GymCouponPreviewTransactions.begin只读身份/门店/设置检查 → GymMemberCouponProvider复用GymMeituanRetailClient.prepare及必要的mobileReceipts → Transactions.save重查并持久化。网络位于数据库事务外；归属只接受可信完整手机号相同或平台本人券列表精确包含，掩码后缀和客户端手机号均不能授权。两个平台接口的platform编码显式转换。设置/身份/映射在网络前后变化时拒绝保存。
+
+配置GymMobileCouponProperties按租户/门店/dealId精确映射具体卡模板，默认关闭。模板快照、设置版本及映射指纹与会员预览同事务保存；不触发consume、CardService、账本、签到或通知。GymCouponCipher从32字节配置主密钥按用途派生AES和HMAC密钥，用随机GCM nonce与租户/门店/用户AAD保护券码，索引用租户/平台HMAC，数据库不保存明文券码或手机号。V033新增gym_coupon_preview至81表，无权限/角色及历史回填。当前只完成32，33–34核销和结果仍待实现，真实渠道联调尚未完成。

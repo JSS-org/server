@@ -2126,7 +2126,8 @@ public class PayOrderServiceTest extends BaseDbAndRedisUnitTest {
                         PayOrderDO.class,
                         o ->
                                 o.setStatus(PayOrderStatusEnum.WAITING.getStatus())
-                                        .setExpireTime(addTime(Duration.ofMinutes(-1))));
+                                        .setExpireTime(
+                                                addTime(Duration.ofMinutes(-1)).withNano(0)));
         orderMapper.insert(order);
         // mock 数据（PayOrderExtensionDO 已支付）
         PayOrderExtensionDO orderExtension =
@@ -2156,7 +2157,8 @@ public class PayOrderServiceTest extends BaseDbAndRedisUnitTest {
                         PayOrderDO.class,
                         o ->
                                 o.setStatus(PayOrderStatusEnum.WAITING.getStatus())
-                                        .setExpireTime(addTime(Duration.ofMinutes(-1))));
+                                        .setExpireTime(
+                                                addTime(Duration.ofMinutes(-1)).withNano(0)));
         orderMapper.insert(order);
         // mock 数据（PayOrderExtensionDO 等待中）
         PayOrderExtensionDO orderExtension =
@@ -2184,7 +2186,8 @@ public class PayOrderServiceTest extends BaseDbAndRedisUnitTest {
                         PayOrderDO.class,
                         o ->
                                 o.setStatus(PayOrderStatusEnum.WAITING.getStatus())
-                                        .setExpireTime(addTime(Duration.ofMinutes(-1))));
+                                        .setExpireTime(
+                                                addTime(Duration.ofMinutes(-1)).withNano(0)));
         orderMapper.insert(order);
         // mock 数据（PayOrderExtensionDO 等待中）
         PayOrderExtensionDO orderExtension =
@@ -2228,7 +2231,8 @@ public class PayOrderServiceTest extends BaseDbAndRedisUnitTest {
                             PayOrderDO.class,
                             o ->
                                     o.setStatus(PayOrderStatusEnum.WAITING.getStatus())
-                                            .setExpireTime(addTime(Duration.ofMinutes(-1))));
+                                            .setExpireTime(
+                                                    addTime(Duration.ofMinutes(-1)).withNano(0)));
             orderMapper.insert(order);
             // mock 数据（PayOrderExtensionDO 等待中）
             PayOrderExtensionDO orderExtension =
@@ -2271,7 +2275,8 @@ public class PayOrderServiceTest extends BaseDbAndRedisUnitTest {
                         PayOrderDO.class,
                         o ->
                                 o.setStatus(PayOrderStatusEnum.WAITING.getStatus())
-                                        .setExpireTime(addTime(Duration.ofMinutes(-1))));
+                                        .setExpireTime(
+                                                addTime(Duration.ofMinutes(-1)).withNano(0)));
         orderMapper.insert(order);
         // mock 数据（PayOrderExtensionDO 等待中）
         PayOrderExtensionDO orderExtension =

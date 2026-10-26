@@ -1567,3 +1567,11 @@ git diff --check
 售卖窗口用未经截断的时刻判断 `[start,end)`，订单持久化时间仍为微秒；工资确认写入前归一化至微秒，首次响应和数据库重读一致。没有修改历史迁移、放宽业务断言或跳过失败用例。专项通过不替代后续完整构建与真实 MySQL/Redis/HTTP/H5 验收。
 
 三个修改的 Java 文件单独通过 Spotless apply/check（17:37:51），日志 `.runtime/main-merge-time-format.log`。插件的 `spotlessFiles` 参数使用正则表达式：`.*GymPayrollService\.java,.*GymMobileOrdersService\.java,.*GymOrganizationServiceTest\.java`；根目录 `-N` 执行前须将当前 `yudao-dependencies/pom.xml` 安装到同一个工作区 Maven 缓存，以解析内部 BOM。
+
+## 2026-10-26 合并复测：支付过期订单夹具精度
+
+Gym 修复后的完整组合继续通过全部 1062 项 Gym 测试，随后在支付模块的 346 项中失败 5 项（35 项既有跳过）。五项均为过期时间的内存纳秒值与 H2 `timestamp` 读回微秒值不同，未发现订单关闭/支付状态的断言失败；原始整对象断言仍全部保留。失败日志保存在 `.runtime/main-merge-verify-before-pay-fixture.log`。
+
+仅将 `PayOrderServiceTest` 五处“当前时间减一分钟”夹具设为整秒（`withNano(0)`），与 MySQL 支付表的 `DATETIME` 精度一致；不修改生产时间工具、表结构或支付业务。`-Pjss-mall -pl yudao-module-pay -am test -Dtest=PayOrderServiceTest -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true` 的 67 项全部通过、无失败/错误/跳过，17:48:53 结束；日志 `.runtime/main-merge-pay-test.log`。使用同一个工作区 Maven 缓存和测试临时目录，完整构建仍须在此改动后重跑。
+
+该测试文件的 Spotless apply/check 通过（17:49:44），日志 `.runtime/main-merge-pay-format.log`，差异检查通过。

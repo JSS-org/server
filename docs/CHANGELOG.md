@@ -4594,3 +4594,33 @@ Redis程序仍不可读，真实菜单HTTP/H5/RBAC/套餐/缓存恢复、并发�
 ### 未做 / 后续
 
 Redis程序仍不可读，最新商城/工作台HTTP/H5、测试探针、异步链、真实RBAC/并发、原生导出/真机/发布继续未完成。前端已准备四页和十类统一导出，具体证据见独立仓库；当前整合验收版本不前移，完整目标继续。
+
+## [2026-10-27 04:22 ~ 04:38] 补齐会员标签与分组的实际MySQL管理证据
+
+### 意图
+
+继续整合计划P5中已启用member模块，迁入会员标签/分组前核对真实查询、租户和会员关联删除保护，避免以页面夹具替代数据库证据。会员分类不授予工作台身份或后台角色。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-member/src/test/java/cn/iocoder/yudao/module/member/integration/JssMemberSegmentMySqlServiceIT.java` | 新增 | 七项生产Service/Mapper/真实关联计数、租户及事务测试 |
+| `script/jss/verify_member_segment_services.py` | 新增 | 归属随机库、V001原始三表、报告时效/数量检查和finally清理 |
+| `docs/testing.md`、`docs/CHANGELOG.md` | 更新/追加 | 命令、实际结果和HTTP/Redis边界 |
+
+### 结构关系
+
+未改生产结构。实际Tag/Group Service经MemberUserServiceImpl的原计数方法调用MemberUserMapper；测试手工连接计数方法所需Mapper，其他不使用的短信/社交/MQ客户端不实例化。三Mapper使用生产租户和分页插件，外层Spring事务控制同一数据源，没有业务替身。
+
+### 验证证据
+
+`python script/jss/verify_member_segment_services.py` 七项全部执行通过，零失败/错误/跳过，14.507秒，MySQL8.4.9:13316，残留随机库0；见 `.runtime/member-segments-services.log` 和 `.runtime/jss-mysql/member-segment-service-test.xml`。覆盖双租户、启用0、255字备注、分页/日期、名称重复、逻辑删除、关联计数/删除保护、Long编号和外层回滚。服务器及依赖测试编译通过，常规专项13项H2执行通过、七项MySQL条件跳过，`.runtime/member-segments-regression.log`。新增Java定向Spotless、Python编译及差异检查通过。
+
+### 影响面 / 风险
+
+只增测试和复现工具，不修改表、迁移或生产Service。脚本仅使用已归属实例上的固定前缀随机库，不访问开发库。关联分配/删除竞争和重复名并发仍无证据；前端按现有单删接口接入，不新增批删或导出接口。
+
+### 未做 / 后续
+
+无新全量verify、HTTP安全链、Redis、注册/短信/MQ或真实H5结果。前端两项实际H5代码仅完成类型/发现检查，工作台待实跑十八项、商城三项；Redis权限恢复后执行已有隔离HTTP/H5脚本。V011部署前置与最近整合验收版本保持不变。

@@ -1911,3 +1911,13 @@ Redis程序仍读取拒绝，真实公告CRUD/备注/权限/租户与完整商�
 服务器及依赖测试编译通过；API访问/错误日志常规专项15项中九项H2执行通过（3+6）、六项MySQL条件跳过，零失败/错误，`.runtime/apilog-regression.log`。既有成功用例从随机三状态改为只取DONE/IGNORE，INIT不是合法处理目标。六个变更Java定向Spotless、四Python编译和差异检查通过，无全量verify或新增HTTP证据。HTTP隔离工具的JSS历史计数改为迁移数量+显式baseline0，避免版本追加后硬编码失真。
 
 真实H5准备使用仅src/test/专用profile的异常探针经真实异常处理器与异步日志API产生记录，检查UI读/处理、同记录双请求只一成功、租户隔离和无权限接口；不直接写表伪造HTTP日志，不新增生产Controller。Redis仍不可读，探针/实际异步链/HTTP/RBAC/原生导出与留存脱敏待实跑；最新工作台九HTTP加浏览器启动仍十项JUnit，真实H5增至十六项（十三文件），商城十三HTTP/三H5不变。必须先备份+migrate/validate V011再部署包含本批API日志处理的代码，整合验收版本不前移。
+
+## 2026-10-27 会员标签/分组实际MySQL专项
+
+`python script/jss/verify_member_segment_services.py` 在已归属 MySQL8.4.9:13316 上创建 `jss_member_segment_verify_<12位随机值>`，从不可变JSS V001提取原始 member_tag/member_group/member_user DDL，不导入业务账号或授权；finally再次核对实例归属并删除随机库。七项实际执行全过，零失败/错误/跳过，14.507秒，随机库残留0，见 `.runtime/member-segments-services.log`、`.runtime/jss-mysql/member-segment-service-test.xml`。脚本检查报告时间和七项数量后保存XML，日志口令脱敏。
+
+测试运行生产Tag/Group Service、全部三Mapper、实际租户/分页插件和Spring事务。关联计数调用真实MemberUserServiceImpl的两个计数方法及真实SQL；该实例手工注入Mapper，未实例化这些计数方法不使用的短信/社交/MQ客户端，没有Service/Mapper替身。覆盖标签增改/名称重复/日期/逻辑删除后重建，分组状态0/启用精简列表/255字备注/第二页/日期，双租户读写/简单列表隔离，真实逗号标签和会员分组的删除保护，解除关联/已删除会员/其他租户会员边界，9007199254740993/995编号及外层事务同时回滚两类写入。它不是完整会员注册/短信/MQ或HTTP安全链验收。
+
+常规命令 `mvn -o -Pjss-mall -pl yudao-server -am test -Dtest=MemberTagServiceImplTest,MemberGroupServiceImplTest,JssMemberSegmentMySqlServiceIT -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true`（本机使用交接中的wrapper）20项中13项H2执行通过、七项MySQL条件跳过，零失败/错误；30模块服务器依赖及测试编译成功，见 `.runtime/member-segments-regression.log`。新增Java定向Spotless及Python编译通过；没有新全量verify、迁移或生产代码修改。
+
+前端新增真实H5两项准备标签/分组页面CRUD、状态/备注、精简列表、标签重名、跨租户目标、工作台访问头和每类五接口无权限拒绝，只清理自建分类/绑定/会话，不拦截API或注入浏览器Token。工作台现十四文件十八项H5，仅类型和发现检查通过；关联会员删除保护当前只获上述实际MySQL证据，真实关联UI/API与并发分配/删除仍待验。Redis仍不可读，商城十三HTTP/三H5及工作台九HTTP/十八H5待串行实跑，整合验收版本不前移。

@@ -151,6 +151,17 @@ public class GymContractService {
         return issue("member-cards", cardId, null, null, false, null, redemption);
     }
 
+    @Resource
+    private cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponVerificationAccess couponAccess;
+
+    @Transactional(
+            propagation = org.springframework.transaction.annotation.Propagation.MANDATORY,
+            rollbackFor = Exception.class)
+    public GymContractDO issueForCouponCard(Long verificationId, Long cardId) {
+        var coupon = couponAccess.require(verificationId);
+        return issue("member-cards", cardId, null, null, false, null, null, coupon);
+    }
+
     private GymContractDO issue(
             String type, Long id, Long templateId, Instant dueAt, boolean required) {
         return issue(type, id, templateId, dueAt, required, null);
@@ -175,6 +186,20 @@ public class GymContractService {
             cn.iocoder.yudao.module.gym.service.sales.GymOrderEntitlementAccess.Purchase purchase,
             cn.iocoder.yudao.module.gym.service.points.GymPointRedemptionAccess.Redemption
                     redemption) {
+        return issue(type, id, templateId, dueAt, required, purchase, redemption, null);
+    }
+
+    private GymContractDO issue(
+            String type,
+            Long id,
+            Long templateId,
+            Instant dueAt,
+            boolean required,
+            cn.iocoder.yudao.module.gym.service.sales.GymOrderEntitlementAccess.Purchase purchase,
+            cn.iocoder.yudao.module.gym.service.points.GymPointRedemptionAccess.Redemption
+                    redemption,
+            cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponVerificationAccess.Verification
+                    coupon) {
         Long memberId, storeId;
         String applicable, name;
         Instant effective;
@@ -206,9 +231,19 @@ public class GymContractService {
             effective = subscription.getRequestedAt();
             entitlement = subscriptionTerms(subscription);
         } else throw exception(CONTRACT_SOURCE_INVALID);
-        if (purchase == null && redemption == null) {
+        if (purchase == null && redemption == null && coupon == null) {
             scope.check(storeId);
             members.checkMemberStore(memberId, storeId);
+        } else if (coupon != null) {
+            if (!(entitlement
+                            instanceof
+                            cn.iocoder.yudao.module.gym.dal.dataobject.card.GymMemberCardDO card)
+                    || !coupon.member().getId().equals(memberId)
+                    || !coupon.store().getId().equals(storeId)
+                    || !"coupon-verification".equals(card.getSourceType())
+                    || !coupon.row().getId().toString().equals(card.getSourceId())
+                    || !coupon.card().getId().equals(card.getTemplateId()))
+                throw exception(CONTRACT_SOURCE_INVALID);
         } else if (redemption != null) {
             if (!(entitlement
                             instanceof
@@ -286,7 +321,7 @@ public class GymContractService {
         privateFile.setMimeType("application/pdf");
         privateFile.setSize((long) content.length);
         privateFile.setUploaderId(
-                purchase == null && redemption == null
+                purchase == null && redemption == null && coupon == null
                         ? SecurityFrameworkUtils.getLoginUserId()
                         : null);
         privateFile.setUrl(
@@ -309,11 +344,13 @@ public class GymContractService {
         row.setTemplateSnapshot(JsonUtils.toJsonString(template));
         var snapshot = new LinkedHashMap<String, Object>();
         var member =
-                redemption != null
-                        ? redemption.member()
-                        : purchase == null
-                                ? members.requireMember(memberId, false)
-                                : purchase.member();
+                coupon != null
+                        ? coupon.member()
+                        : redemption != null
+                                ? redemption.member()
+                                : purchase == null
+                                        ? members.requireMember(memberId, false)
+                                        : purchase.member();
         snapshot.put("memberId", memberId.toString());
         snapshot.put("memberName", member.getName());
         snapshot.put("memberPhone", member.getPhone());

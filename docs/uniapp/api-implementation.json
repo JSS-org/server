@@ -432,8 +432,14 @@
       "method": "POST",
       "path": "/app-api/gym/coupon-verifications",
       "description": "确认核销团购券，渠道成功后发放权益",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymCouponVerificationsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/groupbuy/GymCouponVerificationTransactions.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/groupbuy/GymCouponVerificationWorker.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileCouponVerificationsControllerTest.java"
+      ]
     },
     {
       "id": 34,
@@ -441,8 +447,14 @@
       "method": "GET",
       "path": "/app-api/gym/me/coupon-verifications/{id}",
       "description": "查询本人团购券核销与权益发放结果",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymCouponVerificationsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/groupbuy/GymCouponVerificationTransactions.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/groupbuy/GymCouponVerificationWorker.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileCouponVerificationsControllerTest.java"
+      ]
     },
     {
       "id": 35,

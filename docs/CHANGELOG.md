@@ -3447,3 +3447,45 @@ Java相对路径在yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym，
 ### 未做 / 后续
 
 当前118项新增本地实现、4项复用源码、13项待开发。33–34持久化核销、占券并发、一次派发、真实发卡/合同与恢复仍待实现，适配器没有生产调用者。未对真实平台发核销请求，实券、部署HTTP、多节点、换权未验证。支付/续费、电子签约、真实设备/监控和消费/邀请积分自动奖励继续按用户要求暂缓。仅本地小步提交，不推送。
+
+## [2026-10-26 12:28 ~ 12:45] 会员团购核销持久化与发卡恢复
+
+### 意图
+
+完成135项目标33–34的内部业务链，连接上一批单券适配器，确保同券并发只发送一次；平台已核销时，本地发卡失败可恢复而不会重复消费或释放占用。只读本人结果必须展示真实持久化状态，未知不能伪造成功。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `controller/app/mobile/AppGymCouponVerificationsController.java`、`vo/GymMobileCouponVerificationVO.java` | 新增 | 核销提交/本人读取、四字段结果、未知字段拒绝及敏感日志关闭 |
+| `service/mobile/GymMobileCouponVerificationsService.java` | 新增 | 外层无事务编排、持久化ID幂等与最新状态返回 |
+| `service/groupbuy/GymCouponVerificationTransactions.java`、`GymCouponVerificationWorker.java` | 新增 | 唯一占券、网络前后重查、一次派发、独立确认、未知查单与本地发卡事务 |
+| `service/groupbuy/GymCouponVerificationAccess.java` | 新增 | 真实会员/门店/购卡资格、匹配消费凭据和冻结模板授权 |
+| `service/groupbuy/GymCouponVerificationScheduler.java`、`GymCouponVerificationTimer.java` | 新增 | 独立有效租户扫描、持久化会员身份恢复与上下文还原 |
+| `service/groupbuy/GymCouponPreviewTransactions.java` | 修改 | 提取共用单券适用性判定，预览/提交一致 |
+| `service/card/GymCardService.java`、`service/contract/GymContractService.java` | 修改 | 专用消费凭据授权路径、冻结卡权益及内部未签合同/会员审计 |
+| `dal/dataobject/groupbuy/GymCouponVerificationDO.java`、`dal/mysql/groupbuy/GymCouponVerificationMapper.java` | 新增 | 核销私有流水、状态与唯一关联 |
+| `enums/ErrorCodeConstants.java` | 修改 | 不存在、重复占券、状态/凭据无效错误 |
+| `sql/gym/migration/mysql/V034__gym_coupon_verifications.sql`、H2建表/清理、`script/gym/verify-migrations.py` | 新增/修改 | 一表至82表、状态/时间/凭据约束及20项MySQL检查 |
+| `GymOrganizationServiceTest.java`、`GymMobileCouponVerificationsControllerTest.java` | 修改/新增 | 24实际业务/并发/故障测试及4MVC |
+| `docs/uniapp/`契约、总表、实施和机器清单 | 修改 | 124/135、状态流转、未知上限与实券未联调边界 |
+| `docs/README.md`、`architecture.md`、`testing.md`、团购/全量进度和脚本两份手册 | 修改 | 调用关系、部署/保留数据、恢复开关、证据及下一V035 |
+
+Java相对路径在yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym，测试在同模块src/test。
+
+### 结构关系
+
+会员Controller → 无事务Service → prepare事务持久化请求/占用 → Worker以持久化会员身份检查并调用平台准备 → start事务只允许一个prepared→sending赢家 → consume一次 → confirm独立事务 → Access/Card/Contract/通知/旧核销记录/成功状态同一履约事务。网络不占SQL事务。未知态使用先提交的有限查询租约，观察不是消费证明；confirmed失败只恢复本地发卡，不返券、不重消费。专用调度器扫描有效租户并恢复线程上下文。
+
+### 验证证据
+
+新增28测试，专项28及完整gym1020通过（组织服务580、会员专项84），0失败/错误/跳过；member4通过及1项既有禁用跳过。Spotless、server package -DskipTests通过（打包跳过测试）。真实隔离MySQL242检查通过且临时库全部清理；源码映射124/135、缺11，git diff --check通过。并发、真实卡/合同/通知回滚、核销响应持久化失败、预览过期后恢复、有限查询及跨账号授权均有实际断言，完整日志与初期夹具修正见testing。
+
+### 影响面 / 风险
+
+V034新增一表至82表，下一V035；已应用V001–V033未改，无历史消费/卡/权限回填。需备份、migrate/validate后部署，消费仍默认关闭且需真实商家授权。未决请求引用的预览/密钥/授权指纹必须保留，不能直接换钥/换授权或清理记录。卡起始时间固定本地核销确认时刻，延迟恢复不顺延期限；外部合同blob不受SQL回滚控制，仍需清理孤立文件。业务库未迁移，前端与原始uniapp.md内容/暂存状态保留。
+
+### 未做 / 后续
+
+当前120新增本地验证、4复用源码、11项目标未实现。真实授权/实券、部署HTTP、外部存储、多实例和压力尚未验证；未知结果最多6次观察后仍处理中，缺请求关联凭据/成功确认始终无法落库时没有自动或人工强制成功方案，需受信外部核实与后续关联流程。无现金收入、积分赠送、自动签到或真实签约。支付/续费、电子签约、真实设备/监控和消费/邀请自动奖励按用户要求暂缓；仅本地小步提交，不推送。

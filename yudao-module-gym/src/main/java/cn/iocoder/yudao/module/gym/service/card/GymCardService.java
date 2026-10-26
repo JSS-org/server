@@ -303,6 +303,27 @@ public class GymCardService {
                 redemption);
     }
 
+    @Resource
+    private cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponVerificationAccess couponAccess;
+
+    @Transactional(
+            propagation = org.springframework.transaction.annotation.Propagation.MANDATORY,
+            rollbackFor = Exception.class)
+    public GymMemberCardDO issueCouponVerification(Long verificationId) {
+        var coupon = couponAccess.require(verificationId);
+        return issueInternal(
+                coupon.member().getId(),
+                coupon.store().getId(),
+                coupon.card().getId(),
+                coupon.row().getConfirmedAt(),
+                "coupon-verification",
+                verificationId.toString(),
+                coupon.card(),
+                null,
+                null,
+                coupon);
+    }
+
     private GymMemberCardDO issueInternal(
             Long memberId,
             Long storeId,
@@ -335,16 +356,46 @@ public class GymCardService {
             cn.iocoder.yudao.module.gym.service.sales.GymOrderEntitlementAccess.Purchase purchase,
             cn.iocoder.yudao.module.gym.service.points.GymPointRedemptionAccess.Redemption
                     redemption) {
+        return issueInternal(
+                memberId,
+                storeId,
+                templateId,
+                startsAt,
+                sourceType,
+                sourceId,
+                purchased,
+                purchase,
+                redemption,
+                null);
+    }
+
+    private GymMemberCardDO issueInternal(
+            Long memberId,
+            Long storeId,
+            Long templateId,
+            Instant startsAt,
+            String sourceType,
+            String sourceId,
+            GymCardTemplateDO purchased,
+            cn.iocoder.yudao.module.gym.service.sales.GymOrderEntitlementAccess.Purchase purchase,
+            cn.iocoder.yudao.module.gym.service.points.GymPointRedemptionAccess.Redemption
+                    redemption,
+            cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponVerificationAccess.Verification
+                    coupon) {
         gymBusinessMutex.lockStoreEntitlements();
         if (startsAt != null) startsAt = startsAt.truncatedTo(ChronoUnit.MICROS);
         var authorizedMember =
                 purchase != null
                         ? purchase.member()
-                        : redemption != null ? redemption.member() : null;
+                        : redemption != null
+                                ? redemption.member()
+                                : coupon != null ? coupon.member() : null;
         var authorizedStore =
                 purchase != null
                         ? purchase.store()
-                        : redemption != null ? redemption.store() : null;
+                        : redemption != null
+                                ? redemption.store()
+                                : coupon != null ? coupon.store() : null;
         if (authorizedStore == null) stores.requireStore(storeId, false);
         var member =
                 authorizedMember == null ? members.requireMember(memberId, true) : authorizedMember;
@@ -442,7 +493,8 @@ public class GymCardService {
         update.setId(memberId);
         update.setCustomerStage("member");
         gymMemberMapper.updateById(update);
-        if (redemption != null)
+        if (coupon != null) contracts.issueForCouponCard(coupon.row().getId(), row.getId());
+        else if (redemption != null)
             contracts.issueForRedeemedCard(redemption.row().getId(), row.getId());
         else if (purchase == null) contracts.issueForEntitlement("member-cards", row.getId());
         else contracts.issueForPurchasedItem(purchase.item().getId(), "member-cards", row.getId());

@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import cn.iocoder.yudao.framework.common.biz.system.permission.dto.DeptDataPermissionRespDTO;
+import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.framework.tenant.config.TenantProperties;
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
 import cn.iocoder.yudao.framework.tenant.core.db.TenantDatabaseInterceptor;
@@ -20,11 +21,24 @@ import cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileWorkCours
 import cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileWorkMembersVO;
 import cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileWorkRecordsVO;
 import cn.iocoder.yudao.module.gym.controller.admin.store.vo.*;
+import cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileCouponPreviewVO;
+import cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileCouponVerificationVO;
 import cn.iocoder.yudao.module.gym.dal.dataobject.file.GymFileDO;
 import cn.iocoder.yudao.module.gym.dal.mysql.file.GymFileMapper;
+import cn.iocoder.yudao.module.gym.dal.mysql.groupbuy.GymCouponVerificationMapper;
 import cn.iocoder.yudao.module.gym.dal.mysql.store.GymStoreMapper;
+import cn.iocoder.yudao.module.gym.framework.groupbuy.meituan.GymMeituanProperties;
+import cn.iocoder.yudao.module.gym.framework.groupbuy.meituan.dto.MeituanResponse;
+import cn.iocoder.yudao.module.gym.framework.groupbuy.meituan.dto.retail.MeituanRetailResponses;
+import cn.iocoder.yudao.module.gym.framework.mobile.GymMobileCouponProperties;
 import cn.iocoder.yudao.module.gym.service.common.GymDataScope;
 import cn.iocoder.yudao.module.gym.service.employee.GymEmployeeService;
+import cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponVerificationScheduler;
+import cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponVerificationTransactions;
+import cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponVerificationWorker;
+import cn.iocoder.yudao.module.gym.service.groupbuy.GymMemberCouponConsumption;
+import cn.iocoder.yudao.module.gym.service.mobile.GymMobileCouponPreviewsService;
+import cn.iocoder.yudao.module.gym.service.mobile.GymMobileCouponVerificationsService;
 import cn.iocoder.yudao.module.gym.service.store.GymStoreService;
 import cn.iocoder.yudao.module.system.api.permission.PermissionApi;
 import cn.iocoder.yudao.module.system.dal.dataobject.dept.DeptDO;
@@ -50,6 +64,18 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.framework.mobile.GymMobileCouponProperties.class,
+    cn.iocoder.yudao.module.gym.framework.groupbuy.meituan.GymMeituanProperties.class,
+    cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponCipher.class,
+    cn.iocoder.yudao.module.gym.service.groupbuy.GymMemberCouponProvider.class,
+    cn.iocoder.yudao.module.gym.service.groupbuy.GymMemberCouponConsumption.class,
+    cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponPreviewTransactions.class,
+    cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponVerificationAccess.class,
+    cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponVerificationTransactions.class,
+    cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponVerificationWorker.class,
+    cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponVerificationScheduler.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileCouponPreviewsService.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileCouponVerificationsService.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileDeviceCommandsService.class,
     cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileDeviceCommandsController.class,
     cn.iocoder.yudao.module.gym.service.risk.GymRiskAlertPublisher.class,
@@ -209,6 +235,9 @@ import java.util.*;
 @org.springframework.test.context.TestPropertySource(
         properties = "yudao.web.admin-ui.url=http://localhost")
 public class GymOrganizationServiceTest extends BaseDbUnitTest {
+    @org.springframework.test.context.bean.override.mockito.MockitoBean
+    cn.iocoder.yudao.module.gym.framework.groupbuy.meituan.GymMeituanRetailClient couponClient;
+
     @Resource GymStoreService stores;
     @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileFeedbackService feedback;
 
@@ -21595,5 +21624,797 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
         assertServiceException(() -> mobileCommandResults.get(null), MOBILE_REQUEST_INVALID);
         assertServiceException(() -> mobileCommandResults.get(0L), MOBILE_REQUEST_INVALID);
         assertServiceException(() -> controller.get(-1L), MOBILE_REQUEST_INVALID);
+    }
+
+    @Resource GymMobileCouponProperties cvProperties;
+    @Resource GymMeituanProperties cvProviderProperties;
+    @Resource GymCouponVerificationTransactions cvTransactions;
+    @Resource GymCouponVerificationWorker cvWorker;
+    @Resource GymCouponVerificationScheduler cvScheduler;
+    @Resource GymMobileCouponPreviewsService cvPreviews;
+    @Resource GymMobileCouponVerificationsService cvService;
+    @Resource GymCouponVerificationMapper cvRows;
+    @Resource GymMemberCouponConsumption cvConsumption;
+    static final String CV_CODE = "0012345678901";
+
+    record CouponFixture(
+            Long member,
+            Long template,
+            Long preview,
+            java.time.Instant now,
+            MeituanRetailResponses.Prepare prepared) {}
+
+    <T> MeituanResponse<T> cvResponse(T data) {
+        var r = new MeituanResponse<T>();
+        r.setCode("OP_SUCCESS");
+        r.setData(data);
+        return r;
+    }
+
+    GymMobileCouponPreviewVO.Request cvPreviewRequest() {
+        var req = new GymMobileCouponPreviewVO.Request();
+        req.setStoreId(101L);
+        req.setPlatform("meituan");
+        req.setCouponCode(CV_CODE);
+        return req;
+    }
+
+    GymMobileCouponVerificationVO.Create cvRequest(Long preview) {
+        var req = new GymMobileCouponVerificationVO.Create();
+        req.setPreviewId(preview);
+        return req;
+    }
+
+    CouponFixture couponWorkflowFixture() {
+        var now = java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS);
+        when(businessClock.now()).thenReturn(now);
+        stores.create(store(101L, "A"));
+        Long member = Long.valueOf(members.create(member(101L, "13800002401")).getId());
+        Long template = Long.valueOf(cards.create(cardTemplate("count")).getId());
+        var config = verificationSettings();
+        config.setRequireCheckin(false);
+        salesSettings.saveVerification(101L, config);
+        cvProperties.setEnabled(true);
+        cvProperties.setConsumptionEnabled(true);
+        cvProperties.setEncryptionKey(java.util.Base64.getEncoder().encodeToString(new byte[32]));
+        var mapping = new GymMobileCouponProperties.Mapping();
+        mapping.setEnabled(true);
+        mapping.setDealGroupId(8L);
+        mapping.setCardTemplateId(template);
+        cvProperties.setMappings(
+                new HashMap<>(
+                        Map.of(
+                                1L,
+                                new HashMap<>(Map.of(101L, new HashMap<>(Map.of(7L, mapping)))))));
+        var merchant = new GymMobileCouponProperties.MerchantAccount();
+        merchant.setAccount("merchant-101");
+        merchant.setName("自助核销");
+        cvProperties.setMerchantAccounts(
+                new HashMap<>(Map.of(1L, new HashMap<>(Map.of(101L, merchant)))));
+        cvProviderProperties.setEnabled(true);
+        cvProviderProperties.setMutationsEnabled(true);
+        cvProviderProperties.setDeveloperId(10L);
+        cvProviderProperties.setSignKey("test-only");
+        var authorization = new GymMeituanProperties.StoreAuthorization();
+        authorization.setAppAuthToken("test-token");
+        var tenant = new GymMeituanProperties.TenantAuthorization();
+        tenant.getStores().put(101L, authorization);
+        cvProviderProperties.setTenants(new HashMap<>(Map.of(1L, tenant)));
+        qrMemberIdentity(member);
+        qrMemberLogin();
+        var prepared = new MeituanRetailResponses.Prepare();
+        prepared.setReceiptCode(CV_CODE);
+        prepared.setDealId(7L);
+        prepared.setDealGroupId(8L);
+        prepared.setDealTitle("团购次卡");
+        prepared.setMobile("13800002401");
+        prepared.setBizType(0);
+        prepared.setDealType(0);
+        prepared.setTgTimesCardFlag(false);
+        prepared.setCount(1);
+        prepared.setVerificationType(1);
+        prepared.setReceiptEndDate(now.plusSeconds(600).toEpochMilli());
+        when(couponClient.prepare(eq(1L), eq(101L), any()))
+                .thenAnswer(
+                        i -> {
+                            assertFalse(
+                                    org.springframework.transaction.support
+                                            .TransactionSynchronizationManager
+                                            .isActualTransactionActive());
+                            return cvResponse(prepared);
+                        });
+        when(couponClient.consume(eq(1L), eq(101L), any()))
+                .thenAnswer(
+                        i -> {
+                            assertFalse(
+                                    org.springframework.transaction.support
+                                            .TransactionSynchronizationManager
+                                            .isActualTransactionActive());
+                            var request =
+                                    i.getArgument(
+                                            2,
+                                            cn.iocoder.yudao.module.gym.framework.groupbuy.meituan
+                                                    .dto.retail.MeituanConsumeRequest.class);
+                            var pending =
+                                    cvRows.selectOne(
+                                            cn.iocoder.yudao.module.gym.dal.dataobject.groupbuy
+                                                            .GymCouponVerificationDO
+                                                    ::getProviderRequestId,
+                                            request.getRequestId());
+                            assertTrue(Set.of("sending", "unknown").contains(pending.getStage()));
+                            assertEquals(1, request.getCount());
+                            assertEquals("merchant-101", request.getAppShopAccount());
+                            var detail = new MeituanRetailResponses.ConsumeDetail();
+                            detail.setReceiptCode(CV_CODE);
+                            detail.setDealId(7L);
+                            detail.setDealGroupId(8L);
+                            detail.setBizType(0);
+                            detail.setTgTimesCardFlag(false);
+                            detail.setFlowId("cv-flow-1");
+                            detail.setOrderId("cv-order-1");
+                            var data = new MeituanRetailResponses.Consume();
+                            data.setResult(List.of(detail));
+                            return cvResponse(data);
+                        });
+        Long preview = Long.valueOf(cvPreviews.preview(cvPreviewRequest()).previewId());
+        clearInvocations(couponClient);
+        return new CouponFixture(member, template, preview, now, prepared);
+    }
+
+    Long cvPrepare(CouponFixture f) {
+        return cvTransactions.prepare(cvRequest(f.preview()), "coupon-request-1");
+    }
+
+    void cvUnknown() {
+        doThrow(
+                        cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil
+                                .exception(GROUP_BUY_PROVIDER_RESULT_UNKNOWN))
+                .when(couponClient)
+                .consume(anyLong(), anyLong(), any());
+    }
+
+    void cvObserveResponse() {
+        var data = new MeituanRetailResponses.Consumed();
+        data.setReceiptCode(CV_CODE);
+        data.setDealId(7L);
+        data.setDealGroupId(8L);
+        data.setBizType(0);
+        data.setOrderId("already-used-by-someone");
+        when(couponClient.getConsumed(anyLong(), anyLong(), any())).thenReturn(cvResponse(data));
+    }
+
+    @Test
+    void couponWorkflowSuccessIssuesOneRealCardWithProofAndNoCashOrPoints() {
+        var f = couponWorkflowFixture();
+        var result = cvService.create(cvRequest(f.preview()), "coupon-request-1");
+        assertEquals("succeeded", result.status());
+        assertNull(result.failureReason());
+        assertEquals(1, result.memberCardIds().size());
+        var row = cvRows.selectById(Long.valueOf(result.id()));
+        var card = purchasedCards().selectById(Long.valueOf(result.memberCardIds().getFirst()));
+        assertEquals(f.member(), card.getMemberId());
+        assertEquals("coupon-verification", card.getSourceType());
+        assertEquals(result.id(), card.getSourceId());
+        assertEquals(f.now(), card.getStartsAt());
+        assertEquals(f.now(), row.getConfirmedAt());
+        assertEquals(f.template(), card.getTemplateId());
+        assertEquals("fulfilled", row.getStage());
+        assertEquals(row.getCouponHash(), row.getClaimedCouponHash());
+        assertNotNull(row.getVerificationId());
+        assertFalse(row.getConfirmationSnapshot().contains(CV_CODE));
+        assertEquals(
+                0,
+                redemptionJdbc()
+                        .queryForObject("SELECT COUNT(*) FROM gym_business_order", Integer.class));
+        assertEquals(0, redemptionRecords.selectCount());
+        assertEquals(
+                1,
+                redemptionJdbc()
+                        .queryForObject(
+                                "SELECT COUNT(*) FROM gym_verification WHERE member_card_id="
+                                        + card.getId(),
+                                Integer.class));
+        assertEquals(result, cvService.create(cvRequest(f.preview()), "coupon-request-1"));
+        assertEquals(result, cvService.create(cvRequest(f.preview()), "coupon-request-other"));
+        cvWorker.process(row.getId());
+        assertEquals(1, purchasedCards().selectCount());
+        verify(couponClient, times(1)).consume(eq(1L), eq(101L), any());
+    }
+
+    @Test
+    void couponWorkflowUnknownKeepsClaimAndGetNeverCallsProviderOrIssuesCard() {
+        var f = couponWorkflowFixture();
+        cvUnknown();
+        var result = cvService.create(cvRequest(f.preview()), "coupon-unknown-1");
+        assertEquals("processing", result.status());
+        assertTrue(result.memberCardIds().isEmpty());
+        assertEquals("unknown", cvRows.selectById(Long.valueOf(result.id())).getStage());
+        clearInvocations(couponClient);
+        for (int n = 0; n < 3; n++) assertEquals(result, cvService.get(Long.valueOf(result.id())));
+        verifyNoInteractions(couponClient);
+        assertEquals(0, purchasedCards().selectCount());
+        Long otherPreview = Long.valueOf(cvPreviews.preview(cvPreviewRequest()).previewId());
+        assertServiceException(
+                () -> cvService.create(cvRequest(otherPreview), "coupon-another-preview"),
+                COUPON_ALREADY_CLAIMED);
+        assertEquals(1, cvRows.selectCount());
+    }
+
+    @Test
+    void couponWorkflowReadOnlyObservationNeverConvertsUnknownToSuccessfulConsumption() {
+        var f = couponWorkflowFixture();
+        cvUnknown();
+        Long id = Long.valueOf(cvService.create(cvRequest(f.preview()), "coupon-query-1").id());
+        cvObserveResponse();
+        cvProperties.setEnabled(false);
+        cvProperties.setConsumptionEnabled(false);
+        cvProviderProperties.setMutationsEnabled(false);
+        for (int n = 1; n <= 8; n++) {
+            when(businessClock.now()).thenReturn(f.now().plusSeconds(n * 61));
+            cvWorker.process(id);
+        }
+        var row = cvRows.selectById(id);
+        assertEquals(6, row.getQueryCount());
+        assertEquals("unknown", row.getStage());
+        assertNotNull(row.getObservationSnapshot());
+        assertNull(row.getConfirmationSnapshot());
+        assertEquals(0, purchasedCards().selectCount());
+        assertTrue(cvTransactions.due().isEmpty());
+        verify(couponClient, times(1)).consume(anyLong(), anyLong(), any());
+        verify(couponClient, times(6)).getConsumed(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void couponWorkflowDefinitiveRefusalReleasesClaimButDoesNotResubmitSamePreview() {
+        var f = couponWorkflowFixture();
+        doThrow(
+                        cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil
+                                .exception(GROUP_BUY_PROVIDER_REJECTED))
+                .when(couponClient)
+                .consume(anyLong(), anyLong(), any());
+        var result = cvService.create(cvRequest(f.preview()), "coupon-rejected-1");
+        assertEquals("failed", result.status());
+        assertNull(cvRows.selectById(Long.valueOf(result.id())).getClaimedCouponHash());
+        assertEquals(result, cvService.create(cvRequest(f.preview()), "coupon-rejected-2"));
+        verify(couponClient, times(1)).consume(anyLong(), anyLong(), any());
+        Long fresh = Long.valueOf(cvPreviews.preview(cvPreviewRequest()).previewId());
+        assertNotEquals(
+                Long.valueOf(result.id()),
+                cvTransactions.prepare(cvRequest(fresh), "coupon-fresh-1"));
+    }
+
+    @Test
+    void couponWorkflowExpiredPreviewAndConfigurationChangeCannotDispatch() {
+        var f = couponWorkflowFixture();
+        when(businessClock.now()).thenReturn(f.now().plusSeconds(301));
+        assertServiceException(() -> cvPrepare(f), COUPON_PREVIEW_INVALID);
+        assertEquals(0, cvRows.selectCount());
+        when(businessClock.now()).thenReturn(f.now());
+        Long id = cvPrepare(f);
+        cvProperties.store(1L, 101L).get(7L).setEnabled(false);
+        cvWorker.process(id);
+        assertEquals("failed", cvRows.selectById(id).getStatus());
+        verify(couponClient, never()).consume(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void couponWorkflowRevokedOwnershipAtFinalReadFailsWithoutConsume() {
+        var f = couponWorkflowFixture();
+        Long id = cvPrepare(f);
+        f.prepared().setMobile("13800002499");
+        cvWorker.process(id);
+        assertEquals("failed", cvRows.selectById(id).getStatus());
+        verify(couponClient, never()).consume(anyLong(), anyLong(), any());
+        assertEquals(0, purchasedCards().selectCount());
+    }
+
+    @Test
+    void couponWorkflowChangedPhoneDuringProviderReadCannotDispatch() {
+        var f = couponWorkflowFixture();
+        Long id = cvPrepare(f);
+        doAnswer(
+                        i -> {
+                            memberAccounts.getUser(50L).setMobile("13800002499");
+                            return cvResponse(f.prepared());
+                        })
+                .when(couponClient)
+                .prepare(anyLong(), anyLong(), any());
+        cvWorker.process(id);
+        assertEquals("failed", cvRows.selectById(id).getStatus());
+        verify(couponClient, never()).consume(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void couponWorkflowSameRequestKeySurvivesGenericCacheCleanupAndRejectsChangedPreview() {
+        var f = couponWorkflowFixture();
+        var result = cvService.create(cvRequest(f.preview()), "coupon-durable-key");
+        redemptionJdbc().update("DELETE FROM gym_mobile_request");
+        assertEquals(result, cvService.create(cvRequest(f.preview()), "coupon-durable-key"));
+        Long other = Long.valueOf(cvPreviews.preview(cvPreviewRequest()).previewId());
+        redemptionJdbc().update("DELETE FROM gym_mobile_request");
+        assertServiceException(
+                () -> cvService.create(cvRequest(other), "coupon-durable-key"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        verify(couponClient, times(1)).consume(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void couponWorkflowCardFailureKeepsConfirmedProofAndRecoversAfterPreviewExpiry() {
+        var f = couponWorkflowFixture();
+        redemptionJdbc()
+                .execute(
+                        "ALTER TABLE gym_member_card ADD CONSTRAINT test_coupon_card_failure CHECK(source_type<>'coupon-verification')");
+        Long id;
+        try {
+            id = Long.valueOf(cvService.create(cvRequest(f.preview()), "coupon-card-failure").id());
+            assertEquals("confirmed", cvRows.selectById(id).getStage());
+            assertEquals(0, purchasedCards().selectCount());
+            assertEquals(
+                    0,
+                    redemptionJdbc()
+                            .queryForObject(
+                                    "SELECT COUNT(*) FROM gym_verification", Integer.class));
+        } finally {
+            redemptionJdbc()
+                    .execute(
+                            "ALTER TABLE gym_member_card DROP CONSTRAINT test_coupon_card_failure");
+        }
+        when(businessClock.now()).thenReturn(f.now().plusSeconds(3600));
+        cvProperties.setEnabled(false);
+        cvProperties.setConsumptionEnabled(false);
+        loginAs(1L);
+        var original = org.springframework.security.core.context.SecurityContextHolder.getContext();
+        cvWorker.process(id);
+        assertSame(
+                original,
+                org.springframework.security.core.context.SecurityContextHolder.getContext());
+        qrMemberLogin();
+        assertEquals("succeeded", cvService.get(id).status());
+        assertEquals(1, purchasedCards().selectCount());
+        verify(couponClient, times(1)).consume(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void couponWorkflowLegacyWriteFailureRollsBackCardContractNotificationAndThenRecovers() {
+        var f = couponWorkflowFixture();
+        loginAs(1L);
+        publishedContractPdf();
+        qrMemberLogin();
+        long notifications =
+                redemptionJdbc()
+                        .queryForObject("SELECT COUNT(*) FROM gym_mobile_notification", Long.class);
+        redemptionJdbc()
+                .execute(
+                        "ALTER TABLE gym_verification ADD CONSTRAINT test_coupon_legacy_failure CHECK(channel<>'meituan')");
+        Long id;
+        try {
+            id =
+                    Long.valueOf(
+                            cvService.create(cvRequest(f.preview()), "coupon-legacy-failure").id());
+            assertEquals("confirmed", cvRows.selectById(id).getStage());
+            assertEquals(0, purchasedCards().selectCount());
+            assertEquals(0, contractMapper.selectCount());
+            assertEquals(
+                    notifications,
+                    redemptionJdbc()
+                            .queryForObject(
+                                    "SELECT COUNT(*) FROM gym_mobile_notification", Long.class));
+        } finally {
+            redemptionJdbc()
+                    .execute(
+                            "ALTER TABLE gym_verification DROP CONSTRAINT test_coupon_legacy_failure");
+        }
+        cvWorker.process(id);
+        assertEquals("succeeded", cvService.get(id).status());
+        assertEquals(1, purchasedCards().selectCount());
+        assertEquals(1, contractMapper.selectCount());
+        var contract = contractMapper.selectList().getFirst();
+        assertEquals("unsigned", contract.getStatus());
+        assertEquals("unconfigured", contract.getSigningStatus());
+        assertNull(files.selectById(contract.getUnsignedFileId()).getUploaderId());
+        var event =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.contract
+                                        .GymContractEventMapper.class)
+                        .selectList()
+                        .getFirst();
+        assertEquals(1, event.getActorUserType());
+        assertEquals(50L, event.getActorUserId());
+        verify(couponClient, times(1)).consume(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void couponWorkflowMissingOrMismatchedProofNeverIssuesCard() {
+        var f = couponWorkflowFixture();
+        Long id = cvPrepare(f);
+        var tx =
+                new org.springframework.transaction.support.TransactionTemplate(
+                        applicationContext.getBean(
+                                org.springframework.transaction.PlatformTransactionManager.class));
+        assertServiceException(
+                () -> tx.execute(status -> cards.issueCouponVerification(id)),
+                COUPON_VERIFICATION_INVALID);
+        var ticket = cvTransactions.inspect(id);
+        assertTrue(cvTransactions.start(ticket, f.prepared()));
+        var proof =
+                new GymMemberCouponConsumption.Confirmation(
+                        cvRows.selectById(id).getCouponHash(),
+                        7L,
+                        8L,
+                        "wrong-request",
+                        ticket.scope().fingerprint(),
+                        "flow",
+                        "order",
+                        null);
+        assertServiceException(
+                () -> cvTransactions.confirm(id, proof), COUPON_VERIFICATION_INVALID);
+        assertEquals("sending", cvRows.selectById(id).getStage());
+        assertEquals(0, purchasedCards().selectCount());
+    }
+
+    @Test
+    void couponWorkflowPersistedSendingAfterCrashOnlyQueriesAndNeverResends() {
+        var f = couponWorkflowFixture();
+        Long id = cvPrepare(f);
+        var ticket = cvTransactions.inspect(id);
+        assertTrue(cvTransactions.start(ticket, f.prepared()));
+        cvObserveResponse();
+        when(businessClock.now()).thenReturn(f.now().plusSeconds(31));
+        cvWorker.process(id);
+        assertEquals("unknown", cvRows.selectById(id).getStage());
+        verify(couponClient, never()).consume(anyLong(), anyLong(), any());
+        verify(couponClient).getConsumed(anyLong(), anyLong(), any());
+        assertEquals(0, purchasedCards().selectCount());
+    }
+
+    @Test
+    void couponWorkflowLateProofCanFinishUnknownButLaterQueryCannotOverwriteSuccess() {
+        var f = couponWorkflowFixture();
+        Long id = cvPrepare(f);
+        var ticket = cvTransactions.inspect(id);
+        assertTrue(cvTransactions.start(ticket, f.prepared()));
+        cvTransactions.defer(id, 500);
+        var proof =
+                cvConsumption.consume(
+                        1L, 101L, CV_CODE, 7L, 8L, ticket.requestId(), ticket.scope());
+        cvTransactions.confirm(id, proof);
+        cvTransactions.confirm(id, proof);
+        cvWorker.process(id);
+        cvTransactions.observed(
+                id, new GymMemberCouponConsumption.Observation("bad", 9L, 9L, "bad", null));
+        cvTransactions.reject(id, 500, false);
+        cvTransactions.defer(id, 500);
+        assertEquals("succeeded", cvService.get(id).status());
+        assertEquals(1, purchasedCards().selectCount());
+    }
+
+    @Test
+    void couponWorkflowProviderProofPersistenceFailureNeverResendsOrInventsSuccess() {
+        var f = couponWorkflowFixture();
+        redemptionJdbc()
+                .execute(
+                        "ALTER TABLE gym_coupon_verification ADD CONSTRAINT test_coupon_proof_failure CHECK(confirmation_snapshot IS NULL)");
+        Long id;
+        try {
+            id =
+                    Long.valueOf(
+                            cvService.create(cvRequest(f.preview()), "coupon-proof-failure").id());
+            assertEquals("unknown", cvRows.selectById(id).getStage());
+            assertEquals(0, purchasedCards().selectCount());
+        } finally {
+            redemptionJdbc()
+                    .execute(
+                            "ALTER TABLE gym_coupon_verification DROP CONSTRAINT test_coupon_proof_failure");
+        }
+        cvObserveResponse();
+        when(businessClock.now()).thenReturn(f.now().plusSeconds(61));
+        cvWorker.process(id);
+        assertEquals("processing", cvService.get(id).status());
+        verify(couponClient, times(1)).consume(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void couponWorkflowRecheckDisabledMemberBeforeDispatchAndBeforeFulfillment() {
+        var f = couponWorkflowFixture();
+        Long id = cvPrepare(f);
+        memberAccounts.getUser(50L).setStatus(1);
+        cvWorker.process(id);
+        assertEquals("failed", cvRows.selectById(id).getStatus());
+        verify(couponClient, never()).consume(anyLong(), anyLong(), any());
+        memberAccounts.getUser(50L).setStatus(0);
+        Long fresh = Long.valueOf(cvPreviews.preview(cvPreviewRequest()).previewId());
+        Long next = cvTransactions.prepare(cvRequest(fresh), "coupon-disabled-after");
+        var ticket = cvTransactions.inspect(next);
+        assertTrue(cvTransactions.start(ticket, f.prepared()));
+        var proof =
+                cvConsumption.consume(
+                        1L, 101L, CV_CODE, 7L, 8L, ticket.requestId(), ticket.scope());
+        cvTransactions.confirm(next, proof);
+        memberAccounts.getUser(50L).setStatus(1);
+        cvWorker.process(next);
+        assertEquals("confirmed", cvRows.selectById(next).getStage());
+        assertEquals(0, purchasedCards().selectCount());
+        memberAccounts.getUser(50L).setStatus(0);
+        cvWorker.process(next);
+        assertEquals("succeeded", cvService.get(next).status());
+    }
+
+    @Test
+    void couponWorkflowOtherMemberAndTenantCannotReadOrSubmitPreview() {
+        var f = couponWorkflowFixture();
+        Long id = cvPrepare(f);
+        loginAs(1L);
+        Long other = Long.valueOf(members.create(member(101L, "13800002402")).getId());
+        var identity = new cn.iocoder.yudao.module.gym.dal.dataobject.mobile.GymMobileIdentityDO();
+        identity.setUserId(51L);
+        identity.setMemberId(other);
+        identity.setDefaultStoreId(101L);
+        identity.setSource("test");
+        identity.setFaceStatus("unregistered");
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileIdentityMapper.class)
+                .insert(identity);
+        var account = new cn.iocoder.yudao.module.member.api.user.dto.MemberUserRespDTO();
+        account.setId(51L);
+        account.setStatus(0);
+        account.setMobile("13800002402");
+        when(memberAccounts.getUser(51L)).thenReturn(account);
+        qrMemberLogin();
+        cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser()
+                .setId(51L);
+        assertServiceException(() -> cvService.get(id), COUPON_VERIFICATION_NOT_EXISTS);
+        assertServiceException(
+                () -> cvTransactions.prepare(cvRequest(f.preview()), "coupon-foreign-preview"),
+                COUPON_PREVIEW_INVALID);
+        TenantContextHolder.setTenantId(2L);
+        assertThrows(
+                cn.iocoder.yudao.framework.common.exception.ServiceException.class,
+                () -> cvService.get(id));
+        qrMemberLogin();
+        assertEquals("processing", cvService.get(id).status());
+        verify(couponClient, never()).consume(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void couponWorkflowPreparationFailureRollsBackClaimAndIdempotencyRecord() {
+        var f = couponWorkflowFixture();
+        redemptionJdbc()
+                .execute(
+                        "ALTER TABLE gym_coupon_verification ADD CONSTRAINT test_coupon_prepare_failure CHECK(store_id<>101)");
+        try {
+            assertThrows(RuntimeException.class, () -> cvPrepare(f));
+            assertEquals(0, cvRows.selectCount());
+            assertEquals(
+                    0,
+                    redemptionJdbc()
+                            .queryForObject(
+                                    "SELECT COUNT(*) FROM gym_mobile_request WHERE operation='coupon-verification'",
+                                    Integer.class));
+        } finally {
+            redemptionJdbc()
+                    .execute(
+                            "ALTER TABLE gym_coupon_verification DROP CONSTRAINT test_coupon_prepare_failure");
+        }
+        assertNotNull(cvPrepare(f));
+    }
+
+    @Test
+    void couponWorkflowParallelKeysForSamePreviewShareOneDispatchAndCard() throws Exception {
+        var f = couponWorkflowFixture();
+        try (var pool = java.util.concurrent.Executors.newFixedThreadPool(4)) {
+            var jobs = new ArrayList<java.util.concurrent.Callable<String>>();
+            for (int n = 0; n < 4; n++) {
+                final int index = n;
+                jobs.add(
+                        () -> {
+                            qrMemberLogin();
+                            try {
+                                return cvService
+                                        .create(cvRequest(f.preview()), "coupon-race-" + index)
+                                        .id();
+                            } finally {
+                                cleanupContext();
+                            }
+                        });
+            }
+            var ids = new java.util.HashSet<String>();
+            for (var task : pool.invokeAll(jobs))
+                ids.add(task.get(20, java.util.concurrent.TimeUnit.SECONDS));
+            assertEquals(1, ids.size());
+        }
+        qrMemberLogin();
+        assertEquals(1, cvRows.selectCount());
+        assertEquals("succeeded", cvRows.selectList().getFirst().getStatus());
+        assertEquals(1, purchasedCards().selectCount());
+        verify(couponClient, times(1)).consume(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void couponWorkflowDifferentPreviewsRaceForOnlyOneCouponClaim() throws Exception {
+        var f = couponWorkflowFixture();
+        var second = Long.valueOf(cvPreviews.preview(cvPreviewRequest()).previewId());
+        try (var pool = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            var jobs = new ArrayList<java.util.concurrent.Callable<Object>>();
+            for (Long preview : List.of(f.preview(), second))
+                jobs.add(
+                        () -> {
+                            qrMemberLogin();
+                            try {
+                                return cvTransactions.prepare(
+                                        cvRequest(preview), "coupon-preview-" + preview);
+                            } catch (
+                                    cn.iocoder.yudao.framework.common.exception.ServiceException
+                                            e) {
+                                return e.getCode();
+                            } finally {
+                                cleanupContext();
+                            }
+                        });
+            var results = new ArrayList<Object>();
+            for (var task : pool.invokeAll(jobs))
+                results.add(task.get(20, java.util.concurrent.TimeUnit.SECONDS));
+            assertEquals(1, results.stream().filter(Long.class::isInstance).count());
+            assertTrue(results.contains(COUPON_ALREADY_CLAIMED.getCode()));
+        }
+        assertEquals(1, cvRows.selectCount());
+        verify(couponClient, never()).consume(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void couponWorkflowSchedulerRecoversPreparedAndSkipsDisabledTenantWithContextRestored() {
+        var f = couponWorkflowFixture();
+        Long id = cvPrepare(f);
+        when(tenantFrameworkService.getTenantIds()).thenReturn(List.of(1L));
+        loginAs(1L);
+        var original = org.springframework.security.core.context.SecurityContextHolder.getContext();
+        cvScheduler.tick();
+        assertEquals("prepared", cvRows.selectById(id).getStage());
+        when(businessClock.now()).thenReturn(f.now().plusSeconds(31));
+        doThrow(
+                        cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil
+                                .exception(
+                                        cn.iocoder.yudao.module.system.enums.ErrorCodeConstants
+                                                .TENANT_DISABLE))
+                .when(tenantFrameworkService)
+                .validTenant(1L);
+        cvScheduler.tick();
+        assertEquals("prepared", cvRows.selectById(id).getStage());
+        doNothing().when(tenantFrameworkService).validTenant(1L);
+        cvScheduler.tick();
+        assertEquals("succeeded", cvRows.selectById(id).getStatus());
+        assertSame(
+                original,
+                org.springframework.security.core.context.SecurityContextHolder.getContext());
+        assertEquals(1L, TenantContextHolder.getRequiredTenantId());
+    }
+
+    @Test
+    void couponWorkflowConcurrentSameKeyAndConfirmedRecoveryRemainSingleIssue() throws Exception {
+        var f = couponWorkflowFixture();
+        redemptionJdbc()
+                .execute(
+                        "ALTER TABLE gym_member_card ADD CONSTRAINT test_coupon_parallel_card CHECK(source_type<>'coupon-verification')");
+        Long id;
+        try (var pool = java.util.concurrent.Executors.newFixedThreadPool(3)) {
+            try {
+                var jobs = new ArrayList<java.util.concurrent.Callable<String>>();
+                for (int n = 0; n < 3; n++)
+                    jobs.add(
+                            () -> {
+                                qrMemberLogin();
+                                try {
+                                    return cvService
+                                            .create(cvRequest(f.preview()), "coupon-same-key")
+                                            .id();
+                                } finally {
+                                    cleanupContext();
+                                }
+                            });
+                var ids = new java.util.HashSet<String>();
+                for (var task : pool.invokeAll(jobs))
+                    ids.add(task.get(20, java.util.concurrent.TimeUnit.SECONDS));
+                assertEquals(1, ids.size());
+                id = Long.valueOf(ids.iterator().next());
+                assertEquals("confirmed", cvRows.selectById(id).getStage());
+            } finally {
+                redemptionJdbc()
+                        .execute(
+                                "ALTER TABLE gym_member_card DROP CONSTRAINT test_coupon_parallel_card");
+            }
+            var jobs = new ArrayList<java.util.concurrent.Callable<Boolean>>();
+            for (int n = 0; n < 3; n++)
+                jobs.add(
+                        () -> {
+                            qrMemberLogin();
+                            try {
+                                cvWorker.process(id);
+                                return true;
+                            } finally {
+                                cleanupContext();
+                            }
+                        });
+            for (var task : pool.invokeAll(jobs))
+                assertTrue(task.get(20, java.util.concurrent.TimeUnit.SECONDS));
+        }
+        qrMemberLogin();
+        assertEquals("succeeded", cvService.get(id).status());
+        assertEquals(1, purchasedCards().selectCount());
+        assertEquals(
+                1,
+                redemptionJdbc()
+                        .queryForObject("SELECT COUNT(*) FROM gym_verification", Integer.class));
+        verify(couponClient, times(1)).consume(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void couponWorkflowPeriodCardUsesFrozenDurationDespiteLaterCatalogEdit() {
+        var f = couponWorkflowFixture();
+        loginAs(1L);
+        Long period = Long.valueOf(cards.create(cardTemplate("period")).getId());
+        cvProperties.store(1L, 101L).get(7L).setCardTemplateId(period);
+        qrMemberLogin();
+        Long preview = Long.valueOf(cvPreviews.preview(cvPreviewRequest()).previewId());
+        Long id = cvTransactions.prepare(cvRequest(preview), "coupon-period-card");
+        var ticket = cvTransactions.inspect(id);
+        assertTrue(cvTransactions.start(ticket, f.prepared()));
+        var proof =
+                cvConsumption.consume(
+                        1L, 101L, CV_CODE, 7L, 8L, ticket.requestId(), ticket.scope());
+        cvTransactions.confirm(id, proof);
+        var frozen =
+                JsonUtils.parseObject(
+                        cvRows.selectById(id).getTemplateSnapshot(),
+                        cn.iocoder.yudao.module.gym.dal.dataobject.card.GymCardTemplateDO.class);
+        redemptionJdbc()
+                .update(
+                        "UPDATE gym_card_template SET duration_days=999,status='archived' WHERE id=?",
+                        period);
+        cvWorker.process(id);
+        var card = purchasedCards().selectById(cvRows.selectById(id).getMemberCardId());
+        assertEquals("period", card.getKind());
+        assertEquals(f.now().plusSeconds(frozen.getDurationDays() * 86400L), card.getExpiresAt());
+        assertEquals("succeeded", cvService.get(id).status());
+    }
+
+    @Test
+    void couponWorkflowQueryLeaseCapsFailuresAfterKeyRotationWithoutLeakingOrResending() {
+        var f = couponWorkflowFixture();
+        cvUnknown();
+        Long id =
+                Long.valueOf(cvService.create(cvRequest(f.preview()), "coupon-key-rotation").id());
+        cvProperties.setEncryptionKey(
+                java.util.Base64.getEncoder()
+                        .encodeToString(
+                                "12345678901234567890123456789012"
+                                        .getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        for (int n = 1; n <= 8; n++) {
+            when(businessClock.now()).thenReturn(f.now().plusSeconds(n * 61));
+            cvWorker.process(id);
+        }
+        assertEquals(6, cvRows.selectById(id).getQueryCount());
+        assertEquals("unknown", cvRows.selectById(id).getStage());
+        assertTrue(cvTransactions.due().isEmpty());
+        verify(couponClient, never()).getConsumed(anyLong(), anyLong(), any());
+        verify(couponClient, times(1)).consume(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void couponWorkflowOuterTransactionIsRejectedBeforeClaimOrNetwork() {
+        var f = couponWorkflowFixture();
+        var tx =
+                new org.springframework.transaction.support.TransactionTemplate(
+                        applicationContext.getBean(
+                                org.springframework.transaction.PlatformTransactionManager.class));
+        tx.executeWithoutResult(
+                status ->
+                        assertThrows(
+                                org.springframework.transaction.IllegalTransactionStateException
+                                        .class,
+                                () ->
+                                        cvService.create(
+                                                cvRequest(f.preview()), "coupon-no-outer-tx")));
+        assertEquals(0, cvRows.selectCount());
+        verifyNoInteractions(couponClient);
     }
 }

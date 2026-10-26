@@ -768,3 +768,13 @@ AppGymCouponPreviewsController → GymMobileCouponPreviewsService（NEVER事务�
 GymMemberCouponConsumption → GymMeituanRetailClient → GymMeituanTransport。当前没有生产业务调用者或新增路由，不替代会员身份、占券、幂等流水或发卡授权。consume使用外部编排已冻结的requestId和scope，固定单券；scope由精确租户/门店商家审计配置和平台授权生成，用GymCouponCipher独立authorization用途HMAC绑定。移动消费开关独立于预览且默认关闭，配置变化时拒绝旧scope。
 
 Confirmation只来自对应同步consume成功且精确单券/商品/流水验证后的响应；Observation只来自getConsumed，类型不含本次requestId和消费流水，不能进入发卡授权。两个网络方法NEVER事务，无自动重试。发生超时/歧义时返回结果未知；持久化状态流转与恢复仍未连接。原后台身份填充及16项入口保持原行为，无数据库或权限迁移，仍V033/81表。
+
+## 会员核销持久化、单次派发与本地履约（2026-10-26，V034）
+
+AppGymCouponVerificationsController → GymMobileCouponVerificationsService（NEVER）→ Transactions.prepare提交本人请求/唯一券占用 → Worker真实会员上下文 → inspect/Provider.prepare/start重查并提交sending → Consumption.consume一次 → confirm独立事务 → fulfill本地事务。通用幂等仅缓存记录ID，持久化业务键/预览/券占用约束在缓存清理后继续防重；结果总是按当前用户/会员/租户读取。
+
+GymCouponVerificationAccess只接受当前本人、confirmed阶段、匹配请求/授权/商品/券摘要的同步凭据以及冻结卡模板，拒绝缺凭据或未知态。CardService.issueCouponVerification与ContractService.issueForCouponCard只从该授权对象进入会员路径，不冒用同号员工。卡、会员门店/阶段、适用未签合同/会员审计、通知、旧gym_verification记录与最终fulfilled同事务；失败回滚而provider确认不回滚。卡sourceType=coupon-verification、sourceId=核销ID，起始时间固定confirmedAt，不产生现金订单/收入或积分。
+
+数据库锁顺序为通用幂等键（提交时）→租户权益互斥→核销记录→实际门店/会员/权益；网络在事务外。prepared→sending只有一个赢家，进程在sending崩溃也禁止重发。同步凭据本地保存最多立即重试2次；结果未知保留占用，查询租约先提交、再解密并读取平台，每60秒最多6次观察，观察不能授权发卡。confirmed恢复无预览时效/消费开关要求，但保留当前会员资格校验；失败延后60秒，不返还已消费券。
+
+独立GymCouponVerificationTimer默认30秒扫描有效租户到期任务，每租户最多100条，以nextCheckAt排序防止长期失败任务永久占据队首；用持久化会员账号执行并在finally恢复上下文。无共享默认调度器替换，无真实平台回调/人工确认入口。V034新增一表至82表，旧表/权限不变；预览与核销关联用于恢复，不得清理未决核销引用的加密预览。

@@ -261,5 +261,8 @@ public interface ErrorCodeConstants {
     ErrorCode COUPON_NOT_CONFIGURED = new ErrorCode(1_070_032_001, "会员团购自助兑换未配置或当前不可用");
     ErrorCode COUPON_PROVIDER_INVALID = new ErrorCode(1_070_032_002, "团购平台返回结果无法确认，请联系门店");
     ErrorCode COUPON_OWNERSHIP_REQUIRED = new ErrorCode(1_070_032_003, "无法确认团购券属于当前会员，请联系门店");
+    ErrorCode COUPON_VERIFICATION_NOT_EXISTS = new ErrorCode(1_070_032_005, "核销记录不存在");
+    ErrorCode COUPON_ALREADY_CLAIMED = new ErrorCode(1_070_032_006, "团购券已提交核销，请查询原记录或联系门店");
+    ErrorCode COUPON_VERIFICATION_INVALID = new ErrorCode(1_070_032_007, "核销状态或凭据无效，请联系门店核实");
     ErrorCode COUPON_PREVIEW_INVALID = new ErrorCode(1_070_032_004, "团购预览条件已变化或无效，请重新核对");
 }

@@ -99,3 +99,4 @@ DELETE FROM gym_risk_resolution;
 DELETE FROM gym_risk_alert;
 
 DELETE FROM gym_coupon_preview;
+DELETE FROM gym_coupon_verification;

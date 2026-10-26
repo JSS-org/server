@@ -79,7 +79,7 @@
 | 接口文档 | <http://127.0.0.1:48080/doc.html>（调试需带 `tenant-id: 1`） |
 
 
-阶段交付与第三方未接入范围见 [gym-full-api-progress.md](gym-full-api-progress.md)；后续增量见 [CHANGELOG.md](CHANGELOG.md)。团购当前已搭建服务零售目录16项请求框架，真实授权/联调、结果落库和本地履约仍未接入。
+阶段交付与第三方未接入范围见 [gym-full-api-progress.md](gym-full-api-progress.md)；后续增量见 [CHANGELOG.md](CHANGELOG.md)。团购包含服务零售目录16项请求框架及会员普通单券预览/持久化核销/本地发卡恢复；真实授权/实券联调和未知结果的受信关联解决仍未完成，详见团购与小程序实施文档。
 
 
 ## Java 格式化（2026-10-16）

@@ -132,29 +132,11 @@ public class GymCouponPreviewTransactions {
         var current = begin(req);
         if (!current.equals(before)) throw exception(COUPON_PREVIEW_INVALID);
         var now = clock.now().truncatedTo(ChronoUnit.MICROS);
-        String reason = null;
-        if (!Integer.valueOf(0).equals(prepared.getBizType())
-                || !Boolean.FALSE.equals(prepared.getTgTimesCardFlag())
-                || !Integer.valueOf(0).equals(prepared.getDealType())
-                || !Integer.valueOf(1).equals(prepared.getCount())
-                || prepared.getReceiptInfoMap() != null
-                        && !prepared.getReceiptInfoMap().isBlank()
-                        && !"{}".equals(prepared.getReceiptInfoMap())
-                || prepared.getRelatedReceiptInfo() != null
-                        && !prepared.getRelatedReceiptInfo().isEmpty()
-                || prepared.getDealQuantity() != null && prepared.getDealQuantity() != 1)
-            reason = "当前券型或数量暂不支持自助兑换，请联系门店";
-        else if (!Integer.valueOf(1).equals(prepared.getVerificationType()))
-            reason = "团购券当前不在可核销时段";
-        Instant vendorExpiry = null;
-        if (prepared.getReceiptEndDate() != null) {
-            try {
-                vendorExpiry = Instant.ofEpochMilli(prepared.getReceiptEndDate());
-            } catch (RuntimeException ignored) {
-            }
-        }
-        if (reason == null && (vendorExpiry == null || !vendorExpiry.isAfter(now)))
-            reason = "团购券已过期或有效期无法确认";
+        String reason = unavailableReason(prepared, now);
+        Instant vendorExpiry =
+                prepared.getReceiptEndDate() == null
+                        ? null
+                        : Instant.ofEpochMilli(prepared.getReceiptEndDate());
         var mapping = properties.store(before.tenant(), req.getStoreId()).get(prepared.getDealId());
         GymCardTemplateDO card = null;
         if (mapping != null
@@ -214,5 +196,28 @@ public class GymCouponPreviewTransactions {
                 row.getRedeemable(),
                 reason,
                 expiry.atZone(GymDateRange.ZONE).toOffsetDateTime().toString());
+    }
+
+    public static String unavailableReason(Prepare prepared, Instant now) {
+        String reason = null;
+        if (!Integer.valueOf(0).equals(prepared.getBizType())
+                || !Boolean.FALSE.equals(prepared.getTgTimesCardFlag())
+                || !Integer.valueOf(0).equals(prepared.getDealType())
+                || !Integer.valueOf(1).equals(prepared.getCount())
+                || prepared.getReceiptInfoMap() != null
+                        && !prepared.getReceiptInfoMap().isBlank()
+                        && !"{}".equals(prepared.getReceiptInfoMap())
+                || prepared.getRelatedReceiptInfo() != null
+                        && !prepared.getRelatedReceiptInfo().isEmpty()
+                || prepared.getDealQuantity() != null && prepared.getDealQuantity() != 1)
+            reason = "当前券型或数量暂不支持自助兑换，请联系门店";
+        else if (!Integer.valueOf(1).equals(prepared.getVerificationType()))
+            reason = "团购券当前不在可核销时段";
+
+        if (reason == null
+                && (prepared.getReceiptEndDate() == null
+                        || prepared.getReceiptEndDate() <= now.toEpochMilli()))
+            reason = "团购券已过期或有效期无法确认";
+        return reason;
     }
 }

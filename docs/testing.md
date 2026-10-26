@@ -1433,3 +1433,28 @@ git diff --check
 只读getConsumed在关闭移动消费/平台mutation后仍可查原授权，但其观察类型不含本次requestId或消费流水，不能充当Confirmation。不相关券/商品/类型及不完整订单拒绝。真实Spring事务代理结合H2事务验证两个网络方法在外层事务中拒绝执行。配置绑定验证预览开启不启动消费及精确租户/门店商家账号映射。
 
 日志：`/tmp/uniapp-coupon-consumption-focused.log`（专项49通过）、`/tmp/uniapp-coupon-consumption-final-tests.log`（12:24:38）、`/tmp/uniapp-coupon-consumption-package.log`（12:26:08）。本批无SQL、表或权限变更，未重复运行MySQL迁移检查，上一批222检查仍为V033历史证据。没有真实平台/实券、部署HTTP、多节点或热更新验证；没有会员核销API、占券/持久化幂等、发卡或恢复证据。前端及业务库未改。
+
+## 会员团购持久化核销、真实发卡与恢复（2026-10-26，V034）
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py --show-missing
+git diff --check
+```
+
+新增24项真实数据库业务/并发/恢复测试和4项MVC；专项28通过，最终完整gym1020通过、0失败/错误/跳过（组织服务580、会员专项84），member4通过及1项既有禁用跳过。Spotless通过，server及依赖打包成功（打包阶段跳过测试）；源码覆盖Contract135/mapped124/missing11。路由覆盖只证明方法/路径匹配，实际业务证据如下。
+
+测试使用实际事务、Mapper、CardService、ContractService和通知链路；平台Client模拟独立响应，实际HTTP组装仍由上批49项适配及既有Client测试覆盖。核销成功验证真实卡/核销记录、固定起始时间及无现金订单/积分；网络处于SQL事务外，consume调用前已提交sending。未知结果保留占用、GET无副作用、同预览换键/同键缓存清理后幂等、不同预览同券拒绝、重复或不同键并发单次派发、并发confirmed恢复只发一卡均验证。跨账号/租户、过期预览、配置变化、最终归属/手机号改变、停用会员在派发/履约阶段均有断言。
+
+注入卡或旧核销记录写失败后，卡、内部合同、会员通知与终态全部回滚，保持已核销待发卡；恢复不重消费且在预览过期/消费开关关闭后仍可完成。真实内部未签合同记录会员actor类型1和用户ID，不冒用员工；周期卡按冻结期限发放，不受后续模板归档/期限修改影响。缺少/不匹配消费凭据拒绝发卡；已提交sending后模拟进程中断，只查单不重发。迟到确认可完成未知态，后续观察/失败调用不能覆盖成功。模拟确认持久化两次均失败时保留未知，观察不冒充成功。
+
+查询租约验证每60秒最多6次、已验记录无法转成功、关闭消费开关仍可查、密钥变化导致解密失败也按上限停止；当前没有提供强制成功或手动无限重试入口。恢复器验证prepared崩溃恢复、停用租户跳过、上下文恢复；外层SQL事务禁止调用编排和网络。MVC验证previewId/幂等头、正数输入、四字段投影、长ID字符串及未知身份/状态字段注入拒绝。
+
+真实隔离MySQL/Flyway242检查通过，新增20检查覆盖空核销表、微秒初始状态、请求/预览/跨店券占用唯一及大小写/租户隔离、查询上限、有效身份/派发时间/占用约束、NULL凭据/流水不能确认、已确认不能伪装未消费失败、成功必须关联卡和旧核销、平台流水不可重复、失败释放仅供新预览、恢复/查询/关联索引、旧库不造核销。新增一表至82表，随机库全部清理；V001–V033未改，未迁移业务库或调整角色。
+
+日志：`/tmp/uniapp-coupon-workflow-focused.log`（28通过）、`/tmp/uniapp-coupon-workflow-final-tests.log`（12:40:05）、`/tmp/uniapp-coupon-workflow-migrations.log`（242检查）、`/tmp/uniapp-coupon-workflow-package.log`（12:41:00）。初期修正了访问日志注解应标方法、测试预览方法名/订单表名/JsonUtils导入，未放宽业务校验；修正后专项及全量通过。没有真实商家授权/实券、部署HTTP、外部文件存储、多实例或压力验证，未知结果的受信外部关联仍未接入。前端未改。

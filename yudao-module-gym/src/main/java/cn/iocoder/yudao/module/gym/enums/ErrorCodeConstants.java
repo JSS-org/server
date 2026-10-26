@@ -251,4 +251,6 @@ public interface ErrorCodeConstants {
     ErrorCode POINT_PRODUCT_NOT_EXISTS = new ErrorCode(1_070_030_005, "积分商品不存在");
     ErrorCode POINT_PRODUCT_CONFLICT = new ErrorCode(1_070_030_006, "积分商品已更新，请重新读取后保存");
     ErrorCode POINT_PRODUCT_UNAVAILABLE = new ErrorCode(1_070_030_007, "当前门店不可查询积分商品");
+    ErrorCode POINT_REDEMPTION_INVALID = new ErrorCode(1_070_030_008, "积分兑换发放条件不满足");
+    ErrorCode POINT_REDEMPTION_NOT_EXISTS = new ErrorCode(1_070_030_009, "积分兑换记录不存在");
 }

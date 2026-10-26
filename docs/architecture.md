@@ -726,3 +726,16 @@ V028两表使当前gym表数76，数据库约束账户恒等式、计数边界�
 产品固定关联store_id与card_product_id（具体卡模板版本），维护required_points、可空剩余stock、enabled和revision。修改遵循租户业务互斥→门店→商品→模板锁；旧版本拒绝、同值不更新、失败全部回滚。模板下架/删除后可下架商品，不能以过期模板重新启用。会员目录读取有效模板ID后在产品SQL分页前加入全部商品过滤，查询无账户、库存或权益写副作用。
 
 当前只完成配置和目录，不把库存配置当作已完成库存消费。后续62–63须以真实兑换记录连接LedgerService和受控会员发卡入口，加入库存版本递增及失败一致性；不能绕过现有后台授权或冒充已支付订单。V029新增一表至77表、一个权限定义，未授予角色、未接入自动奖励。
+
+
+## 积分兑换持久化流程（V030）
+
+AppGymPointRedemptionsController→MobilePointRedemptionsService（NEVER外层事务）→RedemptionTransactions.prepare提交资金/库存准备，再调用RedemptionWorker→Transactions.fulfill或fail，最后读取本人结果。三段事务明确隔开；发放异常不会把已保存的processing单抹掉，也不能在发卡已回滚时丢失返还线索。
+
+prepare沿用Idempotency但保存兑换ID而非首次状态；兑换表另以tenant/user/request_key唯一，重试查询最新结果并校验原载荷。租户互斥下核验当前门店/会员/黑名单、商品及模板，冻结模板和原积分成本，写唯一spend、预留refundReserve、扣可售库存并增加reservedStock。失败全体回滚。商品可用库存与处理数量、revision与待完成数量、累计收入与返还空间各有数据库边界约束。
+
+RedemptionAccess验证持久化兑换、原扣分及当前会员资格，供CardService.issuePointRedemption与ContractService.issueForRedeemedCard使用。仅这条已验证分支跳过后台门店授权，始终保持会员账号类型，发卡来源为point-redemption/兑换ID。复用实际卡、跨店权益、未签合同和站内通知流程，无现金订单或付款。fulfill同事务释放库存/数值预留并落succeeded；fail同事务关联原spend写refund、恢复适用库存并落failed，终态不会逆转。
+
+Worker从数据库读取真实发起人，临时设置会员上下文后恢复；发放失败再调用独立返还事务。Scheduler枚举并验证租户，Timer使用自有线程，默认30秒扫描等待至少30秒的processing单、每租户100条。请求与多执行器依靠相同行锁串行；返还故障保留processing供恢复，单个失败不阻断同批其他兑换。GET只读，不驱动工作流。
+
+V030新增gym_point_redemption并扩展原账户/商品，当前78表。需要统一升级积分写入、商品维护和兑换处理实例以遵守预留字段；旧余额与商品配置不回填业务记录。内部合同文件存储不参与数据库事务，失败产生的未引用blob沿用既有清理流程。自动奖励及真实电子签约仍暂缓。

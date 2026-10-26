@@ -21,4 +21,5 @@ public class GymPointProductDO extends TenantBaseDO {
 
     private Boolean enabled;
     private Long revision;
+    private Integer reservedStock;
 }

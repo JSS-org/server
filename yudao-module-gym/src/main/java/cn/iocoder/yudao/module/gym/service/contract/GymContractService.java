@@ -140,6 +140,17 @@ public class GymContractService {
                 purchase);
     }
 
+    @Resource
+    private cn.iocoder.yudao.module.gym.service.points.GymPointRedemptionAccess redemptionAccess;
+
+    @Transactional(
+            propagation = org.springframework.transaction.annotation.Propagation.MANDATORY,
+            rollbackFor = Exception.class)
+    public GymContractDO issueForRedeemedCard(Long redemptionId, Long cardId) {
+        var redemption = redemptionAccess.require(redemptionId);
+        return issue("member-cards", cardId, null, null, false, null, redemption);
+    }
+
     private GymContractDO issue(
             String type, Long id, Long templateId, Instant dueAt, boolean required) {
         return issue(type, id, templateId, dueAt, required, null);
@@ -152,6 +163,18 @@ public class GymContractService {
             Instant dueAt,
             boolean required,
             cn.iocoder.yudao.module.gym.service.sales.GymOrderEntitlementAccess.Purchase purchase) {
+        return issue(type, id, templateId, dueAt, required, purchase, null);
+    }
+
+    private GymContractDO issue(
+            String type,
+            Long id,
+            Long templateId,
+            Instant dueAt,
+            boolean required,
+            cn.iocoder.yudao.module.gym.service.sales.GymOrderEntitlementAccess.Purchase purchase,
+            cn.iocoder.yudao.module.gym.service.points.GymPointRedemptionAccess.Redemption
+                    redemption) {
         Long memberId, storeId;
         String applicable, name;
         Instant effective;
@@ -183,9 +206,19 @@ public class GymContractService {
             effective = subscription.getRequestedAt();
             entitlement = subscriptionTerms(subscription);
         } else throw exception(CONTRACT_SOURCE_INVALID);
-        if (purchase == null) {
+        if (purchase == null && redemption == null) {
             scope.check(storeId);
             members.checkMemberStore(memberId, storeId);
+        } else if (redemption != null) {
+            if (!(entitlement
+                            instanceof
+                            cn.iocoder.yudao.module.gym.dal.dataobject.card.GymMemberCardDO card)
+                    || !redemption.member().getId().equals(memberId)
+                    || !redemption.store().getId().equals(storeId)
+                    || !"point-redemption".equals(card.getSourceType())
+                    || !redemption.row().getId().toString().equals(card.getSourceId())
+                    || !redemption.card().getId().equals(card.getTemplateId()))
+                throw exception(CONTRACT_SOURCE_INVALID);
         } else {
             String sourceType, sourceId;
             if (entitlement
@@ -253,7 +286,9 @@ public class GymContractService {
         privateFile.setMimeType("application/pdf");
         privateFile.setSize((long) content.length);
         privateFile.setUploaderId(
-                purchase == null ? SecurityFrameworkUtils.getLoginUserId() : null);
+                purchase == null && redemption == null
+                        ? SecurityFrameworkUtils.getLoginUserId()
+                        : null);
         privateFile.setUrl(
                 storageConfigId == null
                         ? fileApi.createFile(
@@ -273,7 +308,12 @@ public class GymContractService {
         row.setTemplateId(template.getId());
         row.setTemplateSnapshot(JsonUtils.toJsonString(template));
         var snapshot = new LinkedHashMap<String, Object>();
-        var member = purchase == null ? members.requireMember(memberId, false) : purchase.member();
+        var member =
+                redemption != null
+                        ? redemption.member()
+                        : purchase == null
+                                ? members.requireMember(memberId, false)
+                                : purchase.member();
         snapshot.put("memberId", memberId.toString());
         snapshot.put("memberName", member.getName());
         snapshot.put("memberPhone", member.getPhone());

@@ -15,4 +15,5 @@ public class GymPointAccountDO extends TenantBaseDO {
     private Long balance;
     private Long totalEarned;
     private Long totalSpent;
+    private Long refundReserve;
 }

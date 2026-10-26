@@ -93,6 +93,7 @@ public class GymPointProductsService {
             row.setStoreId(req.getStoreId());
             row.setCardProductId(req.getCardProductId());
             row.setRevision(1L);
+            row.setReservedStock(0);
         } else {
             row =
                     products.selectOne(
@@ -115,6 +116,10 @@ public class GymPointProductsService {
                     || req.getEnabled() && !"published".equals(card.getStatus()))
                 throw exception(POINT_PRODUCT_INVALID);
         }
+        if (req.getStock() != null
+                        && (long) req.getStock() + row.getReservedStock() > Integer.MAX_VALUE
+                || row.getRevision() + 1 + row.getReservedStock()
+                        > GymPointLedgerService.MAX_POINTS) throw exception(POINT_PRODUCT_CONFLICT);
         String name = req.getName().trim();
         if (name.isBlank()) throw exception(POINT_PRODUCT_INVALID);
         boolean changed =

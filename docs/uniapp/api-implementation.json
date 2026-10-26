@@ -779,8 +779,15 @@
       "method": "POST",
       "path": "/app-api/gym/point-redemptions",
       "description": "提交积分兑换，扣减积分并发起会员卡发放",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymPointRedemptionsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobilePointRedemptionsService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/points/GymPointRedemptionTransactions.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/points/GymPointRedemptionAccess.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobilePointRedemptionsControllerTest.java"
+      ]
     },
     {
       "id": 63,
@@ -788,8 +795,15 @@
       "method": "GET",
       "path": "/app-api/gym/me/point-redemptions/{id}",
       "description": "查询本人积分兑换及发卡结果",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymPointRedemptionsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobilePointRedemptionsService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/points/GymPointRedemptionTransactions.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/points/GymPointRedemptionAccess.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobilePointRedemptionsControllerTest.java"
+      ]
     },
     {
       "id": 64,

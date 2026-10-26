@@ -50,6 +50,12 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.service.points.GymPointLedgerService.class,
+    cn.iocoder.yudao.module.gym.service.points.GymPointRedemptionAccess.class,
+    cn.iocoder.yudao.module.gym.service.points.GymPointRedemptionTransactions.class,
+    cn.iocoder.yudao.module.gym.service.points.GymPointRedemptionWorker.class,
+    cn.iocoder.yudao.module.gym.service.points.GymPointRedemptionScheduler.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobilePointRedemptionsService.class,
     cn.iocoder.yudao.module.gym.service.points.GymPointProductsService.class,
     cn.iocoder.yudao.module.gym.controller.admin.points.GymPointProductsController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileConversationsService.class,
@@ -20301,5 +20307,645 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
         assertThrows(
                 org.springframework.security.access.AccessDeniedException.class,
                 () -> pointProductController.update(1L, req));
+    }
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobilePointRedemptionsService pointRedemptions;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.points.GymPointRedemptionTransactions pointRedemptionTx;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.points.GymPointRedemptionWorker pointRedemptionWorker;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.points.GymPointRedemptionScheduler pointRedemptionScheduler;
+
+    @Resource cn.iocoder.yudao.module.gym.service.points.GymPointLedgerService redemptionLedger;
+    @Resource cn.iocoder.yudao.module.gym.service.points.GymPointProductsService redemptionProducts;
+    @Resource cn.iocoder.yudao.module.gym.dal.mysql.points.GymPointRedemptionMapper redemptionRows;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.dal.mysql.points.GymPointProductMapper redemptionProductRows;
+
+    @Resource cn.iocoder.yudao.module.gym.dal.mysql.points.GymPointAccountMapper redemptionAccounts;
+    @Resource cn.iocoder.yudao.module.gym.dal.mysql.points.GymPointRecordMapper redemptionRecords;
+
+    record PointFixture(Long member, Long template, Long product) {}
+
+    PointFixture pointFixture(int stock, long balance) {
+        stores.create(store(101L, "A"));
+        Long member = Long.valueOf(members.create(member(101L, "13800002401")).getId());
+        Long template = Long.valueOf(cards.create(cardTemplate("count")).getId());
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.admin.points.vo.GymPointProductVO.Save();
+        req.setStoreId(101L);
+        req.setCardProductId(template);
+        req.setName("兑换次卡");
+        req.setRequiredPoints(100L);
+        req.setStock(stock);
+        req.setEnabled(true);
+        Long product = Long.valueOf(redemptionProducts.save(null, req).id());
+        qrMemberIdentity(member);
+        qrMemberLogin();
+        if (balance > 0) redemptionCredit(member, balance, "test:initial");
+        return new PointFixture(member, template, product);
+    }
+
+    void redemptionCredit(Long member, long amount, String key) {
+        var tx =
+                new org.springframework.transaction.support.TransactionTemplate(
+                        applicationContext.getBean(
+                                org.springframework.transaction.PlatformTransactionManager.class));
+        tx.execute(
+                status ->
+                        redemptionLedger.append(
+                                new cn.iocoder.yudao.module.gym.service.points.GymPointLedgerService
+                                        .Posting(member, key, "earn", amount, "测试真实账本来源", null)));
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobilePointRedemptionVO.Create redeem(
+            PointFixture f) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobilePointRedemptionVO
+                        .Create();
+        req.setStoreId(101L);
+        req.setProductId(f.product());
+        return req;
+    }
+
+    org.springframework.jdbc.core.JdbcTemplate redemptionJdbc() {
+        return new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+    }
+
+    long pointBalance(PointFixture f) {
+        return redemptionAccounts
+                .selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.points.GymPointAccountDO
+                                ::getMemberId,
+                        f.member())
+                .getBalance();
+    }
+
+    @Test
+    void pointRedemptionSuccessCreatesRealCardWithNoCashOrderAndOneDebit() {
+        var f = pointFixture(5, 500);
+        var result = pointRedemptions.create(redeem(f), "point-success-01");
+        assertEquals("succeeded", result.status());
+        assertEquals(100, result.spentPoints());
+        assertNotNull(result.memberCardId());
+        var card = purchasedCards().selectById(Long.valueOf(result.memberCardId()));
+        assertEquals(f.member(), card.getMemberId());
+        assertEquals(f.template(), card.getTemplateId());
+        assertEquals(10, card.getRemainingUses());
+        assertEquals("point-redemption", card.getSourceType());
+        assertEquals(result.id(), card.getSourceId());
+        assertEquals(400, pointBalance(f));
+        assertEquals(4, redemptionProductRows.selectById(f.product()).getStock());
+        assertEquals(0, redemptionProductRows.selectById(f.product()).getReservedStock());
+        assertEquals(
+                0L,
+                redemptionAccounts
+                        .selectOne(
+                                cn.iocoder.yudao.module.gym.dal.dataobject.points.GymPointAccountDO
+                                        ::getMemberId,
+                                f.member())
+                        .getRefundReserve());
+        assertEquals(2, redemptionRecords.selectCount());
+        assertEquals(0, orderRows().selectCount());
+        assertEquals(0, financialEvents.selectCount());
+    }
+
+    @Test
+    void pointRedemptionSameKeyReturnsLatestResultEvenAfterCatalogAndStoreClosure() {
+        var f = pointFixture(5, 500);
+        var result = pointRedemptions.create(redeem(f), "point-replay-01");
+        redemptionJdbc()
+                .update(
+                        "UPDATE gym_point_product SET enabled=FALSE,required_points=200 WHERE id=?",
+                        f.product());
+        redemptionJdbc().update("UPDATE gym_store SET status='inactive' WHERE id=101");
+        assertEquals(result, pointRedemptions.create(redeem(f), "point-replay-01"));
+        assertEquals(result, pointRedemptions.get(Long.valueOf(result.id())));
+        var changed = redeem(f);
+        changed.setProductId(9999L);
+        assertServiceException(
+                () -> pointRedemptions.create(changed, "point-replay-01"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        assertEquals(1, purchasedCards().selectCount());
+        assertEquals(2, redemptionRecords.selectCount());
+        assertEquals(400, pointBalance(f));
+    }
+
+    @Test
+    void pointRedemptionProcessingIsDurableAndReadOnlyUntilWorkerProcesses() {
+        var f = pointFixture(2, 500);
+        Long id = pointRedemptionTx.prepare(redeem(f), "point-pending-01");
+        var result = pointRedemptions.get(id);
+        assertEquals("processing", result.status());
+        assertEquals(100, result.spentPoints());
+        assertNull(result.memberCardId());
+        assertEquals(1, redemptionProductRows.selectById(f.product()).getStock());
+        assertEquals(1, redemptionProductRows.selectById(f.product()).getReservedStock());
+        assertEquals(400, pointBalance(f));
+        assertEquals(result, pointRedemptions.get(id));
+        assertEquals(0, purchasedCards().selectCount());
+        assertEquals(id, pointRedemptionTx.prepare(redeem(f), "point-pending-01"));
+        assertEquals(400, pointBalance(f));
+        pointRedemptionWorker.process(id);
+        assertEquals("succeeded", pointRedemptions.get(id).status());
+    }
+
+    @Test
+    void pointRedemptionInsufficientBalanceAndSoldOutLeaveNoIntentOrSuccessfulKey() {
+        var f = pointFixture(1, 50);
+        assertServiceException(
+                () -> pointRedemptions.create(redeem(f), "point-low-balance"),
+                POINT_BALANCE_INSUFFICIENT);
+        assertEquals(0, redemptionRows.selectCount());
+        assertEquals(1, redemptionRecords.selectCount());
+        assertEquals(1, redemptionProductRows.selectById(f.product()).getStock());
+        redemptionCredit(f.member(), 50, "test:additional");
+        assertEquals("succeeded", pointRedemptions.create(redeem(f), "point-low-balance").status());
+        assertServiceException(
+                () -> pointRedemptions.create(redeem(f), "point-sold-out-01"),
+                POINT_PRODUCT_INVALID);
+        assertEquals(1, redemptionRows.selectCount());
+    }
+
+    @Test
+    void pointRedemptionWrongIdentityTenantOwnerAndInvalidBodyCannotAccessOrSpend() {
+        var f = pointFixture(3, 500);
+        Long id = pointRedemptionTx.prepare(redeem(f), "point-auth-01");
+        loginAs(1L);
+        assertServiceException(() -> pointRedemptions.get(id), MOBILE_IDENTITY_INVALID);
+        assertServiceException(
+                () -> pointRedemptions.create(redeem(f), "point-auth-admin"),
+                MOBILE_IDENTITY_INVALID);
+        qrMemberLogin();
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> pointRedemptions.get(id), MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        assertServiceException(() -> pointRedemptions.get(999999L), POINT_REDEMPTION_NOT_EXISTS);
+        var bad = redeem(f);
+        bad.setStoreId(null);
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> pointRedemptions.create(bad, "point-invalid-01"));
+        assertServiceException(
+                () -> pointRedemptions.create(redeem(f), "short"), MOBILE_REQUEST_INVALID);
+        assertEquals(400, pointBalance(f));
+    }
+
+    @Test
+    void pointRedemptionCardFailureRefundsExactlyOnceAndNewKeyMayRetry() {
+        var f = pointFixture(2, 500);
+        redemptionJdbc()
+                .execute(
+                        "ALTER TABLE gym_member_card ADD CONSTRAINT test_point_card_failure CHECK (source_type<>'point-redemption')");
+        cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobilePointRedemptionVO.Result
+                failed;
+        try {
+            failed = pointRedemptions.create(redeem(f), "point-card-fail");
+        } finally {
+            redemptionJdbc()
+                    .execute("ALTER TABLE gym_member_card DROP CONSTRAINT test_point_card_failure");
+        }
+        assertEquals("failed", failed.status());
+        assertEquals(0, failed.spentPoints());
+        assertNull(failed.memberCardId());
+        assertEquals(500, pointBalance(f));
+        assertEquals(2, redemptionProductRows.selectById(f.product()).getStock());
+        assertEquals(0, purchasedCards().selectCount());
+        var row = redemptionRows.selectById(Long.valueOf(failed.id()));
+        var refund = redemptionRecords.selectById(row.getRefundRecordId());
+        assertEquals(row.getDebitRecordId(), refund.getOriginalRecordId());
+        assertEquals(100L, refund.getDelta());
+        assertEquals(3, redemptionRecords.selectCount());
+        assertEquals(failed, pointRedemptions.create(redeem(f), "point-card-fail"));
+        assertEquals(3, redemptionRecords.selectCount());
+        assertEquals(
+                "succeeded", pointRedemptions.create(redeem(f), "point-card-new-key").status());
+        assertEquals(1, purchasedCards().selectCount());
+    }
+
+    @Test
+    void pointRedemptionLateNotificationFailureRollsBackCardAndUnsignedContractBeforeRefund() {
+        var f = pointFixture(2, 500);
+        loginAs(1L);
+        publishedContractPdf();
+        qrMemberLogin();
+        redemptionJdbc()
+                .execute(
+                        "ALTER TABLE gym_mobile_notification ADD CONSTRAINT test_point_notify_failure CHECK (1=0)");
+        try {
+            assertEquals(
+                    "failed", pointRedemptions.create(redeem(f), "point-notify-fail").status());
+        } finally {
+            redemptionJdbc()
+                    .execute(
+                            "ALTER TABLE gym_mobile_notification DROP CONSTRAINT test_point_notify_failure");
+        }
+        assertEquals(0, purchasedCards().selectCount());
+        assertEquals(0, contractMapper.selectCount());
+        assertEquals(
+                0,
+                redemptionJdbc()
+                        .queryForObject(
+                                "SELECT COUNT(*) FROM gym_member_card_store", Integer.class));
+        assertEquals(500, pointBalance(f));
+        assertEquals(2, redemptionProductRows.selectById(f.product()).getStock());
+    }
+
+    @Test
+    void pointRedemptionCompensationFailureStaysProcessingAndLaterRecoveryReturnsBothResources() {
+        var f = pointFixture(2, 500);
+        Long id = pointRedemptionTx.prepare(redeem(f), "point-refund-retry");
+        redemptionJdbc()
+                .execute(
+                        "ALTER TABLE gym_member_card ADD CONSTRAINT test_point_card_retry CHECK (source_type<>'point-redemption')");
+        redemptionJdbc()
+                .execute(
+                        "ALTER TABLE gym_point_record ADD CONSTRAINT test_point_refund_retry CHECK (type<>'refund')");
+        try {
+            assertThrows(RuntimeException.class, () -> pointRedemptionWorker.process(id));
+            assertEquals("processing", pointRedemptions.get(id).status());
+            assertEquals(400, pointBalance(f));
+            assertEquals(1, redemptionProductRows.selectById(f.product()).getStock());
+            assertEquals(
+                    100L,
+                    redemptionAccounts
+                            .selectOne(
+                                    cn.iocoder.yudao.module.gym.dal.dataobject.points
+                                                    .GymPointAccountDO
+                                            ::getMemberId,
+                                    f.member())
+                            .getRefundReserve());
+        } finally {
+            redemptionJdbc()
+                    .execute(
+                            "ALTER TABLE gym_point_record DROP CONSTRAINT test_point_refund_retry");
+        }
+        try {
+            pointRedemptionWorker.process(id);
+            pointRedemptionWorker.process(id);
+        } finally {
+            redemptionJdbc()
+                    .execute("ALTER TABLE gym_member_card DROP CONSTRAINT test_point_card_retry");
+        }
+        assertEquals("failed", pointRedemptions.get(id).status());
+        assertEquals(500, pointBalance(f));
+        assertEquals(2, redemptionProductRows.selectById(f.product()).getStock());
+        assertEquals(3, redemptionRecords.selectCount());
+    }
+
+    List<Object> redeemRace(PointFixture f, boolean sameKey) throws Exception {
+        try (var executor = java.util.concurrent.Executors.newFixedThreadPool(4)) {
+            var jobs = new ArrayList<java.util.concurrent.Callable<Object>>();
+            for (int i = 0; i < 4; i++) {
+                final int n = i;
+                jobs.add(
+                        () -> {
+                            qrMemberLogin();
+                            try {
+                                return pointRedemptions.create(
+                                        redeem(f), sameKey ? "point-race-same" : "point-race-" + n);
+                            } catch (
+                                    cn.iocoder.yudao.framework.common.exception.ServiceException
+                                            e) {
+                                return e;
+                            } finally {
+                                cleanupContext();
+                            }
+                        });
+            }
+            var result = new ArrayList<Object>();
+            for (var job : executor.invokeAll(jobs))
+                result.add(job.get(15, java.util.concurrent.TimeUnit.SECONDS));
+            return result;
+        }
+    }
+
+    @Test
+    void pointRedemptionConcurrentSameKeyConsumesOnlyOnce() throws Exception {
+        var f = pointFixture(5, 500);
+        var results = redeemRace(f, true);
+        for (var result : results) assertEquals(results.getFirst(), result);
+        assertInstanceOf(
+                cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobilePointRedemptionVO
+                        .Result.class,
+                results.getFirst());
+        assertEquals(1, purchasedCards().selectCount());
+        assertEquals(400, pointBalance(f));
+        assertEquals(1, redemptionRows.selectCount());
+    }
+
+    @Test
+    void pointRedemptionConcurrentDifferentKeysCannotOversellLastItem() throws Exception {
+        var f = pointFixture(1, 500);
+        var results = redeemRace(f, false);
+        assertEquals(
+                1,
+                results.stream()
+                        .filter(
+                                x ->
+                                        x
+                                                instanceof
+                                                cn.iocoder.yudao.module.gym.controller.app.mobile.vo
+                                                        .GymMobilePointRedemptionVO.Result)
+                        .count());
+        assertEquals(1, purchasedCards().selectCount());
+        assertEquals(0, redemptionProductRows.selectById(f.product()).getStock());
+        assertEquals(400, pointBalance(f));
+    }
+
+    @Test
+    void pointRedemptionConcurrentDifferentKeysCannotOverdrawBalance() throws Exception {
+        var f = pointFixture(5, 150);
+        var results = redeemRace(f, false);
+        assertEquals(
+                1,
+                results.stream()
+                        .filter(
+                                x ->
+                                        x
+                                                instanceof
+                                                cn.iocoder.yudao.module.gym.controller.app.mobile.vo
+                                                        .GymMobilePointRedemptionVO.Result)
+                        .count());
+        assertEquals(50, pointBalance(f));
+        assertEquals(4, redemptionProductRows.selectById(f.product()).getStock());
+        assertEquals(1, redemptionRows.selectCount());
+    }
+
+    @Test
+    void pointRedemptionFrozenCostAndCardSurviveLaterCatalogEdit() {
+        var f = pointFixture(5, 500);
+        Long id = pointRedemptionTx.prepare(redeem(f), "point-frozen-01");
+        redemptionJdbc()
+                .update(
+                        "UPDATE gym_point_product SET required_points=300,name='new',enabled=FALSE WHERE id=?",
+                        f.product());
+        redemptionJdbc()
+                .update(
+                        "UPDATE gym_card_template SET included_uses=99,status='archived' WHERE id=?",
+                        f.template());
+        pointRedemptionWorker.process(id);
+        var result = pointRedemptions.get(id);
+        assertEquals("succeeded", result.status());
+        assertEquals(100, result.spentPoints());
+        assertEquals(
+                10,
+                purchasedCards()
+                        .selectById(Long.valueOf(result.memberCardId()))
+                        .getRemainingUses());
+        assertEquals(400, pointBalance(f));
+    }
+
+    @Test
+    void pointRedemptionRevokedMembershipFailsAndRefundDoesNotRequireOldStoreAccess() {
+        var f = pointFixture(2, 500);
+        Long id = pointRedemptionTx.prepare(redeem(f), "point-lost-store");
+        redemptionJdbc()
+                .update("UPDATE gym_member_store SET deleted=TRUE WHERE member_id=?", f.member());
+        pointRedemptionWorker.process(id);
+        assertEquals("failed", pointRedemptions.get(id).status());
+        assertEquals(500, pointBalance(f));
+        assertEquals(2, redemptionProductRows.selectById(f.product()).getStock());
+    }
+
+    @Test
+    void pointRedemptionDisabledMemberAccountIsRefundedWithoutAdminImpersonation() {
+        var f = pointFixture(2, 500);
+        Long id = pointRedemptionTx.prepare(redeem(f), "point-disabled-user");
+        memberAccounts.getUser(50L).setStatus(1);
+        loginAs(1L);
+        var original = org.springframework.security.core.context.SecurityContextHolder.getContext();
+        pointRedemptionWorker.process(id);
+        assertSame(
+                original,
+                org.springframework.security.core.context.SecurityContextHolder.getContext());
+        assertEquals("failed", redemptionRows.selectById(id).getStatus());
+        assertEquals(500, pointBalance(f));
+        assertEquals(0, purchasedCards().selectCount());
+    }
+
+    @Test
+    void pointRedemptionSchedulerRecoversCommittedPendingAndRestoresTenantAndPrincipal() {
+        var f = pointFixture(2, 500);
+        var now = java.time.Instant.now();
+        when(businessClock.now()).thenReturn(now);
+        Long id = pointRedemptionTx.prepare(redeem(f), "point-crash-recovery");
+        when(tenantFrameworkService.getTenantIds()).thenReturn(List.of(1L, 2L));
+        loginAs(1L);
+        pointRedemptionScheduler.tick();
+        assertEquals("processing", redemptionRows.selectById(id).getStatus());
+        when(businessClock.now()).thenReturn(now.plusSeconds(31));
+        pointRedemptionScheduler.tick();
+        pointRedemptionScheduler.tick();
+        assertEquals(1L, TenantContextHolder.getRequiredTenantId());
+        assertEquals(
+                2,
+                cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser()
+                        .getUserType());
+        assertEquals("succeeded", redemptionRows.selectById(id).getStatus());
+        assertEquals(1, purchasedCards().selectCount());
+    }
+
+    @Test
+    void pointRedemptionRefundCapacityIsReservedAndReleasedWithoutChangingPublicBalance() {
+        long max = cn.iocoder.yudao.module.gym.service.points.GymPointLedgerService.MAX_POINTS;
+        var f = pointFixture(2, max - 100);
+        Long id = pointRedemptionTx.prepare(redeem(f), "point-capacity-01");
+        assertServiceException(
+                () -> redemptionCredit(f.member(), 1, "test:blocked-credit"), POINT_ENTRY_INVALID);
+        pointRedemptionTx.fail(id, 500);
+        assertEquals(max - 100, pointBalance(f));
+        assertEquals(
+                max,
+                redemptionAccounts
+                        .selectOne(
+                                cn.iocoder.yudao.module.gym.dal.dataobject.points.GymPointAccountDO
+                                        ::getMemberId,
+                                f.member())
+                        .getTotalEarned());
+        assertEquals("failed", pointRedemptions.get(id).status());
+        assertEquals(2, redemptionProductRows.selectById(f.product()).getStock());
+    }
+
+    @Test
+    void pointRedemptionCannotChargeWhenRefundWouldExceedNumericCapacity() {
+        var f =
+                pointFixture(
+                        2,
+                        cn.iocoder.yudao.module.gym.service.points.GymPointLedgerService
+                                .MAX_POINTS);
+        assertServiceException(
+                () -> pointRedemptions.create(redeem(f), "point-no-capacity"), POINT_ENTRY_INVALID);
+        assertEquals(0, redemptionRows.selectCount());
+        assertEquals(1, redemptionRecords.selectCount());
+        assertEquals(2, redemptionProductRows.selectById(f.product()).getStock());
+    }
+
+    @Test
+    void pointRedemptionPendingInventoryCannotBeOverwrittenBeyondRestorableStockLimit() {
+        var f = pointFixture(2, 500);
+        Long id = pointRedemptionTx.prepare(redeem(f), "point-stock-cap");
+        loginAs(1L);
+        var product = redemptionProductRows.selectById(f.product());
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.admin.points.vo.GymPointProductVO.Save();
+        req.setStoreId(101L);
+        req.setCardProductId(f.template());
+        req.setName(product.getName());
+        req.setRequiredPoints(product.getRequiredPoints());
+        req.setEnabled(true);
+        req.setRevision(product.getRevision());
+        req.setStock(Integer.MAX_VALUE);
+        assertServiceException(
+                () -> redemptionProducts.save(f.product(), req), POINT_PRODUCT_CONFLICT);
+        req.setStock(Integer.MAX_VALUE - 1);
+        redemptionProducts.save(f.product(), req);
+        pointRedemptionTx.fail(id, 500);
+        assertEquals(Integer.MAX_VALUE, redemptionProductRows.selectById(f.product()).getStock());
+        assertEquals(0, redemptionProductRows.selectById(f.product()).getReservedStock());
+    }
+
+    @Test
+    void pointRedemptionContractUsesMemberActorAndSuccessfulResultCannotBeCompensated() {
+        var f = pointFixture(2, 500);
+        loginAs(1L);
+        publishedContractPdf();
+        qrMemberLogin();
+        var result = pointRedemptions.create(redeem(f), "point-real-contract");
+        assertEquals("succeeded", result.status());
+        var contract = contractMapper.selectList().getFirst();
+        assertEquals("unsigned", contract.getStatus());
+        assertEquals("unconfigured", contract.getSigningStatus());
+        assertNull(files.selectById(contract.getUnsignedFileId()).getUploaderId());
+        var event =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.contract
+                                        .GymContractEventMapper.class)
+                        .selectList()
+                        .getFirst();
+        assertEquals(1, event.getActorUserType());
+        assertEquals(50L, event.getActorUserId());
+        pointRedemptionTx.fail(Long.valueOf(result.id()), 500);
+        pointRedemptionWorker.process(Long.valueOf(result.id()));
+        assertEquals(result, pointRedemptions.get(Long.valueOf(result.id())));
+        assertEquals(400, pointBalance(f));
+        assertEquals(2, redemptionRecords.selectCount());
+        assertEquals(1, contractMapper.selectCount());
+    }
+
+    @Test
+    void pointRedemptionBusinessKeySurvivesGenericIdempotencyRecordCleanup() {
+        var f = pointFixture(2, 500);
+        var result = pointRedemptions.create(redeem(f), "point-business-key");
+        redemptionJdbc()
+                .update("DELETE FROM gym_mobile_request WHERE operation='point-redemption'");
+        redemptionJdbc()
+                .update("UPDATE gym_point_product SET enabled=FALSE WHERE id=?", f.product());
+        assertEquals(result, pointRedemptions.create(redeem(f), "point-business-key"));
+        assertEquals(1, redemptionRows.selectCount());
+        assertEquals(400, pointBalance(f));
+        redemptionJdbc()
+                .update("DELETE FROM gym_mobile_request WHERE operation='point-redemption'");
+        var changed = redeem(f);
+        changed.setProductId(9999L);
+        assertServiceException(
+                () -> pointRedemptions.create(changed, "point-business-key"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+    }
+
+    @Test
+    void pointRedemptionAnotherValidMemberCannotReadOrReuseOthersId() {
+        var f = pointFixture(2, 500);
+        Long id = pointRedemptionTx.prepare(redeem(f), "point-owner-private");
+        loginAs(1L);
+        Long other = Long.valueOf(members.create(member(101L, "13800002402")).getId());
+        var identity = new cn.iocoder.yudao.module.gym.dal.dataobject.mobile.GymMobileIdentityDO();
+        identity.setUserId(51L);
+        identity.setMemberId(other);
+        identity.setDefaultStoreId(101L);
+        identity.setSource("test");
+        identity.setFaceStatus("unregistered");
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileIdentityMapper.class)
+                .insert(identity);
+        var account = new cn.iocoder.yudao.module.member.api.user.dto.MemberUserRespDTO();
+        account.setId(51L);
+        account.setStatus(0);
+        account.setMobile("13800002402");
+        when(memberAccounts.getUser(51L)).thenReturn(account);
+        qrMemberLogin();
+        cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser()
+                .setId(51L);
+        assertServiceException(() -> pointRedemptions.get(id), POINT_REDEMPTION_NOT_EXISTS);
+        var tx =
+                new org.springframework.transaction.support.TransactionTemplate(
+                        applicationContext.getBean(
+                                org.springframework.transaction.PlatformTransactionManager.class));
+        assertServiceException(
+                () -> tx.execute(status -> cards.issuePointRedemption(id, java.time.Instant.now())),
+                POINT_REDEMPTION_INVALID);
+        assertEquals(0, purchasedCards().selectCount());
+        assertEquals(400, pointBalance(f));
+    }
+
+    @Test
+    void pointRedemptionPeriodCardAndUnlimitedInventoryUseRealSnapshotDuration() {
+        var f = pointFixture(1, 500);
+        loginAs(1L);
+        Long period = Long.valueOf(cards.create(cardTemplate("period")).getId());
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.admin.points.vo.GymPointProductVO.Save();
+        req.setStoreId(101L);
+        req.setCardProductId(period);
+        req.setName("周期卡");
+        req.setRequiredPoints(100L);
+        req.setEnabled(true);
+        req.setStock(null);
+        Long product = Long.valueOf(redemptionProducts.save(null, req).id());
+        qrMemberLogin();
+        var result =
+                pointRedemptions.create(
+                        redeem(new PointFixture(f.member(), period, product)), "point-period-card");
+        var card = purchasedCards().selectById(Long.valueOf(result.memberCardId()));
+        assertEquals("period", card.getKind());
+        assertEquals(card.getStartsAt().plusSeconds(30L * 86400), card.getExpiresAt());
+        assertNull(card.getRemainingUses());
+        assertNull(redemptionProductRows.selectById(product).getStock());
+        assertEquals(0, redemptionProductRows.selectById(product).getReservedStock());
+    }
+
+    @Test
+    void pointRedemptionSnapshotCannotBypassMissingDebitAndSchedulerSkipsDisabledTenant() {
+        var f = pointFixture(2, 500);
+        Long id = pointRedemptionTx.prepare(redeem(f), "point-proof-required");
+        var now = redemptionRows.selectById(id).getRequestedAt().plusSeconds(31);
+        when(businessClock.now()).thenReturn(now);
+        when(tenantFrameworkService.getTenantIds()).thenReturn(List.of(1L));
+        doThrow(
+                        new cn.iocoder.yudao.framework.common.exception.ServiceException(
+                                cn.iocoder.yudao.module.system.enums.ErrorCodeConstants
+                                        .TENANT_DISABLE))
+                .when(tenantFrameworkService)
+                .validTenant(1L);
+        pointRedemptionScheduler.tick();
+        assertEquals("processing", redemptionRows.selectById(id).getStatus());
+        assertEquals(0, purchasedCards().selectCount());
+        redemptionJdbc()
+                .update("UPDATE gym_point_redemption SET debit_record_id=NULL WHERE id=?", id);
+        var tx =
+                new org.springframework.transaction.support.TransactionTemplate(
+                        applicationContext.getBean(
+                                org.springframework.transaction.PlatformTransactionManager.class));
+        assertServiceException(
+                () -> tx.execute(status -> cards.issuePointRedemption(id, now)),
+                POINT_REDEMPTION_INVALID);
+        assertEquals(0, purchasedCards().selectCount());
     }
 }

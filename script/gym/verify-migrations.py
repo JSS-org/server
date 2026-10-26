@@ -90,7 +90,31 @@ def main():
               for name, value in manifest.items()), 'historical SQL checksums unchanged')
     with isolated() as db:
         command('init')
-        check(len([t for t in db.tables() if t.startswith('gym_')]) == 77, 'new database has 59 original and 18 additional gym tables')
+        check(len([t for t in db.tables() if t.startswith('gym_')]) == 78, 'new database has 59 original and 19 additional gym tables')
+        check(db.sql('SELECT COUNT(*) FROM gym_point_redemption') == '0', 'migration invents no point redemption or charges')
+        db.sql("INSERT INTO gym_point_product(id,store_id,card_product_id,name,required_points,tenant_id) VALUES(900001,1,1,'reserved test',100,1)")
+        check(db.sql('SELECT reserved_stock FROM gym_point_product WHERE id=900001') == '0', 'old and new products start with no fabricated reservations')
+        rejects(lambda: db.sql('UPDATE gym_point_product SET reserved_stock=-1 WHERE id=900001'), 'reserved point stock cannot be negative')
+        rejects(lambda: db.sql('UPDATE gym_point_product SET stock=2147483647,reserved_stock=1 WHERE id=900001'), 'point stock leaves room to return pending reservations')
+        rejects(lambda: db.sql('UPDATE gym_point_product SET revision=9007199254740991,reserved_stock=1 WHERE id=900001'), 'product revision leaves room to finish pending reservations')
+        db.sql('INSERT INTO gym_point_account(member_id,balance,total_earned,tenant_id) VALUES(900001,10,10,1)')
+        check(db.sql('SELECT refund_reserve FROM gym_point_account WHERE member_id=900001') == '0', 'point refund capacity defaults to zero without changing balances')
+        rejects(lambda: db.sql('UPDATE gym_point_account SET refund_reserve=-1 WHERE member_id=900001'), 'negative refund reserve is rejected')
+        rejects(lambda: db.sql('UPDATE gym_point_account SET refund_reserve=9007199254740991 WHERE member_id=900001'), 'refund reserve fits within remaining safe credit total')
+        def redemption(key, tenant=1):
+            db.sql(f"INSERT INTO gym_point_redemption(user_id,request_key,member_id,store_id,product_id,product_revision,required_points,stock_reserved,template_snapshot,status,requested_at,tenant_id) VALUES(50,'{key}',1,101,900001,1,100,1,'{{}}','processing','2026-10-26 10:00:00.123456',{tenant})")
+        redemption('migration-point-key')
+        rejects(lambda: redemption('migration-point-key'), 'redemption has its own durable user request key')
+        redemption('migration-Point-key')
+        redemption('migration-point-key',2)
+        check(db.sql('SELECT COUNT(*) FROM gym_point_redemption') == '3', 'redemption business keys are case-sensitive and tenant-isolated')
+        rejects(lambda: db.sql("UPDATE gym_point_redemption SET status='failed' WHERE tenant_id=1"), 'failed redemption requires a linked refund and failure time')
+        rejects(lambda: db.sql("UPDATE gym_point_redemption SET status='succeeded' WHERE tenant_id=1"), 'successful redemption requires real debit and card references')
+        db.sql("UPDATE gym_point_redemption SET status='succeeded',debit_record_id=7,member_card_id=8,completed_at='2026-10-26 10:01:00.123456' WHERE tenant_id=1 AND BINARY request_key='migration-point-key'")
+        rejects(lambda: db.sql("UPDATE gym_point_redemption SET debit_record_id=7 WHERE tenant_id=1 AND BINARY request_key='migration-Point-key'"), 'one point debit cannot fund multiple redemptions')
+        check(db.sql("SELECT COUNT(*) FROM gym_point_redemption WHERE status='succeeded' AND member_card_id=8 AND completed_at='2026-10-26 10:01:00.123456'") == '1', 'redemption terminal state preserves microsecond evidence')
+        check(db.sql("SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='gym_point_redemption' AND index_name='idx_point_redemption_pending'") == '5', 'recovery index covers tenant state and queue age')
+        db.sql('DELETE FROM gym_point_redemption; DELETE FROM gym_point_product; DELETE FROM gym_point_account')
         check(db.sql('SELECT COUNT(*) FROM gym_point_product') == '0', 'point catalog is not invented by migration')
         db.sql("INSERT INTO gym_point_product(store_id,card_product_id,name,required_points,tenant_id) VALUES(1,1,'Card',100,1)")
         check(db.sql('SELECT CONCAT(enabled+0,":",revision,":",stock IS NULL) FROM gym_point_product') == '0:1:1', 'products default disabled with explicit unlimited inventory and revision one')
@@ -429,6 +453,26 @@ def main():
             db.flyway('migrate')
             check(db.sql('SELECT * FROM gym_fulfillment_task ORDER BY id') == history, 'repeated migrate creates no duplicate member tasks or resets retry history')
             db.flyway('validate')
+    with isolated() as db:
+        with tempfile.TemporaryDirectory(prefix='gym-flyway-point-redemption-') as folder:
+            previous_assets = Path(folder) / 'assets'
+            shutil.copytree(ASSETS, previous_assets)
+            for migration in (previous_assets / 'migration/mysql').glob('V*__*.sql'):
+                if int(migration.name.split('__')[0][1:]) >= 30:
+                    migration.unlink()
+            manager.ASSETS = previous_assets
+            db.flyway('baseline', 0)
+            db.flyway('migrate')
+            db.sql("INSERT INTO gym_point_product(id,store_id,card_product_id,name,required_points,stock,enabled,revision,tenant_id) VALUES(900001,101,7,'existing offer',40,2,1,3,1)")
+            db.sql('INSERT INTO gym_point_account(member_id,balance,total_earned,total_spent,tenant_id) VALUES(900001,100,120,20,1)')
+            before = auth_snapshot(db)
+            manager.ASSETS = ASSETS
+            db.flyway('migrate')
+            db.flyway('validate')
+            check(db.sql('SELECT CONCAT(balance,":",total_earned,":",total_spent,":",refund_reserve) FROM gym_point_account') == '100:120:20:0', 'V030 preserves real prior account totals without creating refund obligations')
+            check(db.sql("SELECT COUNT(*) FROM gym_point_product WHERE id=900001 AND name='existing offer' AND required_points=40 AND stock=2 AND enabled=1 AND revision=3 AND reserved_stock=0") == '1', 'V030 keeps prior catalog stock price and revision unchanged')
+            check(db.sql('SELECT COUNT(*) FROM gym_point_redemption') == '0', 'V030 does not invent previous redemption requests')
+            check(auth_snapshot(db) == before, 'V030 upgrade changes no account role or data scope')
     print(f'Flyway integration regression passed: {CHECKS} checks; all temporary DBs cleaned.')
 
 

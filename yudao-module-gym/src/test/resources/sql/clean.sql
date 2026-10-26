@@ -94,3 +94,4 @@ DELETE FROM gym_point_record;
 DELETE FROM gym_point_account;
 
 DELETE FROM gym_point_product;
+DELETE FROM gym_point_redemption;

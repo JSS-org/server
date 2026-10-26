@@ -1354,3 +1354,14 @@ git diff --check
 隔离MySQL/Flyway170检查通过且临时库全部清理，本批新增11项：不造默认商品、禁用/无限库存/版本默认、零成本/超安全整数/负库存/无效版本/空名拒绝、售罄及最大成本保留、查询索引、独立权限定义、旧库不造商品；既有角色快照检查仍通过。V001–V028不变，业务库未迁移。
 
 日志：/tmp/uniapp-point-products-focused-final.log（69通过）、/tmp/uniapp-point-products-final-tests.log、/tmp/uniapp-point-products-migrations.log、/tmp/uniapp-point-products-package.log。最初两轮发现测试夹具重复使用全局模板族ID/门店ID，已修正为独立真实主键，保留业务断言后重跑。尚未证明62–63兑换、真实发卡和失败返还闭环；无部署HTTP、多节点及规模性能验证。
+
+
+## 积分兑换与持久化恢复（2026-10-26，V030）
+
+复现命令沿用前文完整Gym/Member测试、Spotless、隔离MySQL、server package及源码覆盖命令。新增23项业务和3项MVC；最终gym895通过（组织服务534、会员专项69），member4通过及1项既有禁用跳过，Spotless通过；server打包成功（打包跳过测试）。覆盖118/135，仍缺17，git diff --check通过。
+
+真实服务/数据库测试覆盖实际次卡/周期卡发放、无现金订单收入、被冻结的成本/模板、同键最新状态及通用幂等记录清理、processing持久化与GET无副作用、余额/库存不足准备全回滚、当前及其他有效会员/租户隔离、缺真实扣分不得发卡、发卡故障全额返还、通知/合同链路故障回滚、返还自身故障保持processing和恢复、并发同键一次扣分、不同键不超卖/超扣、资格撤销及停用账号后台返还、定时恢复与停用租户跳过、上下文恢复、积分上限返还空间及最大库存、真实未签合同会员审计、成功状态不能重复补偿。MVC验证四字段、ID和幂等头、字段校验、processing/failed及无内部数据。
+
+真实隔离MySQL/Flyway189检查通过，临时库全部清理；新增19项覆盖空兑换表、库存/数值预留默认与边界、业务请求键唯一/大小写/租户、终态约束、一次扣分不能资助多个兑换、微秒时间及恢复索引，以及实际V029升级时既有余额/商品/版本/角色保持。V001–V029未修改。初次全量测试暴露H2多上下文重复ALTER初始化，已改为最终建表结构并重跑；隔离脚本表数与升级夹具同步后通过。
+
+日志：/tmp/uniapp-point-redemptions-focused.log（初期19业务通过）、/tmp/uniapp-point-redemptions-final-tests.log、/tmp/uniapp-point-redemptions-final-migrations.log、/tmp/uniapp-point-redemptions-package.log。测试账本和商品只存在隔离数据库，未导入业务库；未运行部署HTTP、真实外部存储、多节点、规模压力或真实电子签约联调。

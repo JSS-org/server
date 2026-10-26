@@ -3254,3 +3254,43 @@ V029新增一表至77表，下一V030；先备份、migrate/validate再升级应
 ### 未做 / 后续
 
 112项新增本地实现、4项复用源码、19项仍待开发；三个后台辅助接口不计入135项。62–63兑换扣分/库存消耗/真实发卡及结果仍待接入，目录查询不宣称兑换闭环完成。消费/邀请自动奖励以及已确认的外部服务继续暂缓。未做部署HTTP、多节点或规模联调；仅本地小步提交，不推送。
+
+## [2026-10-26 09:43 ~ 10:18] 积分兑换发卡、失败返还与持久化恢复
+
+### 意图
+
+完成135项总表62–63，以真实余额兑换会员卡，并在发放失败时可查询且完整返还。延续已实现的积分账本/商品，保持消费及邀请自动奖励暂缓，避免用虚假现金订单或后台身份获得会员权益。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `controller/app/mobile/AppGymPointRedemptionsController.java`、`vo/GymMobilePointRedemptionVO.java`、`service/mobile/GymMobilePointRedemptionsService.java` | 新增 | 幂等兑换提交、本人四字段结果，三段事务编排 |
+| `service/points/GymPointRedemptionTransactions.java`、`GymPointRedemptionAccess.java` | 新增 | 原子扣分/预留、冻结条款、真实扣分授权、成功与返还终态 |
+| `service/points/GymPointRedemptionWorker.java`、`GymPointRedemptionScheduler.java`、`GymPointRedemptionTimer.java` | 新增 | 实际会员上下文、异常返还、各租户处理中恢复、自有定时线程 |
+| `dal/dataobject/points/GymPointRedemptionDO.java`、`dal/mysql/points/GymPointRedemptionMapper.java` | 新增 | 兑换单、独立请求键、原扣分/卡/返还、快照与时间 |
+| `service/card/GymCardService.java`、`service/contract/GymContractService.java` | 修改 | 增加仅持久化兑换可用的会员发放分支，复用真实卡/未签合同/通知 |
+| `service/points/GymPointLedgerService.java`、`GymPointProductsService.java`、账户与商品DO | 修改 | 返还数值空间、待完成库存和版本容量，防止配置覆盖预留 |
+| `enums/ErrorCodeConstants.java` | 修改 | 发放条件无效及本人兑换不存在错误 |
+| `sql/gym/migration/mysql/V030__gym_point_redemptions.sql`、H2建表/清理、`script/gym/verify-migrations.py` | 新增/修改 | 一表至78表、两预留列、唯一/终态/数值约束及19项迁移检查 |
+| `GymOrganizationServiceTest.java`、`GymMobilePointRedemptionsControllerTest.java` | 修改/新增 | 23项实际业务/权限/并发/恢复与3项MVC |
+| `docs/uniapp/`契约、总表、实施进度和机器清单 | 修改 | 118/135、三种状态、净支出、重试/返还和暂缓边界 |
+| `docs/architecture.md`、`docs/testing.md`、`script/gym/README.md`、`script/gym/DATABASE.md` | 修改 | 事务调用链、验证、统一升级/恢复操作及下一V031 |
+
+Java相对路径位于yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym；测试位于同模块src/test。
+
+### 结构关系
+
+提交先以当前会员准备兑换，在租户互斥事务中写独立兑换请求、冻结卡模板/成本、spend流水、返还容量及库存预留；通用幂等保存兑换ID，业务表另有用户请求键唯一约束。发放通过RedemptionAccess验证原扣分和真实会员资格，复用CardService/ContractService的受控分支，不生成现金订单。卡、门店权益、内部未签合同和通知同事务，成功释放预留；异常先回滚发放，再独立事务关联原spend返还积分/库存并写failed。返还故障保持processing。后台恢复与请求共享业务行锁，重试返回原单最新状态；晚到失败不能退款已成功的单。
+
+### 验证证据
+
+完整gym895项通过（组织服务534、会员专项69），member4通过及1项既有禁用跳过，新增23业务+3MVC；Spotless通过。测试覆盖真实次卡/周期卡及未签合同、无现金收入、冻结条款、业务键持久化、权限、同键及异键并发不超扣/超卖、通知/合同链路整体回滚、返还故障恢复、定时租户/会员上下文、积分/库存安全上限。真实隔离MySQL/Flyway189检查通过且临时库全部清理，含真实V029升级余额/商品/角色保持。server package -DskipTests成功（打包跳过测试）；源码覆盖Contract135/mapped118/missing17，git diff --check通过。命令、日志和修正H2多上下文初始化后的最终证据见testing本批章节。
+
+### 影响面 / 风险
+
+V030新增一表至78表、下一V031；账户refund_reserve和商品reserved_stock默认0，不回填历史兑换/扣分、不改变角色。升级须暂停兑换、所有积分/商品写入与gym.points.redemption.enabled定时器，备份并migrate/validate后统一更新实例再恢复，旧写入实例不能与新版混用。商品预留和终结都会增加revision；配置不得侵占可返还库存/数值空间。定时器默认开启，每30秒扫描等待至少30秒的processing，每租户100条；容量未压力验证。外部合同blob不随数据库回滚，未引用文件沿用现有清理。业务库未迁移，前端及用户原始uniapp.md内容/暂存状态保留。
+
+### 未做 / 后续
+
+当前114项新增本地实现、4项复用源码、17项待开发，总目标135保持。消费/邀请自动奖励、历史补发及真实支付/自动续费、电子签约、设备和监控仍按已确认边界暂缓。无真实积分来源时零余额仍拒绝兑换，隔离测试余额不导入业务库。未验证部署HTTP、真实存储、多节点或规模场景。本批独立本地提交，不推送。

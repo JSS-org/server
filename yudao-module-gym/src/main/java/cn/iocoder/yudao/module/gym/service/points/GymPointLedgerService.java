@@ -82,6 +82,7 @@ public class GymPointLedgerService {
             account.setBalance(0L);
             account.setTotalEarned(0L);
             account.setTotalSpent(0L);
+            account.setRefundReserve(0L);
             accounts.insert(account);
         }
         if ("refund".equals(req.type())) {
@@ -111,7 +112,8 @@ public class GymPointLedgerService {
         long earned = account.getTotalEarned(), spent = account.getTotalSpent();
         if (req.delta() > 0) earned = Math.addExact(earned, req.delta());
         else spent = Math.addExact(spent, -req.delta());
-        if (earned > MAX_POINTS || spent > MAX_POINTS) throw exception(POINT_ENTRY_INVALID);
+        if (earned + account.getRefundReserve() > MAX_POINTS || spent > MAX_POINTS)
+            throw exception(POINT_ENTRY_INVALID);
         var row = new GymPointRecordDO();
         row.setAccountId(account.getId());
         row.setMemberId(req.memberId());
@@ -128,5 +130,34 @@ public class GymPointLedgerService {
         account.setTotalSpent(spent);
         accounts.updateById(account);
         return new Posted(row.getId(), balance);
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY, rollbackFor = Exception.class)
+    public void reserveRefund(Long member, long amount) {
+        if (amount <= 0) throw exception(POINT_ENTRY_INVALID);
+        adjustRefundReserve(member, amount);
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY, rollbackFor = Exception.class)
+    public void releaseRefund(Long member, long amount) {
+        if (amount <= 0) throw exception(POINT_ENTRY_INVALID);
+        adjustRefundReserve(member, -amount);
+    }
+
+    private void adjustRefundReserve(Long member, long change) {
+        if (change == 0 || change > MAX_POINTS || change < -MAX_POINTS)
+            throw exception(POINT_ENTRY_INVALID);
+        mutex.lockStoreEntitlements();
+        var account =
+                accounts.selectOne(
+                        new LambdaQueryWrapper<GymPointAccountDO>()
+                                .eq(GymPointAccountDO::getMemberId, member)
+                                .last("FOR UPDATE"));
+        if (account == null) throw exception(POINT_ENTRY_INVALID);
+        long reserved = account.getRefundReserve() + change;
+        if (reserved < 0 || account.getTotalEarned() + reserved > MAX_POINTS)
+            throw exception(POINT_ENTRY_INVALID);
+        account.setRefundReserve(reserved);
+        accounts.updateById(account);
     }
 }

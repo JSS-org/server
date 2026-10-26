@@ -792,3 +792,9 @@ GymMobileActionConfirmationsController → GymMobileActionConfirmationsService �
 main接入upstream/master-jdk25 70ad21ad6c，同时保留移动接口分支f27ce5ad7f的全部gym实现。运行基线为JDK25、Spring Boot4.1.2；Excel依赖随上游升级至Apache Fesod 2.1.0-incubating，框架转换器及报表DTO同步迁移。MyBatis接收上游大小写兼容ResultMap/SQL注入与Jackson初始化修复，管理员认证保留本地AuthMenuTreeCustomizer并纳入上游二维码登录逻辑。
 
 本项目gym业务模型、V001–V035迁移、受控文件及权限扩展未被上游版本替换；环境连接参数保留。默认启用server依赖链通过完整测试与打包，可选未启用模块仅完成源码合并/格式统一，未声明运行验收。所有第三方暂缓范围及125/135的接口统计口径保持不变；应用启动仍不自动迁移gym业务库。
+
+## 统一公告管理与备注迁移（2026-10-27，JSS V010）
+
+移动公告列表/详情/编辑 → 原工作台安全链 → NoticeController → NoticeServiceImpl → 生产NoticeMapper及租户插件 → system_notice。JSS V010只为既有框架表新增remark varchar(200)默认空字符串，VO/DO和H2基座同步；部署服务器代码前必须显式migrate/validate，不在启动时迁移，不重放原框架SQL。既有客户端省略备注时更新保持原值，显式空字符串可清空；管理VO返回备注，DO的@JsonIgnore防止原WebSocket实体推送带出新后台备注。
+
+批删在REQUIRED事务中去重、整批校验当前租户可见记录并核对影响数；混合外租户/缺失目标整体拒绝。前端富文本使用既有mp-html解析器，再白名单生成rich-text节点，保存不改写原正文。既有在线推送API/消息协议不在本批实际调用或验收，实时消息及授权边界仍需独立检查。

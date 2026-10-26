@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.system.service.notice;
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.NOTICE_NOT_FOUND;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.system.controller.admin.notice.vo.NoticePageReqVO;
@@ -15,6 +16,7 @@ import com.google.common.annotations.VisibleForTesting;
 import jakarta.annotation.Resource;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -53,8 +55,18 @@ public class NoticeServiceImpl implements NoticeService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteNoticeList(List<Long> ids) {
-        noticeMapper.deleteByIds(ids);
+        if (CollUtil.isEmpty(ids)) {
+            return;
+        }
+        List<Long> targets = ids.stream().distinct().toList();
+        if (noticeMapper.selectByIds(targets).size() != targets.size()) {
+            throw exception(NOTICE_NOT_FOUND);
+        }
+        if (noticeMapper.deleteByIds(targets) != targets.size()) {
+            throw exception(NOTICE_NOT_FOUND);
+        }
     }
 
     @Override

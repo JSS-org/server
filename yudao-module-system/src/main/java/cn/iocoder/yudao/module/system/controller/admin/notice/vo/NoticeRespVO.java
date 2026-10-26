@@ -28,6 +28,9 @@ public class NoticeRespVO {
             example = "1")
     private Integer status;
 
+    @Schema(description = "备注")
+    private String remark;
+
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED, example = "时间戳格式")
     private LocalDateTime createTime;
 }

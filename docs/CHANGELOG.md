@@ -4490,3 +4490,39 @@ Redis程序读取仍拒绝，真实HTTP/H5/RBAC、更多授权边界与统一导
 ### 未做 / 后续
 
 Redis程序仍无法读取，商城/工作台真实HTTP/H5需恢复后串行运行，包括参数CRUD、按键可见性、内置保护和无权限拒绝。统一导出、其他管理模块、真机/原生包/发布未完成，无新全量verify，整合验收版本不前移。
+
+## [2026-10-27 01:51 ~ 02:15] 公告备注V010及整批删除的真实迁移与事务
+
+### 意图
+
+接续P5通知公告，补齐上游已有备注在后端无法保存的缺口，并修复混合外租户/缺失批次静默删除有效公告；原文富文本和原有安全链继续保留。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `sql/jss/migration/mysql/V010__system_notice_remark.sql` | 新增 | 既有公告表加200字符备注，旧行默认空；历史迁移不改 |
+| `.../notice/vo/NoticeSaveReqVO.java`、`NoticeRespVO.java`、`.../dataobject/notice/NoticeDO.java` | 修改 | 管理备注读写、200字符校验；DO序列化不向实体推送增加后台备注 |
+| `.../service/notice/NoticeServiceImpl.java` | 修改 | 批删去重/整批可见/REQUIRED事务及影响数核对 |
+| `.../integration/JssNoticeMySqlServiceIT.java`、`.../notice/NoticeSerializationTest.java` | 新增 | 五项实际Service与一项生产JSON/转换安全回归 |
+| `.../src/test/resources/sql/create_tables.sql` | 修改 | H2公告基座补备注列 |
+| `script/jss/database.py`、`verify_migrations.py`、`verify_notice_services.py` | 修改/新增 | 公告前置表、V009升级演练、旧正文/备注保留、独立实际Service验证及清理 |
+| `docs/architecture.md`、`testing.md`、`CHANGELOG.md`、`sql/jss/README.md`、`script/jss/README.md` | 修改 | 结构/版本/部署前置和真实证据边界 |
+
+### 结构关系
+
+原NoticeController/Bean转换 → NoticeServiceImpl → 生产Mapper/租户SQL保持；V010追加表字段，管理VO与DO贯通。后台备注在管理VO中返回，在DO实体序列化中排除，避免改变原WebSocket推送的数据暴露面。批删事务服从外层回滚；无新权限或消息发送行为，结构详见architecture。
+
+### 验证证据
+
+真实Flyway十一项全过，`.runtime/notice-migrations.log`，含已有V009升级V010、旧正文/备注保留、重复迁移/校验和漂移及前置保护。实际Service有效修复前五项三通过/两失败、零错误/跳过；最终五项全过、零失败/错误/跳过，12.747秒，`.runtime/notice-services-final.log`和实际XML见testing。全部迁移/服务随机库残留0。
+
+最终13项专项中八项执行通过（七H2、一JSON/Bean转换），五项MySQL条件跳过，零失败/错误，`.runtime/notice-final-regression.log`。服务器30模块依赖与测试编译通过；补序列化排除后system依赖编译及最终专项成功。六个Java定向格式、三个Python编译及差异检查通过，无新完整verify。
+
+### 影响面 / 风险
+
+新代码查询公告需要remark列，必须先备份并migrate/validate V010再部署。旧客户端不传/null备注保持原值，空字符串清空；历史正文/标题不重写。混合不可见/缺失批次现在整批拒绝，重复ID按一个目标。没有开发库或运行服务升级，真实WebSocket/HTTP安全链仍待验；测试未发送消息。
+
+### 未做 / 后续
+
+Redis安装程序仍无法读取，最新商城/工作台真实HTTP/H5需恢复后串行执行，含新增公告与备注场景。在线推送、真机/原生包、其他模块及发布未完成；整合验收版本不前移，完整目标继续进行中。

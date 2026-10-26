@@ -32,4 +32,8 @@ public class NoticeSaveReqVO {
             requiredMode = Schema.RequiredMode.REQUIRED,
             example = "1")
     private Integer status;
+
+    @Schema(description = "备注", example = "内部说明")
+    @Size(max = 200, message = "备注不能超过200个字符")
+    private String remark;
 }

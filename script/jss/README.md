@@ -1,5 +1,11 @@
 # JSS 隔离数据库验证
 
+## 公告备注与V010升级验证
+
+`verify_migrations.py` 现包含十一项真实Flyway检查：框架基座及全部JSS版本初始化、已有V009升级V010、旧公告正文与新备注保留、重复migrate/validate、历史校验和拒绝漂移及初始化前置保护。所有操作仅在工具确认归属的13316随机库，结束清理；V001–V009未改写。新增前置表system_notice，部署包含备注字段的新服务器前必须执行并验证V010，开发库不会自动升级。
+
+`verify_notice_services.py` 在原始system_notice DDL上应用V010，再装配生产Notice Service/Mapper、租户/分页与Spring事务。五项实际MySQL覆盖备注新增/显式清空/旧客户端null保留、富文本原文、筛选分页、外租户读写/混合批次、缺失整批拒绝和重复ID/外层回滚；无Redis、HTTP或WebSocket发送。当前实际证据及H2/序列化专项见docs/testing.md，不代替授权或在线消息验收。
+
 ## 完整后端 HTTP 认证
 
 先启动上述工具管理的 MySQL 13316 与 Redis 16379，再运行：

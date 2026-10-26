@@ -6,6 +6,7 @@ import cn.iocoder.yudao.module.system.enums.notice.NoticeTypeEnum;
 
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -50,4 +51,7 @@ public class NoticeDO extends BaseDO {
      * 枚举 {@link CommonStatusEnum}
      */
     private Integer status;
+
+    /** 管理备注通过管理 VO 返回，不随公告实体推送。 */
+    @JsonIgnore private String remark;
 }

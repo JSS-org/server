@@ -1866,3 +1866,24 @@ python script/jss/verify_config_services.py
 脚本核验实例归属、遮盖密码、校验报告时效/六项计数及零失败/错误/跳过，并在finally删除随机schema；残留核对0。常规专项18项中12项H2执行通过、六项MySQL条件跳过，零失败/错误；服务器30模块依赖与测试编译成功，`.runtime/config-regression.log`。两个Java定向Spotless、Python编译和差异检查通过；没有新完整verify、配置并发改名或HTTP/RBAC结论。
 
 Redis安装程序本轮读取仍拒绝。参数移动UI、按键可见性的真实安全链、工作台与原生后台共享范围、统一导出和其他管理模块需独立验收；本次无权限、表/迁移、开发库、运行服务或部署变更，整合验收版本保持原值。
+
+## 2026-10-27 通知公告备注、V010与整批删除
+
+上游移动公告有备注表单/详情，但原后端Save/Resp/DO与system_notice均无此字段。新增JSS V010仅追加remark varchar(200) NOT NULL DEFAULT ''，VO/DO和H2基座同步；管理VO可返回备注，DO@JsonIgnore排除原WebSocket实体推送中的后台备注。旧客户端省略/null备注保留原值，显式空字符串清空。部署新服务器前须备份、执行并validate V010；本批没有升级开发库/运行jar，V001–V009不改写。
+
+```powershell
+$env:JSS_MAVEN_COMMAND='D:/Project/JSS/JSS-server/.runtime/maven-integration.cmd'
+python script/jss/verify_migrations.py
+python script/jss/verify_notice_services.py
+.runtime/maven-integration.cmd -B -ntp -Pjss-mall -pl yudao-module-system -am test '-Dtest=NoticeServiceImplTest,NoticeSerializationTest,JssNoticeMySqlServiceIT' '-Dsurefire.failIfNoSpecifiedTests=false' '-Dspotless.skip=true'
+```
+
+实际Flyway十一项全过，`.runtime/notice-migrations.log`：完整初始化到V010、已有受管V009升级、旧正文/新备注保留、重复migrate/validate、历史漂移拒绝与前置/接管保护。Database前置表集合增加system_notice，临时旧版本资产副本只复制V001–V009，不改其原文件。三类迁移随机库和服务随机库残留均为0。
+
+`verify_notice_services.py` 只在已归属MySQL8.4.9:13316的 `jss_notice_service_verify_<12位随机值>` 中载入原始公告表DDL并执行V010，再装配生产Service/Mapper、租户/分页插件和事务代理，无业务替身、Redis/HTTP。有效批删复现五项中三通过/两失败、零错误/跳过，`.runtime/notice-services-before.log`：混合外租户或缺失编号时，本租户有效公告已被删除且未拒绝。现在批删去重、整批存在检查、REQUIRED事务及实际删除数校验，任一不可见/缺失返回已有NOTICE_NOT_FOUND并保持已有行。
+
+最终五项实际MySQL全过、零失败/错误/跳过，12.747秒；`.runtime/notice-services-final.log` 与保存的实际XML `.runtime/notice-services-final.xml`。覆盖完整CRUD/HTML原文/通知与公告类型/启停、备注写入/旧客户端null保留/显式清空、标题/状态分页、外租户详情/改/单删/混批、缺失批次整拒、重复ID与外层回滚。脚本遮盖数据库密码并检查报告时效/计数，finally核验归属、清理随机库。
+
+最终常规专项13项中八项执行通过（七项H2 Service、一项生产JSON/Bean转换序列化）、五项实际MySQL条件跳过，零失败/错误，`.runtime/notice-final-regression.log`。序列化验证公告实体不带后台备注、管理VO仍带备注；没有发送消息或调用WebSocket。服务器30模块依赖与测试编译已通过，`.runtime/notice-regression.log`；补@JsonIgnore后system依赖编译及最终专项再次成功。六个变更Java定向Spotless、三个Python编译、差异检查通过。没有新全量verify或真实HTTP/H5/RBAC结果。
+
+Redis程序仍读取拒绝，真实公告CRUD/备注/权限/租户与完整商城/工作台回归待恢复后串行运行；WebSocket在线消息、真机、导出及其他模块继续待验，不以Service或Flyway检查代替。详见architecture、sql/jss/README及前端通知公告说明。

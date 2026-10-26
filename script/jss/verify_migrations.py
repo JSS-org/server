@@ -20,8 +20,9 @@ def main():
     token = os.urandom(6).hex()
     database = 'jss_migration_verify_' + token
     empty_database = 'jss_empty_verify_' + token
-    for name in [database, empty_database]:
-        assert re.fullmatch(r'jss_(migration|empty)_verify_[0-9a-f]{12}', name)
+    upgrade_database = 'jss_upgrade_verify_' + token
+    for name in [database, empty_database, upgrade_database]:
+        assert re.fullmatch(r'jss_(migration|empty|upgrade)_verify_[0-9a-f]{12}', name)
         sql(f'CREATE DATABASE `{name}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;')
     environment_keys = [key for key in os.environ if key.startswith(('JSS_DB_', 'FLYWAY_'))]
     saved = {key: os.environ[key] for key in environment_keys}
@@ -46,11 +47,15 @@ def main():
             assert match, table
             statements.append(match[0])
         sql(f'USE `{database}`;\n' + '\n'.join(statements))
+        sql(f"USE `{database}`; INSERT INTO system_notice (id,title,content,type,status,tenant_id) VALUES (1,'Legacy notice','<p>Original content</p>',1,0,1);")
         managed = Database(quiet=True)
         managed.execute('init')
         versions = [re.match(r'V(\d+)__', file.name)[1] for file in sorted((ASSETS / 'migration/mysql').glob('V*__*.sql'))]
         assert managed.sql(f"SELECT GROUP_CONCAT(version ORDER BY installed_rank) FROM {HISTORY} WHERE success=1") == ','.join(['0', *versions])
         checks.append('explicit baseline-zero and all versioned migrations execute on MySQL')
+        assert managed.sql("SELECT CONCAT(title,'|',content,'|',remark) FROM system_notice WHERE id=1") == 'Legacy notice|<p>Original content</p>|'
+        managed.sql("UPDATE system_notice SET remark='retained remark' WHERE id=1")
+        checks.append('V010 adds an empty remark without changing existing notice content')
         assert managed.sql("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='must_not_override_jss_history'") == '0'
         checks.append('inherited Flyway environment cannot override the history table')
         assert managed.sql('SELECT COUNT(*) FROM system_users') == '0'
@@ -62,8 +67,32 @@ def main():
         managed.execute('migrate')
         managed.execute('validate')
         assert managed.sql('SELECT COUNT(*) FROM member_user') == '1'
+        assert managed.sql("SELECT remark FROM system_notice WHERE id=1") == 'retained remark'
         assert managed.sql(f'SELECT COUNT(*) FROM {HISTORY} WHERE success=1') == str(len(versions) + 1)
         checks.append('repeated migrate/validate preserve application data and migration history')
+        # Rehearse an already managed V009 database, preserving historical SQL/checksums.
+        sql(f'USE `{upgrade_database}`;\n' + '\n'.join(statements) + "\nINSERT INTO system_notice (id,title,content,type,status,tenant_id) VALUES (1,'Before upgrade','<p>Keep me</p>',2,1,1);")
+        os.environ['JSS_DB_NAME'] = upgrade_database
+        upgrade = Database(quiet=True)
+        with tempfile.TemporaryDirectory(prefix='flyway-v009-', dir=RUNTIME) as temp:
+            prior = Path(temp).resolve()
+            assert prior.parent == RUNTIME.resolve()
+            shutil.copy2(ASSETS / 'pom.xml', prior / 'pom.xml')
+            (prior / 'migration/mysql').mkdir(parents=True)
+            for file in (ASSETS / 'migration/mysql').glob('V*__*.sql'):
+                if int(re.match(r'V(\d+)__', file.name)[1]) < 10:
+                    shutil.copy2(file, prior / 'migration/mysql' / file.name)
+            upgrade.flyway('baseline', baseline=0, assets=prior)
+            upgrade.flyway('migrate', assets=prior)
+        assert upgrade.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='system_notice' AND column_name='remark'") == '0'
+        upgrade.execute('migrate')
+        assert upgrade.sql("SELECT CONCAT(title,'|',content,'|',remark) FROM system_notice WHERE id=1") == 'Before upgrade|<p>Keep me</p>|'
+        upgrade.sql("UPDATE system_notice SET remark='kept after upgrade' WHERE id=1")
+        upgrade.execute('migrate')
+        upgrade.execute('validate')
+        assert upgrade.sql("SELECT remark FROM system_notice WHERE id=1") == 'kept after upgrade'
+        checks.append('managed V009 upgrades to V010 without rewriting notices, then migrate/validate preserve remarks')
+        os.environ['JSS_DB_NAME'] = database
         try:
             managed.execute('init')
             raise AssertionError('Repeated initialization was accepted')
@@ -112,7 +141,7 @@ def main():
         else:
             os.environ['JSS_MYSQL_HOME'] = old_home
         status()
-        for name in [database, empty_database]:
+        for name in [database, empty_database, upgrade_database]:
             sql(f'DROP DATABASE `{name}`;')
 
 

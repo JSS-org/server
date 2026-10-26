@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 ASSETS = ROOT / 'sql/jss'
 HISTORY = 'flyway_jss_schema_history'
 FRAMEWORK = {'system_users', 'system_menu', 'system_role', 'system_role_menu',
-             'system_user_role', 'system_tenant'}
+             'system_user_role', 'system_tenant', 'system_notice'}
 BUSINESS_PREFIXES = ('member_', 'jss_', 'product_', 'promotion_', 'trade_', 'pay_')
 
 

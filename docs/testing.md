@@ -1651,3 +1651,20 @@ python script/jss/verify_workspace_http.py --suite mall
 最终 `python script/jss/verify_workspace_http.py --suite mall --browser` 八项全过、无失败/错误/跳过；`.runtime/mall-wallet-http.log`。每次支付 1299 分实际扣本人余额且只增一笔支出流水；另一会员余额不变，客户端传入的他人钱包 ID 被覆盖。真实支付通知成功一次后交易状态 10；重复支付或重复通知不重复扣款。两种售后均经实际退款通知完成，状态 50、交易全额退款关闭，余额恢复、流水 -1299/+1299、库存 8→7→8；重复退款和回调不重复入账/回库存。他人支付单读写、伪造未支付通知、他人售后操作、超额退款、未发货提前收货均拒绝；余额不足无扣款，保留未支付并可取消。
 
 回调查询使用真实管理通知分页，要求成功且通知次数为 1；业务状态通过不带 sync 的查询等待实际回调结果。App 售后 DTO 不暴露内部退款编号，测试通过管理详情 API 查询该编号。物流公司/单号是业务发货/退货状态的隔离数据，没有向外部物流平台发请求。原 H5 未支付购物场景继续通过，H5 钱包付款/售后页面仍待扩展；第三方支付与充值渠道不计作已验证。Java 定向格式、差异、报告时效、日志密码扫描和随机库/专用 Redis 清理通过，没有改动开发服务或宣称完整 30 模块重跑。
+
+## 2026-10-26 钱包版本完整构建与两项真实 H5
+
+代码 `1fdf0a0f82b0a517b02ffef1c953e941b8224854` 已重新执行以下完整组合，20:36:58 成功结束，30 模块全过。Maven 汇总与本轮 221 份 Surefire XML 一致：2593 项，2439 执行通过、154 既有/条件跳过、0 失败/错误。日志 `.runtime/mall-full-verify.log`，结构化复核 `.runtime/mall-full-verification-summary.json`。全仓格式差异仍存在，构建跳过 Spotless，变更 Java 定向检查另有通过证据。
+
+```powershell
+mvn -B -ntp -Pjss-mall -pl yudao-server -am verify '-Dspotless.skip=true' '-Djss.build.final-name=yudao-server-mall-verified' '-Dmaven.repo.local=D:/Project/JSS/JSS-server/.runtime/maven-repository' '-DargLine=-Djava.io.tmpdir=D:/Project/JSS/JSS-server/.runtime/java-temp'
+python script/jss/verify_workspace_http.py --suite mall --browser
+```
+
+独立 jar SHA-256：`6eff59ecf7ae2fe9d791118b1b759bca82962ce365ecb18388e2ba9b1273ce13`。嵌套 pay/trade/system jar 内手工调账、购物车数量和角色目标校验 class 与各自当前 target/classes 逐字节一致，没有替换开发运行 jar。完整构建的内嵌 Redis 与真实验收的认证 Redis 均用 16379，已按先完整构建、再串行 HTTP 的顺序运行。
+
+最终商城联合日志 `.runtime/mall-wallet-browser-final.log`：JUnit 八项全过、无失败/错误/跳过；Playwright 两项全过（23.9 秒）。新 H5 从真实会员登录、直接购买、余额支付进入售后，取消申请后重新申请，商家通过实际管理 API 同意/退款，再从会员 UI 查看退款成功及钱包。金额 1299 分，余额恢复、两条 -1299/+1299 流水、库存 8→7→8；钱包隐藏/显示和每行实际发生时间也与 API 一致，前端修复了错误的时间取值。四张结果截图已目视核对。会员操作没有 API 替身或 Token 注入；商家支持操作不是管理售后 UI 验收。
+
+随后串行执行 `python script/jss/verify_workspace_http.py --browser` 退出 0，JUnit 十项全过（九项真实 HTTP + 一项浏览器启动），六项真实 H5 全过，38.8 秒；日志 `.runtime/mall-wallet-workspace-final.log`，子日志 `.runtime/jss-http/jss_http_verify_8a0c0ba01003/authenticated-browser.log`。实际绑定审核/撤销、按钮/父菜单/入口撤权、租户停用/过期恢复、换号、角色刷新及完整用户 CRUD/角色外租户目标/写权限拒绝继续通过，覆盖公共导航修复后的管理端回归。
+
+两个随机库 `jss_http_verify_590e1d94a19b`、`jss_http_verify_8a0c0ba01003` 均已只读确认删除，归属记录中的 Redis 进程已停止；工具核对本轮报告及服务日志无测试密码。前端已提交 `f756c32`，整合版本指向上述后端代码且仍进行中。微信/支付宝及充值渠道、物流平台、并发竞争、营销、统计 HTTP/任务、其他管理页面和真机发布继续未完成。

@@ -4263,3 +4263,36 @@ App 模板详情/列表中不可领取时 `canTake` 为 false，已有个人券�
 ### 未做 / 后续
 
 恢复 Redis 程序读取/运行权限后执行包含订单、支付及优惠券的十三项实际 HTTP、两项 H5，以及工作台回归。注册/购买赠券、其他营销、统计、管理模块和平台发布继续未完成。
+
+## [2026-10-26 23:05 ~ 23:20] 隔离注册与批量赠券失败并保留外层事务原子性
+
+### 意图
+
+继续优惠券业务，修复注册发券捕获异常后残留未计数券，以及支付后批量赠券单次失败把外层业务标记为 rollback-only 的问题。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `.../promotion/service/coupon/CouponServiceImpl.java` | 修改 | 注册/批量赠券通过类代理使用 NESTED 保存点，直接领取保留原事务 |
+| `.../promotion/integration/JssCouponMySqlServiceIT.java` | 修改 | 类代理及三项真实 MySQL 失败隔离/外层回滚场景 |
+| `script/jss/verify_coupon_services.py` | 修改 | 校验实际用例计数为十项 |
+| `docs/testing.md`、`docs/CHANGELOG.md` | 修改 | 记录失败复现、修复验证和未实跑范围 |
+
+### 结构关系
+
+沿用注册/交易业务 → CouponService → 模板 Service/生产 Mapper → MySQL。逐次赠券通过 `getSelf().takeCouponWithSavepoint` 建立保存点；单次失败局部回滚，成功券仍随外层事务提交或回滚。没有新对外 API、依赖、表、迁移或独立连接事务。
+
+### 验证证据
+
+`python script/jss/verify_coupon_services.py` 修复前十项中两失败/八通过，分别为失败注册券实际数量 2 而计数 1、赠券外层提交抛 `UnexpectedRollbackException`；修复后十项全过、零失败/错误/跳过，14.73 秒，日志 `.runtime/mall-coupon-gifts-before.log`、`mall-coupon-gifts-after.log`。新增第三项验证健康赠券仍随外层主动回滚，原七项并发/生命周期等回归继续通过。随机 schema 无残留。
+
+营销与交易专项命令见 testing：102 项中 21 执行通过、81 既有/条件跳过，零失败/错误，30 模块依赖与服务器测试编译成功，`.runtime/mall-coupon-gifts-regression.log`。十项真实数据库测试在该常规专项中条件跳过，实际结果只计独立脚本；订单更新三项原有跳过也未计通过。两个 Java 定向 Spotless、Python 编译及差异检查通过。
+
+### 影响面 / 风险
+
+影响注册与批量赠券的逐张失败处理。依赖现有 MySQL JDBC 事务保存点和类代理；保留成功券与外层业务原子性，未以 REQUIRES_NEW 提前提交赠券。尚未进行死锁/压力验证。无开发数据、运行服务、jar 或部署变更。
+
+### 未做 / 后续
+
+生产注册完整链和实际订单赠券 HTTP 尚未执行，Redis 程序读取仍为 `WinError 5`。前端第三项优惠券实际 H5 用例仅类型/发现检查通过；商城十三项 HTTP/三项 H5、工作台回归及完整 verify 仍待执行，整合验收版本不前移。其他营销、统计、管理迁移、外部服务和真机发布范围继续保留。

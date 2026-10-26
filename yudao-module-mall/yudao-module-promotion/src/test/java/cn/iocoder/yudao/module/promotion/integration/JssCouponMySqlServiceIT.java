@@ -88,7 +88,7 @@ class JssCouponMySqlServiceIT {
     }
 
     @Configuration
-    @EnableTransactionManagement
+    @EnableTransactionManagement(proxyTargetClass = true)
     @Import({CouponServiceImpl.class, CouponTemplateServiceImpl.class, SpringUtil.class})
     static class Config {
         @Bean
@@ -219,6 +219,76 @@ class JssCouponMySqlServiceIT {
     private Map<Long, List<Long>> claim(long template, Long... users) {
         return service.takeCoupon(
                 template, new HashSet<>(Arrays.asList(users)), CouponTakeTypeEnum.USER);
+    }
+
+    private CouponTemplateDO templateForType(int total, CouponTakeTypeEnum type) {
+        var template = template(total, 1);
+        templates.updateById(
+                new CouponTemplateDO().setId(template.getId()).setTakeType(type.getType()));
+        return template;
+    }
+
+    @Test
+    void registrationSkipsFailedTemplateWithoutLeakingCouponsAndCanRetry() {
+        var exhausted = templateForType(1, CouponTakeTypeEnum.REGISTER);
+        service.takeCoupon(
+                exhausted.getId(), new HashSet<>(Set.of(90L)), CouponTakeTypeEnum.REGISTER);
+        var healthy = templateForType(5, CouponTakeTypeEnum.REGISTER);
+        service.takeCouponByRegister(91L);
+        assertEquals(1, issued(exhausted.getId()), "Failed template left an uncounted coupon");
+        assertEquals(1, templates.selectById(exhausted.getId()).getTakeCount());
+        assertTrue(
+                coupons.selectListByTemplateIdAndUserId(exhausted.getId(), Set.of(91L)).isEmpty());
+        assertEquals(1, issued(healthy.getId()));
+        assertEquals(1, templates.selectById(healthy.getId()).getTakeCount());
+        service.takeCouponByRegister(91L);
+        assertEquals(1, issued(healthy.getId()));
+        assertEquals(1, issued(exhausted.getId()));
+    }
+
+    @Test
+    void failedGiftDoesNotPoisonOuterTransactionOrRollBackHealthyGift() {
+        var exhausted = templateForType(1, CouponTakeTypeEnum.ADMIN);
+        service.takeCoupon(exhausted.getId(), new HashSet<>(Set.of(90L)), CouponTakeTypeEnum.ADMIN);
+        var healthy = templateForType(5, CouponTakeTypeEnum.ADMIN);
+        var transaction =
+                new TransactionTemplate(context.getBean(DataSourceTransactionManager.class));
+        var markerId = new java.util.concurrent.atomic.AtomicReference<Long>();
+        var gifted =
+                assertDoesNotThrow(
+                        () ->
+                                transaction.execute(
+                                        status -> {
+                                            markerId.set(template(5, 1).getId());
+                                            return service.takeCouponsByAdmin(
+                                                    Map.of(
+                                                            exhausted.getId(),
+                                                            1,
+                                                            healthy.getId(),
+                                                            1),
+                                                    92L);
+                                        }));
+        assertNotNull(templates.selectById(markerId.get()));
+        assertEquals(1, gifted.size());
+        assertEquals(healthy.getId(), coupons.selectById(gifted.getFirst()).getTemplateId());
+        assertEquals(1, issued(exhausted.getId()));
+        assertEquals(1, issued(healthy.getId()));
+        assertEquals(1, templates.selectById(healthy.getId()).getTakeCount());
+    }
+
+    @Test
+    void healthyGiftStillRollsBackWithItsOuterBusinessTransaction() {
+        var healthy = templateForType(5, CouponTakeTypeEnum.ADMIN);
+        var transaction =
+                new TransactionTemplate(context.getBean(DataSourceTransactionManager.class));
+        transaction.executeWithoutResult(
+                status -> {
+                    assertEquals(
+                            1, service.takeCouponsByAdmin(Map.of(healthy.getId(), 1), 93L).size());
+                    status.setRollbackOnly();
+                });
+        assertEquals(0, issued(healthy.getId()));
+        assertEquals(0, templates.selectById(healthy.getId()).getTakeCount());
     }
 
     private long issued(long template) {

@@ -141,6 +141,13 @@ public class CouponServiceImpl implements CouponService {
         return takeCoupon0(templateId, userIds, takeType);
     }
 
+    // 单次赠券失败回滚到保存点；成功赠券仍随注册/订单等外层业务一起提交或回滚。
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
+    public Map<Long, List<Long>> takeCouponWithSavepoint(
+            Long templateId, Set<Long> userIds, CouponTakeTypeEnum takeType) {
+        return takeCoupon0(templateId, userIds, takeType);
+    }
+
     private Map<Long, List<Long>> takeCoupon0(
             Long templateId, Set<Long> userIds, CouponTakeTypeEnum takeType) {
         // 同一模板的领取在事务内串行校验；锁定后的当前读避免限领数量使用旧快照。
@@ -182,7 +189,7 @@ public class CouponServiceImpl implements CouponService {
                 for (int i = 0; i < entry.getValue(); i++) {
                     Map<Long, List<Long>> userCouponIdsMap =
                             getSelf()
-                                    .takeCoupon(
+                                    .takeCouponWithSavepoint(
                                             entry.getKey(),
                                             CollUtil.newHashSet(userId),
                                             CouponTakeTypeEnum.ADMIN);
@@ -276,8 +283,11 @@ public class CouponServiceImpl implements CouponService {
         int successCount = 0;
         for (CouponTemplateDO template : takeableTemplates) {
             try {
-                takeCoupon0(
-                        template.getId(), CollUtil.newHashSet(userId), CouponTakeTypeEnum.REGISTER);
+                getSelf()
+                        .takeCouponWithSavepoint(
+                                template.getId(),
+                                CollUtil.newHashSet(userId),
+                                CouponTakeTypeEnum.REGISTER);
                 successCount++;
             } catch (Exception e) {
                 log.error(

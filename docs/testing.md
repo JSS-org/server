@@ -1747,3 +1747,21 @@ python script/jss/verify_coupon_services.py
 `python script/jss/verify_coupon_services.py` 最终七项全过，零失败/错误/跳过，13.76 秒，`.runtime/mall-coupon-availability-after.log`；同脚本仍校验归属/清理随机库。三个 Java 定向格式、Python 编译、全依赖与服务器测试编译通过，`.runtime/mall-coupon-availability-format-check.log`、`mall-coupon-availability-compile.log`。上一节 21 项执行通过/74 跳过的营销专项仍对应 `7dd945ca30`，未冒充本次全量回归。
 
 已有待运行的优惠券 HTTP 场景追加停用后另一会员读到 `canTake=false`；HTTP 数量仍为十三项，带浏览器十四项 JUnit。真实 HTTP/H5 和其他营销、注册/赠券依旧待后续验收，整合验收版本不变。
+
+## 2026-10-26 注册与批量赠券的失败事务隔离
+
+实际 MySQL Service 测试从七项扩为十项，使用类事务代理覆盖生产 `getSelf()` 调用。首轮十项中八通过、两失败、零错误/跳过：已耗尽的 REGISTER 模板插入券后更新计数失败，被注册入口捕获后留下未计数的券；批量 ADMIN 赠券在外层事务中捕获失败，仍因 REQUIRED 标记 rollback-only 导致 `UnexpectedRollbackException`，健康赠券及无关业务写入一起回滚。复现 `.runtime/mall-coupon-gifts-before.log`。
+
+注册和批量赠券现在经类代理调用内部 `takeCouponWithSavepoint`，以 `Propagation.NESTED` 为每次赠券建立保存点。失败回滚该次券与计数，继续其余模板；成功赠券仍属外层事务，外层业务回滚时券与计数同时回滚。直接领取保留 REQUIRED 原子事务；无新依赖、表、迁移或对外接口。
+
+```powershell
+$env:JSS_MAVEN_COMMAND='D:/Project/JSS/JSS-server/.runtime/maven-integration.cmd'
+python script/jss/verify_coupon_services.py
+.runtime/maven-integration.cmd -B -ntp -Pjss-mall -pl yudao-server -am test '-Dtest=cn.iocoder.yudao.module.promotion.**,TradeCouponPriceCalculatorTest,TradeOrderUpdateServiceTest' '-Dsurefire.failIfNoSpecifiedTests=false' '-Dspotless.skip=true'
+```
+
+修复后十项真实 MySQL 测试全过，零失败/错误/跳过，14.73 秒，`.runtime/mall-coupon-gifts-after.log`。新增场景核对失败注册券无残留、健康券发放及重复注册不超限；失败赠券不影响外层标记写入/健康赠券；健康赠券随外层主动回滚。原七项额度、并发、租户、归属、生命周期及写入故障回归继续通过。脚本清理随机库后只读查询同前缀 schema，无残留。
+
+营销与交易专项 102 项中 21 执行通过、81 既有/条件跳过、零失败/错误，30 模块依赖与服务器测试编译成功，`.runtime/mall-coupon-gifts-regression.log`。本轮十项真实测试在常规专项中因没有隔离数据库环境全部跳过；订单更新三项既有测试也跳过，不能作为真实交易通过证据。两个 Java 定向 Spotless、Python 编译及差异检查通过。本次未运行全量 verify。
+
+实际生产注册链/订单赠券 HTTP 及新商城/工作台回归仍待执行。Redis 已安装程序读取权限本轮仍为 `WinError 5`，没有启动新服务或修改开发库。兄弟前端已补第三项实际 H5 用例（领券、选券、取消返还、实付支付退款），仅类型与发现检查通过，尚未实跑；商城预期仍为十三项 HTTP + 一项浏览器启动，实际 H5 由两项增至三项。整合验收版本仍为 `a0a583c44a`。

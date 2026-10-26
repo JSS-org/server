@@ -5,6 +5,7 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.minusTime;
 import static cn.iocoder.yudao.framework.common.util.servlet.ServletUtils.getClientIP;
 import static cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils.getTerminal;
+import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.ADDRESS_NOT_EXISTS;
 import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.*;
 import static cn.iocoder.yudao.module.trade.enums.MessageTemplateConstants.WXA_ORDER_DELIVERY;
 
@@ -232,7 +233,9 @@ public class TradeOrderUpdateServiceImpl implements TradeOrderUpdateService {
         if (Objects.equals(createReqVO.getDeliveryType(), DeliveryTypeEnum.EXPRESS.getType())) {
             MemberAddressRespDTO address =
                     addressApi.getAddress(createReqVO.getAddressId(), userId);
-            Assert.notNull(address, "地址({}) 不能为空", createReqVO.getAddressId()); // 价格计算时，已经计算
+            if (address == null) {
+                throw exception(ADDRESS_NOT_EXISTS);
+            }
             order.setReceiverName(address.getName())
                     .setReceiverMobile(address.getMobile())
                     .setReceiverAreaId(address.getAreaId())

@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.trade.service.price.calculator;
 import static cn.iocoder.yudao.framework.common.util.collection.SetUtils.asSet;
 import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
 import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.ADDRESS_NOT_EXISTS;
 import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.PICK_UP_STORE_NOT_EXISTS;
 import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.PRICE_CALCULATE_DELIVERY_PRICE_TEMPLATE_NOT_FOUND;
 import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.PRICE_CALCULATE_DELIVERY_PRICE_TYPE_ILLEGAL;
@@ -249,6 +250,12 @@ public class TradeDeliveryPriceCalculatorTest extends BaseMockitoUnitTest {
     }
 
     // ========== 快递模式 ==========
+
+    @Test
+    void testCalculate_express_rejectsMissingOrForeignAddress() {
+        when(addressApi.getAddress(10L, 1L)).thenReturn(null);
+        assertServiceException(() -> calculator.calculate(reqBO, resultBO), ADDRESS_NOT_EXISTS);
+    }
 
     @Test
     @DisplayName("快递：收件地址为空时直接返回")

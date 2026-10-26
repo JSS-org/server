@@ -3882,3 +3882,39 @@ main已先生成上游合并d5872e1ff0，本次将功能分支f27ce5ad7f作为�
 ### 未做 / 后续
 
 继续完整整合范围中的商城交易、统计 HTTP/任务、其他管理页面、跨门店数据范围与真机发布。更新本地开发服务前仍须备份并审阅 Gym 增量迁移，不能据此记录宣称整个目标完成。
+
+## [2026-10-26 18:54 ~ 19:14] 商城真实购物车与未支付订单验收
+
+### 意图
+
+继续双端整合计划 A08 的真实商城业务验证，使用有内容的商品、两个独立会员和生产 HTTP 链路核对购物车、计价、库存及归属，补齐实际复现的输入校验缺口。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `script/jss/verify_workspace_http.py` | 修改 | 增加 `--suite mall`，复用随机 schema、迁移、专用 Redis、报告时效、脱敏及清理校验；原工作台入口保持默认 |
+| `yudao-server/src/test/java/cn/iocoder/yudao/server/integration/JssMallHttpIT.java` | 新增 | 四项实际 HTTP 场景；分类、品牌、商品、交易配置及支付应用均通过生产管理 API 建立 |
+| `.../trade/controller/app/order/vo/AppTradeOrderSettlementReqVO.java` | 修改 | 商品列表嵌套校验、拒绝空项及非正数数量；保留仅 cartId 的合法方式，缺少活动商品时返回约束错误 |
+| `.../trade/service/cart/CartServiceImpl.java` | 修改 | 加入购物车及改数量时检查 SPU 存在且上架 |
+| `.../trade/service/price/calculator/TradeDeliveryPriceCalculator.java`、`.../trade/service/order/TradeOrderUpdateServiceImpl.java` | 修改 | 缺失或非本人地址使用既有 `ADDRESS_NOT_EXISTS`，避免通用 500 |
+| `.../trade/controller/app/order/vo/AppTradeOrderSettlementReqVOTest.java`、`.../trade/service/cart/CartServiceImplTest.java`、`.../trade/service/price/calculator/TradeDeliveryPriceCalculatorTest.java` | 新增/修改 | 新增八项有效回归，覆盖合法购物车方式和拒绝时不写入 |
+| `docs/testing.md`、`docs/CHANGELOG.md` | 修改 | 记录命令、实际结果与未覆盖范围 |
+
+### 结构关系
+
+验收入口沿用 `JssHttpFixtures` 的隔离基础设施及身份，只通过真实 HTTP 调用生产 Controller、安全过滤器、Service、MyBatis 和 Redis。购物车借用既有 ProductSpuApi 校验；结算/下单在 Controller 请求校验时递归检查商品项；地址仍按会员查询，错误码复用会员模块。未新增业务表或改写历史迁移。
+
+### 验证证据
+
+交易模块实际执行 `mvn -Pjss-mall -pl yudao-module-mall/yudao-module-trade -am test -Dtest=cn.iocoder.yudao.module.trade.** -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true`，71 项、55 执行通过、16 项既有条件跳过、0 失败/错误；日志 `.runtime/mall-trade-unit.log`。Java 格式和差异另行检查。
+
+`python script/jss/verify_workspace_http.py --suite mall` 最终退出 0，新生成 JUnit 四项全过、无跳过；日志 `.runtime/mall-http-verification.log`，运行目录索引 `.runtime/jss-mall-http/last-run.json`。实际覆盖公开商品租户/上下架、购物车合并与库存上限、另一会员读写隔离、GET/POST 数量校验、空商品项、他人地址/购物车拒绝、篡改 payPrice 后仍按 1299×2=2598 分计价、创建 PayOrder、扣库存 8→6、取消恢复 6→8、重复取消不重复恢复。服务日志未出现测试密码，随机库已删除，已归属 Redis 进程已停止。
+
+### 影响面 / 风险
+
+非法订单项更早返回 400；下架商品不再允许加入购物车或修改数量，既有购物项仍可删除。无效地址从通用 500 改为既有业务码 1004004000。合法直接购买和仅购物车项请求均有回归。只使用 13316 随机库与 16379 专用 Redis，没有改动开发库或运行 jar。
+
+### 未做 / 后续
+
+本次为真实 HTTP 的未支付订单生命周期，尚未验证真实 H5 购物操作、支付渠道收款、物流发货/签收及售后退款；完整交易闭环不能据此标为完成。整体整合计划、其他管理页面与跨端发布范围继续保留。

@@ -1608,3 +1608,20 @@ Gym 修复后的完整组合继续通过全部 1062 项 Gym 测试，随后在�
 随后 `python script/jss/verify_statistics_mappers.py` 的 3 项真实 MySQL 8.4.9 生产 Mapper 测试通过，无失败/错误/跳过；`.runtime/main-merge-statistics-final.log`。只读确认本轮 HTTP/统计随机 schema 均无残留、已归属的专用 Redis 进程停止。没有升级开发库或替换运行 jar。
 
 独立产物 `yudao-server-main-merge.jar` SHA-256 为 `47dbaf23e55afc0ce841f5c182c5c67c2925146ed3fce7f8957cc48749f72fcd`；包内角色归属、工资确认和售卖窗口三个修复 class 与当前编译产物逐字节一致。兄弟前端的整合版本更新到上述代码基线；整体仍为进行中，商城完整交易、统计 HTTP/任务、其他管理模块与跨端发布尚未完成。
+
+## 2026-10-26 商城真实 HTTP：购物车、结算与未支付订单
+
+新增入口 `python script/jss/verify_workspace_http.py --suite mall`，默认 `--suite workspace` 继续运行原工作台场景。商城入口使用相同的随机 MySQL schema、完整迁移、已归属 Redis 及真实 Spring Boot 服务，商品和交易前置数据通过管理 API 创建。当前商城入口不支持 `--browser`，H5 后续单独接入。
+
+先后实际复现并修复下架商品加入购物车、订单商品列表未嵌套校验，以及他人/缺失地址返回通用 500。补入五项请求校验单测、两项购物车拒绝写入单测和一项地址错误单测；交易模块回归 71 项（55 执行通过、16 既有条件跳过，0 失败/错误），`.runtime/mall-trade-unit.log`。复现命令：
+
+```powershell
+mvn -Pjss-mall -pl yudao-module-mall/yudao-module-trade -am test '-Dtest=cn.iocoder.yudao.module.trade.**' '-Dsurefire.failIfNoSpecifiedTests=false' '-Dspotless.skip=true'
+python script/jss/verify_workspace_http.py --suite mall
+```
+
+最终真实 HTTP 四项全部通过，无失败/错误/跳过：公开商品按租户和上下架过滤；购物车合并数量、库存上限和所有者写入限制；结算、篡改客户端金额仍按 2598 分创建实际支付订单、扣库存及取消恢复；非正数量、空项、缺少数量、他人地址和他人购物车项拒绝且不新增订单或改变库存。GET 结算和 POST 下单均验证，合法仅 cartId 的方式保留。
+
+日志 `.runtime/mall-http-verification.log`，随机目录由 `.runtime/jss-mall-http/last-run.json` 定位；本轮报告时效、服务日志不含测试密码、随机 schema 已删除及专用 Redis 已停止均通过。没有操作开发库/运行 jar。本次没有渠道收款、物流或售后证据；71 项中的条件跳过不计真实验收，也未将局部回归称为新的完整 30 模块 verify。
+
+格式验证按本次修改/新增的 Java 文件定向执行 Spotless check。额外运行的无筛选根目录 `spotless:check` 发现 8117 个既有文件的 CRLF/LF 差异（`.runtime/mall-format-check.log`），未批量重写无关文件；这项全仓格式检查不登记为通过。

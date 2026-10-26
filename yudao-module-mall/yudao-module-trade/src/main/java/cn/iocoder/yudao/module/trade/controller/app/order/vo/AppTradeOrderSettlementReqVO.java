@@ -21,12 +21,12 @@ import java.util.List;
 
 @Schema(description = "用户 App - 交易订单结算 Request VO")
 @Data
-@Valid
 public class AppTradeOrderSettlementReqVO {
 
     @Schema(description = "商品项数组", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotEmpty(message = "商品不能为空")
-    private List<Item> items;
+    @Valid
+    private List<@NotNull(message = "商品项不能为空") Item> items;
 
     @Schema(description = "优惠劵编号", example = "1024")
     private Long couponId;
@@ -81,16 +81,14 @@ public class AppTradeOrderSettlementReqVO {
             return true;
         }
         // 校验订单项是否超出
-        return items.size() == 1;
+        return items != null && items.size() == 1;
     }
 
     @Data
     @Schema(description = "用户 App - 商品项")
-    @Valid
     public static class Item {
 
         @Schema(description = "商品 SKU 编号", example = "2048")
-        @NotNull(message = "商品 SKU 编号不能为空")
         private Long skuId;
 
         @Schema(description = "购买数量", example = "1")
@@ -104,8 +102,8 @@ public class AppTradeOrderSettlementReqVO {
         @JsonIgnore
         public boolean isValid() {
             // 组合一：skuId + count 使用商品 SKU
-            if (skuId != null && count != null) {
-                return true;
+            if (skuId != null) {
+                return count != null;
             }
             // 组合二：cartId 使用购物车项
             return cartId != null;

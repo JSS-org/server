@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.trade.service.price.calculator;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.ADDRESS_NOT_EXISTS;
 import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.*;
 
 import cn.hutool.core.collection.CollUtil;
@@ -93,7 +94,9 @@ public class TradeDeliveryPriceCalculator implements TradePriceCalculator {
         }
         MemberAddressRespDTO address =
                 addressApi.getAddress(param.getAddressId(), param.getUserId());
-        Assert.notNull(address, "收件人({})的地址，不能为空", param.getUserId());
+        if (address == null) {
+            throw exception(ADDRESS_NOT_EXISTS);
+        }
 
         // 情况一：全局包邮
         if (isGlobalExpressFree(result)) {

@@ -201,6 +201,7 @@ public class CartServiceImpl implements CartService {
         if (sku == null) {
             throw exception(SKU_NOT_EXISTS);
         }
+        productSpuApi.validateSpuList(List.of(sku.getSpuId()));
         if (count > sku.getStock()) {
             throw exception(SKU_STOCK_NOT_ENOUGH);
         }

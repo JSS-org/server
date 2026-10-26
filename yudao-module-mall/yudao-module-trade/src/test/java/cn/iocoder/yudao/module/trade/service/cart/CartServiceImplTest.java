@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.trade.service.cart;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
 import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.SKU_NOT_EXISTS;
 import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.SKU_STOCK_NOT_ENOUGH;
+import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.SPU_NOT_ENABLE;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -22,6 +24,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
+import java.util.List;
+
 /**
  * {@link CartServiceImpl} 的单元测试
  *
@@ -34,6 +38,37 @@ public class CartServiceImplTest extends BaseMockitoUnitTest {
     @Mock private CartMapper cartMapper;
     @Mock private ProductSpuApi productSpuApi;
     @Mock private ProductSkuApi productSkuApi;
+
+    @Test
+    void testAddCart_rejectsOffShelfSpuBeforeWriting() {
+        when(productSkuApi.getSku(10L))
+                .thenReturn(new ProductSkuRespDTO().setId(10L).setSpuId(20L).setStock(10));
+        when(productSpuApi.validateSpuList(List.of(20L)))
+                .thenThrow(exception(SPU_NOT_ENABLE, "下架商品"));
+        assertServiceException(
+                () -> cartService.addCart(1L, new AppCartAddReqVO().setSkuId(10L).setCount(1)),
+                SPU_NOT_ENABLE,
+                "下架商品");
+        verify(cartMapper, never()).insert(any(CartDO.class));
+        verify(cartMapper, never()).updateById(any(CartDO.class));
+    }
+
+    @Test
+    void testUpdateCartCount_rejectsOffShelfSpuBeforeWriting() {
+        when(cartMapper.selectById(100L, 1L))
+                .thenReturn(new CartDO().setId(100L).setSkuId(10L).setCount(2));
+        when(productSkuApi.getSku(10L))
+                .thenReturn(new ProductSkuRespDTO().setId(10L).setSpuId(20L).setStock(10));
+        when(productSpuApi.validateSpuList(List.of(20L)))
+                .thenThrow(exception(SPU_NOT_ENABLE, "下架商品"));
+        assertServiceException(
+                () ->
+                        cartService.updateCartCount(
+                                1L, new AppCartUpdateCountReqVO().setId(100L).setCount(3)),
+                SPU_NOT_ENABLE,
+                "下架商品");
+        verify(cartMapper, never()).updateById(any(CartDO.class));
+    }
 
     @Test
     public void testAddCart_insert() {

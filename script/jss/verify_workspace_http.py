@@ -19,13 +19,18 @@ import redis_sandbox as redis
 from database import Database
 
 ROOT = mysql.ROOT
-RUNTIME = ROOT / '.runtime/jss-http'
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--browser', action='store_true', help='Also run the sibling uni-app real-login browser acceptance')
+    parser.add_argument('--suite', choices=['workspace', 'mall'], default='workspace',
+                        help='Run workspace security or mall catalog/cart/order acceptance')
     args = parser.parse_args()
+    if args.browser and args.suite != 'workspace':
+        parser.error('--browser currently supports only the workspace suite')
+    runtime = ROOT / ('.runtime/jss-http' if args.suite == 'workspace' else '.runtime/jss-mall-http')
+    test_class = 'JssWorkspaceHttpIT' if args.suite == 'workspace' else 'JssMallHttpIT'
     sys.stdout.reconfigure(encoding='utf8', errors='replace')
     live = mysql.status()
     assert live['port'] == 13316
@@ -53,10 +58,10 @@ def main():
     assert re.fullmatch(r'jss_http_verify_[0-9a-f]{12}', schema)
     saved_environment = dict(os.environ)
     created = False
-    RUNTIME.mkdir(parents=True, exist_ok=True)
-    run_directory = RUNTIME / schema
+    runtime.mkdir(parents=True, exist_ok=True)
+    run_directory = runtime / schema
     run_directory.mkdir()
-    (RUNTIME / 'last-run.json').write_text(json.dumps({'schema': schema, 'logDirectory': str(run_directory)}), encoding='utf8')
+    (runtime / 'last-run.json').write_text(json.dumps({'schema': schema, 'logDirectory': str(run_directory)}), encoding='utf8')
     try:
         mysql.sql(f'CREATE DATABASE `{schema}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;')
         created = True
@@ -97,28 +102,28 @@ def main():
         if not maven:
             maven = str(ROOT.parent / '.tools/apache-maven-3.9.11/bin' / ('mvn.cmd' if os.name == 'nt' else 'mvn'))
         command = [maven, '-B', '-ntp', '-q', '-Pjss-mall', '-pl', 'yudao-server', '-am', 'test',
-                   '-Dtest=JssWorkspaceHttpIT', '-Dsurefire.failIfNoSpecifiedTests=false', '-Dspotless.skip=true']
+                   f'-Dtest={test_class}', '-Dsurefire.failIfNoSpecifiedTests=false', '-Dspotless.skip=true']
         started = time.time()
         result = subprocess.run(command, cwd=ROOT, env=environment, capture_output=True,
                                 text=True, encoding='utf8', errors='replace')
         output = result.stdout + result.stderr
         for secret in [password, redis_password, http_password]:
             output = output.replace(secret, '<redacted>')
-        (RUNTIME / 'workspace-http-test.log').write_text(output, encoding='utf8')
+        (runtime / f'{args.suite}-http-test.log').write_text(output, encoding='utf8')
         if result.returncode:
             print('Run logs: ' + str(run_directory))
             print('\n'.join(output.splitlines()[-65:]))
             raise RuntimeError('Full server HTTP tests failed; inspect the ignored runtime log')
         server_log = (run_directory / 'server.log').read_text(encoding='utf8')
         assert all(secret not in server_log for secret in [password, redis_password, http_password]), 'Server log exposed a test credential'
-        report = ROOT / 'yudao-server/target/surefire-reports/TEST-cn.iocoder.yudao.server.integration.JssWorkspaceHttpIT.xml'
+        report = ROOT / f'yudao-server/target/surefire-reports/TEST-cn.iocoder.yudao.server.integration.{test_class}.xml'
         assert report.stat().st_mtime >= started
         suite = ET.parse(report).getroot()
-        expected = '10' if args.browser else '9'
+        expected = ('10' if args.browser else '9') if args.suite == 'workspace' else '4'
         assert suite.attrib['tests'] == expected and all(suite.attrib[k] == '0' for k in ['errors', 'failures', 'skipped']), suite.attrib
         for case in suite.findall('testcase'):
             print('PASS ' + case.attrib['name'])
-        print('Full server HTTP login/domain isolation verified with real MySQL and Redis')
+        print(f'Full server {args.suite} HTTP acceptance verified with real MySQL and Redis')
     finally:
         os.environ.clear()
         os.environ.update(saved_environment)

@@ -820,3 +820,9 @@ JSS V011将已有process_user_id从int拓宽到nullable bigint default0，管理
 选择先插入而不是先查缺失事件，是为避免缺失行的范围锁参与不同会员的插入竞争；范围/间隙锁和完整唯一键匹配的区别见[MySQL 8.4 InnoDB锁文档](https://dev.mysql.com/doc/refman/8.4/en/innodb-locking.html)。六名独立会员并发已在实际MySQL通过；不将此推广为完整交易系统无死锁或吞吐已验。
 
 V012只新建事件表并按原经验历史封存外部事件，包含已逻辑删除记录；重复旧记录保留，不重新加减余额，不把旧实际变动猜成原始请求量。新表无逻辑删除标志/公开删除接口，保留事件键独立于日志清理，避免清理日志重新开放重投。先备份+migrate/validate V012，再部署含此代码的服务；不改写V001–V011，应用启动不自动迁移。
+
+## 会员资料编辑与分类关联（2026-10-27）
+
+原管理会员更新Controller → MemberUserServiceImpl的REQUIRED事务 → 当前租户会员FOR UPDATE → 原会员Mapper写入。资料转换忽略levelId，旧客户端回传等级仍可兼容，实际调级必须走独立权限及等级记录Service；积分和经验没有加入资料写入。标签/分组通过同模块Mapper校验，避免User与Tag/Group的Service循环依赖：新增关联只允许本租户有效标签及启用分组，原失效关联可保留或移除，标签去重且限制实际逗号字段255字。
+
+更新VO内部记录birthday/areaId/groupId/tagIds是否出现，标志不接受JSON赋值也不输出。省略保持原值，显式null清空；地区及分组0也清空，标签空值归一为空列表。地区在Long转int前校验非负及上限；可空数据库列通过显式UPDATE SET NULL清除。原禁用撤权分支保留，但本批实际数据库测试没有实例化或调用OAuth/Redis客户端，不能视作登录、RBAC或撤权验收。没有新增表或迁移。

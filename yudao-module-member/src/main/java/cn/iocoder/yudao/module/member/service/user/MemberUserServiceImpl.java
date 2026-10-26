@@ -19,6 +19,8 @@ import cn.iocoder.yudao.module.member.controller.app.user.vo.*;
 import cn.iocoder.yudao.module.member.convert.auth.AuthConvert;
 import cn.iocoder.yudao.module.member.convert.user.MemberUserConvert;
 import cn.iocoder.yudao.module.member.dal.dataobject.user.MemberUserDO;
+import cn.iocoder.yudao.module.member.dal.mysql.group.MemberGroupMapper;
+import cn.iocoder.yudao.module.member.dal.mysql.tag.MemberTagMapper;
 import cn.iocoder.yudao.module.member.dal.mysql.user.MemberUserMapper;
 import cn.iocoder.yudao.module.member.mq.producer.user.MemberUserProducer;
 import cn.iocoder.yudao.module.system.api.sms.SmsCodeApi;
@@ -27,6 +29,7 @@ import cn.iocoder.yudao.module.system.api.social.SocialClientApi;
 import cn.iocoder.yudao.module.system.api.social.dto.SocialWxPhoneNumberInfoRespDTO;
 import cn.iocoder.yudao.module.system.enums.sms.SmsSceneEnum;
 
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.google.common.annotations.VisibleForTesting;
 
 import jakarta.annotation.Resource;
@@ -41,8 +44,12 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 会员 User Service 实现类
@@ -55,6 +62,8 @@ import java.util.List;
 public class MemberUserServiceImpl implements MemberUserService {
 
     @Resource private MemberUserMapper memberUserMapper;
+    @Resource private MemberTagMapper memberTagMapper;
+    @Resource private MemberGroupMapper memberGroupMapper;
 
     @Resource private SmsCodeApi smsCodeApi;
     @Resource private SocialClientApi socialClientApi;
@@ -270,7 +279,9 @@ public class MemberUserServiceImpl implements MemberUserService {
     @Transactional(rollbackFor = Exception.class)
     public void updateUser(MemberUserUpdateReqVO updateReqVO) {
         // 校验存在
-        validateUserExists(updateReqVO.getId());
+        MemberUserDO user =
+                updateReqVO.getId() == null ? null : getUserForUpdate(updateReqVO.getId());
+        if (user == null) throw exception(USER_NOT_EXISTS);
         // 校验手机唯一
         validateMobileUnique(updateReqVO.getId(), updateReqVO.getMobile());
         // 校验邮箱唯一
@@ -278,11 +289,64 @@ public class MemberUserServiceImpl implements MemberUserService {
 
         // 更新
         MemberUserDO updateObj = MemberUserConvert.INSTANCE.convert(updateReqVO);
-        memberUserMapper.updateById(updateObj);
+        validateProfileAssociations(user, updateReqVO, updateObj);
+        if (updateReqVO.isBirthdayPresent()
+                || updateReqVO.isAreaIdPresent()
+                || updateReqVO.isGroupIdPresent()) {
+            var update =
+                    new LambdaUpdateWrapper<MemberUserDO>().eq(MemberUserDO::getId, user.getId());
+            if (updateReqVO.isBirthdayPresent()) {
+                update.set(MemberUserDO::getBirthday, updateReqVO.getBirthday());
+                updateObj.setBirthday(null);
+            }
+            if (updateReqVO.isAreaIdPresent()) {
+                update.set(MemberUserDO::getAreaId, updateObj.getAreaId());
+                updateObj.setAreaId(null);
+            }
+            if (updateReqVO.isGroupIdPresent()) {
+                update.set(MemberUserDO::getGroupId, updateObj.getGroupId());
+                updateObj.setGroupId(null);
+            }
+            memberUserMapper.update(updateObj, update);
+        } else memberUserMapper.updateById(updateObj);
 
         // 如果是禁用用户，则删除其 Token 信息
         if (CommonStatusEnum.isDisable(updateObj.getStatus())) {
             oauth2TokenApi.removeAccessToken(updateObj.getId(), UserTypeEnum.MEMBER.getValue());
+        }
+    }
+
+    private void validateProfileAssociations(
+            MemberUserDO user, MemberUserUpdateReqVO request, MemberUserDO update) {
+        if (request.isAreaIdPresent()) {
+            Long area = request.getAreaId();
+            if (area != null && (area < 0 || area > Integer.MAX_VALUE))
+                throw exception(USER_AREA_INVALID);
+            update.setAreaId(area == null || area == 0 ? null : area.intValue());
+        }
+        if (request.isGroupIdPresent()) {
+            Long id = request.getGroupId();
+            if (id == null || id == 0L) update.setGroupId(null);
+            else if (!id.equals(user.getGroupId())) {
+                var group = memberGroupMapper.selectById(id);
+                if (group == null || !CommonStatusEnum.isEnable(group.getStatus()))
+                    throw exception(USER_GROUP_INVALID);
+            }
+        }
+        if (request.isTagIdsPresent()) {
+            Set<Long> ids =
+                    request.getTagIds() == null
+                            ? new LinkedHashSet<>()
+                            : new LinkedHashSet<>(request.getTagIds());
+            if (ids.stream().anyMatch(id -> id == null || id <= 0)
+                    || ids.stream().map(String::valueOf).collect(Collectors.joining(",")).length()
+                            > 255) throw exception(USER_TAG_INVALID);
+            Set<Long> original =
+                    new LinkedHashSet<>(user.getTagIds() == null ? List.of() : user.getTagIds());
+            List<Long> added = ids.stream().filter(id -> !original.contains(id)).toList();
+            if (!added.isEmpty() && memberTagMapper.selectByIds(added).size() != added.size())
+                throw exception(USER_TAG_INVALID);
+            update.setTagIds(new ArrayList<>(ids));
         }
     }
 

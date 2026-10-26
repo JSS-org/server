@@ -1951,3 +1951,14 @@ Redis程序仍读取拒绝，真实公告CRUD/备注/权限/租户与完整商�
 `python script/jss/verify_migrations.py` 十七项实际Flyway生命周期全部通过，`.runtime/member-experience-migrations.log`；原十三项公告/处理人/历史校验和保护继续通过，新增V012空初始化、受管V011升级/封存历史、唯一事件键、重复migrate/validate保留新旧事件。九条历史经验记录包含重复/已逻辑删除/ADMIN/空编号/双租户/不同类型/大小写键/Long会员，生成六个旧事件键且原记录逐字段快照不变；加入一个新事件后重复迁移仍为七个。三类迁移随机库和Service库残留0。V001–V011未改写，不修改会员余额或旧记录，不通过repair遮掩校验和。
 
 常规37项中14执行通过（12H2、2Mockito），23跳过（22条件MySQL、1既有Disabled），零失败/错误，服务器及依赖测试编译成功，`.runtime/member-experience-idempotency-regression.log`。七Java定向Spotless apply/check、两Python编译和差异检查通过；无新增完整verify/HTTP/Redis/H5。当前代码部署前须先备份+migrate/validate V012；开发库/运行包未升级。订单/签到/售后完整链、锁顺序/吞吐、通知TODO和最低门槛偏好仍需后续确认/验收。
+## 2026-10-27 会员资料权限、分类关联和显式清空
+
+在后端目录设置 `$env:JSS_MAVEN_COMMAND=(Join-Path (Get-Location) '.runtime/maven-integration.cmd')`，再执行 `python script/jss/verify_member_profile_services.py`。脚本只在已归属MySQL8.4.9:13316创建 `jss_member_profile_verify_<12位随机值>`，从不可变V001提取四表，校验报告时效/八项计数并保存实际XML，finally核验实例归属后删除随机库。生产User Service经真实事务advice调用原User/Tag/Group Mapper及租户SQL，没有业务替身；未实例化未调用的短信/社交/MQ/OAuth客户端，测试使用启用会员，不覆盖禁用撤权或HTTP/RBAC。
+
+有效修复前八项两通过/六失败、零错误/跳过，13.925秒，`.runtime/member-profile-before.log`和XML：普通资料可直接改等级，外租户标签/分组及停用分组可新分配，null字段不能清除，重复/非法标签未归一校验。初次工具编译错误及首次生产补丁的Lombok链式setter返回类型错误均已修正，不计业务证据。
+
+最终八项全过17.261秒、零失败/错误/跳过，`.runtime/member-profile-final.log`、`.runtime/member-profile-final.xml`及 `.runtime/jss-mysql/member-profile-service-test.xml`。覆盖资料忽略等级且保留积分/经验，双租户目标及手机/邮箱唯一边界，新增关联租户/启停校验、失效原关联保留/移除，大Long标签去重/空值/255字限制，省略保留与显式null/0清空，JSON伪造内部标志无效且不序列化，地区超int拒绝及实际Service/外层事务回滚。随机库清理后残留0。
+
+串行回归 `verify_member_level_services.py` 二十二项全过23.921秒、`verify_member_segment_services.py` 七项全过17.104秒，零失败/错误/跳过。服务器30模块依赖常规专项65项中27项执行通过（12等级H2、7分组H2、6标签H2、2状态Mockito），38项既有/条件跳过（37项MySQL和1项禁用User测试），零失败/错误，`.runtime/member-profile-regression.log`。两状态Mockito仅核对锁查询及撤权调用约定，不是Redis证据。六个变更Java定向Spotless通过（VO匹配同时规范化同后缀App VO换行，无内容差异）、新Python编译及差异检查通过；无新全量verify、迁移或真实HTTP/H5结果。
+
+会员管理源页面及详情十一标签尚未迁入，不登记为页面完成。真实CRUD/RBAC/Redis撤权、分类变更竞争、关联会员UI、积分调整和完整订单/签到链继续待验；V012部署前置与整合验收版本保持不变。

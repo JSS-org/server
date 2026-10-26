@@ -40,6 +40,8 @@ public interface MemberUserConvert {
 
     List<MemberUserRespDTO> convertList2(List<MemberUserDO> list);
 
+    // Grade changes require the dedicated permission and the audited level service.
+    @Mapping(target = "levelId", ignore = true)
     MemberUserDO convert(MemberUserUpdateReqVO bean);
 
     PageResult<MemberUserRespVO> convertPage(PageResult<MemberUserDO> page);

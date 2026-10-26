@@ -1,6 +1,8 @@
 package cn.iocoder.yudao.module.member.service.user;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,7 +30,7 @@ class MemberUserServiceImplStatusTest extends BaseMockitoUnitTest {
     void testUpdateUser_disableRevokesToken() {
         // 准备参数
         Long userId = 1L;
-        when(memberUserMapper.selectById(userId))
+        when(memberUserMapper.selectOneForUpdate(any(), eq(userId)))
                 .thenReturn(MemberUserDO.builder().id(userId).build());
         MemberUserUpdateReqVO reqVO = new MemberUserUpdateReqVO();
         reqVO.setId(userId);
@@ -51,7 +53,7 @@ class MemberUserServiceImplStatusTest extends BaseMockitoUnitTest {
     void testUpdateUser_enableKeepsToken() {
         // 准备参数
         Long userId = 1L;
-        when(memberUserMapper.selectById(userId))
+        when(memberUserMapper.selectOneForUpdate(any(), eq(userId)))
                 .thenReturn(MemberUserDO.builder().id(userId).build());
         MemberUserUpdateReqVO reqVO = new MemberUserUpdateReqVO();
         reqVO.setId(userId);

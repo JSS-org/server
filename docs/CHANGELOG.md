@@ -4719,3 +4719,37 @@ Redis程序仍不可读，真实HTTP/H5/RBAC、订单/签到完整奖励链、�
 ### 未做 / 后续
 
 没有新增HTTP/Redis/H5或完整verify证据。完整订单/签到/售后调用链、锁顺序/吞吐、历史余额人工核对、通知TODO、真机与发布继续待验；整合验收版本不前移。
+
+## [2026-10-27 05:29 ~ 05:46] 隔离会员资料与调级权限并校验分类关联
+
+### 意图
+
+继续P5会员管理迁移前的业务核对，修复普通资料更新绕过独立调级权限/记录、跨租户或停用分类新分配，以及原表单无法清除日期/地区/分组的问题。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| MemberUserConvert.java | 修改 | 管理资料转换忽略levelId，保留专用调级入口 |
+| MemberUserUpdateReqVO.java | 修改 | 四字段出现标志和链式setter，JSON不能伪造或输出内部标志 |
+| MemberUserServiceImpl.java | 修改 | 事务内锁会员，新增关联租户/状态校验，标签去重/长度，显式清空可空列和地区int范围 |
+| member/enums/ErrorCodeConstants.java | 修改 | 无效分组/标签/地区业务错误 |
+| JssMemberProfileMySqlServiceIT.java / verify_member_profile_services.py | 新增 | 八项实际Service/Mapper/租户SQL及归属随机库/报告校验/清理 |
+| MemberUserServiceImplStatusTest.java | 修改 | 两项状态调用约定改为当前读锁查询 |
+| docs/architecture.md / testing.md / CHANGELOG.md | 更新/追加 | 调用关系、复现命令与证据边界 |
+
+### 结构关系
+
+原管理更新Controller与事务 → 当前租户会员FOR UPDATE → User/Tag/Group Mapper；同模块Mapper校验避免双向Service依赖。资料更新不会写等级，专用权限/等级记录链不变。省略四可空关联字段保持原值，显式null清除，地区/分组0清除；原失效分类可以保留或移除，新分配必须可见且分组启用。没有新表或迁移。
+
+### 验证证据
+
+有效修复前八项两通过/六失败13.925秒，最终八项实际MySQL全过17.261秒，零失败/错误/跳过，`.runtime/member-profile-before.log/XML`、`member-profile-final.log/XML`。覆盖等级绕过、双租户关联和目标、手机/邮箱唯一、失效原关联、Long标签去重/255字、null/0及省略、伪造标志/序列化、地区溢出及外层事务回滚。既有二十二项等级全过23.921秒、七项分类全过17.104秒；随机schema残留0。常规65项中27执行通过（25H2/2Mockito）、38既有/条件跳过，服务器30模块依赖测试编译成功，`.runtime/member-profile-regression.log`。六变更Java定向Spotless、新Python编译、差异检查通过；格式匹配同时规范化App VO换行但无内容差异。初始工具编译/链式setter返回类型错误已修正，不计业务证据。
+
+### 影响面 / 风险
+
+旧客户端资料回传levelId被忽略，必须走独立调级API；新外租户/停用分组或非法标签返回业务错误。会员行持锁至外层事务结束，分类并发变更及完整锁顺序仍需核对。原禁用OAuth撤权分支保留，仅两Mockito检查调用约定；实际数据库专项只用启用会员、未实例化OAuth/短信/社交/MQ客户端，不代表真实撤权或HTTP/RBAC通过。
+
+### 未做 / 后续
+
+会员管理源页面和详情十一标签尚未迁入，积分调整、真实CRUD/分类/RBAC/Redis撤权、完整订单/签到链、真机发布继续待验。Redis程序仍不可读，无新HTTP/H5、完整verify或部署；开发库/运行jar未改，先备份+migrate/validate V012再部署及原整合验收版本保持不变。

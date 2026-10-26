@@ -15,6 +15,9 @@ public interface ErrorCodeConstants {
     ErrorCode USER_MOBILE_USED = new ErrorCode(1_004_001_002, "修改手机失败，该手机号({})已经被使用");
     ErrorCode USER_POINT_NOT_ENOUGH = new ErrorCode(1_004_001_003, "用户积分余额不足");
     ErrorCode USER_EMAIL_USED = new ErrorCode(1_004_001_004, "修改邮箱失败，该邮箱({})已经被使用");
+    ErrorCode USER_GROUP_INVALID = new ErrorCode(1_004_001_005, "新分配的会员分组不存在或未启用");
+    ErrorCode USER_TAG_INVALID = new ErrorCode(1_004_001_006, "会员标签无效、不属于当前租户或编号列表超长");
+    ErrorCode USER_AREA_INVALID = new ErrorCode(1_004_001_007, "会员地区编号须为有效的非负int");
 
     // ========== AUTH 模块 1-004-003-000 ==========
     ErrorCode AUTH_LOGIN_BAD_CREDENTIALS = new ErrorCode(1_004_003_000, "登录失败，账号密码不正确");

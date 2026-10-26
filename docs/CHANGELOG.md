@@ -3332,3 +3332,41 @@ V031新增两表至80表、下一V032，只创建gym:risk:read/resolve定义，�
 ### 未做 / 后续
 
 当前116项新增本地实现、4项复用源码、15项待开发。内部告警Publisher无生产调用者，未接入可信网关、采集/分类及证据上传；未实现第4次违规冻结、违规周期统计、申诉或解冻，不把人工confirmed当作自动处罚完成。消费/邀请自动奖励和真实支付/自动续费、签约、设备、监控继续暂缓。未做部署HTTP、真实存储、多实例或规模联调；仅本地小步提交，不推送。
+
+
+## [2026-10-26 10:44 ~ 10:54] 设备命令结果授权读取与可信完成时间
+
+### 意图
+
+完成135项目标125，对已持久化命令提供本人或授权管理者查询；保留真实设备通信暂缓范围，避免将旧模拟成功或缺少回执的历史状态显示为已开门。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `controller/admin/mobile/GymMobileDeviceCommandsController.java`、`vo/GymMobileDeviceCommandVO.java` | 新增 | 结果GET及7字段投影 |
+| `service/mobile/GymMobileDeviceCommandsService.java` | 新增 | 本人/管理者授权、当前身份/租户、状态与失败原因处理 |
+| `dal/dataobject/device/GymDeviceCommandDO.java`、`service/device/GymDeviceService.java` | 修改 | 可空完成时间及本地未发送失败同事务记时 |
+| `enums/ErrorCodeConstants.java` | 修改 | 不存在/无权读取统一错误1070017008 |
+| `sql/gym/migration/mysql/V032__gym_device_command_completion.sql`、H2结构、`script/gym/verify-migrations.py` | 新增/修改 | 可空微秒列、完成约束和8项隔离迁移检查 |
+| `GymOrganizationServiceTest.java`、`GymMobileDeviceCommandsControllerTest.java` | 修改/新增 | 8项业务及2项MVC回归 |
+| `docs/uniapp/`契约、总表、实施与机器清单 | 修改 | 121/135、历史读取与真实设备回执边界 |
+| `docs/architecture.md`、`docs/testing.md`、`script/gym/README.md`、`script/gym/DATABASE.md` | 修改 | 调用关系、证据、部署和下一V033 |
+
+Java相对路径在yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym，测试在同模块src/test。
+
+### 结构关系
+
+新Controller进入只读事务Service，先校验当前后台账号与租户，再读取命令；本人按requesterId授权，他人需设备读取功能权限加当前整店范围，设备归属不可迁移。只投影结果、不调用发送服务；未知/模拟成功不转成真实成功，原始失败文本只允许已知服务端说明。既有GymDeviceService未发送失败写入同时记录completed_at，迁移不回填历史时间或改变状态。
+
+### 验证证据
+
+完整gym923通过（组织服务556、会员专项69），member4通过及1项既有禁用跳过；Spotless通过。新增8业务+2MVC，覆盖权限/历史/租户、状态、字段与敏感原因、完成约束。真实隔离MySQL/Flyway212检查通过，临时库清理；server package -DskipTests成功（打包跳过测试）。源码覆盖Contract135/mapped121/missing14；git diff --check通过。早期专项夹具Import/非法ID异常类型修正后完整回归通过，最终命令和日志见testing本批章节。
+
+### 影响面 / 风险
+
+V032新增可空列及约束，仍80表、下一V033，无角色或权限变更。先备份并migrate/validate后升级应用；旧程序不填写新列时保持NULL，不把更新时间当作执行完成。本人保留历史读取权限，但停用账号或会员令牌仍拒绝；他人需当前管理权限。原失败原因可能含内部内容，仅白名单说明透出。业务库未迁移，前端与用户原始uniapp.md内容/暂存状态保留。
+
+### 未做 / 后续
+
+当前117项新增本地实现、4项复用源码、14项待开发。124命令下发、126二次验证及132–133网关事件/回执仍待实现，真实设备通信继续按用户要求暂缓；当前已记录failed只代表实际未发送失败。支付/续费、签约、监控、消费/邀请积分自动奖励仍暂缓。未做真实硬件、部署HTTP、多节点或规模验证；仅本地小步提交，不推送。

@@ -27,7 +27,7 @@
 | 设备集成 | 2 | 服务端接收门禁事件和设备执行回执，小程序不直接调用 |
 | **合计** | **135** | **按方法与路径去重** |
 
-当前实现状态：新增实现并通过本地测试 **116** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **15** 个。源码映射共 **120 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
+当前实现状态：新增实现并通过本地测试 **117** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **14** 个。源码映射共 **121 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
 
 请求方法：GET **81** 个，POST **50** 个，PATCH **2** 个，PUT **1** 个，DELETE **1** 个。
 
@@ -161,7 +161,7 @@
 | 122 | 工作台 | GET | `/admin-api/gym/mobile/devices` | 查询授权门店的门禁和柜机设备 | 已实现，本地测试通过 |
 | 123 | 工作台 | GET | `/admin-api/gym/mobile/devices/{id}/compartments` | 查询指定柜机的柜格列表和状态 | 已实现，本地测试通过 |
 | 124 | 工作台 | POST | `/admin-api/gym/mobile/devices/{id}/commands` | 提交远程开门或开柜命令并保留操作记录 | 待开发；外部接入暂缓 |
-| 125 | 工作台 | GET | `/admin-api/gym/mobile/device-commands/{id}` | 查询设备命令发送及实际执行结果 | 待开发；外部接入暂缓 |
+| 125 | 工作台 | GET | `/admin-api/gym/mobile/device-commands/{id}` | 查询设备命令发送及实际执行结果 | 已实现，本地测试通过；真实设备回执暂缓 |
 | 126 | 工作台 | POST | `/admin-api/gym/mobile/action-confirmations` | 验证二次确认凭据，生成绑定设备和操作的短时令牌 | 设计待开发 |
 | 127 | 工作台 | GET | `/admin-api/gym/mobile/notifications` | 查询员工本人可接收的工作台通知 | 已实现，本地测试通过；外部推送未接入 |
 | 128 | 公共及会员端 | GET | `/app-api/gym/me/notifications` | 查询会员本人预约、合同、权益等通知 | 已实现，本地测试通过；外部推送未接入 |

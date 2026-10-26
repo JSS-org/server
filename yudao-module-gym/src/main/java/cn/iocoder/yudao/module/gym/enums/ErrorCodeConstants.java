@@ -173,6 +173,7 @@ public interface ErrorCodeConstants {
     ErrorCode DEVICE_COMPARTMENT_BUSY = new ErrorCode(1_070_017_005, "已占用或预留柜格不能被移除、停用或重置");
     ErrorCode DEVICE_COMMAND_INVALID = new ErrorCode(1_070_017_006, "设备指令、柜格或Idempotency-Key不合法");
     ErrorCode DEVICE_COMMAND_CONFLICT = new ErrorCode(1_070_017_007, "相同指令提交标识已用于不同内容");
+    ErrorCode DEVICE_COMMAND_NOT_EXISTS = new ErrorCode(1_070_017_008, "设备指令不存在或无权读取");
     ErrorCode EQUIPMENT_NOT_EXISTS = new ErrorCode(1_070_018_001, "器械不存在");
     ErrorCode EQUIPMENT_SCENE_INVALID = new ErrorCode(1_070_018_006, "器械场景码无效或器械未公开");
     ErrorCode EQUIPMENT_CODE_DUPLICATE = new ErrorCode(1_070_018_002, "同一门店的器械编码已存在");

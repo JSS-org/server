@@ -1639,10 +1639,14 @@
       "method": "GET",
       "path": "/admin-api/gym/mobile/device-commands/{id}",
       "description": "查询设备命令发送及实际执行结果",
-      "implementation": "pending",
-      "evidence": [],
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileDeviceCommandsController.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileDeviceCommandsControllerTest.java"
+      ],
       "externalIntegration": "deferred_by_user",
-      "deferredScope": "设备实际执行结果"
+      "deferredScope": "真实设备回执及执行状态同步；当前仅读取已持久化结果，未发送失败不代表真实设备执行"
     },
     {
       "id": 126,

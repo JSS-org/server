@@ -50,6 +50,8 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileDeviceCommandsService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileDeviceCommandsController.class,
     cn.iocoder.yudao.module.gym.service.risk.GymRiskAlertPublisher.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileRiskService.class,
     cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileRiskController.class,
@@ -21402,5 +21404,196 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
             assertEquals(1, ids.size());
         }
         assertEquals(1, riskRows.selectCount());
+    }
+
+    @Resource
+    private cn.iocoder.yudao.module.gym.service.mobile.GymMobileDeviceCommandsService
+            mobileCommandResults;
+
+    @Resource
+    private cn.iocoder.yudao.module.gym.dal.mysql.device.GymDeviceCommandMapper commandResults;
+
+    cn.iocoder.yudao.module.gym.dal.dataobject.device.GymDeviceCommandDO commandResult(
+            Long device,
+            Long requester,
+            String status,
+            boolean simulated,
+            java.time.Instant completed) {
+        var row = new cn.iocoder.yudao.module.gym.dal.dataobject.device.GymDeviceCommandDO();
+        row.setDeviceId(device);
+        row.setCommand("open_door");
+        row.setReason("PRIVATE-REASON");
+        row.setRequesterId(requester);
+        row.setRequesterName("PRIVATE-ACTOR");
+        row.setRequestedAt(RISK_TIME);
+        row.setCompletedAt(completed);
+        row.setStatus(status);
+        row.setSimulated(simulated);
+        row.setFailureReason("PRIVATE-VENDOR-TOKEN");
+        row.setRequestKey("RESULT-" + java.util.UUID.randomUUID());
+        row.setRequestHash("PRIVATE-HASH");
+        commandResults.insert(row);
+        return row;
+    }
+
+    @Test
+    void commandResultReadsRealBackendRejectionAndExactCompletionWithoutSendingAgain() {
+        Long device = riskDevice();
+        when(businessClock.now()).thenReturn(RISK_TIME);
+        var rejected =
+                deviceService.command(device, deviceCommand("open_door", null), "command-read-01");
+        var row = commandResults.selectById(rejected.getId());
+        assertEquals(RISK_TIME, row.getCompletedAt());
+        var result = mobileCommandResults.get(row.getId());
+        assertEquals("failed", result.status());
+        assertEquals(result.requestedAt(), result.completedAt());
+        assertEquals("2026-10-26T09:02:03.123456+08:00", result.completedAt());
+        assertEquals("设备厂商接口未配置，未发送远程指令", result.failureReason());
+        assertEquals(result, mobileCommandResults.get(row.getId()));
+        assertEquals(1, commandResults.selectCount());
+        assertFalse(mobileDeviceRows.selectById(device).getOnline());
+    }
+
+    @Test
+    void commandResultOwnerKeepsHistoryAfterScopeRevocationAndDeviceDeletion() {
+        Long device = riskDevice();
+        var row = commandResult(device, 1L, "failed", false, null);
+        personalScope(1L);
+        when(permissions.hasAnyPermissions(anyLong(), eq("gym:devices:read"))).thenReturn(false);
+        mobileDeviceRows.deleteById(device);
+        assertEquals("failed", mobileCommandResults.get(row.getId()).status());
+        assertNull(mobileCommandResults.get(row.getId()).completedAt());
+        assertEquals(1, commandResults.selectCount());
+    }
+
+    @Test
+    void commandResultOtherManagerRequiresCurrentPermissionAndWholeStoreScope() {
+        Long device = riskDevice();
+        var row = commandResult(device, 50L, "queued", false, null);
+        scoped(101L);
+        assertServiceException(
+                () -> mobileCommandResults.get(row.getId()), DEVICE_COMMAND_NOT_EXISTS);
+        when(permissions.hasAnyPermissions(anyLong(), eq("gym:devices:read"))).thenReturn(true);
+        assertEquals("queued", mobileCommandResults.get(row.getId()).status());
+        personalScope(1L);
+        assertServiceException(
+                () -> mobileCommandResults.get(row.getId()), DEVICE_COMMAND_NOT_EXISTS);
+        scoped(102L);
+        assertServiceException(
+                () -> mobileCommandResults.get(row.getId()), DEVICE_COMMAND_NOT_EXISTS);
+        headquarters();
+        assertNotNull(mobileCommandResults.get(row.getId()));
+        when(permissions.hasAnyPermissions(anyLong(), eq("gym:devices:read"))).thenReturn(false);
+        assertServiceException(
+                () -> mobileCommandResults.get(row.getId()), DEVICE_COMMAND_NOT_EXISTS);
+        when(permissions.hasAnyPermissions(anyLong(), eq("gym:devices:read"))).thenReturn(true);
+        mobileDeviceRows.deleteById(device);
+        assertServiceException(
+                () -> mobileCommandResults.get(row.getId()), DEVICE_COMMAND_NOT_EXISTS);
+    }
+
+    @Test
+    void commandResultRejectsMemberDisabledAccountForeignTenantAndDeletedRecords() {
+        var row = commandResult(riskDevice(), 1L, "failed", false, null);
+        var login =
+                cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser();
+        login.setUserType(1);
+        assertServiceException(
+                () -> mobileCommandResults.get(row.getId()), MOBILE_IDENTITY_INVALID);
+        login.setUserType(2);
+        var account = new cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO();
+        account.setId(1L);
+        account.setStatus(1);
+        when(workAccounts.getUser(1L)).thenReturn(account);
+        assertServiceException(
+                () -> mobileCommandResults.get(row.getId()), MOBILE_IDENTITY_INVALID);
+        account.setStatus(0);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(
+                () -> mobileCommandResults.get(row.getId()), MOBILE_IDENTITY_INVALID);
+        login.setTenantId(2L);
+        assertServiceException(
+                () -> mobileCommandResults.get(row.getId()), DEVICE_COMMAND_NOT_EXISTS);
+        TenantContextHolder.setTenantId(1L);
+        login.setTenantId(1L);
+        commandResults.deleteById(row.getId());
+        assertServiceException(
+                () -> mobileCommandResults.get(row.getId()), DEVICE_COMMAND_NOT_EXISTS);
+    }
+
+    @Test
+    void commandResultNeverTreatsSimulatedOrUnfinishedSuccessAsRealExecution() {
+        Long device = riskDevice();
+        for (var state : List.of("succeeded", "unexpected", "unknown")) {
+            var row = commandResult(device, 1L, state, false, null);
+            var result = mobileCommandResults.get(row.getId());
+            assertEquals("unknown", result.status());
+            assertNull(result.completedAt());
+            assertTrue(result.failureReason().contains("不要自动重发"));
+        }
+        for (var state : List.of("queued", "sent", "succeeded")) {
+            var row = commandResult(device, 1L, state, true, null);
+            assertEquals("unknown", mobileCommandResults.get(row.getId()).status());
+        }
+        var pending = commandResult(device, 1L, "sent", false, null);
+        assertEquals("sent", mobileCommandResults.get(pending.getId()).status());
+        assertNull(mobileCommandResults.get(pending.getId()).failureReason());
+        var complete = commandResult(device, 1L, "succeeded", false, RISK_TIME.plusSeconds(1));
+        assertEquals("succeeded", mobileCommandResults.get(complete.getId()).status());
+        assertEquals(
+                "2026-10-26T09:02:04.123456+08:00",
+                mobileCommandResults.get(complete.getId()).completedAt());
+    }
+
+    @Test
+    void commandResultOnlyExposesSevenFieldsAndSafeFailureMessages() {
+        var row = commandResult(riskDevice(), 1L, "failed", false, RISK_TIME);
+        var result = mobileCommandResults.get(row.getId());
+        var json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(result);
+        assertFalse(json.contains("PRIVATE"));
+        assertEquals("设备指令未完成，请联系门店核实", result.failureReason());
+        assertEquals(
+                Set.of(
+                        "id",
+                        "deviceId",
+                        "command",
+                        "status",
+                        "requestedAt",
+                        "completedAt",
+                        "failureReason"),
+                cn.iocoder.yudao.framework.common.util.json.JsonUtils.parseObject(json, Map.class)
+                        .keySet());
+        row.setFailureReason("柜格已停用，未发送指令");
+        commandResults.updateById(row);
+        assertEquals(row.getFailureReason(), mobileCommandResults.get(row.getId()).failureReason());
+    }
+
+    @Test
+    void commandResultCompletionConstraintRejectsInventedTimesAndSimulatedSuccess() {
+        Long device = riskDevice();
+        assertThrows(
+                org.springframework.dao.DataIntegrityViolationException.class,
+                () -> commandResult(device, 1L, "sent", false, RISK_TIME));
+        assertThrows(
+                org.springframework.dao.DataIntegrityViolationException.class,
+                () -> commandResult(device, 1L, "succeeded", true, RISK_TIME));
+        assertThrows(
+                org.springframework.dao.DataIntegrityViolationException.class,
+                () -> commandResult(device, 1L, "failed", false, RISK_TIME.minusSeconds(1)));
+        assertEquals(0, commandResults.selectCount());
+    }
+
+    @Test
+    void commandResultControllerUsesOwnerOrManagerPolicyAndValidatesIds() {
+        var row = commandResult(riskDevice(), 1L, "failed", false, null);
+        var controller =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.controller.admin.mobile
+                                .GymMobileDeviceCommandsController.class);
+        personalScope(1L);
+        assertEquals(row.getId().toString(), controller.get(row.getId()).getCheckedData().id());
+        assertServiceException(() -> mobileCommandResults.get(null), MOBILE_REQUEST_INVALID);
+        assertServiceException(() -> mobileCommandResults.get(0L), MOBILE_REQUEST_INVALID);
+        assertServiceException(() -> controller.get(-1L), MOBILE_REQUEST_INVALID);
     }
 }

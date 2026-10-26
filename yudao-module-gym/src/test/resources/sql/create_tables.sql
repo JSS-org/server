@@ -789,6 +789,7 @@ CREATE TABLE IF NOT EXISTS gym_device_command (
  requester_id bigint NOT NULL,
  requester_name varchar(80) NOT NULL,
  requested_at datetime(6) NOT NULL,
+ completed_at datetime(6) DEFAULT NULL,
  status varchar(16) NOT NULL,
  failure_reason varchar(500) DEFAULT NULL,
  simulated boolean NOT NULL DEFAULT false,
@@ -802,7 +803,8 @@ CREATE TABLE IF NOT EXISTS gym_device_command (
  tenant_id bigint NOT NULL DEFAULT 0,
  PRIMARY KEY (id),
  UNIQUE KEY uk_device_command_request (tenant_id,device_id,requester_id,request_key),
- KEY idx_device_command_date (tenant_id,device_id,requested_at)
+ KEY idx_device_command_date (tenant_id,device_id,requested_at),
+ CONSTRAINT ck_device_command_completion CHECK (completed_at IS NULL OR (completed_at >= requested_at AND status IN ('failed','succeeded') AND (status <> 'succeeded' OR simulated = false)))
 );
 CREATE TABLE IF NOT EXISTS gym_equipment (
   public_scene varchar(32) DEFAULT NULL,

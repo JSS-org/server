@@ -748,3 +748,10 @@ V030新增gym_point_redemption并扩展原账户/商品，当前78表。需要�
 `GymRiskAlertPublisher`为内部MANDATORY事务接收器，在租户互斥锁下从登记设备获得门店，验证可选会员及同店私有证据。来源以租户/设备/事件键/类型唯一，规范化微秒时间和证据顺序；同源相同内容返回原ID，变化拒绝。当前没有生产调用者；未来可信网关须先验签、防重放并完成真实事件分类，再在业务事务中调用。不把该服务称为已接入风险检测，也不向客户端开放创建入口。
 
 证据链：告警读取授权 → 检查不可变evidenceFileIds关联 → 同租户/同店risk_evidence元数据 → FileApi取原始字节 → 格式/大小校验 → 私有附件流。通用GymFileService拒绝此类别的元数据/下载，通用上传类别也不开放；未新增真实采集入口。日志不记录该Controller请求/响应业务内容。V031新增告警/处置两表至80表和两项功能权限定义，不授予角色、不回填事件。自动冻结、规则累计、设备事件生产仍未实现。
+
+
+## 设备命令结果与完成时间（2026-10-26，V032）
+
+GymMobileDeviceCommandsController → GymMobileDeviceCommandsService → GymDeviceCommandMapper，以租户和有效后台身份读取既有命令。本人历史按requesterId授权；他人需PermissionApi的gym:devices:read及GymDataScope整店范围，并核对不可迁移归属的设备记录。无当前设备记录时他人不可读；本人历史不依赖当前门店/设备可用性。服务层承担“本人或管理者”完整授权，不在Controller附加会排除本人历史的固定功能权限。
+
+查询只投影7字段，失败原因白名单、模拟/缺失完成证据的成功降为unknown；不调用发送器。V032为gym_device_command增加completed_at及状态/时间约束，不修改历史记录。既有GymDeviceService在未发送失败事务内记真实结束时间；真实设备回执仍无生产写入者。未来回执须校验真实来源，不能用更新时间替代完成时间。表数仍80，无新增权限或角色变更。

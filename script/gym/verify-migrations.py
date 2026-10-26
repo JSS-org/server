@@ -91,6 +91,15 @@ def main():
     with isolated() as db:
         command('init')
         check(len([t for t in db.tables() if t.startswith('gym_')]) == 80, 'new database has 59 original and 21 additional gym tables')
+        check(db.sql("SELECT CONCAT(is_nullable,':',datetime_precision) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='gym_device_command' AND column_name='completed_at'") == 'YES:6', 'command completion is nullable with microsecond precision')
+        db.sql("INSERT INTO gym_device_command(id,device_id,command,reason,requester_id,requester_name,requested_at,status,request_key,request_hash,tenant_id) VALUES(900001,7,'open_door','integration fixture',50,'operator','2026-10-26 10:00:00.123456','queued','migration-command','hash',1)")
+        check(db.sql('SELECT COUNT(*) FROM gym_device_command WHERE id=900001 AND completed_at IS NULL') == '1', 'new command has no invented completion time')
+        rejects(lambda: db.sql("UPDATE gym_device_command SET status='failed',completed_at='2026-10-26 09:59:59'"), 'command cannot finish before its request')
+        rejects(lambda: db.sql("UPDATE gym_device_command SET completed_at='2026-10-26 10:01:00'"), 'queued command cannot claim completion')
+        rejects(lambda: db.sql("UPDATE gym_device_command SET status='succeeded',simulated=1,completed_at='2026-10-26 10:01:00'"), 'simulated success cannot claim real completion')
+        db.sql("UPDATE gym_device_command SET status='failed',completed_at='2026-10-26 10:01:00.654321'")
+        check(db.sql("SELECT COUNT(*) FROM gym_device_command WHERE completed_at='2026-10-26 10:01:00.654321' AND status='failed'") == '1', 'command completion keeps terminal state and microseconds')
+        db.sql('DELETE FROM gym_device_command')
         check(db.sql('SELECT (SELECT COUNT(*) FROM gym_risk_alert)+(SELECT COUNT(*) FROM gym_risk_resolution)') == '0', 'risk migration creates no invented alerts or operator decisions')
         def risk_event(key='source-test', tenant=1):
             db.sql(f"INSERT INTO gym_risk_alert(store_id,device_id,type,source_event_key,source_snapshot,occurred_at,evidence_file_ids,tenant_id) VALUES(101,7,'multiple_entry','{key}','{{}}','2026-10-26 10:00:00.123456','[]',{tenant})")
@@ -488,6 +497,7 @@ def main():
             db.flyway('migrate')
             db.sql("INSERT INTO gym_point_product(id,store_id,card_product_id,name,required_points,stock,enabled,revision,tenant_id) VALUES(900001,101,7,'existing offer',40,2,1,3,1)")
             db.sql('INSERT INTO gym_point_account(member_id,balance,total_earned,total_spent,tenant_id) VALUES(900001,100,120,20,1)')
+            db.sql("INSERT INTO gym_device_command(id,device_id,command,reason,requester_id,requester_name,requested_at,status,simulated,request_key,request_hash,tenant_id) VALUES(900001,7,'open_door','legacy reason',50,'legacy operator','2026-10-25 10:00:00.123456','succeeded',1,'legacy-command','legacy-hash',1)")
             before = auth_snapshot(db)
             manager.ASSETS = ASSETS
             db.flyway('migrate')
@@ -496,6 +506,8 @@ def main():
             check(db.sql("SELECT COUNT(*) FROM gym_point_product WHERE id=900001 AND name='existing offer' AND required_points=40 AND stock=2 AND enabled=1 AND revision=3 AND reserved_stock=0") == '1', 'V030 keeps prior catalog stock price and revision unchanged')
             check(db.sql('SELECT COUNT(*) FROM gym_point_redemption') == '0', 'V030 does not invent previous redemption requests')
             check(auth_snapshot(db) == before, 'V030 upgrade changes no account role or data scope')
+            check(db.sql('SELECT COUNT(*) FROM gym_device_command WHERE id=900001 AND completed_at IS NULL') == '1', 'V032 does not invent historical command completion')
+            check(db.sql("SELECT COUNT(*) FROM gym_device_command WHERE id=900001 AND status='succeeded' AND simulated=1 AND requester_id=50 AND requested_at='2026-10-25 10:00:00.123456' AND reason='legacy reason' AND request_hash='legacy-hash'") == '1', 'V032 keeps original legacy command status actor time and request facts')
     print(f'Flyway integration regression passed: {CHECKS} checks; all temporary DBs cleaned.')
 
 

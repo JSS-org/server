@@ -3980,3 +3980,36 @@ main已先生成上游合并d5872e1ff0，本次将功能分支f27ce5ad7f作为�
 ### 未做 / 后续
 
 完整支付、物流和售后仍待验证，P4/A15 未整体完成。
+
+## [2026-10-26 19:35 ~ 19:40] 拒绝购物车合并数量整数溢出
+
+### 意图
+
+继续 P4/A15 交易数量边界验证，修复已有购物项加极大数量时整数溢出成负数、绕过库存上限的问题。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `.../trade/service/cart/CartServiceImpl.java` | 修改 | 使用 long 计算和校验合并数量，确认未超库存后再精确转换为 int 保存 |
+| `.../trade/service/cart/CartServiceImplTest.java` | 修改 | 复现 3 + Integer.MAX_VALUE，要求库存拒绝且不写入、不改变已有数量 |
+| `yudao-server/src/test/java/cn/iocoder/yudao/server/integration/JssMallHttpIT.java` | 修改 | 真实购物车场景加入同一极端数量请求，并继续核对购物项和库存未变 |
+| `docs/testing.md`、`docs/CHANGELOG.md` | 修改 | 记录复现、回归及真实联合结果 |
+
+### 结构关系
+
+沿用购物车 Service 的 SKU/SPU/库存校验及原业务错误码，仅将合并计算和比较过程扩大到 long；落库结构和接口数量类型均未改变。
+
+### 验证证据
+
+新增单测先失败：10 项中 1 项失败，未抛预期库存异常，日志 `.runtime/mall-cart-overflow-before.log`。修复后交易模块回归 72 项，56 执行通过、16 既有条件跳过、0 失败/错误，`.runtime/mall-cart-overflow-after.log`。定向 Java 格式和差异检查通过。
+
+`python script/jss/verify_workspace_http.py --suite mall --browser` 退出 0，五项 JUnit 全过（四项真实 HTTP + 一项真实 H5 启动）、无跳过，`.runtime/mall-cart-overflow-http.log`。极端请求被拒绝后购物项仍为 3，正常加购/下单/取消继续通过；工具核对新报告、日志不含测试密码并清理随机库和专用 Redis。
+
+### 影响面 / 风险
+
+超大合并数量现按既有库存不足业务码拒绝，不再存储负数。普通数量、等于库存的合并及正常购物路径均有回归。未改动开发数据库、运行 jar 或发布环境。
+
+### 未做 / 后续
+
+继续钱包实际扣款/退款、履约及售后 HTTP/H5 验收，第三方收款渠道与物流平台仍未联调；完整 P4/A15 未完成。

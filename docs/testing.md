@@ -1635,3 +1635,9 @@ python script/jss/verify_workspace_http.py --suite mall
 初轮有两个测试定位问题（重复金额区域、英文确认按钮），均已改为具体容器/按钮类。真实下单还复现订单成功后收银台跳转被点击节流丢弃；前端 `397bd1c` 保留普通点击节流并让业务重定向即时执行，新增单测先失败后通过。最终确认页、已关闭订单截图位于前端 `test-results/mall`，已实际查看；日志 `.runtime/mall-browser-verification.log`，子日志由 `.runtime/jss-mall-http/last-run.json` 定位并已脱敏。
 
 本轮服务日志密码扫描、报告时效、随机 schema 清理、已归属 Redis 停止均通过；新增 Java 定向格式检查通过。前端 33 项单测、7 项夹具、类型检查、验收 TypeScript 检查及 H5 构建另行通过。没有执行渠道付款、发货或售后，本次不代表完整交易闭环，也没有将历史完整 30 模块构建重新归到本次提交。
+
+## 2026-10-26 购物车合并数量溢出回归
+
+已有 3 件时加入 Integer.MAX_VALUE 件，原 int 加法溢出为负数，未触发库存不足异常。新增 `CartServiceImplTest.testAddCart_mergeCannotOverflowToNegativeQuantity` 先复现失败，`.runtime/mall-cart-overflow-before.log`；改用 long 合并并在库存校验后转 int，交易模块专项回归 72 项（56 执行通过、16 既有条件跳过，0 失败/错误），`.runtime/mall-cart-overflow-after.log`。
+
+再次执行 `python script/jss/verify_workspace_http.py --suite mall --browser` 成功，本轮 JUnit 五项全过、无跳过（四项 HTTP + 一项 H5 启动），新增真实极端数量请求被拒绝且原购物项/库存保持不变，正常 UI 购物和取消恢复继续通过；日志 `.runtime/mall-cart-overflow-http.log`。Java 定向 Spotless 和差异检查通过；工具的本轮报告、日志密码扫描与随机库/Redis 清理检查通过。未重复完整 30 模块构建，没有新增第三方支付或物流证据。

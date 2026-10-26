@@ -214,6 +214,23 @@ public class CartServiceImplTest extends BaseMockitoUnitTest {
     }
 
     @Test
+    void testAddCart_mergeCannotOverflowToNegativeQuantity() {
+        CartDO existing = new CartDO().setId(100L).setUserId(1L).setSkuId(10L).setCount(3);
+        when(cartMapper.selectByUserIdAndSkuId(1L, 10L)).thenReturn(existing);
+        when(productSkuApi.getSku(10L))
+                .thenReturn(new ProductSkuRespDTO().setId(10L).setSpuId(20L).setStock(10));
+        assertServiceException(
+                () ->
+                        cartService.addCart(
+                                1L,
+                                new AppCartAddReqVO().setSkuId(10L).setCount(Integer.MAX_VALUE)),
+                SKU_STOCK_NOT_ENOUGH);
+        verify(cartMapper, never()).updateById(any(CartDO.class));
+        verify(cartMapper, never()).insert(any(CartDO.class));
+        assertEquals(3, existing.getCount());
+    }
+
+    @Test
     public void testUpdateCartCount_equalsStock() {
         // 准备参数
         Long userId = 1L;

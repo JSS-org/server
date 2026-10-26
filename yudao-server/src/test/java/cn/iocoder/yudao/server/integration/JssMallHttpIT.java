@@ -476,6 +476,13 @@ class JssMallHttpIT {
         assertEquals(3, number(ok(api("GET", "/app-api/trade/cart/get-count", null, buyer, 1))));
         rejected(
                 api(
+                        "POST",
+                        "/app-api/trade/cart/add",
+                        Map.of("skuId", sku, "count", Integer.MAX_VALUE),
+                        buyer,
+                        1));
+        rejected(
+                api(
                         "PUT",
                         "/app-api/trade/cart/update-count",
                         Map.of("id", cart, "count", 9),

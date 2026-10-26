@@ -27,8 +27,6 @@ def main():
     parser.add_argument('--suite', choices=['workspace', 'mall'], default='workspace',
                         help='Run workspace security or mall catalog/cart/order acceptance')
     args = parser.parse_args()
-    if args.browser and args.suite != 'workspace':
-        parser.error('--browser currently supports only the workspace suite')
     runtime = ROOT / ('.runtime/jss-http' if args.suite == 'workspace' else '.runtime/jss-mall-http')
     test_class = 'JssWorkspaceHttpIT' if args.suite == 'workspace' else 'JssMallHttpIT'
     sys.stdout.reconfigure(encoding='utf8', errors='replace')
@@ -95,7 +93,8 @@ def main():
                            JSS_TEST_RUNTIME_DIR=run_directory.as_posix())
         if args.browser:
             frontend = ROOT.parent / 'JSS-uniapp'
-            if not (frontend / 'playwright.authenticated.config.ts').is_file():
+            browser_config = 'playwright.authenticated.config.ts' if args.suite == 'workspace' else 'playwright.mall.config.ts'
+            if not (frontend / browser_config).is_file():
                 raise ValueError('Real browser acceptance requires the sibling JSS-uniapp integration harness')
             environment.update(JSS_TEST_BROWSER='1', JSS_TEST_FRONTEND_DIR=str(frontend.resolve()))
         maven = os.environ.get('JSS_MAVEN_COMMAND') or shutil.which('mvn')
@@ -119,7 +118,7 @@ def main():
         report = ROOT / f'yudao-server/target/surefire-reports/TEST-cn.iocoder.yudao.server.integration.{test_class}.xml'
         assert report.stat().st_mtime >= started
         suite = ET.parse(report).getroot()
-        expected = ('10' if args.browser else '9') if args.suite == 'workspace' else '4'
+        expected = ('10' if args.browser else '9') if args.suite == 'workspace' else ('5' if args.browser else '4')
         assert suite.attrib['tests'] == expected and all(suite.attrib[k] == '0' for k in ['errors', 'failures', 'skipped']), suite.attrib
         for case in suite.findall('testcase'):
             print('PASS ' + case.attrib['name'])

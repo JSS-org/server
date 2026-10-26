@@ -1625,3 +1625,13 @@ python script/jss/verify_workspace_http.py --suite mall
 日志 `.runtime/mall-http-verification.log`，随机目录由 `.runtime/jss-mall-http/last-run.json` 定位；本轮报告时效、服务日志不含测试密码、随机 schema 已删除及专用 Redis 已停止均通过。没有操作开发库/运行 jar。本次没有渠道收款、物流或售后证据；71 项中的条件跳过不计真实验收，也未将局部回归称为新的完整 30 模块 verify。
 
 格式验证按本次修改/新增的 Java 文件定向执行 Spotless check。额外运行的无筛选根目录 `spotless:check` 发现 8117 个既有文件的 CRLF/LF 差异（`.runtime/mall-format-check.log`），未批量重写无关文件；这项全仓格式检查不登记为通过。
+
+## 2026-10-26 商城真实 H5 联合验收通过
+
+现已支持 `python script/jss/verify_workspace_http.py --suite mall --browser`。工具使用兄弟前端 `playwright.mall.config.ts`，启动独立 9103 H5，拒绝 48080 开发后端；测试商品由当前 Java 场景通过生产管理 API 创建，图片也来自此本地 H5 服务。`JSS_TEST_BROWSER=1` 才启用浏览器场景，未提供隔离环境时不能直接启动此前端配置。
+
+最终本轮 JUnit 五项全过（四项真实 HTTP + 一项浏览器启动），无失败/错误/跳过；Playwright 一项全程实际操作通过，9.9 秒。UI 登录会员后，按商品列表、详情、加入购物车、改为两件、结算、提交、收银台、详情取消的顺序操作。通过实际查询同时核对金额 2598 分、SKU/SPU 库存 8→6→8、购物车已清空、订单取消状态 40 和未支付状态；页面无运行错误。没有拦截 API 或注入登录 Token。
+
+初轮有两个测试定位问题（重复金额区域、英文确认按钮），均已改为具体容器/按钮类。真实下单还复现订单成功后收银台跳转被点击节流丢弃；前端 `397bd1c` 保留普通点击节流并让业务重定向即时执行，新增单测先失败后通过。最终确认页、已关闭订单截图位于前端 `test-results/mall`，已实际查看；日志 `.runtime/mall-browser-verification.log`，子日志由 `.runtime/jss-mall-http/last-run.json` 定位并已脱敏。
+
+本轮服务日志密码扫描、报告时效、随机 schema 清理、已归属 Redis 停止均通过；新增 Java 定向格式检查通过。前端 33 项单测、7 项夹具、类型检查、验收 TypeScript 检查及 H5 构建另行通过。没有执行渠道付款、发货或售后，本次不代表完整交易闭环，也没有将历史完整 30 模块构建重新归到本次提交。

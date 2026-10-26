@@ -9,7 +9,9 @@ import cn.iocoder.yudao.server.YudaoServerApplication;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,12 +28,16 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import javax.sql.DataSource;
 
@@ -78,6 +84,80 @@ class JssMallHttpIT {
     private long spu;
     private long sku;
     private String name;
+    private final String image =
+            "1".equals(System.getenv("JSS_TEST_BROWSER"))
+                    ? "http://127.0.0.1:9103/static/logo.png"
+                    : "/static/logo.png";
+
+    @TestFactory
+    Stream<DynamicTest> actualMallBrowserAcceptance() {
+        if (!"1".equals(System.getenv("JSS_TEST_BROWSER"))) return Stream.empty();
+        return Stream.of(
+                DynamicTest.dynamicTest(
+                        "realMallCartCheckoutAndCancellation",
+                        () -> {
+                            var frontend =
+                                    Path.of(System.getenv("JSS_TEST_FRONTEND_DIR")).toRealPath();
+                            assertTrue(
+                                    Files.isRegularFile(
+                                            frontend.resolve("playwright.mall.config.ts")));
+                            var log =
+                                    Path.of(
+                                            System.getenv("JSS_TEST_RUNTIME_DIR"),
+                                            "mall-browser.log");
+                            boolean windows =
+                                    System.getProperty("os.name").toLowerCase().contains("win");
+                            var builder =
+                                    windows
+                                            ? new ProcessBuilder(
+                                                    "cmd.exe",
+                                                    "/d",
+                                                    "/c",
+                                                    "corepack.cmd",
+                                                    "pnpm",
+                                                    "test:mall")
+                                            : new ProcessBuilder("corepack", "pnpm", "test:mall");
+                            builder.environment()
+                                    .put(
+                                            "JSS_TEST_HTTP_API_URL",
+                                            "http://127.0.0.1:"
+                                                    + environment.getRequiredProperty(
+                                                            "local.server.port"));
+                            builder.environment().put("JSS_TEST_MALL_SPU_ID", String.valueOf(spu));
+                            builder.environment().put("JSS_TEST_MALL_PRODUCT_NAME", name);
+                            builder.directory(frontend.toFile())
+                                    .redirectErrorStream(true)
+                                    .redirectOutput(log.toFile());
+                            var process = builder.start();
+                            try {
+                                assertTrue(
+                                        process.waitFor(240, TimeUnit.SECONDS),
+                                        "Mall browser acceptance timed out");
+                                assertEquals(
+                                        0,
+                                        process.exitValue(),
+                                        "Mall browser acceptance failed; inspect ignored mall-browser.log");
+                            } finally {
+                                if (process.isAlive()) {
+                                    process.descendants().forEach(child -> child.destroyForcibly());
+                                    process.destroyForcibly().waitFor();
+                                }
+                                if (Files.exists(log)) {
+                                    String output = Files.readString(log);
+                                    for (String key :
+                                            List.of(
+                                                    "JSS_TEST_HTTP_PASSWORD",
+                                                    "JSS_TEST_MYSQL_PASSWORD",
+                                                    "JSS_TEST_REDIS_PASSWORD")) {
+                                        String secret = System.getenv(key);
+                                        if (secret != null && !secret.isEmpty())
+                                            output = output.replace(secret, "<redacted>");
+                                    }
+                                    Files.writeString(log, output);
+                                }
+                            }
+                        }));
+    }
 
     @DynamicPropertySource
     static void ownedConnections(DynamicPropertyRegistry registry) {
@@ -269,13 +349,7 @@ class JssMallHttpIT {
                                         "POST",
                                         "/admin-api/product/brand/create",
                                         Map.of(
-                                                "name",
-                                                name,
-                                                "picUrl",
-                                                "/static/logo.png",
-                                                "sort",
-                                                1,
-                                                "status",
+                                                "name", name, "picUrl", image, "sort", 1, "status",
                                                 0),
                                         admin,
                                         1)));
@@ -286,8 +360,8 @@ class JssMallHttpIT {
         product.put("description", "<p>JSS 商城真实接口验收</p>");
         product.put("categoryId", category);
         product.put("brandId", brand);
-        product.put("picUrl", "/static/logo.png");
-        product.put("sliderPicUrls", List.of("/static/logo.png"));
+        product.put("picUrl", image);
+        product.put("sliderPicUrls", List.of(image));
         product.put("sort", 1);
         product.put("specType", false);
         product.put("deliveryTypes", List.of(1));
@@ -307,7 +381,7 @@ class JssMallHttpIT {
                                 "costPrice",
                                 800,
                                 "picUrl",
-                                "/static/logo.png",
+                                image,
                                 "stock",
                                 8,
                                 "firstBrokeragePrice",
@@ -334,7 +408,7 @@ class JssMallHttpIT {
                                         "name",
                                         categoryName,
                                         "picUrl",
-                                        "/static/logo.png",
+                                        image,
                                         "sort",
                                         1,
                                         "status",

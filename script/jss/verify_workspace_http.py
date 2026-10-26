@@ -29,14 +29,18 @@ def main():
     sys.stdout.reconfigure(encoding='utf8', errors='replace')
     live = mysql.status()
     assert live['port'] == 13316
-    redis.start(None, 16379)
-    previous = json.loads(redis.STATE.read_text(encoding='utf8'))
-    redis.stop()
-    deadline = time.monotonic() + 10
-    while redis.process_live(previous['pid']):
-        if time.monotonic() >= deadline:
-            raise RuntimeError('Previous owned Redis process remains live; refusing replacement')
-        time.sleep(0.1)
+    try:
+        redis.status()
+    except ConnectionRefusedError:
+        pass  # start() below still verifies that the recorded process has ended.
+    else:
+        previous = json.loads(redis.STATE.read_text(encoding='utf8'))
+        redis.stop()
+        deadline = time.monotonic() + 10
+        while redis.process_live(previous['pid']):
+            if time.monotonic() >= deadline:
+                raise RuntimeError('Previous owned Redis process remains live; refusing replacement')
+            time.sleep(0.1)
     redis.start(None, 16379)
     owned = json.loads(redis.STATE.read_text(encoding='utf8'))
     config = configparser.ConfigParser(interpolation=None)
@@ -59,7 +63,7 @@ def main():
         baseline = (ROOT / 'sql/mysql/ruoyi-vue-pro.sql').read_text(encoding='utf8')
         if re.search(r'(?im)^\s*(USE\s|(?:CREATE|DROP)\s+DATABASE\b|GRANT\b|CREATE\s+USER\b|SET\s+GLOBAL\b)', baseline):
             raise ValueError('Framework baseline contains commands outside the disposable schema')
-        mysql.sql(f'USE `{schema}`;\n' + baseline)
+        mysql.sql(f'USE `{schema}`;\n' + baseline, timeout=30)
         state = json.loads(mysql.STATE.read_text(encoding='utf8'))
         os.environ.update(JSS_DB_NAME=schema, JSS_DB_USER='root', JSS_DB_PASSWORD=password,
                           JSS_DB_HOST='127.0.0.1', JSS_DB_PORT='13316', JSS_MYSQL_HOME=state['mysqlHome'])
@@ -72,7 +76,7 @@ def main():
         quartz = Path.home() / '.m2/repository/org/quartz-scheduler/quartz/2.5.2/quartz-2.5.2.jar'
         with zipfile.ZipFile(quartz) as archive:
             ddl = archive.read('org/quartz/impl/jdbcjobstore/tables_mysql_innodb.sql').decode('utf8')
-        mysql.sql(f'USE `{schema}`;\n' + ddl)
+        mysql.sql(f'USE `{schema}`;\n' + ddl, timeout=30)
         environment = dict(os.environ,
                            JSS_TEST_HTTP_SCHEMA=schema,
                            JSS_TEST_MYSQL_URL=f'jdbc:mysql://127.0.0.1:13316/{schema}?serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true',
@@ -106,7 +110,7 @@ def main():
         report = ROOT / 'yudao-server/target/surefire-reports/TEST-cn.iocoder.yudao.server.integration.JssWorkspaceHttpIT.xml'
         assert report.stat().st_mtime >= started
         suite = ET.parse(report).getroot()
-        expected = '8' if args.browser else '7'
+        expected = '10' if args.browser else '9'
         assert suite.attrib['tests'] == expected and all(suite.attrib[k] == '0' for k in ['errors', 'failures', 'skipped']), suite.attrib
         for case in suite.findall('testcase'):
             print('PASS ' + case.attrib['name'])

@@ -176,6 +176,17 @@ class JssWorkspaceHttpIT {
 
     private Map<String, Object> api(
             String method, String path, Object body, String token, long tenant) throws Exception {
+        return api(method, path, body, token, tenant, Map.of());
+    }
+
+    private Map<String, Object> api(
+            String method,
+            String path,
+            Object body,
+            String token,
+            long tenant,
+            Map<String, String> headers)
+            throws Exception {
         int port = environment.getRequiredProperty("local.server.port", Integer.class);
         var request =
                 HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + path))
@@ -183,6 +194,7 @@ class JssWorkspaceHttpIT {
                         .header("tenant-id", String.valueOf(tenant))
                         .header("Content-Type", "application/json");
         if (token != null) request.header("Authorization", "Bearer " + token);
+        headers.forEach(request::header);
         request.method(
                 method,
                 body == null
@@ -259,6 +271,14 @@ class JssWorkspaceHttpIT {
                 api("GET", "/admin-api/system/user/page?pageNo=1&pageSize=10", null, "test1", 1),
                 401);
         String member = login("member", "13800009001");
+        try (var connection = datasource.getConnection();
+                var statement = connection.createStatement();
+                var rows =
+                        statement.executeQuery(
+                                "SELECT g.name FROM member_user u JOIN member_group g ON g.id=u.group_id AND g.tenant_id=u.tenant_id WHERE u.id=23001 AND u.tenant_id=1")) {
+            assertTrue(rows.next());
+            assertEquals("员工", rows.getString(1));
+        }
         assertEquals(
                 23001L,
                 ((Number) data(api("GET", "/app-api/member/user/get", null, member, 1)).get("id"))
@@ -268,6 +288,30 @@ class JssWorkspaceHttpIT {
         assertEquals("23001", context.get("memberUserId"));
         assertEquals(Boolean.FALSE, ((Map<?, ?>) context.get("capabilities")).get("workspace"));
         expectCode(api("POST", "/app-api/jss/auth/workspace-session", null, member, 1), 403);
+        var forged =
+                data(
+                        api(
+                                "GET",
+                                "/app-api/jss/auth/context?adminUserId=1&workspace=true",
+                                null,
+                                member,
+                                1));
+        assertEquals("23001", forged.get("memberUserId"));
+        assertEquals(Boolean.FALSE, ((Map<?, ?>) forged.get("capabilities")).get("workspace"));
+        expectCode(
+                api(
+                        "POST",
+                        "/app-api/jss/auth/workspace-session",
+                        Map.of(
+                                "adminUserId",
+                                1,
+                                "workspace",
+                                true,
+                                "permissions",
+                                List.of("*:*:*")),
+                        member,
+                        1),
+                403);
         expectCode(
                 api("GET", "/admin-api/system/user/page?pageNo=1&pageSize=10", null, member, 1),
                 403);
@@ -860,5 +904,94 @@ class JssWorkspaceHttpIT {
         expectCode(api("GET", page, null, renewed, 91001), 401);
         expectCode(api("GET", page, null, issueWorkspace(member, 91001), 91001), 0);
         expectCode(api("GET", "/app-api/member/user/get", null, member, 91001), 0);
+    }
+
+    private void setRoleStatus(String reviewer, long role, int status) throws Exception {
+        var configuration =
+                new HashMap<>(
+                        data(
+                                api(
+                                        "GET",
+                                        "/admin-api/system/role/get?id=" + role,
+                                        null,
+                                        reviewer,
+                                        1)));
+        configuration.keySet().retainAll(List.of("id", "name", "code", "sort", "status", "remark"));
+        configuration.put("status", status);
+        expectCode(api("PUT", "/admin-api/system/role/update", configuration, reviewer, 1), 0);
+    }
+
+    @Test
+    void enabledRolesCombineButDisabledRolesContributeNeitherEntryNorBusinessAccess()
+            throws Exception {
+        String reviewer = login("admin", "jssitreviewer");
+        String member = login("member", "13800009009");
+        expectCode(
+                api(
+                        "POST",
+                        "/admin-api/jss/identity/bind",
+                        Map.of(
+                                "memberUserId",
+                                23009,
+                                "adminUserId",
+                                23009,
+                                "reason",
+                                "Review multiple role fixture"),
+                        reviewer,
+                        1),
+                0);
+        String page = "/admin-api/system/user/page?pageNo=1&pageSize=10";
+        try {
+            assertCapability(member, true);
+            String entryOnly = issueWorkspace(member);
+            expectCode(api("GET", page, null, entryOnly, 1), 403);
+            setRoleStatus(reviewer, 23009, 1);
+            assertCapability(member, false);
+            expectCode(api("GET", page, null, entryOnly, 1), 401);
+            expectCode(api("POST", "/app-api/jss/auth/workspace-session", null, member, 1), 403);
+            setRoleStatus(reviewer, 23010, 0);
+            assertCapability(member, true);
+            expectCode(api("GET", page, null, entryOnly, 1), 401);
+            String full = issueWorkspace(member);
+            expectCode(api("GET", page, null, full, 1), 0);
+            setRoleStatus(reviewer, 23009, 0);
+            setRoleStatus(reviewer, 23010, 1);
+            assertCapability(member, true);
+            expectCode(api("GET", page, null, full, 1), 403);
+        } finally {
+            setRoleStatus(reviewer, 23009, 0);
+            setRoleStatus(reviewer, 23010, 1);
+        }
+    }
+
+    @Test
+    void workspaceCannotUseVisitTenantHeaderEvenWhenItsNativeAdministratorCan() throws Exception {
+        String reviewer = login("admin", "jssitreviewer");
+        String member = login("member", "13800009010");
+        assertCapability(member, false);
+        expectCode(
+                api(
+                        "POST",
+                        "/admin-api/jss/identity/bind",
+                        Map.of(
+                                "memberUserId",
+                                23010,
+                                "adminUserId",
+                                1,
+                                "reason",
+                                "Review tenant-bound administrator fixture"),
+                        reviewer,
+                        1),
+                0);
+        String token = issueWorkspace(member);
+        String page = "/admin-api/system/user/page?pageNo=1&pageSize=10";
+        expectCode(api("GET", page, null, token, 1), 0);
+        expectCode(api("GET", page, null, token, 1, Map.of("visit-tenant-id", "91001")), 403);
+        var permittedNativeVisit =
+                data(api("GET", page, null, reviewer, 1, Map.of("visit-tenant-id", "91001")));
+        assertEquals(1, ((Number) permittedNativeVisit.get("total")).intValue());
+        var rows = (List<?>) permittedNativeVisit.get("list");
+        assertEquals("33001", ((Map<?, ?>) rows.getFirst()).get("id").toString());
+        expectCode(api("GET", page, null, token, 1), 0);
     }
 }

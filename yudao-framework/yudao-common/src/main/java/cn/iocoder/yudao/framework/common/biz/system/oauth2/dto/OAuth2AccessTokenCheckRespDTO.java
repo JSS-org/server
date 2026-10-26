@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * OAuth2.0 访问令牌的校验 Response DTO
@@ -39,6 +40,9 @@ public class OAuth2AccessTokenCheckRespDTO implements Serializable {
      * 授权范围的数组
      */
     private List<String> scopes;
+
+    /** Optional exact permission ceiling for application-scoped tokens; null preserves native RBAC. */
+    private Set<String> permissionLimits;
 
     /**
      * 过期时间

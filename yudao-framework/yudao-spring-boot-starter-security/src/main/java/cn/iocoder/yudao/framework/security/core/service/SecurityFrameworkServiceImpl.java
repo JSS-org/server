@@ -29,6 +29,17 @@ public class SecurityFrameworkServiceImpl implements SecurityFrameworkService {
 
     @Override
     public boolean hasAnyPermissions(String... permissions) {
+        LoginUser user = SecurityFrameworkUtils.getLoginUser();
+        if (user != null && user.getPermissionLimits() != null) {
+            if (user.getId() == null || permissions == null) return false;
+            // Filter each candidate before RBAC, so OR checks cannot combine one bounded
+            // permission with a different permission granted only by native RBAC.
+            String[] bounded =
+                    Arrays.stream(permissions)
+                            .filter(user.getPermissionLimits()::contains)
+                            .toArray(String[]::new);
+            return bounded.length > 0 && permissionApi.hasAnyPermissions(user.getId(), bounded);
+        }
         // 特殊：跨租户访问
         if (skipPermissionCheck()) {
             return true;

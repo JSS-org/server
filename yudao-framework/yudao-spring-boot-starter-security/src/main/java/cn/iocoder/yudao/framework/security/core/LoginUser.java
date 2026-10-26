@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 登录用户信息
@@ -49,6 +50,9 @@ public class LoginUser {
      * 授权范围
      */
     private List<String> scopes;
+
+    /** Null means no additional ceiling; an empty set denies every permission check. */
+    private Set<String> permissionLimits;
 
     /**
      * 过期时间

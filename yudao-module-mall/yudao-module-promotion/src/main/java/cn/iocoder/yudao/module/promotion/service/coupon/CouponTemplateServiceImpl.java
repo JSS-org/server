@@ -140,6 +140,11 @@ public class CouponTemplateServiceImpl implements CouponTemplateService {
     }
 
     @Override
+    public CouponTemplateDO getCouponTemplateForUpdate(Long id) {
+        return couponTemplateMapper.selectOneForUpdate(CouponTemplateDO::getId, id);
+    }
+
+    @Override
     public PageResult<CouponTemplateDO> getCouponTemplatePage(CouponTemplatePageReqVO pageReqVO) {
         return couponTemplateMapper.selectPage(pageReqVO);
     }

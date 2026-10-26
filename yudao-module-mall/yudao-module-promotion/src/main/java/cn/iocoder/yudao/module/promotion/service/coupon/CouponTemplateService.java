@@ -74,6 +74,9 @@ public interface CouponTemplateService {
      */
     CouponTemplateDO getCouponTemplate(Long id);
 
+    /** 在调用方事务内锁定模板，供领取额度与每人限领校验使用。 */
+    CouponTemplateDO getCouponTemplateForUpdate(Long id);
+
     /**
      * 获得优惠劵模板分页
      *

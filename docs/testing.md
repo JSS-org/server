@@ -1717,3 +1717,23 @@ python script/jss/verify_workspace_http.py --suite mall --browser
 新脚本预期十二项 HTTP，带浏览器十三项 JUnit；实际 H5 仍为两项。三个变更 Java 定向格式检查、全依赖测试编译、Python 编译及差异检查通过；测试编译日志 `.runtime/mall-wallet-concurrent-compile.log`。
 
 本轮再次尝试启动已归属 Redis，仍因读取已安装程序返回 `WinError 5` 失败，未启动新服务或创建随机库；新订单/支付竞争用例均未实际运行，不能登记并发验收或前移整合验收版本。恢复 Redis 程序读取/运行权限后，使用原 wrapper 串行执行商城 HTTP/H5 并检查无失败/错误/跳过、随机库清理和日志密码扫描；工作台真实回归与最新完整构建结论仍归属旧版本。
+
+## 2026-10-26 优惠券领取与使用：真实 MySQL Service 回归
+
+新增 `python script/jss/verify_coupon_services.py`：只使用已归属的 13316 MySQL，创建 `jss_coupon_service_verify_<随机值>`，载入原 V006，实际装配 `CouponServiceImpl`、`CouponTemplateServiceImpl`、两个生产 Mapper、租户插件及 Spring 事务代理；不使用 H2、Mapper/Service 替身或 Redis。三个未调用的会员/商品 API 仅为装配替身，不能视为完整模块/API/授权验收。日志先遮盖数据库密码再落盘，报告校验本轮时效与测试计数，最终删除随机 schema。
+
+首轮六项中一通过、五失败，零错误/跳过：每人限领一张时六并发实际全部成功；批量领取在剩余量不足时仍成功；停用模板仍发券；缺失/外租户模板与他人券使用抛空指针。数据库写入失败回滚场景通过。证据 `.runtime/mall-coupon-services-before.log`、`mall-coupon-services-before-detail.log`、`mall-coupon-services-before.xml`。
+
+修复后同模板领取先锁定模板行，再以当前读核验每人已领数量；避免等待期间沿用可重复读旧快照。校验本批领取后不超总量，Mapper 的计数条件也按完整增量比较；模板停用返回 `1013004006`，缺失模板/非本人券返回已有业务错误。无迁移、无新锁服务。注册发券内部入口复用相同校验，注册/购买赠券完整流程仍待单独验收。
+
+```powershell
+$env:JSS_MAVEN_COMMAND='D:/Project/JSS/JSS-server/.runtime/maven-integration.cmd'
+python script/jss/verify_coupon_services.py
+.runtime/maven-integration.cmd -B -ntp -Pjss-mall -pl yudao-server -am test '-Dtest=cn.iocoder.yudao.module.promotion.**,TradeCouponPriceCalculatorTest' '-Dsurefire.failIfNoSpecifiedTests=false' '-Dspotless.skip=true'
+```
+
+最终六项真实 MySQL Service 测试全部通过，零失败/错误/跳过，12.91 秒；`.runtime/mall-coupon-services-final.log`。核对总量 3 时先领 2、批量再领 2 拒绝且仍为 2、最后领 1；同会员六请求即使先在外层 RR 事务建立旧快照也只有一成功/五限领拒绝，实际券与模板计数均为 1。其他场景验证停用/过期及跨租户拒绝，券 UNUSED→USED→UNUSED→USED→EXPIRE、重复使用/返还拒绝，以及随机库内触发器故意拒绝写入时实际异常来自该触发器、券与计数均回滚为零。
+
+营销专项 94 项中 20 执行通过、74 既有/条件跳过；交易优惠计算一项通过，合计 21 执行通过、74 跳过，零失败/错误，完整依赖及服务器测试编译成功；`.runtime/mall-coupon-promotion-regression.log`。其中六项新真实测试在无环境变量的常规回归中条件跳过，其真实结果以独立脚本为准，不能重复计数。八个变更 Java 定向 Spotless、Python 编译和差异检查通过。
+
+`JssMallHttpIT` 已补一个尚未执行的实际优惠券用例：管理 API 创建仅适用本轮商品的券，会员领券/限领/归属拒绝，1299−200=1099 分结算、服务端重算和支付单金额，用券后拒绝重复下单且失败无订单/库存副作用，两轮取消返还后再用，停用模板拒绝发券。脚本新预期十三项 HTTP、带浏览器十四项 JUnit，实际 H5 仍两项。该 HTTP 用例与前轮订单/支付竞争均因本机 Redis 程序读取权限 `WinError 5` 尚未运行；无新的 HTTP/H5、全量 verify 或发布结论，开发库/服务与整合验收版本未改动。

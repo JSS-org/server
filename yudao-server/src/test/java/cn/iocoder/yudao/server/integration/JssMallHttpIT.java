@@ -31,6 +31,8 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -641,6 +643,147 @@ class JssMallHttpIT {
         body.put("deliveryType", 1);
         body.put("addressId", address);
         return body;
+    }
+
+    @Test
+    void claimedCouponDiscountsOwnedOrdersAndCancellationReturnsItForReuse() throws Exception {
+        String couponName = name + "Coupon";
+        var template = new HashMap<String, Object>();
+        template.put("name", couponName);
+        template.put("description", "隔离 HTTP 优惠券下单与取消返还");
+        template.put("totalCount", 2);
+        template.put("takeLimitCount", 1);
+        template.put("takeType", 1);
+        template.put("usePrice", 1000);
+        template.put("productScope", 2);
+        template.put("productScopeValues", List.of(spu));
+        template.put("validityType", 1);
+        var format = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        template.put("validStartTime", LocalDateTime.now().minusHours(1).format(format));
+        template.put("validEndTime", LocalDateTime.now().plusDays(1).format(format));
+        template.put("discountType", 1);
+        template.put("discountPrice", 200);
+        long templateId =
+                number(
+                        ok(
+                                api(
+                                        "POST",
+                                        "/admin-api/promotion/coupon-template/create",
+                                        template,
+                                        admin,
+                                        1)));
+        assertEquals(
+                true,
+                get("/app-api/promotion/coupon-template/get?id=" + templateId, buyer)
+                        .get("canTake"));
+        assertEquals(
+                false,
+                ok(
+                        api(
+                                "POST",
+                                "/app-api/promotion/coupon/take",
+                                Map.of("templateId", templateId),
+                                buyer,
+                                1)));
+        rejected(
+                api(
+                        "POST",
+                        "/app-api/promotion/coupon/take",
+                        Map.of("templateId", templateId),
+                        buyer,
+                        1));
+        assertEquals(
+                false,
+                get("/app-api/promotion/coupon-template/get?id=" + templateId, buyer)
+                        .get("canTake"));
+        var coupon =
+                list(
+                                get(
+                                                "/app-api/promotion/coupon/page?pageNo=1&pageSize=100&status=1",
+                                                buyer)
+                                        .get("list"))
+                        .stream()
+                        .filter(item -> couponName.equals(item.get("name")))
+                        .findFirst()
+                        .orElseThrow();
+        long couponId = number(coupon.get("id"));
+        assertNull(ok(api("GET", "/app-api/promotion/coupon/get?id=" + couponId, null, other, 1)));
+        var before = orderFootprint();
+        var body = orderBody(List.of(Map.of("skuId", sku, "count", 1)));
+        body.put("couponId", couponId);
+        body.put("addressId", otherAddress);
+        rejected(api("POST", "/app-api/trade/order/create", body, other, 1));
+        assertEquals(before, orderFootprint());
+        assertInventory(8);
+        body.put("addressId", address);
+        var settlement =
+                get(
+                        "/app-api/trade/order/settlement?items%5B0%5D.skuId="
+                                + sku
+                                + "&items%5B0%5D.count=1&pointStatus=false&deliveryType=1&addressId="
+                                + address
+                                + "&couponId="
+                                + couponId,
+                        buyer);
+        assertEquals(1099, number(object(settlement.get("price")).get("payPrice")));
+        assertEquals(200, number(object(settlement.get("price")).get("couponPrice")));
+        body.put("payPrice", 1);
+        for (int attempt = 0; attempt < 2; attempt++) {
+            var created = object(ok(api("POST", "/app-api/trade/order/create", body, buyer, 1)));
+            long order = number(created.get("id"));
+            var detail = get("/app-api/trade/order/get-detail?id=" + order, buyer);
+            assertEquals(1099, number(detail.get("payPrice")));
+            assertEquals(200, number(detail.get("couponPrice")));
+            assertEquals(
+                    1099,
+                    number(
+                            get("/app-api/pay/order/get?id=" + created.get("payOrderId"), buyer)
+                                    .get("price")));
+            assertEquals(
+                    2,
+                    number(
+                            get("/app-api/promotion/coupon/get?id=" + couponId, buyer)
+                                    .get("status")));
+            assertEquals(
+                    order,
+                    scalar("SELECT use_order_id FROM promotion_coupon WHERE id=" + couponId));
+            assertInventory(7);
+            var after = orderFootprint();
+            rejected(api("POST", "/app-api/trade/order/create", body, buyer, 1));
+            assertEquals(after, orderFootprint());
+            assertInventory(7);
+            ok(api("DELETE", "/app-api/trade/order/cancel?id=" + order, null, buyer, 1));
+            assertEquals(
+                    1,
+                    number(
+                            get("/app-api/promotion/coupon/get?id=" + couponId, buyer)
+                                    .get("status")));
+            assertInventory(8);
+            rejected(api("DELETE", "/app-api/trade/order/cancel?id=" + order, null, buyer, 1));
+            assertInventory(8);
+        }
+        assertEquals(
+                1,
+                number(
+                        get("/admin-api/promotion/coupon-template/get?id=" + templateId, admin)
+                                .get("takeCount")));
+        ok(
+                api(
+                        "PUT",
+                        "/admin-api/promotion/coupon-template/update-status",
+                        Map.of("id", templateId, "status", 1),
+                        admin,
+                        1));
+        assertEquals(
+                1_013_004_006,
+                number(
+                        api(
+                                        "POST",
+                                        "/app-api/promotion/coupon/take",
+                                        Map.of("templateId", templateId),
+                                        other,
+                                        1)
+                                .get("code")));
     }
 
     private long scalar(String sql) throws Exception {

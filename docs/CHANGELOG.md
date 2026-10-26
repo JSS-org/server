@@ -4194,3 +4194,40 @@ H5 尚只有未支付取消，接下来补会员 UI 钱包付款及售后退款�
 ### 未做 / 后续
 
 先恢复 Redis 程序读取/运行权限并完成十二项实际 HTTP 与两项 H5，再据结果处理其他并发问题。最新真实验收仍为 `a0a583c44a`、完整构建为 `1fdf0a0f82`；营销、统计、工作台其他模块、第三方和真机发布继续保留。
+
+## [2026-10-26 22:12 ~ 22:31] 修复真实优惠券超领、状态与归属校验
+
+### 意图
+
+继续 P4/A15 优惠券业务，在 HTTP 环境受阻时先以实际 MySQL、生产 Service/Mapper 和 Spring 事务复现领取、限额、归属及返还问题，补后续真实交易验收用例。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `.../promotion/service/coupon/CouponServiceImpl.java` | 修改 | 事务内模板行锁、当前读限领及批次总量校验；拒绝停用模板和非本人/缺失优惠券 |
+| `.../promotion/service/coupon/CouponTemplateService.java`、`CouponTemplateServiceImpl.java` | 修改 | 提供调用方事务内的模板锁定查询 |
+| `.../promotion/dal/mysql/coupon/CouponMapper.java`、`CouponTemplateMapper.java` | 修改 | 已领取券当前读；总量更新比较完整增量 |
+| `.../promotion/enums/ErrorCodeConstants.java` | 修改 | 模板停用业务码 `1013004006` |
+| `.../promotion/integration/JssCouponMySqlServiceIT.java` | 新增 | 六项实际 MySQL Service/事务测试，含外层 RR 快照和数据库写失败回滚 |
+| `script/jss/verify_coupon_services.py` | 新增 | 已归属 MySQL、随机库、报告时效与数量核验、密码遮盖及清理 |
+| `yudao-server/.../JssMallHttpIT.java`、`script/jss/verify_workspace_http.py` | 修改 | 增加优惠券领取/结算/取消再用的待运行 HTTP 场景，预期十三项 HTTP |
+| `docs/testing.md`、`docs/CHANGELOG.md` | 修改 | 记录真实复现、修复与验收边界 |
+
+### 结构关系
+
+沿用优惠券 Service → 模板 Service/两个 Mapper → MySQL。领取事务持有模板行锁，随后当前读已领取券，串行核验同模板总量与每人限领；实际券插入与模板计数仍在同一 Spring 事务中。注册内部发券复用相同入口校验；没有新表、迁移、锁服务、依赖或对外业务 API。测试的会员/商品 API 只用于装配，未调用，不计外部能力验收。
+
+### 验证证据
+
+首轮六项中五失败：六并发限领实际六成功，批量超余量未拒绝，停用券可领，缺失模板/他人券抛空指针；一项写入失败回滚通过，零错误/跳过。最终 `python script/jss/verify_coupon_services.py` 六项全过、零失败/错误/跳过，12.91 秒；外层 RR 旧快照场景仍为一成功/五拒绝，券和模板计数一致。日志 `.runtime/mall-coupon-services-before*` 与 `mall-coupon-services-final.log`。
+
+营销/交易优惠专项 21 项执行通过、74 既有/条件跳过、零失败/错误，所有服务器依赖和测试编译通过；`.runtime/mall-coupon-promotion-regression.log`。八个 Java 定向格式、Python 编译及差异检查通过。随机库已删除；触发器只在该随机库内创建并在 finally 删除，没有改写历史迁移或操作开发数据。
+
+### 影响面 / 风险
+
+影响直接领取及复用该内部校验的发券路径：同模板请求等待行锁，停用模板或额度不足返回受控业务错误。保留实际事务回滚、租户过滤和库存/订单链路；未做压力测试。已有券的使用与返还仍按券状态和有效期，不因模板停用自动失效。没有改开发库、运行服务、jar、远端或部署。
+
+### 未做 / 后续
+
+新增实际 HTTP 用例尚未执行，Redis 程序读取仍为 `WinError 5`。恢复后商城要求十三项 HTTP、两项 H5 无失败/错误/跳过，再继续优惠券 H5、注册/赠券及其他营销。完整构建、统计、其他管理迁移、第三方和真机发布继续保留，整合验收版本不前移。

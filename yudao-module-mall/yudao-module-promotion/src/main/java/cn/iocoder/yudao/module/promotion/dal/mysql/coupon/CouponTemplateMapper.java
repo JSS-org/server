@@ -59,7 +59,7 @@ public interface CouponTemplateMapper extends BaseMapperX<CouponTemplateDO> {
         if (incrCount > 0) {
             updateWrapper.and(
                     i ->
-                            i.apply("take_count < total_count")
+                            i.apply("take_count + {0} <= total_count", incrCount)
                                     .or()
                                     .eq(
                                             CouponTemplateDO::getTotalCount,

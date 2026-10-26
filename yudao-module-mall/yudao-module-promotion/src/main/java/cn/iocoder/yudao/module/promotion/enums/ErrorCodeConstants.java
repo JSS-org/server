@@ -32,6 +32,7 @@ public interface ErrorCodeConstants {
     ErrorCode COUPON_TEMPLATE_USER_ALREADY_TAKE = new ErrorCode(1_013_004_003, "用户已领取过此优惠券");
     ErrorCode COUPON_TEMPLATE_EXPIRED = new ErrorCode(1_013_004_004, "优惠券已过期");
     ErrorCode COUPON_TEMPLATE_CANNOT_TAKE = new ErrorCode(1_013_004_005, "领取方式不正确");
+    ErrorCode COUPON_TEMPLATE_DISABLED = new ErrorCode(1_013_004_006, "优惠券模板已停用");
 
     // ========== 优惠劵 1-013-005-000 ==========
     ErrorCode COUPON_NOT_EXISTS = new ErrorCode(1_013_005_000, "优惠券不存在");

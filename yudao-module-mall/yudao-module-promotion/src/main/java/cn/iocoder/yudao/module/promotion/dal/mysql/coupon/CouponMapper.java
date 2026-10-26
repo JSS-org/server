@@ -102,6 +102,16 @@ public interface CouponMapper extends BaseMapperX<CouponDO> {
                 map -> MapUtil.getInt(map, countAlias));
     }
 
+    /** 领取时已持有模板行锁；当前读确保等待后能看到其它领取事务已提交的券。 */
+    default List<CouponDO> selectListByTemplateIdAndUserIdForUpdate(
+            Long templateId, Collection<Long> userIds) {
+        return selectList(
+                new LambdaQueryWrapperX<CouponDO>()
+                        .eq(CouponDO::getTemplateId, templateId)
+                        .in(CouponDO::getUserId, userIds)
+                        .last("FOR UPDATE"));
+    }
+
     default List<CouponDO> selectListByStatusAndValidEndTimeLe(
             Integer status, LocalDateTime validEndTime) {
         return selectList(

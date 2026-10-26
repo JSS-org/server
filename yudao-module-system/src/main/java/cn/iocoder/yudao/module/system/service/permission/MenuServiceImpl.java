@@ -77,6 +77,10 @@ public class MenuServiceImpl implements MenuService {
         if (menuMapper.selectById(updateReqVO.getId()) == null) {
             throw exception(MENU_NOT_EXISTS);
         }
+        if (MenuTypeEnum.BUTTON.getType().equals(updateReqVO.getType())
+                && menuMapper.selectCountByParentId(updateReqVO.getId()) > 0) {
+            throw exception(MENU_EXISTS_CHILDREN);
+        }
         // 校验父菜单存在
         validateParentMenu(updateReqVO.getParentId(), updateReqVO.getId());
         // 校验菜单（自己）
@@ -104,7 +108,9 @@ public class MenuServiceImpl implements MenuService {
             throw exception(MENU_NOT_EXISTS);
         }
         // 标记删除
-        menuMapper.deleteById(id);
+        if (menuMapper.deleteById(id) != 1) {
+            throw exception(MENU_NOT_EXISTS);
+        }
         // 删除授予给角色的权限
         permissionService.processMenuDeleted(id);
     }
@@ -115,8 +121,15 @@ public class MenuServiceImpl implements MenuService {
             value = RedisKeyConstants.PERMISSION_MENU_ID_LIST,
             allEntries = true) // allEntries 清空所有缓存，因为 Spring Cache 不支持按照 ids 批量删除
     public void deleteMenuList(List<Long> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return;
+        }
+        List<Long> targets = new ArrayList<>(new LinkedHashSet<>(ids));
+        if (menuMapper.selectByIds(targets).size() != targets.size()) {
+            throw exception(MENU_NOT_EXISTS);
+        }
         // 校验是否还有子菜单
-        ids.forEach(
+        targets.forEach(
                 id -> {
                     if (menuMapper.selectCountByParentId(id) > 0) {
                         throw exception(MENU_EXISTS_CHILDREN);
@@ -124,9 +137,11 @@ public class MenuServiceImpl implements MenuService {
                 });
 
         // 标记删除
-        menuMapper.deleteByIds(ids);
+        if (menuMapper.deleteByIds(targets) != targets.size()) {
+            throw exception(MENU_NOT_EXISTS);
+        }
         // 删除授予给角色的权限
-        ids.forEach(id -> permissionService.processMenuDeleted(id));
+        targets.forEach(id -> permissionService.processMenuDeleted(id));
     }
 
     @Override
@@ -153,7 +168,7 @@ public class MenuServiceImpl implements MenuService {
 
         // 遍历 menu 菜单，查找不是禁用的菜单，添加到 enabledMenus 结果
         List<MenuDO> enabledMenus = new ArrayList<>();
-        Set<Long> disabledMenuCache = new HashSet<>(); // 存下递归搜索过被禁用的菜单，防止重复的搜索
+        Map<Long, Boolean> disabledMenuCache = new HashMap<>();
         for (MenuDO menu : menuList) {
             if (isMenuDisabled(menu, menuMap, disabledMenuCache)) {
                 continue;
@@ -164,31 +179,32 @@ public class MenuServiceImpl implements MenuService {
     }
 
     private boolean isMenuDisabled(
-            MenuDO node, Map<Long, MenuDO> menuMap, Set<Long> disabledMenuCache) {
-        // 如果已经判定是禁用的节点，直接结束
-        if (disabledMenuCache.contains(node.getId())) {
-            return true;
+            MenuDO node, Map<Long, MenuDO> menuMap, Map<Long, Boolean> disabledMenuCache) {
+        // Iterative ancestry traversal also fails closed for legacy cycles and missing parents.
+        Set<Long> path = new LinkedHashSet<>();
+        boolean disabled;
+        while (true) {
+            if (node == null) {
+                disabled = true;
+                break;
+            }
+            Boolean known = disabledMenuCache.get(node.getId());
+            if (known != null) {
+                disabled = known;
+                break;
+            }
+            if (!path.add(node.getId()) || !CommonStatusEnum.isEnable(node.getStatus())) {
+                disabled = true;
+                break;
+            }
+            if (ObjUtil.equal(node.getParentId(), ID_ROOT)) {
+                disabled = false;
+                break;
+            }
+            node = menuMap.get(node.getParentId());
         }
-
-        // 1. 先判断自身是否禁用
-        if (CommonStatusEnum.isDisable(node.getStatus())) {
-            disabledMenuCache.add(node.getId());
-            return true;
-        }
-
-        // 2. 遍历到 parentId 为根节点，则无需判断
-        Long parentId = node.getParentId();
-        if (ObjUtil.equal(parentId, ID_ROOT)) {
-            return false;
-        }
-
-        // 3. 继续遍历 parent 节点
-        MenuDO parent = menuMap.get(parentId);
-        if (parent == null || isMenuDisabled(parent, menuMap, disabledMenuCache)) {
-            disabledMenuCache.add(node.getId());
-            return true;
-        }
-        return false;
+        for (Long id : path) disabledMenuCache.put(id, disabled);
+        return disabled;
     }
 
     @Override
@@ -199,7 +215,9 @@ public class MenuServiceImpl implements MenuService {
     @Override
     @Cacheable(value = RedisKeyConstants.PERMISSION_MENU_ID_LIST, key = "#permission")
     public List<Long> getMenuIdListByPermissionFromCache(String permission) {
-        List<MenuDO> menus = menuMapper.selectListByPermission(permission);
+        // API authorization must agree with permission-info when a node or its parent is disabled.
+        List<MenuDO> menus = filterDisableMenus(menuMapper.selectList());
+        menus.removeIf(menu -> !Objects.equals(permission, menu.getPermission()));
         return convertList(menus, MenuDO::getId);
     }
 
@@ -251,6 +269,15 @@ public class MenuServiceImpl implements MenuService {
         if (!MenuTypeEnum.DIR.getType().equals(menu.getType())
                 && !MenuTypeEnum.MENU.getType().equals(menu.getType())) {
             throw exception(MENU_PARENT_NOT_DIR_OR_MENU);
+        }
+        Set<Long> visited = new HashSet<>();
+        while (menu != null && !ID_ROOT.equals(menu.getId())) {
+            if (Objects.equals(childId, menu.getId()) || !visited.add(menu.getId())) {
+                throw exception(MENU_PARENT_ERROR);
+            }
+            if (ID_ROOT.equals(menu.getParentId())) break;
+            menu = menuMapper.selectById(menu.getParentId());
+            if (menu == null) throw exception(MENU_PARENT_NOT_EXISTS);
         }
     }
 

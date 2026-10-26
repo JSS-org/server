@@ -4526,3 +4526,36 @@ Redis程序仍无法读取，商城/工作台真实HTTP/H5需恢复后串行运�
 ### 未做 / 后续
 
 Redis安装程序仍无法读取，最新商城/工作台真实HTTP/H5需恢复后串行执行，含新增公告与备注场景。在线推送、真机/原生包、其他模块及发布未完成；整合验收版本不前移，完整目标继续进行中。
+
+## [2026-10-27 03:00 ~ 03:30] 菜单循环与停用权限保护、批删校验及共享授权清理
+
+### 意图
+
+继续双端整合P5菜单管理，先修复真实Service暴露的层级循环、停用权限与删除完整性，保持平台共享菜单和租户角色授权的关系一致。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `MenuServiceImpl.java` | 修改 | 祖先链拒绝后代/循环/孤儿，带子项不能改按钮；迭代过滤脏结构/停用祖先并用于权限编号查询；批删去重/完整存在及影响数校验 |
+| `PermissionServiceImpl.java` | 修改 | 删除平台共享菜单时以受控ignore租户范围清理所有租户的对应role_menu，执行后恢复原上下文 |
+| `ErrorCodeConstants.java` | 修改 | MENU_PARENT_ERROR保留编码并明确自己/后代/循环含义 |
+| `JssMenuMySqlServiceIT.java`、`verify_menu_services.py` | 新增 | 八项实际MySQL目标/事务测试，隔离原始DDL、报告时效/保存和finally清理 |
+| `MenuServiceImplTest.java` | 修改 | 权限查询使用显式有效状态/根节点，加入停用/孤儿排除断言 |
+| `docs/testing.md`、`docs/CHANGELOG.md` | 追加 | 实际复现、结果及Redis/HTTP边界 |
+
+### 结构关系
+
+MenuController原接口继续调用MenuServiceImpl与MenuMapper；菜单仍@TenantIgnore平台共享。删除事务内调用原PermissionServiceImpl，再经租户忽略上下文删除该菜单在所有租户的role_menu，异常与外层菜单删除共同回滚。权限缓存查询新增祖先有效性过滤，原缓存名/全局ignore-cache及更新清理切面保持。无新表、迁移、依赖、接口或模块连接，architecture无需结构调整。
+
+### 验证证据
+
+`python script/jss/verify_menu_services.py` 有效修复前八项三通过/四失败/一栈溢出错误；最终八项实际MySQL全过，15.166秒，零失败/错误/跳过，随机库残留0。含后续SQL触发器失败/外层回滚、跨租户授权清理和万层迭代过滤，详见testing及 `.runtime/menu-services-verified.log`、`.runtime/jss-mysql/menu-service-test.xml`。服务器及依赖测试编译、菜单/角色/权限74项执行通过，八项MySQL条件跳过，`.runtime/menu-regression-final.log`；五Java定向Spotless、Python编译和差异检查通过。测试配置手工连线实际目标/Mapper/事务，不含Redis切面/HTTP或实际RBAC。
+
+### 影响面 / 风险
+
+混合缺失批次现在整批拒绝，重复ID只删一次；含子项批次仍要求先删下级。停用自身或祖先后权限编号不再返回，孤儿/循环/未知状态不授予权限；有子项改按钮被拒绝。共享菜单删除会清理其他租户关联，此为全局资源删除的必要范围，角色自身不删除。冷缓存读取完整菜单树，需实际压力测试；跨租户角色反查缓存/事务提交后的失效尚需真实Redis验证。没有开发服务部署或历史结构清理。
+
+### 未做 / 后续
+
+Redis程序仍不可读，真实菜单HTTP/H5/RBAC/套餐/缓存恢复、并发改层级和增删竞争、其他模块与真机/发布继续未完成；八项Service不能替代这些证据。前端菜单四页及真实用例在独立仓库继续，整合验收版本不前移。

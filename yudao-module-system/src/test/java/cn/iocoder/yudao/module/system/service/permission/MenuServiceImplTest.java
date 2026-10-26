@@ -211,10 +211,12 @@ public class MenuServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetMenuIdListByPermissionFromCache() {
         // mock 数据
-        MenuDO menu100 = randomPojo(MenuDO.class);
+        MenuDO menu100 = randomPojo(MenuDO.class, menu -> menu.setParentId(ID_ROOT).setStatus(0));
         menuMapper.insert(menu100);
         MenuDO menu101 = randomPojo(MenuDO.class);
         menuMapper.insert(menu101);
+        menuMapper.insert(cloneIgnoreId(menu100, menu -> menu.setStatus(1)));
+        menuMapper.insert(cloneIgnoreId(menu100, menu -> menu.setParentId(Long.MAX_VALUE)));
         // 准备参数
         String permission = menu100.getPermission();
 
@@ -223,6 +225,8 @@ public class MenuServiceImplTest extends BaseDbUnitTest {
         // 断言
         assertEquals(1, ids.size());
         assertEquals(menu100.getId(), ids.get(0));
+        menuMapper.updateById(new MenuDO().setId(menu100.getId()).setStatus(1));
+        assertTrue(menuService.getMenuIdListByPermissionFromCache(permission).isEmpty());
     }
 
     @Test

@@ -11,6 +11,7 @@ import cn.iocoder.yudao.framework.common.biz.system.permission.dto.DeptDataPermi
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
 import cn.iocoder.yudao.framework.datapermission.core.annotation.DataPermission;
+import cn.iocoder.yudao.framework.tenant.core.util.TenantUtils;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.MenuDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleMenuDO;
@@ -183,7 +184,11 @@ public class PermissionServiceImpl implements PermissionService {
     @Override
     @CacheEvict(value = RedisKeyConstants.MENU_ROLE_ID_LIST, key = "#menuId")
     public void processMenuDeleted(Long menuId) {
-        roleMenuMapper.deleteListByMenuId(menuId);
+        // Menus are platform-shared; removing one must remove grants in every tenant as well.
+        TenantUtils.executeIgnore(
+                () -> {
+                    roleMenuMapper.deleteListByMenuId(menuId);
+                });
     }
 
     @Override

@@ -1887,3 +1887,15 @@ python script/jss/verify_notice_services.py
 最终常规专项13项中八项执行通过（七项H2 Service、一项生产JSON/Bean转换序列化）、五项实际MySQL条件跳过，零失败/错误，`.runtime/notice-final-regression.log`。序列化验证公告实体不带后台备注、管理VO仍带备注；没有发送消息或调用WebSocket。服务器30模块依赖与测试编译已通过，`.runtime/notice-regression.log`；补@JsonIgnore后system依赖编译及最终专项再次成功。六个变更Java定向Spotless、三个Python编译、差异检查通过。没有新全量verify或真实HTTP/H5/RBAC结果。
 
 Redis程序仍读取拒绝，真实公告CRUD/备注/权限/租户与完整商城/工作台回归待恢复后串行运行；WebSocket在线消息、真机、导出及其他模块继续待验，不以Service或Flyway检查代替。详见architecture、sql/jss/README及前端通知公告说明。
+
+## 2026-10-27 菜单层级、停用权限与共享授权清理
+
+使用 `$env:JSS_MAVEN_COMMAND=(Join-Path (Get-Location) '.runtime/maven-integration.cmd'); python script/jss/verify_menu_services.py`。脚本只在已归属 MySQL8.4.9:13316创建 `jss_menu_service_verify_<12位随机值>`，载入原始system_menu/system_role_menu DDL，核对报告时间/计数并保存实际XML，finally核验归属并删除随机库。没有改写开发库或运行jar，没有新增迁移。
+
+测试装配实际MenuServiceImpl、PermissionServiceImpl.processMenuDeleted、MyBatis Mapper/租户插件与真实Spring事务 advice；生产目标通过测试配置手工连线，未启动完整容器、Redis缓存切面、套餐选择或HTTP/RBAC。第一轮测试工具继承setter返回类型编译错误已修正，不计业务证据。有效修复前八项中三通过、四失败、一StackOverflowError，零跳过，14.642秒：允许移到后代、循环层级递归溢出、混合缺失批次静默删除、停用自身/祖先后权限编号仍被返回、其他租户角色授权残留。证据 `.runtime/menu-services-before-valid.log`、`.runtime/menu-services-before-valid.xml`。
+
+最终八项实际MySQL全部通过，零失败/错误/跳过，15.166秒，`.runtime/menu-services-verified.log` 和脚本保留的 `.runtime/jss-mysql/menu-service-test.xml`。覆盖共享CRUD/显式清空/false/按钮字段规整、名称和组件名唯一/父类型/子项保护、禁止后代与带子项改按钮、旧循环/孤儿拒绝及万层无栈溢出、有效权限编号与停用祖先、缺失整批拒绝/重复ID、跨租户角色授权清理、后续SQL触发器失败时菜单和授权整体回滚及外层回滚。部分层级过滤使用构造的万层/循环节点调用实际纯方法，不冒充数据库产生这些历史脏结构。随机schema残留0。
+
+服务器及依赖测试编译成功；菜单/角色/权限专项82项中74项执行通过、八项MySQL条件跳过，零失败/错误，`.runtime/menu-regression-final.log`，含MenuServiceImplTest20、RoleServiceImplTest22、PermissionServiceTest24、PermissionControllerTest5、PermissionApiImplTest3。旧权限缓存查询测试的随机状态/父编号不代表有效授权菜单，现显式启用根节点并加入停用/孤儿排除断言后通过。五个变更Java定向Spotless检查、Python编译与差异检查通过，不计全仓Spotless或全量verify。
+
+权限编号缓存已有全局ignore-cache配置，菜单更新/删除继续清空该缓存；冷查询现读取完整树以核对祖先。角色反查缓存仍沿用既有租户缓存规则，不能以无Redis的MySQL测试认定跨租户缓存已验。需恢复Redis后运行实际菜单CRUD、同一员工Token的自身/祖先停用恢复、删除权限、套餐和并发改上级/增删竞争，再做冷缓存性能与完整商城/工作台HTTP/H5。整合验收版本保持原值。

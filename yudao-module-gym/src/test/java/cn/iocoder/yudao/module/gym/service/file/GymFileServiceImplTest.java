@@ -445,4 +445,15 @@ public class GymFileServiceImplTest extends BaseMockitoUnitTest {
             throw new AssertionError(ex);
         }
     }
+
+    @Test
+    void riskEvidenceCannotUseGenericFileMetadataOrDownloadAuthorization() {
+        var file = GymFileDO.builder().id(95L).storeId(STORE_ID).category("risk_evidence").build();
+        when(gymFileMapper.selectById(95L)).thenReturn(file);
+        assertServiceException(
+                () -> gymFileService.getFile(95L), FILE_STORE_NO_PERMISSION, STORE_ID);
+        assertServiceException(
+                () -> gymFileService.getFileContent(95L), FILE_STORE_NO_PERMISSION, STORE_ID);
+        org.mockito.Mockito.verifyNoInteractions(fileApi);
+    }
 }

@@ -669,9 +669,9 @@ Content-Type: application/json
 | 夜间异常逗留 | 结合可靠进出记录、配置的夜间时段和最长时长产生告警 | 夜间时间段、超时阈值、接收人 |
 | 欠费禁止入场 | 依据服务端欠费及门类型规则决策；按原文补充“A 门直接挡住” | B 门规则与原“ab 门除外”有歧义，暂不默认放行 |
 
-告警接口：`GET W/risk-alerts`，请求 `P,storeId:ID,status?:open或resolved`，返回 `Page<{id:ID,type:string,deviceId:ID,memberId:ID?,occurredAt:DateTime,status:string,evidenceFileIds:ID[]}>`，仅授权管理者访问。
+告警接口：`GET W/risk-alerts`，请求 `P,storeId:ID,status?:open或resolved`，返回 `Page<{id:ID,type:string,deviceId:ID,memberId:ID?,occurredAt:DateTime,status:string,evidenceFileIds:ID[],version:int,resolution:RiskResolution?}>`，仅授权管理者访问。
 
-处置接口：`POST W/risk-alerts/{id}/resolutions`（幂等），请求 `result:confirmed或false_positive,note:string,expectedVersion:int`，返回更新后的告警。确认违规与冻结权益须记录来源事件，不提供任意修改统计次数的接口。
+处置接口：`POST W/risk-alerts/{id}/resolutions`（幂等），请求 `result:confirmed或false_positive,note:string,expectedVersion:int`，返回更新后的告警。已实现一次处置记录，确认违规不自动冻结权益；真实告警生产和冻结规则尚未接入。来源事件保持不可变，不提供任意修改统计次数的接口。精确契约见文末V031章节。
 
 ## 十、错误码与客户端行为
 
@@ -1297,3 +1297,24 @@ AdminPointProduct包含`id,storeId,cardProductId,name,requiredPoints,stock,enabl
 请求中先尝试处理一次；后台恢复每30秒扫描各有效租户中已等待至少30秒的processing单，每租户每批最多100条。`gym.points.redemption.enabled=true`默认开启；`interval-ms=30000`（至少1000），`initial-delay-ms=30000`（非负）。处理使用持久化发起人作为真实会员上下文并恢复原执行上下文；租户互斥与行锁使多实例或请求并发不会重复发卡/返还。失败返还未完成的单仍会继续扫描。错误1070030008表示兑换发放条件不满足，具体失败码只保存在内部，不公开会员资料、快照或系统异常。
 
 V030新增兑换表并向商品/账户加两个预留字段，当前78表、下一V031。迁移不造历史兑换、扣分或奖励，消费/邀请自动奖励仍按用户要求暂缓；真实余额为零时拒绝兑换，不导入测试积分。上线与恢复配置见实施及数据库手册。
+
+
+## 风控告警查询、处置与证据（V031，总表134–135）
+
+两条目标接口已实现内部持久化业务。真实设备事件与风险判定生产者未接入，当前迁移不创建任何告警。没有数据时列表为空，不能据此认定设备没有风险。
+
+| 方法与路径 | 请求 | 响应data | 权限 |
+| --- | --- | --- | --- |
+| `GET W/risk-alerts` | 必填storeId；可选status=open或resolved；pageNo/pageSize，最多200 | `Page<RiskAlert>` | gym:risk:read + 整店范围 |
+| `POST W/risk-alerts/{id}/resolutions` | 必填Idempotency-Key及JSON `{result,note,expectedVersion}` | 更新后的RiskAlert | gym:risk:read及gym:risk:resolve + 整店范围 |
+| `GET W/risk-alerts/{id}/evidence/{fileId}/content` | 告警ID和证据文件ID；后台令牌/租户头 | 文件字节流，辅助接口不计入135项 | gym:risk:read + 告警整店范围 + 实际证据关联 |
+
+RiskAlert共9字段：`id:ID,type,deviceId:ID,memberId:ID?,occurredAt:DateTime,status,evidenceFileIds:ID[],version:int,resolution:RiskResolution?`。ID统一字符串，时间为上海时区ISO8601，保留微秒。type为multiple_entry、tailgating、blacklist、overnight或debt，表示来源分类；不能将多人告警直接视为确认违规。列表按发生时间倒序、ID倒序，租户/门店/状态在SQL分页前过滤，不输出来源事件键、完整来源快照或存储URL。历史会员ID可空，门店/设备停用不抹去历史证据。
+
+RiskResolution为`{result,note,operatorUserId:ID,resolvedAt:DateTime}`，未处理为null。result只接受confirmed或false_positive；note必填非空、最多2000字符，保存去除首尾空白的说明；expectedVersion必填正整数。新告警open/version=1，仅可一次变为resolved/version=2，操作人和时间由服务端填写。每条告警只有一条处置；更新与审计、幂等响应同事务，失败全部回滚。并发不同结论仅一个成功，其他返回版本/状态冲突。相同键及相同原请求重放首次响应，换参数报幂等冲突；重放仍检查当前账号、功能权限和门店范围。请先GET取得version，不自行推测版本。
+
+证据需是同店、category=risk_evidence的私有文件，单条告警最多10个且不可重复，只支持PNG/JPEG/MP4；文件元数据与实际魔数均须一致，下载非空且最多50MiB。响应通用名称risk-evidence-{id}.{扩展名}，private,no-store及nosniff，保留原始字节。已删除/未关联/不存在证据返回HTTP404，无权返回403，内容无效400；JSON业务接口保持CommonResult约定。普通文件元数据/内容接口拒绝risk_evidence，通用上传也不接受此类别；真实受信采集器和证据上传入口尚未实现。
+
+内部来源按租户/设备/事件键/类型唯一（事件键区分大小写），门店由登记设备确定；相同来源内容变化拒绝，不覆盖快照或已保存的人工结论。读取和处置不产生签到、开门、扣费、权益冻结、违规次数或外部通知。第4次违规冻结的统计周期、卡范围、申诉/解冻规则仍待确认；消费/邀请积分规则及真实支付、签约、设备和监控继续按用户要求暂缓。
+
+新增错误：1070031001来源/证据无效，1070031002重复来源内容冲突，1070031003告警不存在，1070031004告警已处置或版本冲突。部署须V031，显式授权gym:risk:read/resolve；迁移不自动授权已有角色。

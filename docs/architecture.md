@@ -739,3 +739,12 @@ RedemptionAccess验证持久化兑换、原扣分及当前会员资格，供Card
 Worker从数据库读取真实发起人，临时设置会员上下文后恢复；发放失败再调用独立返还事务。Scheduler枚举并验证租户，Timer使用自有线程，默认30秒扫描等待至少30秒的processing单、每租户100条。请求与多执行器依靠相同行锁串行；返还故障保留processing供恢复，单个失败不阻断同批其他兑换。GET只读，不驱动工作流。
 
 V030新增gym_point_redemption并扩展原账户/商品，当前78表。需要统一升级积分写入、商品维护和兑换处理实例以遵守预留字段；旧余额与商品配置不回填业务记录。内部合同文件存储不参与数据库事务，失败产生的未引用blob沿用既有清理流程。自动奖励及真实电子签约仍暂缓。
+
+
+## 风控告警与不可变处置（2026-10-26，V031）
+
+`GymMobileRiskController` → `GymMobileRiskService` → `GymRiskAlertMapper/GymRiskResolutionMapper`。有效后台身份、功能权限及GymDataScope整店范围在服务层复查，SELF不足；分页先SQL筛选再投影。处置事务通过GymMobileIdempotency及告警行锁，将open/version1改为resolved/version2，并保存真实操作者、时间及一次处置，唯一约束防止第二份审计。相同键重试仍先校验当前授权；失败回滚业务和幂等响应。原始来源快照不可改写，不调用CardService或门禁放行服务。
+
+`GymRiskAlertPublisher`为内部MANDATORY事务接收器，在租户互斥锁下从登记设备获得门店，验证可选会员及同店私有证据。来源以租户/设备/事件键/类型唯一，规范化微秒时间和证据顺序；同源相同内容返回原ID，变化拒绝。当前没有生产调用者；未来可信网关须先验签、防重放并完成真实事件分类，再在业务事务中调用。不把该服务称为已接入风险检测，也不向客户端开放创建入口。
+
+证据链：告警读取授权 → 检查不可变evidenceFileIds关联 → 同租户/同店risk_evidence元数据 → FileApi取原始字节 → 格式/大小校验 → 私有附件流。通用GymFileService拒绝此类别的元数据/下载，通用上传类别也不开放；未新增真实采集入口。日志不记录该Controller请求/响应业务内容。V031新增告警/处置两表至80表和两项功能权限定义，不授予角色、不回填事件。自动冻结、规则累计、设备事件生产仍未实现。

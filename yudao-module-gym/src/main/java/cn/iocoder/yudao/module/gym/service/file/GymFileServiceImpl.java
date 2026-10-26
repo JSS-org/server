@@ -227,7 +227,8 @@ public class GymFileServiceImpl implements GymFileService {
             throw exception(FILE_NOT_EXISTS);
         }
         // Member-uploaded files use business-specific authorization, never generic store access.
-        if (file.getCategory() != null && file.getCategory().startsWith("member_")) {
+        if ("risk_evidence".equals(file.getCategory())
+                || file.getCategory() != null && file.getCategory().startsWith("member_")) {
             throw exception(FILE_STORE_NO_PERMISSION, file.getStoreId());
         }
         // 门店越权校验：非本门店（且不在数据范围内）的文件，一律按无权处理

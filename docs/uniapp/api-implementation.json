@@ -1756,8 +1756,12 @@
       "method": "GET",
       "path": "/admin-api/gym/mobile/risk-alerts",
       "description": "查询授权门店的门禁及异常行为告警",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileRiskController.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileRiskControllerTest.java"
+      ]
     },
     {
       "id": 135,
@@ -1765,12 +1769,17 @@
       "method": "POST",
       "path": "/admin-api/gym/mobile/risk-alerts/{id}/resolutions",
       "description": "处理风控告警，记录确认违规或误报结论",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileRiskController.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileRiskControllerTest.java"
+      ]
     }
   ],
   "scopeNotes": [
     "支付/自动续费、电子签约、门禁设备和监控的真实渠道接入与联调，按用户要求暂缓；保留原135个接口的设计口径。",
-    "源码路由存在、业务测试通过、真实外部集成通过是不同验收层级；前端不修改。"
+    "源码路由存在、业务测试通过、真实外部集成通过是不同验收层级；前端不修改。",
+    "134–135仅实现内部告警查询、一次处置与受控证据读取；真实设备告警生产、证据采集、风险判定及自动冻结未接入。消费/邀请积分发放规则与自动奖励按用户要求暂缓。"
   ]
 }

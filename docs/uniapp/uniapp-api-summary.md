@@ -13,6 +13,8 @@
 - 已有管理后台接口在设计文档中仅作为复用参考，不额外计入小程序接口总数。
 - 公开素材辅助读取 `GET /app-api/gym/public-media/{id}/content` 支撑总表7–11的Media URL，不新增135个目标条目；实际业务引用授权与普通会员文件入口分开。
 
+- 风控证据辅助读取 `GET /admin-api/gym/mobile/risk-alerts/{id}/evidence/{fileId}/content` 不增加135项目标数量；当前无真实设备告警或证据生产者。
+
 - 会员会话已读辅助接口 `POST /app-api/gym/me/conversations/{id}/read` 支撑未读摘要，不增加135项目标数量。
 
 ## 数量汇总
@@ -25,7 +27,7 @@
 | 设备集成 | 2 | 服务端接收门禁事件和设备执行回执，小程序不直接调用 |
 | **合计** | **135** | **按方法与路径去重** |
 
-当前实现状态：新增实现并通过本地测试 **114** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **17** 个。源码映射共 **118 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
+当前实现状态：新增实现并通过本地测试 **116** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **15** 个。源码映射共 **120 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
 
 请求方法：GET **81** 个，POST **50** 个，PATCH **2** 个，PUT **1** 个，DELETE **1** 个。
 
@@ -168,8 +170,8 @@
 | 131 | 公共及会员端 | POST | `/app-api/gym/me/notification-preferences` | 保存会员消息订阅意愿，不替代微信实际授权 | 已实现，本地测试通过；外部推送未接入 |
 | 132 | 设备集成 | POST | `/integration-api/gym/access-events` | 接收已认证门禁网关的进出事件，驱动签到及风控 | 待开发；外部接入暂缓 |
 | 133 | 设备集成 | POST | `/integration-api/gym/device-command-results` | 接收设备真实执行回执，幂等更新命令状态 | 待开发；外部接入暂缓 |
-| 134 | 工作台 | GET | `/admin-api/gym/mobile/risk-alerts` | 查询授权门店的门禁及异常行为告警 | 设计待开发 |
-| 135 | 工作台 | POST | `/admin-api/gym/mobile/risk-alerts/{id}/resolutions` | 处理风控告警，记录确认违规或误报结论 | 设计待开发 |
+| 134 | 工作台 | GET | `/admin-api/gym/mobile/risk-alerts` | 查询授权门店的门禁及异常行为告警 | 已实现，本地测试通过；真实告警来源暂缓 |
+| 135 | 工作台 | POST | `/admin-api/gym/mobile/risk-alerts/{id}/resolutions` | 处理风控告警，记录确认违规或误报结论 | 已实现，本地测试通过；真实告警来源暂缓 |
 
 ## 尚未计数的集成项
 

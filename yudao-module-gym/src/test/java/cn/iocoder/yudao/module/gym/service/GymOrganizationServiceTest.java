@@ -50,6 +50,9 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.service.risk.GymRiskAlertPublisher.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileRiskService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileRiskController.class,
     cn.iocoder.yudao.module.gym.service.points.GymPointLedgerService.class,
     cn.iocoder.yudao.module.gym.service.points.GymPointRedemptionAccess.class,
     cn.iocoder.yudao.module.gym.service.points.GymPointRedemptionTransactions.class,
@@ -20947,5 +20950,457 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
                 () -> tx.execute(status -> cards.issuePointRedemption(id, now)),
                 POINT_REDEMPTION_INVALID);
         assertEquals(0, purchasedCards().selectCount());
+    }
+
+    @Resource cn.iocoder.yudao.module.gym.service.risk.GymRiskAlertPublisher riskPublisher;
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileRiskService mobileRisk;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileRiskController riskController;
+
+    @Resource cn.iocoder.yudao.module.gym.dal.mysql.risk.GymRiskAlertMapper riskRows;
+    @Resource cn.iocoder.yudao.module.gym.dal.mysql.risk.GymRiskResolutionMapper riskResolutions;
+    static final java.time.Instant RISK_TIME =
+            java.time.Instant.parse("2026-10-26T01:02:03.123456Z");
+
+    void riskPermission() {
+        when(permissions.hasAnyPermissions(anyLong(), eq("gym:risk:read"))).thenReturn(true);
+        when(permissions.hasAnyPermissions(anyLong(), eq("gym:risk:resolve"))).thenReturn(true);
+    }
+
+    Long riskDevice() {
+        stores.create(store(101L, "A"));
+        riskPermission();
+        return Long.valueOf(
+                deviceService.createDevice(deviceRequest(101L, "door", "RISK-DOOR")).getId());
+    }
+
+    cn.iocoder.yudao.module.gym.service.risk.GymRiskAlertPublisher.Event riskEvent(
+            Long device, String key, List<Long> evidence) {
+        return new cn.iocoder.yudao.module.gym.service.risk.GymRiskAlertPublisher.Event(
+                device, null, "multiple_entry", key, RISK_TIME, evidence);
+    }
+
+    Long publishRisk(cn.iocoder.yudao.module.gym.service.risk.GymRiskAlertPublisher.Event event) {
+        var tx =
+                new org.springframework.transaction.support.TransactionTemplate(
+                        applicationContext.getBean(
+                                org.springframework.transaction.PlatformTransactionManager.class));
+        return tx.execute(status -> riskPublisher.publish(event));
+    }
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileRiskVO.Query riskQuery(
+            Long store) {
+        var q = new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileRiskVO.Query();
+        q.setStoreId(store);
+        return q;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileRiskVO.Resolve riskResolve(
+            String result) {
+        var r =
+                new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileRiskVO
+                        .Resolve();
+        r.setResult(result);
+        r.setNote(" 核对来源事件及现场记录 ");
+        r.setExpectedVersion(1);
+        return r;
+    }
+
+    Long riskFile(Long store) {
+        var file =
+                GymFileDO.builder()
+                        .storeId(store)
+                        .category("risk_evidence")
+                        .name("private-capture.png")
+                        .mimeType("image/png")
+                        .size(8L)
+                        .url("private-risk-file")
+                        .build();
+        files.insert(file);
+        return file.getId();
+    }
+
+    @Test
+    void riskPublisherUsesRealDeviceStoreAndCanonicalBusinessEventWithoutGeneratingCheckins() {
+        Long device = riskDevice();
+        Long a = riskFile(101L), b = riskFile(101L);
+        var event = riskEvent(device, "source-01", List.of(b, a));
+        Long id = publishRisk(event);
+        assertEquals(id, publishRisk(riskEvent(device, "source-01", List.of(a, b))));
+        assertEquals(1, riskRows.selectCount());
+        var result = mobileRisk.page(riskQuery(101L)).getList().getFirst();
+        assertEquals(id.toString(), result.id());
+        assertEquals(device.toString(), result.deviceId());
+        assertNull(result.memberId());
+        assertEquals(1, result.version());
+        assertEquals("open", result.status());
+        assertNull(result.resolution());
+        assertEquals(List.of(a.toString(), b.toString()), result.evidenceFileIds());
+        assertEquals("2026-10-26T09:02:03.123456+08:00", result.occurredAt());
+        assertEquals(
+                0,
+                redemptionJdbc().queryForObject("SELECT COUNT(*) FROM gym_checkin", Integer.class));
+        assertEquals(0, purchasedCards().selectCount());
+    }
+
+    @Test
+    void riskPublisherRejectsChangedEventAndDoesNotResetResolvedHistory() {
+        Long device = riskDevice();
+        Long id = publishRisk(riskEvent(device, "source-01", List.of()));
+        var resolved =
+                mobileRisk.resolve(id, riskResolve("false_positive"), "risk-resolve-same-source");
+        assertEquals(id, publishRisk(riskEvent(device, "source-01", List.of())));
+        assertEquals(resolved, mobileRisk.page(riskQuery(101L)).getList().getFirst());
+        var changed =
+                new cn.iocoder.yudao.module.gym.service.risk.GymRiskAlertPublisher.Event(
+                        device,
+                        null,
+                        "multiple_entry",
+                        "source-01",
+                        RISK_TIME.plusSeconds(1),
+                        List.of());
+        assertServiceException(() -> publishRisk(changed), RISK_SOURCE_CONFLICT);
+        assertEquals(1, riskResolutions.selectCount());
+    }
+
+    @Test
+    void riskPublisherRequiresOuterTransactionValidSourceAndPrivateEvidence() {
+        Long device = riskDevice();
+        assertThrows(
+                org.springframework.transaction.IllegalTransactionStateException.class,
+                () -> riskPublisher.publish(riskEvent(device, "source-01", List.of())));
+        assertServiceException(
+                () -> publishRisk(riskEvent(99999L, "source-02", List.of())), RISK_SOURCE_INVALID);
+        Long camera =
+                Long.valueOf(
+                        deviceService
+                                .createDevice(deviceRequest(101L, "camera", "RISK-CAMERA"))
+                                .getId());
+        assertServiceException(
+                () -> publishRisk(riskEvent(camera, "source-03", List.of())), RISK_SOURCE_INVALID);
+        Long file = riskFile(102L);
+        assertServiceException(
+                () -> publishRisk(riskEvent(device, "source-04", List.of(file))),
+                RISK_SOURCE_INVALID);
+        final Long ordinary = publicImage(101L).getId();
+        assertServiceException(
+                () -> publishRisk(riskEvent(device, "source-05", List.of(ordinary))),
+                RISK_SOURCE_INVALID);
+        Long own = riskFile(101L);
+        assertServiceException(
+                () -> publishRisk(riskEvent(device, "source-06", List.of(own, own))),
+                RISK_SOURCE_INVALID);
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> publishRisk(riskEvent(device, "bad key", List.of())));
+        assertEquals(0, riskRows.selectCount());
+    }
+
+    @Test
+    void riskListFiltersStatusStoreTenantBeforePaginationAndKeepsHistoricalDeviceIds() {
+        Long device = riskDevice();
+        Long first = publishRisk(riskEvent(device, "source-01", List.of()));
+        Long second = publishRisk(riskEvent(device, "source-02", List.of()));
+        Long third = publishRisk(riskEvent(device, "source-03", List.of()));
+        mobileRisk.resolve(first, riskResolve("false_positive"), "risk-page-resolve");
+        stores.create(store(102L, "B"));
+        Long other =
+                Long.valueOf(
+                        deviceService.createDevice(deviceRequest(102L, "door", "OTHER")).getId());
+        publishRisk(riskEvent(other, "source-04", List.of()));
+        var q = riskQuery(101L);
+        q.setStatus("open");
+        q.setPageSize(1);
+        assertEquals(2L, mobileRisk.page(q).getTotal());
+        assertEquals(third.toString(), mobileRisk.page(q).getList().getFirst().id());
+        q.setPageNo(2);
+        assertEquals(second.toString(), mobileRisk.page(q).getList().getFirst().id());
+        q.setPageNo(3);
+        assertTrue(mobileRisk.page(q).getList().isEmpty());
+        redemptionJdbc().update("UPDATE gym_device SET deleted=TRUE WHERE id=?", device);
+        q.setStatus("resolved");
+        q.setPageNo(1);
+        assertEquals(device.toString(), mobileRisk.page(q).getList().getFirst().deviceId());
+        TenantContextHolder.setTenantId(2L);
+        loginAs(1L);
+        cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser()
+                .setTenantId(2L);
+        assertServiceException(
+                () -> mobileRisk.resolve(first, riskResolve("confirmed"), "risk-foreign-id"),
+                RISK_ALERT_NOT_EXISTS);
+    }
+
+    @Test
+    void riskResolutionStoresRealOperatorTimeAndNeverFreezesCardsAutomatically() {
+        Long device = riskDevice();
+        Long member = Long.valueOf(members.create(member(101L, "13800003101")).getId());
+        Long template = Long.valueOf(cards.create(cardTemplate("count")).getId());
+        var card =
+                cards.issue(
+                        member,
+                        101L,
+                        template,
+                        java.time.Instant.now(),
+                        "test",
+                        "risk-original-card");
+        Long id =
+                publishRisk(
+                        new cn.iocoder.yudao.module.gym.service.risk.GymRiskAlertPublisher.Event(
+                                device,
+                                member,
+                                "tailgating",
+                                "source-confirm",
+                                RISK_TIME,
+                                List.of()));
+        when(businessClock.now()).thenReturn(RISK_TIME.plusSeconds(60));
+        var result = mobileRisk.resolve(id, riskResolve("confirmed"), "risk-confirmed-01");
+        assertEquals("resolved", result.status());
+        assertEquals(2, result.version());
+        assertEquals("confirmed", result.resolution().result());
+        assertEquals("1", result.resolution().operatorUserId());
+        assertEquals("核对来源事件及现场记录", result.resolution().note());
+        assertEquals(1, riskResolutions.selectList().getFirst().getPreviousVersion());
+        assertEquals("active", purchasedCards().selectById(card.getId()).getStatus());
+        assertEquals(10, purchasedCards().selectById(card.getId()).getRemainingUses());
+    }
+
+    @Test
+    void riskIdempotencyRechecksCurrentPermissionWholeStoreScopeAndAccount() {
+        Long device = riskDevice();
+        Long id = publishRisk(riskEvent(device, "source-01", List.of()));
+        var result = mobileRisk.resolve(id, riskResolve("confirmed"), "risk-permission-key");
+        assertEquals(
+                result, mobileRisk.resolve(id, riskResolve("confirmed"), "risk-permission-key"));
+        when(permissions.hasAnyPermissions(anyLong(), eq("gym:risk:resolve"))).thenReturn(false);
+        assertServiceException(
+                () -> mobileRisk.resolve(id, riskResolve("confirmed"), "risk-permission-key"),
+                cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants
+                        .FORBIDDEN);
+        riskPermission();
+        scoped(102L);
+        assertServiceException(
+                () -> mobileRisk.resolve(id, riskResolve("confirmed"), "risk-permission-key"),
+                STORE_NO_PERMISSION);
+        assertServiceException(() -> mobileRisk.page(riskQuery(101L)), STORE_NO_PERMISSION);
+        personalScope(1L);
+        assertServiceException(() -> mobileRisk.page(riskQuery(101L)), STORE_NO_PERMISSION);
+        headquarters();
+        var user = new cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO();
+        user.setId(1L);
+        user.setStatus(1);
+        when(workAccounts.getUser(1L)).thenReturn(user);
+        assertServiceException(
+                () -> mobileRisk.resolve(id, riskResolve("confirmed"), "risk-permission-key"),
+                MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void riskStaleVersionChangedPayloadAndSecondResolutionCannotOverwriteFirst() {
+        Long device = riskDevice();
+        Long id = publishRisk(riskEvent(device, "source-01", List.of()));
+        var stale = riskResolve("confirmed");
+        stale.setExpectedVersion(2);
+        assertServiceException(
+                () -> mobileRisk.resolve(id, stale, "risk-stale-key"), RISK_RESOLUTION_CONFLICT);
+        assertEquals(0, riskResolutions.selectCount());
+        var result = mobileRisk.resolve(id, riskResolve("confirmed"), "risk-success-key");
+        assertServiceException(
+                () -> mobileRisk.resolve(id, riskResolve("false_positive"), "risk-success-key"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        assertServiceException(
+                () -> mobileRisk.resolve(id, riskResolve("false_positive"), "risk-second-key"),
+                RISK_RESOLUTION_CONFLICT);
+        assertEquals(result, mobileRisk.page(riskQuery(101L)).getList().getFirst());
+    }
+
+    @Test
+    void riskResolutionWriteFailuresRollbackAlertAuditAndIdempotencyTogether() {
+        Long device = riskDevice();
+        Long id = publishRisk(riskEvent(device, "source-01", List.of()));
+        redemptionJdbc()
+                .execute(
+                        "ALTER TABLE gym_risk_alert ADD CONSTRAINT test_risk_resolution_failure CHECK (status='open')");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () -> mobileRisk.resolve(id, riskResolve("confirmed"), "risk-failure-retry"));
+            assertEquals(0, riskResolutions.selectCount());
+            assertEquals("open", riskRows.selectById(id).getStatus());
+        } finally {
+            redemptionJdbc()
+                    .execute(
+                            "ALTER TABLE gym_risk_alert DROP CONSTRAINT test_risk_resolution_failure");
+        }
+        assertEquals(
+                "resolved",
+                mobileRisk.resolve(id, riskResolve("confirmed"), "risk-failure-retry").status());
+        assertEquals(1, riskResolutions.selectCount());
+    }
+
+    List<Object> riskRace(Long id, boolean same) throws Exception {
+        try (var executor = java.util.concurrent.Executors.newFixedThreadPool(4)) {
+            var tasks = new ArrayList<java.util.concurrent.Callable<Object>>();
+            for (int i = 0; i < 4; i++) {
+                final int n = i;
+                tasks.add(
+                        () -> {
+                            setupThreadContext();
+                            try {
+                                return mobileRisk.resolve(
+                                        id,
+                                        riskResolve(
+                                                n % 2 == 0 || same
+                                                        ? "confirmed"
+                                                        : "false_positive"),
+                                        same ? "risk-race-same" : "risk-race-" + n);
+                            } catch (
+                                    cn.iocoder.yudao.framework.common.exception.ServiceException
+                                            e) {
+                                return e;
+                            } finally {
+                                cleanupContext();
+                            }
+                        });
+            }
+            var results = new ArrayList<Object>();
+            for (var f : executor.invokeAll(tasks))
+                results.add(f.get(10, java.util.concurrent.TimeUnit.SECONDS));
+            return results;
+        }
+    }
+
+    @Test
+    void riskConcurrentSameKeyReturnsOneIdenticalDisposition() throws Exception {
+        Long device = riskDevice();
+        Long id = publishRisk(riskEvent(device, "source-01", List.of()));
+        var results = riskRace(id, true);
+        for (var result : results) assertEquals(results.getFirst(), result);
+        assertEquals(1, riskResolutions.selectCount());
+        assertEquals(2, riskRows.selectById(id).getVersion());
+    }
+
+    @Test
+    void riskConcurrentConflictingDispositionsProduceOneWinner() throws Exception {
+        Long device = riskDevice();
+        Long id = publishRisk(riskEvent(device, "source-01", List.of()));
+        var results = riskRace(id, false);
+        assertEquals(
+                1,
+                results.stream()
+                        .filter(
+                                x ->
+                                        x
+                                                instanceof
+                                                cn.iocoder.yudao.module.gym.controller.admin.mobile
+                                                        .vo.GymMobileRiskVO.Alert)
+                        .count());
+        assertEquals(1, riskResolutions.selectCount());
+        assertEquals(2, riskRows.selectById(id).getVersion());
+    }
+
+    @Test
+    void riskEvidenceRequiresCurrentAlertScopeAndNeverReturnsUnlinkedOrWrongTypeFiles() {
+        Long device = riskDevice();
+        Long file = riskFile(101L);
+        Long id = publishRisk(riskEvent(device, "source-01", List.of(file)));
+        byte[] png = new byte[] {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
+        when(fileApi.getFileContentByUrl("private-risk-file")).thenReturn(png);
+        var content = mobileRisk.attachment(id, file);
+        assertArrayEquals(png, content.getContent());
+        assertEquals("risk-evidence-" + file + ".png", content.getName());
+        Long unlinked = riskFile(101L);
+        assertServiceException(() -> mobileRisk.attachment(id, unlinked), FILE_NOT_EXISTS);
+        scoped(102L);
+        assertServiceException(() -> mobileRisk.attachment(id, file), STORE_NO_PERMISSION);
+        headquarters();
+        when(fileApi.getFileContentByUrl("private-risk-file"))
+                .thenReturn("<html>bad</html>".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        assertServiceException(() -> mobileRisk.attachment(id, file), RISK_SOURCE_INVALID);
+        redemptionJdbc().update("UPDATE gym_file SET deleted=TRUE WHERE id=?", file);
+        assertServiceException(() -> mobileRisk.attachment(id, file), FILE_NOT_EXISTS);
+    }
+
+    @Test
+    void riskControllersRequireDedicatedReadAndResolvePermissions() {
+        Long device = riskDevice();
+        Long id = publishRisk(riskEvent(device, "source-01", List.of()));
+        when(permissions.hasAnyPermissions(anyLong(), eq("gym:risk:read"))).thenReturn(false);
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> riskController.page(riskQuery(101L)));
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> riskController.resolve(id, riskResolve("confirmed"), "risk-controller-key"));
+        riskPermission();
+        when(permissions.hasAnyPermissions(anyLong(), eq("gym:risk:resolve"))).thenReturn(false);
+        assertEquals(1L, riskController.page(riskQuery(101L)).getData().getTotal());
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> riskController.resolve(id, riskResolve("confirmed"), "risk-controller-key"));
+        qrMemberLogin();
+        assertServiceException(() -> mobileRisk.page(riskQuery(101L)), MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void riskQueryAndResolutionRejectInvalidParametersWithoutMutations() {
+        Long device = riskDevice();
+        Long id = publishRisk(riskEvent(device, "source-01", List.of()));
+        var q = riskQuery(101L);
+        q.setStatus("all");
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class, () -> mobileRisk.page(q));
+        q.setStatus(null);
+        q.setPageSize(-1);
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class, () -> mobileRisk.page(q));
+        var r = riskResolve("confirmed");
+        r.setNote(" ");
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> mobileRisk.resolve(id, r, "risk-invalid-note"));
+        r.setNote("ok");
+        r.setResult("freeze");
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> mobileRisk.resolve(id, r, "risk-invalid-result"));
+        assertEquals(0, riskResolutions.selectCount());
+    }
+
+    @Test
+    void riskPublisherConcurrentDuplicatesAndCallerRollbackKeepSingleSource() throws Exception {
+        Long device = riskDevice();
+        var event = riskEvent(device, "source-concurrent", List.of());
+        var tx =
+                new org.springframework.transaction.support.TransactionTemplate(
+                        applicationContext.getBean(
+                                org.springframework.transaction.PlatformTransactionManager.class));
+        assertThrows(
+                IllegalStateException.class,
+                () ->
+                        tx.execute(
+                                status -> {
+                                    riskPublisher.publish(event);
+                                    throw new IllegalStateException("source ingest rollback");
+                                }));
+        assertEquals(0, riskRows.selectCount());
+        try (var executor = java.util.concurrent.Executors.newFixedThreadPool(4)) {
+            var tasks = new ArrayList<java.util.concurrent.Callable<Long>>();
+            for (int i = 0; i < 4; i++)
+                tasks.add(
+                        () -> {
+                            setupThreadContext();
+                            try {
+                                return publishRisk(event);
+                            } finally {
+                                cleanupContext();
+                            }
+                        });
+            var ids = new HashSet<Long>();
+            for (var future : executor.invokeAll(tasks))
+                ids.add(future.get(10, java.util.concurrent.TimeUnit.SECONDS));
+            assertEquals(1, ids.size());
+        }
+        assertEquals(1, riskRows.selectCount());
     }
 }

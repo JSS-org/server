@@ -1365,3 +1365,27 @@ git diff --check
 真实隔离MySQL/Flyway189检查通过，临时库全部清理；新增19项覆盖空兑换表、库存/数值预留默认与边界、业务请求键唯一/大小写/租户、终态约束、一次扣分不能资助多个兑换、微秒时间及恢复索引，以及实际V029升级时既有余额/商品/版本/角色保持。V001–V029未修改。初次全量测试暴露H2多上下文重复ALTER初始化，已改为最终建表结构并重跑；隔离脚本表数与升级夹具同步后通过。
 
 日志：/tmp/uniapp-point-redemptions-focused.log（初期19业务通过）、/tmp/uniapp-point-redemptions-final-tests.log、/tmp/uniapp-point-redemptions-final-migrations.log、/tmp/uniapp-point-redemptions-package.log。测试账本和商品只存在隔离数据库，未导入业务库；未运行部署HTTP、真实外部存储、多节点、规模压力或真实电子签约联调。
+
+
+## 风控告警、一次处置与证据授权（2026-10-26，V031）
+
+复现本批最终验证：
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py
+git diff --check
+```
+
+完整gym **913项通过**、0失败/错误/跳过（组织服务548、会员专项69、文件服务19）；member所选4通过、1项既有禁用跳过。新增14项实际业务测试、3项MVC和1项通用文件隐私测试；Spotless通过。server及依赖打包成功，打包阶段跳过测试。覆盖Contract135/mapped120/missing15；源码映射不替代部署HTTP验收。
+
+业务验证涵盖真实登记设备归属、规范化来源去重和冲突、相同来源并发唯一、调用者事务回滚、租户隔离、状态/整店范围过滤后分页、历史设备删除、真实操作人/微秒时间、无卡冻结或签到副作用、权限撤销后的重试拒绝、SELF/会员身份拒绝、相同键并发返回同一结论、不同键竞争只成功一次、版本冲突和注入失败后审计/幂等整体回滚。证据验证真实关联、范围撤销、元数据/字节魔数冲突、文件删除、私有下载响应及通用文件入口不可绕过。MVC验证9字段投影、参数/版本/请求键绑定及无效请求拒绝。
+
+真实隔离MySQL/Flyway **204项检查通过**，临时随机库全部清理，累计80张gym表。新增15项覆盖空表、open/version1、来源唯一/区分大小写/租户、类型和状态版本约束、处置唯一/结果/非空说明/旧版本/操作人约束、微秒审计、索引、权限定义及升级不生成历史风险记录。已应用V001–V030保持不变，业务数据库未迁移。早期专项失败为Mockito重复when触发已配置异常，改为doThrow重新配置后完整回归通过，未放松生产鉴权或异常处理。
+
+最终日志：`/tmp/uniapp-risk-final-tests.log`（10:39:33）、`/tmp/uniapp-risk-migrations.log`、`/tmp/uniapp-risk-package.log`（10:39:52）。未验证真实设备/存储、部署HTTP、多实例或规模性能；当前无生产风险事件或证据写入调用者，未验证/实现自动冻结和外部推送。前端未改。

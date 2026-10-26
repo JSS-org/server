@@ -3294,3 +3294,41 @@ V030新增一表至78表、下一V031；账户refund_reserve和商品reserved_st
 ### 未做 / 后续
 
 当前114项新增本地实现、4项复用源码、17项待开发，总目标135保持。消费/邀请自动奖励、历史补发及真实支付/自动续费、电子签约、设备和监控仍按已确认边界暂缓。无真实积分来源时零余额仍拒绝兑换，隔离测试余额不导入业务库。未验证部署HTTP、真实存储、多节点或规模场景。本批独立本地提交，不推送。
+
+
+## [2026-10-26 10:19 ~ 10:43] 风控告警查询、一次处置与受控证据
+
+### 意图
+
+完成135项总表134–135的内部查询与审计处置，保留真实设备接入暂缓边界。人工复核不得覆盖来源事件，也不能凭告警直接冻结会员权益。消费/邀请积分发放规则及自动奖励继续按用户答复跳过，记录在同级接口文档中。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `controller/admin/mobile/GymMobileRiskController.java`、`vo/GymMobileRiskVO.java` | 新增 | 列表、处置及辅助证据流，9字段响应和版本/权限校验 |
+| `service/mobile/GymMobileRiskService.java`、`service/risk/GymRiskAlertPublisher.java` | 新增 | 范围分页、幂等一次处置、规范化来源去重和证据授权 |
+| `dal/dataobject/risk/`、`dal/mysql/risk/` | 新增 | 告警/处置模型与Mapper |
+| `service/file/GymFileServiceImpl.java`、`enums/ErrorCodeConstants.java` | 修改 | 通用文件拒绝risk_evidence及4类风险业务错误 |
+| `sql/gym/migration/mysql/V031__gym_risk_alerts.sql`、H2建表/清理、`script/gym/verify-migrations.py` | 新增/修改 | 两表至80表、权限定义、约束/索引及15项隔离检查 |
+| `GymOrganizationServiceTest.java`、`GymMobileRiskControllerTest.java`、`GymFileServiceImplTest.java` | 修改/新增 | 14业务、3MVC及1通用文件隐私测试 |
+| `docs/uniapp/`契约、总表、实施进度及机器清单 | 修改 | 120/135和真实告警来源、冻结未接入边界 |
+| `docs/architecture.md`、`docs/testing.md`、`script/gym/README.md`、`script/gym/DATABASE.md` | 修改 | 调用关系、验证、权限/部署及下一版本V032 |
+
+Java相对路径位于yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym，测试在同模块src/test。
+
+### 结构关系
+
+内部Publisher需现有事务，从登记设备取得门店，在租户互斥下写入不可变来源快照，以租户/设备/来源键/类型去重。工作台Controller进入RiskService，当前后台身份、功能权限与整店范围先校验再查询/幂等执行；行锁和处置唯一约束保证一次结论，操作人及时间由服务端生成。证据先核验告警授权与实际关联，再读取私有文件原字节；通用文件服务拒绝该类别，防止绕过业务授权。
+
+### 验证证据
+
+完整gym913项通过（组织服务548、会员专项69、文件服务19），member4通过及1项既有禁用跳过，Spotless通过；新增18项覆盖来源重复/并发、审计原子性、版本冲突、权限撤销、证据关联和无自动冻结副作用。真实隔离MySQL/Flyway204检查通过且临时库全部清理，V001–V030不改；server package -DskipTests成功（打包跳过测试）。源码覆盖Contract135/mapped120/missing15，git diff --check通过；命令及日志见testing本批章节。初次专项Mockito异常重设方式修正后完整回归通过。
+
+### 影响面 / 风险
+
+V031新增两表至80表、下一V032，只创建gym:risk:read/resolve定义，不自动授权。部署先备份、migrate/validate后升级应用并显式授权；跨V030升级仍须暂停积分相关写入和恢复定时器。版本及处置字段是响应新增字段；当前只支持一次处置，没有撤回/编辑入口。证据保留原字节，需受控读取；真实存储及内存读取规模未验证。业务库未迁移，前端及用户原始uniapp.md内容和暂存状态保持。
+
+### 未做 / 后续
+
+当前116项新增本地实现、4项复用源码、15项待开发。内部告警Publisher无生产调用者，未接入可信网关、采集/分类及证据上传；未实现第4次违规冻结、违规周期统计、申诉或解冻，不把人工confirmed当作自动处罚完成。消费/邀请自动奖励和真实支付/自动续费、签约、设备、监控继续暂缓。未做部署HTTP、真实存储、多实例或规模联调；仅本地小步提交，不推送。

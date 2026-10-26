@@ -253,4 +253,8 @@ public interface ErrorCodeConstants {
     ErrorCode POINT_PRODUCT_UNAVAILABLE = new ErrorCode(1_070_030_007, "当前门店不可查询积分商品");
     ErrorCode POINT_REDEMPTION_INVALID = new ErrorCode(1_070_030_008, "积分兑换发放条件不满足");
     ErrorCode POINT_REDEMPTION_NOT_EXISTS = new ErrorCode(1_070_030_009, "积分兑换记录不存在");
+    ErrorCode RISK_SOURCE_INVALID = new ErrorCode(1_070_031_001, "风险告警来源或证据不合法");
+    ErrorCode RISK_SOURCE_CONFLICT = new ErrorCode(1_070_031_002, "风险来源事件已存在且内容不同");
+    ErrorCode RISK_ALERT_NOT_EXISTS = new ErrorCode(1_070_031_003, "风险告警不存在");
+    ErrorCode RISK_RESOLUTION_CONFLICT = new ErrorCode(1_070_031_004, "风险告警已处置或版本已变化");
 }

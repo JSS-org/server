@@ -1601,3 +1601,48 @@ CREATE TABLE IF NOT EXISTS gym_point_redemption (
   OR (status='succeeded' AND debit_record_id IS NOT NULL AND member_card_id IS NOT NULL AND refund_record_id IS NULL AND completed_at IS NOT NULL AND failure_code IS NULL)
   OR (status='failed' AND debit_record_id IS NOT NULL AND member_card_id IS NULL AND refund_record_id IS NOT NULL AND completed_at IS NOT NULL AND failure_code IS NOT NULL))
 );
+
+-- Internal alert records and immutable human dispositions; no fabricated gateway events or auto freezes.
+CREATE TABLE IF NOT EXISTS gym_risk_alert (
+ id bigint NOT NULL AUTO_INCREMENT,
+ store_id bigint NOT NULL,
+ device_id bigint NOT NULL,
+ member_id bigint DEFAULT NULL,
+ type varchar(32) NOT NULL,
+ source_event_key varchar(128) NOT NULL,
+ source_snapshot longtext NOT NULL,
+ occurred_at datetime(6) NOT NULL,
+ evidence_file_ids text NOT NULL,
+ status varchar(16) NOT NULL DEFAULT 'open',
+ version int NOT NULL DEFAULT 1,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT FALSE,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY(id),
+ UNIQUE KEY uk_risk_alert_source(tenant_id,device_id,source_event_key,type),
+ KEY idx_risk_alert_store(tenant_id,store_id,deleted,status,occurred_at,id),
+ CONSTRAINT ck_risk_alert_type CHECK(type IN ('multiple_entry','tailgating','blacklist','overnight','debt')),
+ CONSTRAINT ck_risk_alert_state CHECK((status='open' AND version=1) OR (status='resolved' AND version=2))
+);
+CREATE TABLE IF NOT EXISTS gym_risk_resolution (
+ id bigint NOT NULL AUTO_INCREMENT,
+ alert_id bigint NOT NULL,
+ operator_user_id bigint NOT NULL,
+ result varchar(32) NOT NULL,
+ note varchar(2000) NOT NULL,
+ previous_version int NOT NULL,
+ resolved_at datetime(6) NOT NULL,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT FALSE,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY(id),
+ UNIQUE KEY uk_risk_resolution_alert(tenant_id,alert_id),
+ CONSTRAINT ck_risk_resolution_result CHECK(result IN ('confirmed','false_positive')),
+ CONSTRAINT ck_risk_resolution_audit CHECK(operator_user_id>0 AND previous_version=1 AND CHAR_LENGTH(TRIM(note))>0)
+);

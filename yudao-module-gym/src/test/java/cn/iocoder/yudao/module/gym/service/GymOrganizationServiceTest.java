@@ -3269,6 +3269,8 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
         var kept = payrolls.get(id);
         assertEquals(oldItem, kept.getItems().getFirst().getId());
         assertEquals(first.getNetAmount(), kept.getNetAmount());
+        when(businessClock.now())
+                .thenReturn(java.time.Instant.parse("2026-06-10T02:00:00.123456700Z"));
         var confirmed = payrolls.confirm(id);
         assertEquals("confirmed", confirmed.getStatus());
         assertEquals(confirmed.getConfirmedAt(), payrolls.confirm(id).getConfirmedAt());
@@ -9829,7 +9831,8 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
     @Test
     void mobileWorkMemberSummaryCountsUnlimitedDurationWithoutInventingUsesOrExpiry() {
         Long own = workMember();
-        var now = java.time.Instant.now();
+        // Match datetime(6), so the exact-start assertion is independent of OS clock precision.
+        var now = java.time.Instant.parse("2026-06-10T02:00:00.123456Z");
         when(businessClock.now()).thenReturn(now);
         workCard(own, 101L, "period", 0, 0, now, null);
         workCard(own, 101L, "count", 3, 3, now, null);
@@ -17670,7 +17673,13 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
                 () -> mobileOrders.create(req, "order-legacy-offer-retry"),
                 COMMERCE_REQUEST_INVALID);
         offer.setOffers(List.of(offer.getOffers().getFirst()));
-        var start = businessClock.now().plusSeconds(60);
+        // Keep a sub-microsecond boundary to catch premature truncation during validation.
+        var start =
+                businessClock
+                        .now()
+                        .plusSeconds(60)
+                        .truncatedTo(java.time.temporal.ChronoUnit.MICROS)
+                        .plusNanos(700);
         var end = start.plusSeconds(60);
         offer.getOffers().getFirst().setStartsAt(start);
         offer.getOffers().getFirst().setEndsAt(end);

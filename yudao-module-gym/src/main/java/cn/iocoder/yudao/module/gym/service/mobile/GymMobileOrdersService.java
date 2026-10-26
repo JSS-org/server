@@ -123,7 +123,7 @@ public class GymMobileOrdersService {
                                                             req.getStoreId()))
                                     == 0) throw exception(COMMERCE_REQUEST_INVALID);
                     records.checkPurchase(memberId);
-                    Instant now = clock.now().truncatedTo(ChronoUnit.MICROS);
+                    Instant now = clock.now();
                     Terms terms =
                             "card".equals(req.getProductType())
                                     ? cardTerms(req, now)
@@ -144,8 +144,9 @@ public class GymMobileOrdersService {
                             terms.amount().signum() == 0
                                     ? "pending_fulfillment"
                                     : "pending_payment");
-                    row.setOrderedAt(now);
-                    Instant deadline = now.plus(30, ChronoUnit.MINUTES);
+                    Instant orderedAt = now.truncatedTo(ChronoUnit.MICROS);
+                    row.setOrderedAt(orderedAt);
+                    Instant deadline = orderedAt.plus(30, ChronoUnit.MINUTES);
                     if (quote != null && quote.getExpiresAt().isBefore(deadline))
                         deadline = quote.getExpiresAt();
                     row.setExpiresAt(deadline);

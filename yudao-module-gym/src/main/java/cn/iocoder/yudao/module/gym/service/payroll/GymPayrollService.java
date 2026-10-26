@@ -36,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.*;
 import java.time.*;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Service
@@ -342,7 +343,7 @@ public class GymPayrollService {
                     throw exception(PAYROLL_INACTIVE_INTERVAL_REQUIRED, employee.getName());
             }
             row.setStatus("confirmed");
-            row.setConfirmedAt(gymBusinessClock.now());
+            row.setConfirmedAt(gymBusinessClock.now().truncatedTo(ChronoUnit.MICROS));
             row.setConfirmedBy(SecurityFrameworkUtils.getLoginUserId());
             gymPayrollMapper.updateById(row);
         }

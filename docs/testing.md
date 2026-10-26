@@ -1548,3 +1548,22 @@ git diff --check
 统计 Mapper 复测同样止于上述依赖解析，日志 `.runtime/main-merge-statistics-resumed.log`，随机 schema 已清理。隔离 Redis 启动本机 WinGet 包中的程序返回 `WinError 5`，本轮真实 HTTP/H5 没有开始，不能沿用合并前的通过报告。只读检查确认 HTTP/统计随机 schema 均无残留；开发库、默认运行 jar 和原服务未替换。
 
 兄弟前端已准备第 3 个真实浏览器场景，覆盖用户 CRUD、状态、密码、角色与写权限撤销后的接口拒绝；仅通过静态类型检查和用例发现，尚无真实运行结果。环境恢复后先完成完整构建，再运行 `script/jss/verify_workspace_http.py --browser` 和 `script/jss/verify_statistics_mappers.py`。仍须核对 JUnit 10 项、Playwright 3 项、日志脱敏及清理结果，然后才更新整合版本。
+
+## 2026-10-26 合并复测：Gym 亚微秒边界修复
+
+本轮已获准下载缺失依赖及运行本机隔离服务，上一轮的依赖/程序权限限制已解除。基础单测使用内嵌 Redis 16379，因此完整 `verify` 期间必须停止同端口的已归属隔离 Redis；真实 HTTP 验收在构建结束后再串行启动。清理端口冲突后，完整构建的 system 514 项中 0 失败/错误、8 项既有跳过，Gym 1062 项中出现 3 项时间精度失败，后续模块尚未执行，日志 `.runtime/main-merge-verify-online.log`（17:27:36 结束）。
+
+为原有三个用例设置确定的时间：工资使用 `.123456700Z`，售卖窗口保留 700ns 的微秒余数，会员卡精确开始边界使用 `datetime(6)` 可完整表示的时刻。修复前专项运行 3 项，其中工资幂等时间和截止瞬间拒绝两项稳定失败，会员卡查询通过；`.runtime/main-merge-time-precision-red.log`。修复后同命令 3 项全部通过，无失败、错误或跳过，17:34:14 结束；`.runtime/main-merge-time-precision-green.log`。
+
+```powershell
+& D:\Project\JSS\.tools\apache-maven-3.9.11\bin\mvn.cmd -B -ntp `
+  '-Dmaven.repo.local=D:/Project/JSS/JSS-server/.runtime/maven-repository' `
+  '-DargLine=-Djava.io.tmpdir=D:/Project/JSS/JSS-server/.runtime/java-temp' `
+  -Pjss-mall -pl yudao-module-gym -am test `
+  '-Dtest=GymOrganizationServiceTest#payrollFailureKeepsPreviousItemsAndConfirmationFreezesSnapshot+mobileWorkMemberSummaryCountsUnlimitedDurationWithoutInventingUsesOrExpiry+mobileOrderMalformedLegacyOfferAndExactSaleWindowFailClosedWithoutLeavingRequests' `
+  '-Dsurefire.failIfNoSpecifiedTests=false' '-Dspotless.skip=true'
+```
+
+售卖窗口用未经截断的时刻判断 `[start,end)`，订单持久化时间仍为微秒；工资确认写入前归一化至微秒，首次响应和数据库重读一致。没有修改历史迁移、放宽业务断言或跳过失败用例。专项通过不替代后续完整构建与真实 MySQL/Redis/HTTP/H5 验收。
+
+三个修改的 Java 文件单独通过 Spotless apply/check（17:37:51），日志 `.runtime/main-merge-time-format.log`。插件的 `spotlessFiles` 参数使用正则表达式：`.*GymPayrollService\.java,.*GymMobileOrdersService\.java,.*GymOrganizationServiceTest\.java`；根目录 `-N` 执行前须将当前 `yudao-dependencies/pom.xml` 安装到同一个工作区 Maven 缓存，以解析内部 BOM。

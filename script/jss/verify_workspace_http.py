@@ -68,9 +68,11 @@ def main():
         os.environ.update(JSS_DB_NAME=schema, JSS_DB_USER='root', JSS_DB_PASSWORD=password,
                           JSS_DB_HOST='127.0.0.1', JSS_DB_PORT='13316', JSS_MYSQL_HOME=state['mysqlHome'])
         database = Database(quiet=True)
+        # JSS owns the complete member schema. Gym V005 creates member_user only if absent.
+        # Initialize JSS first so its unmanaged-business-table guard remains strict.
+        database.execute('init')
         database.flyway('baseline', baseline=0, assets=ROOT / 'sql/gym')
         database.flyway('migrate', assets=ROOT / 'sql/gym')
-        database.execute('init')
         gym_versions = list((ROOT / 'sql/gym/migration/mysql').glob('V*__*.sql'))
         assert gym_versions, 'Gym migrations are missing'
         assert database.sql('SELECT COUNT(*) FROM flyway_gym_schema_history WHERE success=1') == str(len(gym_versions) + 1)

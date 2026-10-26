@@ -1575,3 +1575,9 @@ Gym 修复后的完整组合继续通过全部 1062 项 Gym 测试，随后在�
 仅将 `PayOrderServiceTest` 五处“当前时间减一分钟”夹具设为整秒（`withNano(0)`），与 MySQL 支付表的 `DATETIME` 精度一致；不修改生产时间工具、表结构或支付业务。`-Pjss-mall -pl yudao-module-pay -am test -Dtest=PayOrderServiceTest -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true` 的 67 项全部通过、无失败/错误/跳过，17:48:53 结束；日志 `.runtime/main-merge-pay-test.log`。使用同一个工作区 Maven 缓存和测试临时目录，完整构建仍须在此改动后重跑。
 
 该测试文件的 Spotless apply/check 通过（17:49:44），日志 `.runtime/main-merge-pay-format.log`，差异检查通过。
+
+## 2026-10-26 完整组合通过与联合初始化顺序
+
+在 `5bccd71770` 上重新执行上述完整 `jss-mall verify`，30 模块全部成功，17:58:51 结束、耗时 8:01；日志 `.runtime/main-merge-verify-final.log`。219 份本轮 Surefire XML 与 Maven 模块汇总一致：2583 项，0 失败/错误，154 项既有或条件跳过，即 2429 项执行通过。跳过的 Mapper/HTTP 集成用例及第三方测试不计作真实验收。独立产物 `yudao-server-main-merge.jar` 的 SHA-256 为 `b4fe34ea4308a84eae56be2c9d7a398fbbbee480dbca7aaa9f9a464f4c7c81c2`；没有替换开发运行 jar。
+
+随后真实联合工具遇到 Gym V005 的 `CREATE TABLE IF NOT EXISTS member_user` 与 JSS 初始化已有业务表守卫冲突。修复只调整 `verify_workspace_http.py`：框架基座 → JSS 显式 init → Gym baseline/migrate → Quartz。JSS 先建立完整会员表，Gym 的条件建表保留该定义；`database.py` 的拒绝自动接管业务表规则与所有历史迁移均未修改。新随机 schema 的实际历史已核对 JSS 10 条、Gym 36 条（各含 baseline 0），完整应用及浏览器验收继续执行中，尚未登记 HTTP/H5 通过。

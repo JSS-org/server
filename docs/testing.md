@@ -1698,3 +1698,22 @@ python script/jss/verify_workspace_http.py --suite mall --browser
 **新真实 HTTP/H5 未运行。** `python script/jss/verify_workspace_http.py --suite mall` 在创建随机库前因读取本机 WinGet 安装的 `redis-server.exe` 返回 `PermissionError: [WinError 5]` 退出，日志 `.runtime/mall-order-stock-before.log`；未启动新 Redis/后端、未创建本轮随机库。无环境变量的编译检查中 HTTP 类十一项全部条件跳过，不能计为通过；最终源码另执行全依赖 `test-compile -DskipTests`。四个变更 Java 的三组定向 Spotless 检查通过，Python 编译和差异检查通过。
 
 恢复该已安装程序的读取/运行权限后，仍需先执行 `python script/jss/verify_workspace_http.py --suite mall --browser` 并检查实际报告、清理和截图。最近真实商城证据仍属于 `a0a583c44a`，完整 verify/独立 jar 仍属于 `1fdf0a0f82`；本轮没有新全量构建、没有更新开发库或替换运行 jar，不前移整合验收版本。支付并发及其余完整范围继续保留。
+
+## 2026-10-26 支付并发接续：钱包待支付查询与竞争用例
+
+`WalletPayClientTest` 新增两个待支付查询回归，先出现两项错误（原六项通过）：支付扩展单为 WAITING 时，尚无扣款流水或已有已提交的扣款流水，`getOrder` 都抛出 `PayClientException/IllegalStateException`。复现日志 `.runtime/mall-wallet-concurrent-unit-before.log`。钱包客户端现查询已提交的 PAYMENT 流水：无流水返回 WAITING，有流水返回 SUCCESS，供正常状态同步使用；原 SUCCESS 必须有流水、CLOSED 返回关闭的行为保留。没有新增锁或改变唯一键。
+
+支付模块专项通过，355 项中 314 执行通过、41 项既有/条件跳过，零失败/错误；钱包客户端八项全过，支付订单 67 项、钱包服务九项继续通过。日志 `.runtime/mall-wallet-concurrent-unit-after.log`：
+
+```powershell
+.runtime/maven-integration.cmd -B -ntp -Pjss-mall -pl yudao-module-pay -am test '-Dtest=cn.iocoder.yudao.module.pay.**' '-Dsurefire.failIfNoSpecifiedTests=false' '-Dspotless.skip=true'
+```
+
+`JssMallHttpIT` 增加两个真实场景（尚未执行）：
+
+- 同一支付单六请求竞争，余额 12990 分足够全部请求，不能以余额耗尽掩盖重复扣款；要求一成功，其余受控拒绝，支出仅 1299、流水仅一笔、累计支出仅增 1299、支付单/交易单成功，成功支付扩展、支付操作日志、真实 HTTP 通知任务与通知日志均只一次，另一会员余额不变；重复提交不改变结果。
+- 同一会员两个 1299 分订单竞争仅够一笔的余额：要求恰好一成功、余额零、另一支付单与交易单仍未支付，败者无支付流水/成功扩展/通知/支付操作日志。通过实际管理 API 再入账 1299 后重试败者，要求该单恢复为支付成功且只扣一次，胜者不重复通知，两个库存预留保持 SKU/SPU 均为 6。
+
+新脚本预期十二项 HTTP，带浏览器十三项 JUnit；实际 H5 仍为两项。三个变更 Java 定向格式检查、全依赖测试编译、Python 编译及差异检查通过；测试编译日志 `.runtime/mall-wallet-concurrent-compile.log`。
+
+本轮再次尝试启动已归属 Redis，仍因读取已安装程序返回 `WinError 5` 失败，未启动新服务或创建随机库；新订单/支付竞争用例均未实际运行，不能登记并发验收或前移整合验收版本。恢复 Redis 程序读取/运行权限后，使用原 wrapper 串行执行商城 HTTP/H5 并检查无失败/错误/跳过、随机库清理和日志密码扫描；工作台真实回归与最新完整构建结论仍归属旧版本。

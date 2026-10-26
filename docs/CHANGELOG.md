@@ -4160,3 +4160,37 @@ H5 尚只有未支付取消，接下来补会员 UI 钱包付款及售后退款�
 ### 未做 / 后续
 
 恢复本机 Redis 程序读取/运行权限后先跑新增商城 HTTP/H5，再继续钱包支付并发、营销、统计、管理迁移、第三方与真机发布。整合版本暂保留最近实际验收的 `a0a583c44a`，整体目标继续进行中。
+
+## [2026-10-26 21:48 ~ 21:56] 修复钱包待支付查询并补支付竞争验收
+
+### 意图
+
+接续 P4/A15 的同支付单并发提交和余额竞争验收，修复竞争窗口及扣款后状态未更新时钱包支付查询直接报错的问题。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `.../pay/framework/pay/core/client/impl/wallet/WalletPayClient.java` | 修改 | WAITING 扩展单按已提交的钱包支付流水返回待支付/成功 |
+| `.../pay/framework/pay/core/client/impl/wallet/WalletPayClientTest.java` | 修改 | 新增无扣款流水/扣款已提交的待支付查询回归，先错误后通过 |
+| `yudao-server/src/test/java/cn/iocoder/yudao/server/integration/JssMallHttpIT.java` | 修改 | 同支付单六请求与双订单余额竞争；核对支付、流水、累计支出、交易与真实通知，并验证败者入账后重试 |
+| `script/jss/verify_workspace_http.py` | 修改 | 商城预期十二项 HTTP，带浏览器十三项 JUnit |
+| `docs/testing.md`、`docs/CHANGELOG.md` | 修改 | 记录单测复现与未执行的真实验收边界 |
+
+### 结构关系
+
+钱包客户端查询 → 支付扩展单与已提交的 PAYMENT 钱包流水 → 支付查询/同步链路。无扣款流水时保持未知的待支付状态，已扣款时向现有支付同步返回成功；没有新接口、锁服务或迁移，既有余额条件更新、事务与流水业务唯一键继续约束扣款。真实 HTTP 用例继续由隔离工具管理 MySQL、Redis、临时账号和实际回调。
+
+### 验证证据
+
+新增两个钱包待支付查询先各出现 `PayClientException`，共八项中六通过/两错误，零失败/跳过；`.runtime/mall-wallet-concurrent-unit-before.log`。修复后的支付专项 355 项中 314 执行通过、41 既有/条件跳过、零失败/错误，钱包客户端八项全过；`.runtime/mall-wallet-concurrent-unit-after.log`，命令见 testing。变更 Java 定向 Spotless、全依赖测试编译、Python 编译与差异检查通过。
+
+本轮启动 Redis 仍因已安装程序读取权限返回 `WinError 5`；未启动新 Redis/后端或创建随机库。两个新支付 HTTP 场景、前轮订单竞争场景及真实 H5 均未执行，不能把专项或测试编译作为并发验收。
+
+### 影响面 / 风险
+
+钱包待支付扩展单查询不再直接抛无效状态异常；返回已支付必须存在已提交的支出流水，未提交/不存在时保持待支付。原成功单缺失流水仍拒绝，关闭单行为不变。未改开发库、服务、独立 jar、远端或部署。
+
+### 未做 / 后续
+
+先恢复 Redis 程序读取/运行权限并完成十二项实际 HTTP 与两项 H5，再据结果处理其他并发问题。最新真实验收仍为 `a0a583c44a`、完整构建为 `1fdf0a0f82`；营销、统计、工作台其他模块、第三方和真机发布继续保留。

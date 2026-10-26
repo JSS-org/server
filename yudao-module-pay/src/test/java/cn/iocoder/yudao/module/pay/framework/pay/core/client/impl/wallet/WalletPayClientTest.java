@@ -8,13 +8,16 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
+import cn.iocoder.yudao.module.pay.dal.dataobject.order.PayOrderExtensionDO;
 import cn.iocoder.yudao.module.pay.dal.dataobject.refund.PayRefundDO;
 import cn.iocoder.yudao.module.pay.dal.dataobject.wallet.PayWalletTransactionDO;
+import cn.iocoder.yudao.module.pay.enums.order.PayOrderStatusEnum;
 import cn.iocoder.yudao.module.pay.enums.refund.PayRefundStatusEnum;
 import cn.iocoder.yudao.module.pay.enums.wallet.PayWalletBizTypeEnum;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.refund.PayRefundRespDTO;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.exception.PayClientException;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.NonePayClientConfig;
+import cn.iocoder.yudao.module.pay.service.order.PayOrderService;
 import cn.iocoder.yudao.module.pay.service.refund.PayRefundService;
 import cn.iocoder.yudao.module.pay.service.wallet.PayWalletService;
 import cn.iocoder.yudao.module.pay.service.wallet.PayWalletTransactionService;
@@ -36,6 +39,7 @@ public class WalletPayClientTest extends BaseMockitoUnitTest {
     @Mock private PayWalletService walletService;
     @Mock private PayWalletTransactionService walletTransactionService;
     @Mock private PayRefundService refundService;
+    @Mock private PayOrderService orderService;
 
     @BeforeEach
     public void setUp() {
@@ -43,6 +47,42 @@ public class WalletPayClientTest extends BaseMockitoUnitTest {
         ReflectionTestUtils.setField(client, "wallService", walletService);
         ReflectionTestUtils.setField(client, "walletTransactionService", walletTransactionService);
         ReflectionTestUtils.setField(client, "refundService", refundService);
+        ReflectionTestUtils.setField(client, "orderService", orderService);
+    }
+
+    @Test
+    void waitingOrderWithoutCommittedDebitRemainsWaiting() {
+        mockWaitingOrder();
+        var result = client.getOrder("P001");
+        assertEquals(PayOrderStatusEnum.WAITING.getStatus(), result.getStatus());
+        assertEquals("P001", result.getOutTradeNo());
+        assertNull(result.getChannelOrderNo());
+    }
+
+    @Test
+    void waitingOrderWithCommittedDebitReportsPaidForReconciliation() {
+        mockWaitingOrder();
+        var transaction = randomPojo(PayWalletTransactionDO.class);
+        org.mockito.Mockito.lenient()
+                .when(
+                        walletTransactionService.getWalletTransaction(
+                                "100", PayWalletBizTypeEnum.PAYMENT))
+                .thenReturn(transaction);
+        var result = client.getOrder("P001");
+        assertEquals(PayOrderStatusEnum.SUCCESS.getStatus(), result.getStatus());
+        assertEquals("P001", result.getOutTradeNo());
+        assertEquals(transaction.getNo(), result.getChannelOrderNo());
+        assertEquals(transaction.getCreateTime(), result.getSuccessTime());
+    }
+
+    private void mockWaitingOrder() {
+        when(orderService.getOrderExtensionByNo("P001"))
+                .thenReturn(
+                        new PayOrderExtensionDO()
+                                .setId(10L)
+                                .setOrderId(100L)
+                                .setNo("P001")
+                                .setStatus(PayOrderStatusEnum.WAITING.getStatus()));
     }
 
     @Test // 已退款到钱包，但退款单仍是 WAITING（例如说：退款入账后，更新退款单失败）：以钱包退款流水为准，返回退款成功

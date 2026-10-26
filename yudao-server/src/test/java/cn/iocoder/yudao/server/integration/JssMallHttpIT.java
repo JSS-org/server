@@ -928,6 +928,182 @@ class JssMallHttpIT {
     private record PaidOrder(
             long order, long payOrder, long balanceBeforePayment, long ledgerBeforePayment) {}
 
+    private record WalletOrder(long id, long payOrder) {}
+
+    private WalletOrder createUnpaidWalletOrder() throws Exception {
+        var created =
+                object(
+                        ok(
+                                api(
+                                        "POST",
+                                        "/app-api/trade/order/create",
+                                        orderBody(List.of(Map.of("skuId", sku, "count", 1))),
+                                        buyer,
+                                        1)));
+        return new WalletOrder(number(created.get("id")), number(created.get("payOrderId")));
+    }
+
+    private void setBuyerWalletBalance(int balance) throws Exception {
+        int delta = Math.toIntExact(balance - walletBalance(buyer));
+        if (delta != 0)
+            ok(
+                    api(
+                            "PUT",
+                            "/admin-api/pay/wallet/update-balance",
+                            Map.of("userId", 23006, "balance", delta),
+                            admin,
+                            1));
+        assertEquals(balance, walletBalance(buyer));
+    }
+
+    private Map<String, Object> submitWallet(WalletOrder order) throws Exception {
+        return api(
+                "POST",
+                "/app-api/pay/order/submit",
+                Map.of("id", order.payOrder(), "channelCode", "wallet"),
+                buyer,
+                1);
+    }
+
+    private void assertWalletOrderPaidOnce(WalletOrder order) throws Exception {
+        var trade =
+                awaitField("/app-api/trade/order/get-detail?id=" + order.id(), buyer, "status", 10);
+        assertEquals(true, trade.get("payStatus"));
+        assertEquals(order.payOrder(), number(trade.get("payOrderId")));
+        assertEquals(1299, number(trade.get("payPrice")));
+        var payment = get("/app-api/pay/order/get?id=" + order.payOrder(), buyer);
+        assertEquals(10, number(payment.get("status")));
+        assertEquals(1299, number(payment.get("price")));
+        assertEquals(String.valueOf(order.id()), payment.get("merchantOrderId"));
+        awaitNotify(1, order.payOrder());
+        assertEquals(
+                1,
+                scalar(
+                        "SELECT COUNT(*) FROM pay_order_extension WHERE order_id="
+                                + order.payOrder()
+                                + " AND status=10"));
+        assertEquals(
+                1,
+                scalar(
+                        "SELECT COUNT(*) FROM pay_wallet_transaction WHERE biz_type=3 AND biz_id='"
+                                + order.payOrder()
+                                + "' AND price=-1299"));
+        assertEquals(
+                1,
+                scalar(
+                        "SELECT COUNT(*) FROM trade_order_log WHERE order_id="
+                                + order.id()
+                                + " AND operate_type=10"));
+        assertEquals(
+                1,
+                scalar(
+                        "SELECT COUNT(*) FROM pay_notify_log l JOIN pay_notify_task t ON t.id=l.task_id"
+                                + " WHERE t.type=1 AND t.data_id="
+                                + order.payOrder()));
+    }
+
+    private void assertWalletOrderStillUnpaid(WalletOrder order) throws Exception {
+        var trade = get("/app-api/trade/order/get-detail?id=" + order.id(), buyer);
+        assertEquals(0, number(trade.get("status")));
+        assertEquals(false, trade.get("payStatus"));
+        assertEquals(
+                0,
+                number(get("/app-api/pay/order/get?id=" + order.payOrder(), buyer).get("status")));
+        assertEquals(
+                0,
+                scalar(
+                        "SELECT COUNT(*) FROM pay_wallet_transaction WHERE biz_type=3 AND biz_id='"
+                                + order.payOrder()
+                                + "'"));
+        assertEquals(
+                0,
+                scalar(
+                        "SELECT COUNT(*) FROM pay_order_extension WHERE order_id="
+                                + order.payOrder()
+                                + " AND status=10"));
+        assertEquals(
+                0,
+                scalar(
+                        "SELECT COUNT(*) FROM pay_notify_task WHERE type=1 AND data_id="
+                                + order.payOrder()));
+        assertEquals(
+                0,
+                scalar(
+                        "SELECT COUNT(*) FROM trade_order_log WHERE operate_type=10 AND order_id="
+                                + order.id()));
+    }
+
+    @Test
+    void concurrentWalletSubmissionsOfOneOrderDebitAndNotifyExactlyOnce() throws Exception {
+        setBuyerWalletBalance(
+                12990); // Enough for every request: balance exhaustion cannot hide a duplicate
+        // debit.
+        var beforeWallet = get("/app-api/pay/wallet/get", buyer);
+        long beforeLedger = number(ledger(buyer).get("total"));
+        long otherBalance = walletBalance(other);
+        var order = createUnpaidWalletOrder();
+        List<Callable<Map<String, Object>>> calls = new ArrayList<>();
+        for (int i = 0; i < 6; i++) calls.add(() -> submitWallet(order));
+        var results = parallelRequests(calls);
+        assertEquals(1, results.stream().filter(r -> number(r.get("code")) == 0).count());
+        for (var result : results) {
+            if (number(result.get("code")) == 0)
+                assertEquals(10, number(object(ok(result)).get("status")));
+            else rejected(result);
+        }
+        assertWalletOrderPaidOnce(order);
+        var afterWallet = get("/app-api/pay/wallet/get", buyer);
+        assertEquals(11691, number(afterWallet.get("balance")));
+        assertEquals(
+                number(beforeWallet.get("totalExpense")) + 1299,
+                number(afterWallet.get("totalExpense")));
+        assertEquals(beforeLedger + 1, number(ledger(buyer).get("total")));
+        assertEquals(otherBalance, walletBalance(other));
+        assertInventory(7);
+        rejected(submitWallet(order));
+        assertWalletOrderPaidOnce(order);
+        assertEquals(11691, walletBalance(buyer));
+        assertEquals(beforeLedger + 1, number(ledger(buyer).get("total")));
+    }
+
+    @Test
+    void competingWalletOrdersCannotOverdrawAndRejectedOrderCanBePaidAfterCredit()
+            throws Exception {
+        setBuyerWalletBalance(1299);
+        var first = createUnpaidWalletOrder();
+        var second = createUnpaidWalletOrder();
+        var orders = List.of(first, second);
+        long beforeLedger = number(ledger(buyer).get("total"));
+        var beforeWallet = get("/app-api/pay/wallet/get", buyer);
+        var results =
+                parallelRequests(List.of(() -> submitWallet(first), () -> submitWallet(second)));
+        assertEquals(1, results.stream().filter(r -> number(r.get("code")) == 0).count());
+        int winner = number(results.get(0).get("code")) == 0 ? 0 : 1;
+        int loser = 1 - winner;
+        assertEquals(10, number(object(ok(results.get(winner))).get("status")));
+        rejected(results.get(loser));
+        assertWalletOrderPaidOnce(orders.get(winner));
+        assertWalletOrderStillUnpaid(orders.get(loser));
+        assertEquals(0, walletBalance(buyer));
+        assertEquals(beforeLedger + 1, number(ledger(buyer).get("total")));
+        assertEquals(
+                number(beforeWallet.get("totalExpense")) + 1299,
+                number(get("/app-api/pay/wallet/get", buyer).get("totalExpense")));
+        assertInventory(6);
+
+        setBuyerWalletBalance(1299);
+        long ledgerAfterCredit = number(ledger(buyer).get("total"));
+        assertEquals(10, number(object(ok(submitWallet(orders.get(loser)))).get("status")));
+        assertWalletOrderPaidOnce(orders.get(loser));
+        assertWalletOrderPaidOnce(orders.get(winner));
+        assertEquals(0, walletBalance(buyer));
+        assertEquals(ledgerAfterCredit + 1, number(ledger(buyer).get("total")));
+        assertEquals(
+                number(beforeWallet.get("totalExpense")) + 2598,
+                number(get("/app-api/pay/wallet/get", buyer).get("totalExpense")));
+        assertInventory(6);
+    }
+
     private PaidOrder createWalletPaidOrder() throws Exception {
         // Real administrative test credit; no external payment provider or fabricated pay status.
         ok(

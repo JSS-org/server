@@ -122,12 +122,17 @@ public class WalletPayClient extends AbstractPayClient<NonePayClientConfig> {
                     outTradeNo,
                     "");
         }
-        // 成功状态
-        if (PayOrderStatusEnum.isSuccess(orderExtension.getStatus())) {
+        // 扣款事务可能尚未提交，也可能已提交但支付单状态尚未更新；以已提交的钱包流水核对。
+        if (PayOrderStatusEnum.isWaiting(orderExtension.getStatus())
+                || PayOrderStatusEnum.isSuccess(orderExtension.getStatus())) {
             PayWalletTransactionDO walletTransaction =
                     walletTransactionService.getWalletTransaction(
                             String.valueOf(orderExtension.getOrderId()),
                             PayWalletBizTypeEnum.PAYMENT);
+            if (walletTransaction == null
+                    && PayOrderStatusEnum.isWaiting(orderExtension.getStatus())) {
+                return PayOrderRespDTO.waitingOf(null, null, outTradeNo, orderExtension);
+            }
             Assert.notNull(walletTransaction, "支付单 {} 钱包流水不能为空", outTradeNo);
             return PayOrderRespDTO.successOf(
                     walletTransaction.getNo(),

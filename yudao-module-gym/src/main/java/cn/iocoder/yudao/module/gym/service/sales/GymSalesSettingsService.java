@@ -108,6 +108,9 @@ public class GymSalesSettingsService {
         for (var item : req.getItems()) {
             if (!ids.add(item.getCardTemplateId())) throw exception(SALES_SETTINGS_INVALID);
             checkApproval(item.getContractRequired(), item.getApprovalRequired());
+            if ((item.getRenewalTerms() == null) != (item.getAgreementVersion() == null)
+                    || item.getRenewalTerms() != null && item.getRenewalTerms().isBlank())
+                throw exception(SALES_SETTINGS_INVALID);
         }
         for (var item :
                 req.getItems().stream()

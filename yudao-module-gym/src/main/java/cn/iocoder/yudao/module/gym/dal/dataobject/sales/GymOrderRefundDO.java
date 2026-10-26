@@ -17,6 +17,7 @@ public class GymOrderRefundDO extends TenantBaseDO {
     @TableId private Long id;
     private Long orderId;
     private Long paymentId;
+    private Long refundApplicationId;
     private String provider;
     private String providerRefundId;
     private BigDecimal amount;

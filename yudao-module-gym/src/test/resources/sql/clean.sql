@@ -67,3 +67,39 @@ DELETE FROM gym_order_refund_review;
 DELETE FROM gym_fulfillment_task;
 
 DELETE FROM gym_order_item_financial_event;
+
+DELETE FROM gym_mobile_file_owner;
+DELETE FROM gym_mobile_request;
+DELETE FROM gym_mobile_identity;
+
+DELETE FROM gym_member_followup;
+
+DELETE FROM gym_mobile_work_file;
+
+DELETE FROM gym_mobile_lesson_qr;
+
+DELETE FROM gym_feedback_attachment;
+DELETE FROM gym_feedback;
+
+DELETE FROM gym_course_quote;
+
+DELETE FROM gym_refund_application;
+DELETE FROM gym_mobile_notification;
+DELETE FROM gym_mobile_notification_preference;
+DELETE FROM gym_mobile_message;
+DELETE FROM gym_mobile_conversation;
+
+DELETE FROM gym_mobile_invitation;
+DELETE FROM gym_point_record;
+DELETE FROM gym_point_account;
+
+DELETE FROM gym_point_product;
+DELETE FROM gym_point_redemption;
+DELETE FROM gym_risk_resolution;
+DELETE FROM gym_risk_alert;
+
+DELETE FROM gym_coupon_preview;
+DELETE FROM gym_coupon_verification;
+
+DELETE FROM gym_action_confirmation;
+DELETE FROM gym_action_verification_state;

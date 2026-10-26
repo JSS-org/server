@@ -1891,6 +1891,1725 @@ MeituanCouponHistoryRequest 承载业务参数；Client 将其一次序列化后
 
 未访问真实美团接口、提供凭据、启动/重启服务或执行实际核销。真实平台授权、行业权限、联通和数据差异仍按业务说明待接入；本次代码审查和模拟测试不能替代平台联调。
 
+
+## [2026-10-19 21:10 ~ 21:38] 健身服务零售团购核销16项POST框架
+
+### 意图
+
+按用户要求切换到美团服务零售文档，把“团购核销API”目录全部16项搭建为后端POST请求框架，包含该目录退款接口；遵循独立DTO和getter/setter规范，前端不动，不要求真实平台跑通。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../controller/admin/groupbuy/GymMeituanRetailController.java` 及新请求VO | 新增 | 16个类型化POST入口、本地店ID/嵌套业务参数校验和功能权限 |
+| `yudao-module-gym/.../service/groupbuy/GymMeituanRetailService.java` | 新增 | 每项显式业务方法，门店检查、上下文租户和可信操作人填充 |
+| `yudao-module-gym/.../framework/groupbuy/meituan/GymMeituanRetailClient.java`、`MeituanApi.java` | 新增 | 16个明确平台方法及固定路径/业务编号/操作类型白名单 |
+| `yudao-module-gym/.../framework/groupbuy/meituan/GymMeituanTransport.java` | 新增 | 共享签名表单POST、业务编号隔离、开关、超时和结果未知处理 |
+| `yudao-module-gym/.../framework/groupbuy/meituan/dto/retail/`、`dto/MeituanResponse.java` | 新增 | 独立业务请求、嵌套类型及各平台响应模型，公共响应泛型信封 |
+| `GymMeituanCouponClient.java`、`GymMeituanProperties.java`、`GymGroupBuyController.java`、`ErrorCodeConstants.java` | 修改 | 旧餐饮复用传输并限制编号1/标记deprecated；新默认58、变更单独关闭、增加错误码 |
+| `yudao-server/src/main/resources/application.yaml` | 修改 | 默认关闭接口和状态变更请求，凭据仍从外部配置读取 |
+| `sql/gym/migration/mysql/V004__gym_group_buy_refund_permission.sql` | 新增 | 独立退款权限定义，不授予角色，不创建前端页面 |
+| `yudao-module-gym/src/test/.../GymMeituanRetailClientTest.java`、`GymMeituanRetailControllerTest.java`、契约辅助类及JSON | 新增 | 16项独立官方契约、实际MVC/Service链路和边界回归 |
+| 既有餐饮Client和配置测试 | 修改 | 显式餐饮编号1，默认配置编号58的回归 |
+| `docs/meituan-service-retail-api.md` | 新增 | 16项官方来源、远端/本地路径、DTO与字段约束，以及文档差异 |
+| `docs/README.md`、`architecture.md`、`group-buy-verification.md`、`gym-full-api-progress.md`、`testing.md` | 修改/追加 | 当前业务边界、配置、分层及可复现证据 |
+
+### 结构关系
+
+Controller → Retail Service → GymStoreService.requireStore → 填充当前登录操作人 → Retail Client → MeituanApi白名单 → Transport → 官方表单POST。业务DTO和公共DTO通过setter构建，biz一次序列化后同时用于签名与发送。新接口固定businessId58，旧餐饮历史只允许显式编号1；同一门店不能借修改请求参数混用业务授权。变更请求需额外开关和权限，退款为独立权限；没有Mapper、核销流水、权益或财务写入器。
+
+### 验证证据
+
+`mvn -o -B -ntp -N spotless:apply spotless:check`通过；`mvn -o -B -ntp -pl yudao-module-gym -am test -Dtest='GymMeituan*Test,GymGroupBuy*Test' -Dsurefire.failIfNoSpecifiedTests=false -DargLine=-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar`：114测试、0失败/错误/跳过。16项平台契约逐项验证实际POST路径、字段、签名和类型化响应；每个本地入口有功能权限和门店拒绝回归。`mvn -o -B -ntp -pl yudao-server -am -DskipTests package`最终成功（跳过测试，构建完成时间21:37:31）。Python静态审计核对16个路径/路由/方法和16个日志禁用注解，4份当前文档23个相对链接和围栏通过，git diff --check通过，dashboard工作区干净。SQL仅做静态核对，未执行MySQL迁移；完整命令和范围见testing当日条目。
+
+### 影响面 / 风险
+
+范围严格限于服务零售团购核销目录，未扩到商家券、财务、预约或授权管理目录。旧餐饮路径保留响应兼容但不再适用于默认58授权。核销/撤销/退款变更无自动重试，网络/格式异常及可能部分执行的业务错误返回结果待确认；明确公共参数拒绝才按未执行拒绝处理。批量结果保留逐项状态。审查发现并修复部分核销错误被一概当作整次拒绝的问题；当前请求骨架未发现其余阻塞问题。请求/响应体访问日志关闭，平台异常原文不透传。V004仅定义权限，部署需显式迁移和分配职责；没有改前端或角色授权。
+
+### 未做 / 后续
+
+未取得真实平台凭据、发起真实核销/退款、启动/重启应用或运行目标库迁移。授权刷新/回调、未知结果自动补查、核销落库、本地会员权益、退款审批财务和对账仍未接入；请求框架完成不等于平台真实业务上线。变更保留在codex/meituan-retail-group-buy分支工作区，未提交或推送。
+
+## [2026-10-23 22:15 ~ 22:58] 小程序135项契约与首批会员接口
+
+### 意图
+
+按小程序需求建立带描述和总数的接口清单，推进135项后端实现；优先完成可独立验证的会员身份、本人资料、权益、运动档案和文件。遵从用户“不要改前端”及“这个部分先跳过，文档写清楚”：支付/自动续费、电子签约、门禁设备与监控的真实渠道接入和联调暂缓。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `docs/uniapp/uniapp-api.md`、`uniapp-api-summary.md` | 新增 | 设计契约、逐项方法/完整路径/描述与状态，总数135 |
+| `docs/uniapp/uniapp-implementation.md`、`api-implementation.json` | 新增 | 当前实施证据、第三方暂缓范围、部署限制与机器清单 |
+| `pom.xml`、`yudao-module-gym/pom.xml`、`yudao-server/pom.xml` | 修改 | 启用member模块，由gym通过MemberUserApi取得会员身份 |
+| `yudao-module-gym/.../controller/app/mobile/` | 新增 | 身份/资料4项、档案/合同/签到/汇总8项、文件2项、卡与课包3项，共17个入口及显式VO |
+| `yudao-module-gym/.../service/mobile/` | 新增 | 身份映射、事务幂等、本人查询、权益状态投影、文件用途和归属验证 |
+| `yudao-module-gym/.../dal/dataobject/mobile/`、`dal/mysql/mobile/` | 新增 | 身份、请求幂等、会员文件归属的实体与Mapper |
+| `yudao-module-gym/.../framework/mobile/`、`enums/ErrorCodeConstants.java` | 新增/修改 | 通用手机号入口拦截、移动JSON绑定异常处理、新业务错误码 |
+| `yudao-module-gym/.../service/file/GymFileServiceImpl.java` | 修改 | 后台通用文件访问拒绝member用途，防止按门店权限读取会员私有文件 |
+| `sql/gym/migration/mysql/V005__gym_mobile_identity.sql` | 新增 | member_user及3张gym表，既有迁移保持不变 |
+| `yudao-module-gym/src/test/.../GymMobileMemberServiceTest.java`、`GymMobileIdentityControllerTest.java`、`src/test/resources/sql/` | 新增/修改 | 23项数据库服务测试、4项MVC测试及对应H2建表/清理 |
+| `script/gym/verify-migrations.py`、`verify-uniapp-api-coverage.py` | 修改/新增 | 新版本结构与真实隔离迁移检查、135项路由和实现证据核对 |
+| `docs/README.md`、`architecture.md`、`testing.md` | 修改/追加 | 文档入口、模块及数据关系、实际验证命令与边界 |
+
+### 结构关系
+
+会员令牌 → 账号类型/租户/状态检查 → MemberUserApi → gym_mobile_identity → 本人gym档案；查询在数据库分页前加入member_id。首次关联在事务中使用请求键行锁、摘要及GymBusinessMutex，保持客户阶段/负责关系，相同请求返回原结果。会员文件使用已有FileApi私有存储和新归属表，不把会员账号写入后台uploader_id；人脸不可下载。卡查询按当前权益门店关系及实际时间状态投影，状态过滤与分页总数一致。员工端仍保留system身份和既有权限链。
+
+### 验证证据
+
+Spotless apply/check通过；完整所选gym回归404项通过，member状态回归4项通过、1项既有禁用测试跳过；其中本批新增27项测试全部通过。server package成功（跳过测试）。真实MySQL/Flyway隔离回归34项通过、临时库已清理。契约审计21/135源码路由、114缺失，文件证据和总表一致；文档链接/围栏、git diff --check通过。具体命令及验证边界见testing当日条目。
+
+### 影响面 / 风险
+
+本批新增接口只允许本人数据；通用会员换手机号入口被拦截，后台通用文件服务不再接受member用途文件。member整体装配会带入其他通用入口，本批未迁移其所有业务表，部署前需核查入口开放范围及依赖。V005尚未应用到业务数据库；部署须按既有手册显式迁移。微信账号及实际HTTP过滤链尚未联调，本地mock不替代真实渠道验收。保留用户原始uniapp.md暂存及未暂存变更，未改前端、账号授权或历史迁移，未提交/推送。
+
+### 未做 / 后续
+
+135项尚未全部完成：17个新增实现、4个复用源码路由、114个待开发。继续公共门店/商品、预约写流程、互动、工作台等实现和相应权限/并发测试；来源和邀请码只留存，奖励归因待实现。用户明确暂缓四类第三方实际接入，完整接口编号及所需资料已记入实施边界；不伪造支付、签署、开门、播放成功，不将暂缓条目从总表删除或计作完成。
+
+## [2026-10-23 22:59 ~ 23:20] 会员私教预约主流程与共享课时预占
+
+### 意图
+
+继续135项小程序后端目标，补齐不依赖外部渠道的教练排期、本人预约创建/取消/查询和课消记录，防止后台与会员端同时预约时超占名额或重复释放课时。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../controller/app/mobile/AppGymBookingsController.java`、`vo/GymMobileBookingVO.java` | 新增 | 总表37–41、45共6个接口、严格写入字段、分页查询与显式响应 |
+| `yudao-module-gym/.../service/mobile/GymMobileBookingsService.java` | 新增 | 本人鉴权、持久幂等、事务预占和取消、批量关联读取、排期可约资格 |
+| `yudao-module-gym/.../service/course/GymBookingRules.java`、`GymCourseService.java` | 新增/修改 | 会员与后台共用任职、课包、冲突和预占/释放规则；既有确认课消记录消费时余额 |
+| `yudao-module-gym/.../framework/mobile/GymMobileBookingProperties.java`、`yudao-server/src/main/resources/application.yaml` | 新增/修改 | 自助取消提前量配置，默认0分钟，范围0～10080 |
+| `yudao-module-gym/.../dal/dataobject/course/GymBookingDO.java`、`GymLessonRecordDO.java`、`enums/ErrorCodeConstants.java` | 修改 | 取消原因、消费后余额及冲突/超时错误码 |
+| `sql/gym/migration/mysql/V006__gym_mobile_booking_audit.sql`、测试`create_tables.sql` | 新增/修改 | 两个可空审计列；不猜测回填旧课消余额 |
+| `yudao-module-gym/src/test/.../GymMobileBookingsServiceTest.java`、`GymMobileBookingsControllerTest.java`、`GymOrganizationServiceTest.java` | 新增/修改 | 新增21项回归及既有签课余额断言 |
+| `script/gym/verify-migrations.py`、`README.md`、`DATABASE.md` | 修改 | 新列真实迁移验证、当前版本及接口覆盖审计入口 |
+| `docs/uniapp/`中设计/总表/实施说明/JSON清单、`docs/architecture.md`、`testing.md` | 修改/追加 | 27/135真实进度、取消政策、历史余额空值和验证证据 |
+
+### 结构关系
+
+App Controller → 本人身份 → 幂等请求事务 → 教练/会员/排期/预约/权益锁 → GymBookingRules → 预占或释放账本 → 保存原响应。后台也通过相同规则并持有会员锁，跨入口不能产生重叠预约。取消异常会回滚已释放课时、状态和请求结果。列表不依赖后台数据范围，使用本人SQL谓词、真实课程日期和批量关联投影；课消余额读取新增的消费时快照。
+
+### 验证证据
+
+最终gym完整回归425项通过，member所选4项通过/1项既有禁用跳过；本批聚焦260项通过，含15项新服务测试、5项新MVC测试和1项两端混合并发测试。Spotless通过，server及依赖package通过（跳过测试）；真实MySQL/Flyway隔离35检查通过并清理测试库。源码覆盖27/135，108缺失；不是全量完成。具体命令和日志见testing本次条目。
+
+### 影响面 / 风险
+
+后台新增同会员重叠课程拒绝，属于业务一致性修复；已有容量、预占、取消和签课回归保持通过。会员自助取消默认开课前，可配置提前分钟数，过期联系门店；没有自动爽约扣课。旧课消和不限次数卡的历史余额返回NULL，不能当0或当前余额。V006需先迁移再启用新代码；仅隔离库已应用，业务库未动。前端、角色授权及既有迁移未修改；没有真实微信、签课二维码或设备集成验收。
+
+### 未做 / 后续
+
+当前23个新增接口实现通过本地测试，4个已有源码接口复用，仍有108个目标接口待实现。接续公共展示、商品、会员签到排名及扫码签课、工作台等；支付/自动续费、电子签约、门禁设备、监控外部接入继续按用户确认暂缓。代码保留在原工作分支，未提交或推送。
+
+## [2026-10-23 23:21 ~ 23:45] 移动工作台档案、会员跟进及分配
+
+### 意图
+
+继续135项小程序接口目标，新增工作台的体测、计划、合同读写以及会员跟进和分配，复用现有后台业务校验、功能权限、门店及SELF负责关系；不修改前端。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../controller/admin/mobile/` | 新增 | 两个Controller及专用VO，9个工作台入口；5个写请求必填幂等头并拒绝未定义身份/内部字段 |
+| `yudao-module-gym/.../service/mobile/GymMobileWorkAccess.java`、`GymMobileWorkRecordsService.java`、`GymMobileWorkMembersService.java` | 新增 | 后台身份与当前范围验证、公开响应适配、复用已有创建服务、跟进与带版本分配 |
+| `yudao-module-gym/.../dal/dataobject/mobile/GymMemberFollowupDO.java`、`dal/mysql/mobile/GymMemberFollowupMapper.java` | 新增 | 租户隔离的跟进记录与员工审计 |
+| `yudao-module-gym/.../dal/dataobject/card/GymMemberStoreDO.java`、`service/member/GymMemberCoachService.java` | 修改 | 门店负责关系版本、实际变更递增及到岗日期校验；旧后台同步维护版本 |
+| `yudao-module-gym/.../enums/ErrorCodeConstants.java` | 修改 | 版本冲突及缺少有效员工关联错误 |
+| `sql/gym/migration/mysql/V007__gym_mobile_member_followups.sql`、测试SQL | 新增/修改 | 跟进表和默认0的负责关系版本，gym表总数63 |
+| `yudao-module-gym/src/test/.../GymOrganizationServiceTest.java`、`controller/admin/mobile/GymMobileWorkControllerTest.java` | 修改/新增 | 12项业务/权限/并发测试及5项HTTP绑定测试 |
+| `script/gym/verify-migrations.py`、`README.md`、`DATABASE.md` | 修改 | 63表和默认版本真实验证、当前迁移版本说明 |
+| `docs/uniapp/`的设计/总表/实施说明/清单、`architecture.md`、`testing.md` | 修改/追加 | 36/135进度、权限与版本边界、证据及待开发读取入口 |
+
+### 结构关系
+
+后台令牌 → Controller功能权限 → GymMobileWorkAccess账号及租户检查 → 原会员负责关系/门店校验 → 业务服务或Mapper。写入先检查当前权限，再读取幂等结果，防止撤权后重放历史资料。体测/计划/合同复用原创建服务，响应裁剪内部证据。跟进作者从员工关联取得；分配在租户锁及会员关系行锁内核对expectedVersion，调用原替换服务后返回实际版本。
+
+### 验证证据
+
+最终gym442项通过，member4项通过/1项既有禁用跳过；新增17项覆盖真实权限、服务、数据库、并发及MVC，全部通过。Spotless及server依赖打包成功（跳过测试）。真实隔离MySQL/Flyway36检查通过，所有临时库清理；V007未应用至业务库。接口审计36映射/99缺失，证据文件、文档链接/围栏及diff检查通过。详见testing本次条目。
+
+### 影响面 / 风险
+
+原分配服务现在仅接受已经到入职和门店任职日期的有效员工，实际增删负责关系时更新共享版本。旧后台接口仍不要求expectedVersion，保持原整体替换语义；新增移动接口可检测旧后台先发生的变更，不能宣称旧后台操作也都受版本冲突保护。V007必须先迁移后运行新代码。跟进要求当前账号关联唯一在职员工；总部账号未关联员工时不可冒名录入。数据与功能权限分开验证，无角色自动授权、外部渠道接入或前端变更。
+
+### 未做 / 后续
+
+已新增实现32项、复用源码4项，仍有99项目标接口待开发；会员列表/详情的assignmentVersion读取、工作台上下文/文件、公共展示、商品及其余流程继续推进。真实支付/自动续费、电子签约、门禁、监控继续按用户要求暂缓。没有提交、推送或部署，本轮不代表135项全部完成。
+
+## [2026-10-23 23:45 ~ 2026-10-24 00:01] 工作台会员列表、详情与分配版本读取
+
+### 意图
+
+补齐135项目标的87–88两项，使工作台可按权限筛选会员、读取本门店权益摘要，并取得已实现分配接口所需的expectedVersion来源。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../service/mobile/GymMobileWorkMemberQueryService.java` | 新增 | 授权关联和权益筛选先于分页、每会员去重、确定响应门店、批量摘要与只读事务 |
+| `yudao-module-gym/.../controller/admin/mobile/GymMobileWorkMembersController.java` | 修改 | 新增列表及详情GET，统一会员读取权限 |
+| `yudao-module-gym/.../controller/admin/mobile/vo/GymMobileWorkMembersVO.java` | 修改 | 有界查询参数、脱敏WorkMember及卡/课包摘要响应 |
+| `yudao-module-gym/src/test/.../GymOrganizationServiceTest.java`、`GymMobileWorkControllerTest.java` | 修改 | 9项数据库/权限/业务回归、1项MVC绑定回归，并扩充实际方法权限验证 |
+| `docs/uniapp/uniapp-api.md`、`uniapp-api-summary.md`、`uniapp-implementation.md`、`api-implementation.json` | 修改 | 明确多门店选择、摘要字段及筛选语义；进度38/135、余97 |
+| `docs/architecture.md`、`docs/testing.md` | 修改/追加 | 更新版本读取状态及查询链路，记录测试与打包证据 |
+
+### 结构关系
+
+移动会员Controller → 方法权限 → 查询服务后台身份 → 既有GymMemberCoachService授权谓词 → 会员SQL相关子查询 → 分页 → 满足筛选的最小可见门店 → 批量负责关系与权益投影。详情要求指定门店。只读REPEATABLE_READ事务使coachIds与assignmentVersion保持同一快照；写分配仍重新检查当前权限和版本。
+
+### 验证证据
+
+新增10项测试通过，最终gym完整回归452项通过，member4项通过/1项既有禁用跳过；Spotless及server依赖打包成功。命令沿用testing中记录的reactor和显式Mockito agent。源码路由审计38映射/97缺失，证据文件、文档链接/围栏和diff检查通过。无SQL结构修改，因此本批不重复运行迁移测试，也不将以前的迁移结果算作新增验证。
+
+### 影响面 / 风险
+
+没有改动旧后台会员查询口径。移动列表省略门店时每会员选满足全部筛选的最小可见门店，调用方需要其他门店资料应明确传storeId；不会把不同门店负责关系版本合并。卡适用范围取真实关系表，摘要仅合计当前有效权益；潜客取真实客户阶段，预占不代表已消费。返回脱敏手机号，不带内部实体。部署HTTP、真实账号登录及外部渠道尚未验收。
+
+### 未做 / 后续
+
+34项新增实现、4项复用源码、97项目标待开发。继续公共门店/商品/教练展示、工作台上下文及其余业务接口；支付/自动续费、电子签约、门禁、监控真实接入按用户要求暂缓。前端、角色授权及业务数据库未修改，没有提交、推送或部署。
+
+## [2026-10-24 00:02 ~ 00:27] 公开门店、首页与展示配置及媒体访问
+
+### 意图
+
+补齐135项目标7–11，让游客读取当前租户营业门店、首页、已登记入场次数和展示资料；为真实图片/视频提供可撤销的公开引用读取，保留第三方设备等暂缓边界。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../controller/app/mobile/AppGymPublicController.java`、`vo/GymMobilePublicVO.java` | 新增 | 五个目标GET与显式响应、有界位置查询参数 |
+| `yudao-module-gym/.../controller/app/mobile/AppGymPublicMediaController.java` | 新增 | 公开媒体辅助GET，实际Range读取、404及禁缓存；不增加135条目 |
+| `yudao-module-gym/.../service/mobile/GymMobilePublicService.java` | 新增 | 租户内营业门店、距离分页、真实签到计数、配置回退、公开引用及内容校验 |
+| `yudao-module-gym/.../framework/mobile/GymPublicMediaTenantFilter.java`、`GymMobileWebConfiguration.java` | 新增/修改 | 仅公开媒体GET的query租户转header，保留原租户过滤器及校验 |
+| `yudao-module-gym/.../controller/admin/content/vo/GymClientSettingsReqVO.java`、`service/content/GymContentService.java` | 修改 | 原配置新增可选福利、三模型及公告，检查归属/URL/唯一ID/有效期，保持原权限和全量替换 |
+| `yudao-module-gym/src/test/.../GymOrganizationServiceTest.java`、`controller/app/mobile/GymMobilePublicControllerTest.java`、`GymPublicMediaTenantFilterTest.java` | 修改/新增 | 11项业务测试、4项MVC、4项真实租户过滤器组合测试 |
+| `docs/uniapp/`中的设计/总表/实施说明/清单、`docs/architecture.md`、`docs/testing.md` | 修改/追加 | 43/135进度、配置方法、公开素材辅助路径及统计/联调边界 |
+
+### 结构关系
+
+公开Controller → 租户内数据服务 → 门店/素材/配置/签到Mapper → 显式响应。门店状态active即公开营业口径，位置排序先于数据库分页；首页不加载个人资料。配置沿用原JSON，门店存在则整份覆盖，否则回退总部。公开图片URL → gym媒体租户选择器 → 原租户Context/Security校验 → 当前公开引用及文件类型检查 → FileApi → Resource范围响应；共享框架未修改。
+
+### 验证证据
+
+最终gym471项通过、member4通过/1既有禁用跳过，本批新增19项。Spotless和server依赖package成功。覆盖43/135、余92；相对链接/围栏、机器清单、总表和diff检查通过。测试与日志见testing当日条目。没有DDL变更，不重复记账旧MySQL迁移测试；完整部署过滤链和存储服务没有联调。
+
+### 影响面 / 风险
+
+原后台配置DTO新增可选字段，仍是全量替换，调用者保存时须保留所需公告/加盟/福利字段；无前端修改。营业门店绑定的环境素材及启用配置的封面/模型明确成为匿名可读，未发布或业务私有类别不开放，撤销全部公开引用才撤销访问。媒体query租户只在精确GET路径生效，原header优先，仍拒绝过期租户与登录租户不符。当前入场数据不是完整设备覆盖，实时人数null/unavailable；不以查询时刻冒充设备更新时间。加盟缺少完整三模型时返回未配置，不补虚构素材。
+
+### 未做 / 后续
+
+39项新增实现、4项复用源码、92项待开发。继续商品、教练展示、购买内部流程、互动及工作台能力；支付/自动续费、电子签约、门禁、监控实际接入仍按用户要求暂缓。未修改前端或角色授权、未迁移业务库、未提交推送部署。
+
+## [2026-10-24 00:27 ~ 18:53] 公开商品目录、实际售价和商品版本
+
+### 意图
+
+实现总表14–16、27四项，游客可读取真实销售商品，明确未交付购买和自动续费边界。期间任务中断后续跑验证。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../controller/app/mobile/AppGymCatalogController.java`、`vo/GymMobileCatalogVO.java`、`service/mobile/GymMobileCatalogService.java` | 新增 | 四个商品GET、真实配置与分页、购买限制 |
+| `yudao-module-gym/.../GymCourseProductDO.java`、`GymCourseProductRespVO.java`、`GymCourseService.java` | 修改 | 商品真实版本，实际资料或审批变价才递增 |
+| `yudao-module-gym/.../GymSubscriptionSettingsReqVO.java`、`GymSalesSettingsService.java`、`ErrorCodeConstants.java` | 修改 | 成对续费条款和协议版本、明确不可用错误 |
+| `sql/gym/migration/mysql/V008__gym_course_product_version.sql`、`script/gym/verify-migrations.py`、脚本手册 | 新增/修改 | 默认版本1、旧值保留验证、下一版本V009 |
+| `yudao-module-gym/src/test/.../GymOrganizationServiceTest.java`、`GymMobileCatalogControllerTest.java`、H2 schema | 修改/新增 | 七项业务和两项MVC测试 |
+| `docs/uniapp/`设计/总表/清单/实施说明、`architecture.md`、`testing.md` | 修改 | 47/135、88待开发、版本与售卖边界 |
+
+### 结构关系
+
+公开Controller → 只读商品服务 → 真实销售配置/模板/商品/有效任职。卡和包月返回门店配置revision，私教依赖V008商品版本；原后台变更服务在锁内维护版本。包月公开前检查条款成对发布，复用原JSON和权限。
+
+### 验证证据
+
+gym480项通过，member4项通过/1既有禁用跳过；新增9项。Spotless与server打包成功。真实隔离MySQL/Flyway38检查通过并清理临时库，未迁移业务库。日志、命令和时间见testing当日条目。源码映射47/135，余88。
+
+### 影响面 / 风险
+
+V008须先于新代码部署。包月后台保存仍全量替换，须保留需发布的条款；旧配置缺少条款不公开。销售状态不代表已支持付款，卡/私教返回checkout_unavailable，包月返回auto_renewal_integration_deferred。实际第三方接入仍暂缓；前端不改。
+
+### 未做 / 后续
+
+43项新增实现、4项复用源码、88项待开发；继续教练公开资料及其余内部流程。没有部署或真实渠道联调。按用户最新“小步提交”要求，将此前累计后端工作按依赖与功能拆分为本地提交，用户原始uniapp.md改动保持原暂存及工作区状态，不推送。
+
+## [2026-10-24 19:03 ~ 19:12] 教练公开资料发布、列表与详情
+
+### 意图
+
+实现总表35–36，提供真实教练介绍与资质展示，同时避免自动公开全部内部员工档案。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../controller/app/mobile/AppGymCoachesController.java`、`vo/GymMobileCoachVO.java`、`service/mobile/GymMobileCoachService.java` | 新增 | 两个公开GET、当前门店过滤与显式响应 |
+| `yudao-module-gym/.../controller/admin/employee/vo/GymPublicCoachProfileVO.java`、`service/employee/GymCoachPublicProfiles.java` | 新增 | 公开对象、发布校验、有效任职及图片引用规则 |
+| `yudao-module-gym/.../GymEmployeeDO.java`、员工请求/响应VO、`GymEmployeeService.java`、`GymMobilePublicService.java`、`ErrorCodeConstants.java` | 修改 | 原员工写入口显式发布、保留旧设置、媒体引用及不可见错误 |
+| `sql/gym/migration/mysql/V009__gym_public_coach_profiles.sql`、H2 schema、`script/gym/verify-migrations.py`及脚本手册 | 新增/修改 | 默认私有列、历史员工保护、40项验证、下一版本V010 |
+| `yudao-module-gym/src/test/.../GymOrganizationServiceTest.java`、`GymMobileCoachesControllerTest.java` | 修改/新增 | 七项业务及两项MVC回归 |
+| `docs/uniapp/`设计/总表/实施说明/清单、`architecture.md`、`testing.md` | 修改 | 49/135进度、发布流程及公开图片边界 |
+
+### 结构关系
+
+员工既有功能权限和全部任职范围检查 → 发布资料校验及持久化；游客Controller → 当前租户公开条件 → SQL分页 → 裁剪响应。公开媒体沿用原路径和租户过滤，在有效任职与营业门店下确认公开教练引用，复用文件实际内容检查。
+
+### 验证证据
+
+最终gym489项全部通过，member4通过/1既有禁用跳过；新增9项。Spotless和server打包通过，真实隔离MySQL/Flyway40检查通过并清理临时库。源码审计49/135、86缺失；命令与日志见testing。
+
+### 影响面 / 风险
+
+新代码须先迁移到V009；旧员工默认不公开。明确发布后的资料在全部当前营业任职门店共用，图片变为按引用匿名可读；下架时仅撤销本公开引用，其他有效公开引用仍可访问。原员工写权限和共享档案范围保持，前端和角色授权不改。公开资质是管理员录入资料，不表示已外部核验。
+
+### 未做 / 后续
+
+45项新增实现、4项复用源码、86项待开发。本人教练资料编辑及其他工作台入口继续推进；第三方实际接入仍按要求暂缓，未迁移业务库或部署。此功能连同测试、文档单独作一次本地提交，不推送；用户原始uniapp.md改动保留。
+
+## [2026-10-24 19:13 ~ 19:24] 本人教练资料修改与草稿图片预览
+
+### 意图
+
+实现总表83–84，教练能够修改自己的介绍和图片，保持管理员发布控制和内部员工资料边界。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../controller/admin/mobile/GymMobileCoachProfileController.java`、`vo/GymMobileCoachProfilePatch.java` | 新增 | GET/PATCH及本人绑定图片辅助读取、部分字段请求、鉴权和媒体响应 |
+| `yudao-module-gym/.../service/mobile/GymMobileCoachProfileService.java` | 新增 | 当前教练身份、行锁合并、图片上传人/绑定校验、草稿预览 |
+| `yudao-module-gym/src/test/.../GymOrganizationServiceTest.java`、`GymMobileCoachProfileControllerTest.java` | 修改/新增 | 七项数据库/权限/并发业务测试、三项MVC |
+| `docs/uniapp/`设计/总表/实施说明/清单、`architecture.md`、`testing.md` | 修改 | 51/135状态、身份/发布/图片边界与验证证据 |
+
+### 结构关系
+
+认证Controller → 工作台有效账号和唯一员工 → 当前营业任职及已有教练资料/私教商品 → 只读资料或员工行锁内合并。更新仅写公开资料JSON和审计字段，管理员发布标志及其他员工字段保持。本人图片辅助路径重新验证绑定和真实内容，通过FileApi读取，不向匿名公开草稿。
+
+### 验证证据
+
+最终gym499项全部通过；member4通过/1既有禁用跳过。新增10项覆盖身份、文件、匿名代理拒绝、并发合并及MVC；Spotless和server打包成功。源码审计51/135，余84项。首轮夹具违反既有唯一绑定约束，修正测试后通过，未改约束。详见testing本次条目。
+
+### 影响面 / 风险
+
+不要求或授予整店员工写权限，服务端只准本人操作；发布仍由管理员控制。新图片须本人上传，管理员既有绑定可继续使用。失效旧图片需在保存时清除。新增鉴权预览为辅助路由，不计入135项；未修改公开图片路由、原上传权限或前端。无需新增迁移，继续依赖V009。
+
+### 未做 / 后续
+
+47项新增本地实现、4项复用源码、84项待开发。继续工作台上传/下载等流程；当前资料编辑不代表SELF通用图片上传已完成。四类第三方真实接入保持暂缓，未部署或迁移业务库。本功能及测试文档作单独本地提交，不推送；原始uniapp.md改动保留。
+
+## [2026-10-24 19:25 ~ 19:49] 工作台文件上传、下载和目标归属
+
+### 意图
+
+补齐总表74、76，打通SELF教练图片上传，并防止上传到指定会员的附件被原后台或移动入口误绑给其他目标。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../controller/admin/mobile/GymMobileWorkFilesController.java`、`vo/GymMobileWorkFileUploadReqVO.java`、`service/mobile/GymMobileWorkFilesService.java` | 新增 | 两个目标路由、用途权限、内容校验、下载及字段白名单 |
+| `yudao-module-gym/.../dal/dataobject/mobile/GymMobileWorkFileDO.java`、对应Mapper、`service/file/GymWorkFileBindings.java` | 新增 | 租户内不可变上传用途及会员/员工目标 |
+| `yudao-module-gym/.../GymMemberRecordsService.java`、`GymTrainingPlanService.java`、`GymContractTemplateService.java`、`GymCoachPublicProfiles.java`、`GymEmployeeService.java`、`GymMobileCoachProfileService.java` | 修改 | 原绑定入口也检查新文件目标，教练图片不随账号重绑转移 |
+| `sql/gym/migration/mysql/V010__gym_mobile_work_file_targets.sql`、H2 schema/clean、迁移脚本及手册 | 新增/修改 | 64表、唯一目标和历史文件保留验证，下一版本V011 |
+| `yudao-module-gym/src/test/.../GymOrganizationServiceTest.java`、`GymMobileWorkFilesControllerTest.java` | 修改/新增 | 九项业务回归及三项MVC |
+| `docs/uniapp/`设计/总表/实施说明/清单、`architecture.md`、`testing.md` | 修改 | 53/135进度、用途权限和存储回滚边界 |
+
+### 结构关系
+
+文件功能权限与有效后台身份 → 用途对应业务/数据范围 → 实际内容检查 → 私有FileApi → gym_file和目标行同事务落库。原会员档案、教练资料和模板服务共享目标检查。下载按当前目标及绑定关系授权，不靠知道ID或曾上传过来绕过撤权。
+
+### 验证证据
+
+完整gym511项通过，member4通过/1既有禁用跳过；新增12项。Spotless、server依赖打包通过；真实隔离MySQL/Flyway42检查通过并清理测试库。源码审计53/135，余82项。MVC发现的header误绑定和缺少nosniff已修复并验证；日志见testing。
+
+### 影响面 / 风险
+
+部署须先执行V010；原附件绑定服务也依赖新表。新上传目标固定，历史文件不变。只有新工作台入口增加按本人教练身份上传图片的能力，不扩大原通用后台上传权限或自动授权角色。数据库回滚不删除外部已写入对象，孤立对象自动清理尚未实现；合同上传不表示签署成功。前端未修改。
+
+### 未做 / 后续
+
+49项新增实现、4项复用源码、82项待开发。继续工作台上下文、预约与其余内部流程；支付/自动续费、电子签约、门禁、监控实际接入继续暂缓。未部署或迁移业务库，本功能连同测试文档单独本地提交，不推送；原始uniapp.md改动保留。
+
+## [2026-10-24 19:50 ~ 20:05] 工作台身份、权限和门店入口上下文
+
+### 意图
+
+补齐总表6，提供可核对实际权限的工作台入口上下文，避免按职位推断角色或把本人任职范围误当整店权限。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../controller/admin/mobile/GymMobileWorkContextController.java`、`vo/GymMobileWorkContextVO.java`、`service/mobile/GymMobileWorkContextService.java` | 新增 | 当前账号、可空员工编号、实际角色与gym权限、门店入口集合 |
+| `yudao-module-system/.../api/permission/PermissionApi.java`、`PermissionApiImpl.java`、`dto/UserPermissionInfoRespDTO.java` | 修改/新增 | 跨模块读取本人启用角色和菜单权限，复用既有权限/菜单服务 |
+| `yudao-module-gym/src/test/.../GymOrganizationServiceTest.java`、`GymMobileWorkContextControllerTest.java`、`yudao-module-system/src/test/.../PermissionApiImplTest.java` | 修改/新增 | 五项业务范围、两项MVC及三项系统API测试 |
+| `docs/uniapp/`设计/总表/实施说明/机器清单、`architecture.md`、`testing.md` | 修改 | 54/135状态、菜单展示与业务鉴权边界、验证证据 |
+
+### 结构关系
+
+工作台Controller → 有效后台身份 → system PermissionApi查询启用角色和菜单权限 → gym员工、整店范围、SELF关系与任职查询 → 当前租户营业门店入口。本人任职不改变后续会员范围鉴权，系统API不反向依赖gym，不修改原授权接口。
+
+### 验证证据
+
+gym518项、系统权限27项全部通过；member4通过/1既有禁用跳过。新增10项覆盖停用角色与父菜单、空范围、总部无员工、任职日期、租户和令牌、本人任职不授予会员访问及MVC。Spotless和server依赖打包成功。源码审计54/135、余81项；命令和日志见testing本次条目。首轮Mockito重载匹配器编译错误已修正。
+
+### 影响面 / 风险
+
+无新权限码、自动授权或DDL。上下文只提供入口展示，权限列表不保证目标功能均已实现；超级管理员不补造通配符。`employeeId`允许null；封面及距离本接口为null。停用/撤权后的业务请求继续按原鉴权执行，部署缓存撤权联调未在本批证明。前端未修改。
+
+### 未做 / 后续
+
+50项新增本地实现、4项复用源码、81项待开发；继续工作台预约、排课与其余内部流程。支付/自动续费、电子签约、门禁、监控实际接入保持暂缓。未部署或迁移业务库，本功能及文档测试独立本地提交，不推送；原始uniapp.md内容和暂存状态保留。
+
+## [2026-10-24 20:05 ~ 20:13] 工作台预约、签到与课消查询
+
+### 意图
+
+补齐总表78–81，在原后台真实业务账本上提供移动工作台查询，落实本人授课与会员负责关系共同限定的SELF范围。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../controller/admin/mobile/GymMobileWorkCoursesController.java`、`vo/GymMobileWorkCoursesVO.java` | 新增 | 四条读取路由、功能权限、必传日期和有界分页、明确响应字段 |
+| `yudao-module-gym/.../service/mobile/GymMobileWorkCoursesService.java` | 新增 | SQL前置范围、租户与关联检查、批量读数据、历史状态和余额 |
+| `yudao-module-gym/src/test/.../GymOrganizationServiceTest.java`、`GymMobileWorkCoursesControllerTest.java` | 修改/新增 | 六项实际业务/范围回归、三项MVC |
+| `docs/uniapp/`设计/总表/实施说明/机器清单、`architecture.md`、`testing.md` | 修改 | 58/135进度、查询和历史边界、可复现证据 |
+
+### 结构关系
+
+移动Controller检查对应功能权限，服务检查有效后台身份，复用会员和授课范围谓词做SQL分页。预约必须关联同租户同门店排期；签到与课消分别取成功和确认状态；明确VO只输出授权记录字段，余额读取消费时快照。原后台写入和查询服务保持，未新增业务写入或DDL。
+
+### 验证证据
+
+gym527项全部通过；member4通过/1既有禁用跳过。新增9项覆盖从实际预约到签到/扣课再读取的流程，以及SELF两条件交集、管理门店、租户、撤权、分页、日期、错误关联、历史null余额、HTTP绑定与功能权限。Spotless、server依赖打包、diff检查通过；源码映射58/135，余77项。详细命令与日志见testing本次条目。
+
+### 影响面 / 风险
+
+移动工作台预约/课消的SELF范围比仅负责会员更严格，必须本人授课；原后台接口未改。没有自动权限授权，列表中的当前负责关系和任职影响历史访问。异常排期归属不返回预约；缺失历史余额或姓名为null。签到来源保持真实manual，不表示门禁集成已接通。前端未修改。
+
+### 未做 / 后续
+
+54项新增本地实现、4项复用源码、77项待开发。继续工作台排课、代约及其余内部流程，二维码和扫码签课仍待实现；四类第三方接入继续暂缓。未部署或迁移业务库，本功能及测试文档独立本地提交，不推送；原始uniapp.md内容和暂存状态保留。
+
+## [2026-10-24 20:14 ~ 20:24] 工作台排课与代会员预约
+
+### 意图
+
+补齐总表85–86，为有权限的教练和管理者提供排期创建及真实会员权益预约，并使移动入口与旧后台并发时共享冲突和预占规则。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../controller/admin/mobile/GymMobileWorkCourseWriteController.java`、`vo/GymMobileWorkCourseWriteVO.java`、`service/mobile/GymMobileWorkCourseWriteService.java` | 新增 | 两个幂等写入口、本人/管理范围、严格字段、排课和真实代约 |
+| `yudao-module-gym/.../service/course/GymBookingRules.java`、`GymCourseService.java` | 修改 | 提取同教练排期重叠查询，原后台继续使用相同锁与权限 |
+| `yudao-module-gym/src/test/.../GymOrganizationServiceTest.java`、`GymMobileWorkCourseWriteControllerTest.java` | 修改/新增 | 八项业务/事务/混合并发及三项MVC |
+| `docs/uniapp/`设计/总表/实施说明/机器清单、`architecture.md`、`testing.md` | 修改 | 60/135状态、本人排课边界、幂等及余额说明 |
+
+### 结构关系
+
+写事务先检查当前身份和数据范围，再锁持久化幂等请求。排课复用教练锁及共享重叠判断，代约委托原预约业务及预占账本，响应与业务同事务保存。查询仅负责构造明确响应，不开放额外读接口权限。
+
+### 验证证据
+
+gym538项、member4项通过；1项member既有禁用跳过。新增11项含H2真实并发与故障注入：同键一次写入、跨旧后台冲突只一方成功、响应保存失败回滚业务和键。Spotless和server依赖打包通过；源码60/135、余75项。命令与日志见testing本批条目。
+
+### 影响面 / 风险
+
+本人排课允许无会员负责关系，但仍须显式排课权限、本人有效员工/任职和真实商品；这不扩大原后台整店权限。代约仍须本人授课和负责会员的交集，或整店授权范围。排课返回member_context_required，不冒充会员可约资格。幂等重放是首次响应快照，当前状态须查询。无新DDL或自动授权，前端未修改。
+
+### 未做 / 后续
+
+56项新增本地实现、4项复用源码、75项待开发。继续其他内部接口，二维码/扫码签课尚待实现，四类第三方接入保持暂缓。未部署、推送或迁移业务库；混合并发尚未在部署MySQL验证。本批独立本地提交，保留用户原始uniapp.md及其暂存状态。
+
+## [2026-10-24 20:25 ~ 20:41] 短时二维码与会员确认签课
+
+### 意图
+
+补齐总表44和82，使会员扫码与人工确认共用真实扣课账本，要求真实签到并防止跨会员/课程、过期、改期或重复扣课。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../GymMobileLessonQrController.java`、`AppGymLessonConfirmationController.java`、`GymMobileLessonVO.java` | 新增 | 发码与本人签课、严格请求及访问日志正文禁用 |
+| `yudao-module-gym/.../GymMobileLessonService.java`、`GymMobileLessonToken.java`、`GymMobileLessonProperties.java` | 新增 | 短时HMAC、业务绑定、签发人当前授权及幂等事务 |
+| `yudao-module-gym/.../GymLessonConfirmationService.java`、`GymCourseService.java`、`ErrorCodeConstants.java` | 新增/修改 | 人工与扫码共享一次扣课事务、同预约签到验证、未配置/无效错误码 |
+| `sql/gym/migration/mysql/V011__gym_mobile_lesson_qr.sql`、对应DO/Mapper、H2 schema/clean、迁移回归及脚本手册 | 新增/修改 | 65表、哈希唯一、精确时间绑定及历史不生成凭据 |
+| `yudao-server/src/main/resources/application.yaml` | 修改 | 环境密钥占位、60秒TTL、课后120分钟窗口 |
+| `GymOrganizationServiceTest.java`、`GymMobileLessonControllerTest.java` | 修改/新增 | 八项事务/授权/并发与三项MVC |
+| `docs/uniapp/`设计/总表/实施说明/清单、`architecture.md`、`testing.md` | 修改 | 62/135进度、签名配置、使用及验证边界 |
+
+### 结构关系
+
+发码在排期/预约锁下保存哈希及绑定，会员凭本人预约和有效token进入同一共享签课事务；旧后台也调用共享服务。真实签到、权益预占和唯一课消是扣课依据，二维码使用与幂等结果同事务提交。
+
+### 验证证据
+
+gym549项全部通过，member4通过/1既有禁用跳过；Spotless与server依赖打包成功。真实隔离MySQL/Flyway45检查通过并清理测试库，源码映射62/135。新增11项含真实事务回滚、两种来源并发、过期/撤权/错绑拒绝。时间解析测试问题已修正，详细日志见testing。
+
+### 影响面 / 风险
+
+部署前执行V011并配置至少32字节随机密钥的Base64；未配置时明确不可用，轮换使旧码不能新确认。人工签课新增同预约签到关联验证，其原权限和非扫码时间边界保留。二维码表仅哈希，幂等发码响应仍保存原token；未实施过期记录自动清理。前端未修改，无码可自动制造签到。
+
+### 未做 / 后续
+
+58项新增本地实现、4项复用源码、73项待开发；月度签到汇总等继续推进。四类第三方实际接入仍暂缓，真实扫码页面与部署密钥未配置，业务库未迁移。本功能和测试文档独立本地提交，不推送；原始uniapp.md与暂存状态保留。
+
+## [2026-10-24 20:43 ~ 20:55] 会员月度签到汇总与本人排名
+
+### 意图
+
+补齐总表43，向本人返回指定门店月份的真实成功签到次数、活跃天数、参与人数及排名，明确零签到和同分口径。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../AppGymAttendanceController.java`、`GymMobileAttendanceVO.java` | 新增 | 认证月度读取、月份/门店参数与五项聚合响应 |
+| `yudao-module-gym/.../GymMobileAttendanceService.java` | 新增 | 本人身份、当前关系或本人历史授权、上海逐日边界和只读快照 |
+| `yudao-module-gym/.../GymMobileAttendanceMapper.java`、`GymMobileAttendanceAggregate.java` | 新增 | SQL去重活跃日及同店竞争排名，不返回其他会员身份 |
+| `GymOrganizationServiceTest.java`、`GymMobileAttendanceControllerTest.java` | 修改/新增 | 五项真实数据库业务测试及两项MVC |
+| `docs/uniapp/uniapp-api.md`、`uniapp-api-summary.md`、`uniapp-implementation.md`、`api-implementation.json` | 修改 | 明确统计口径，进度63/135 |
+| `docs/architecture.md`、`docs/testing.md` | 修改 | 查询链路、时间边界、验证命令和实际结果 |
+
+### 结构关系
+
+Controller经会员身份校验进入月度服务；门店关系或本人成功历史提供读取资格。Java按Asia/Shanghai计算各日边界，Mapper在同一只读事务快照中聚合本人签到和门店参与人数；无新表、权限或写入流程。
+
+### 验证证据
+
+gym556项、member4项通过，1项既有禁用跳过；Spotless和server依赖打包通过。新增7项覆盖竞争排名、零值、时间边界、1991夏令时、历史访问、账号/租户隔离及响应字段。源码审计63/135，余72项。具体命令、日志和测试夹具ID类型修正见testing本批记录。
+
+### 影响面 / 风险
+
+查询月份1900–9999年，未来月先鉴权再返回零值。成功签到按记录条数及上海自然日分别计数，停用但未删除会员仍参与历史排名；没有本人签到时rank为空。仅输出本人排名和人数，updatedAt是计算时刻。无DDL；聚合查询性能尚未在部署MySQL大数据量验证，前端未修改。
+
+### 未做 / 后续
+
+59项新增本地实现、4项复用源码、72项待开发，继续其他内部接口。支付/自动续费、电子签约、门禁设备和监控真实接入保持暂缓。没有推送或迁移业务库；本批独立本地提交，保留用户原始uniapp.md及暂存状态。
+
+## [2026-10-24 20:57 ~ 21:09] 移动工资查询与后台明确发布
+
+### 意图
+
+补齐总表108–111，实现员工本人已发布工资和管理者授权门店工资查询；补上原后台缺失的显式发布动作，避免把“确认”自动当成“对员工公开”。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../GymMobilePayrollController.java`、`GymMobilePayrollVO.java`、`GymMobilePayrollService.java` | 新增 | 四个移动路由、员工明细资源、本人/整店授权和快照投影 |
+| `yudao-module-gym/.../GymPayrollPublicationController.java`、`GymPayrollPublicationService.java` | 新增 | 后台显式发布、同批次可重试和首次发布审计 |
+| `GymPayrollDO.java`、`GymPayrollRespVO.java`、`GymPayrollService.java`、`ErrorCodeConstants.java` | 修改 | 发布字段、旧SELF草稿隔离及当前有效员工校验、发布前置状态错误 |
+| `sql/gym/migration/mysql/V012__gym_payroll_publication.sql`、测试schema、`script/gym/verify-migrations.py` | 新增/修改 | 可空发布字段、员工索引、历史确认工资不自动发布及48项迁移检查 |
+| `GymOrganizationServiceTest.java`、`GymMobilePayrollControllerTest.java` | 修改/新增 | 七项权限/事务/并发业务、三项MVC，更新旧SELF回归 |
+| `docs/uniapp/`设计/总表/实施说明/清单、`architecture.md`、`testing.md`、`script/gym/README.md`、`DATABASE.md` | 修改 | 67/135进度、发布操作、ID与金额映射、验证证据和部署要求 |
+
+### 结构关系
+
+移动服务从员工工资明细读取，通过父批次EXISTS先限制查询再分页，批量加载父信息并投影已冻结金额。发布服务复用后台身份和门店范围，按门店→批次锁顺序写发布时间/人，原confirmed状态保留。原后台SELF也要求发布及有效员工，避免旁路读取草稿。
+
+### 验证证据
+
+gym566项、member4项通过，1项既有禁用跳过；Spotless及server依赖打包通过。真实隔离MySQL/Flyway48检查通过并清理全部临时库。新增10项测试含真实快照金额、严格本人、分页权限、离职与跨租户、旧SELF混合范围、故障回滚及并发发布。源码映射67/135；具体命令和日志见testing本批条目。
+
+### 影响面 / 风险
+
+部署前需V012并validate，表数仍65。历史确认工资默认未发布，管理员明确发布后员工才可读取；旧SELF入口同步收紧，管理者草稿审核能力保持。发布使用原gym:payroll:confirm权限，不自动授权。移动详情使用员工明细ID，后台发布使用批次ID；金额从原快照读取且不暴露源交易。确认冻结逻辑未改；前端未修改。
+
+### 未做 / 后续
+
+63项新增本地实现、4项复用源码、68项待开发，继续其他内部业务。暂未提供撤回或批量发布、自动通知、工资打款；四类第三方真实接入仍暂缓。业务库未迁移，不推送；本批独立本地提交，保留用户原始uniapp.md及暂存状态。
+
+## [2026-10-24 21:11 ~ 21:24] 活动公开展示、报名与取消
+
+### 意图
+
+补齐总表66–70、121，提供管理者创建发布、公开活动和会员本人报名/取消/历史，保持原后台跨店活动、总名额和重复报名规则。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../AppGymActivitiesController.java`、`GymMobileActivityController.java`、`GymMobileActivityVO.java`、`GymMobileActivityService.java` | 新增 | 六个目标路由、身份/范围、幂等创建报名、取消和历史 |
+| `GymActivityParticipationService.java`、`GymMarketingService.java` | 新增/修改 | 两端共用活动锁下的名额、时间和重复报名规则，已有报名后截止不可修改 |
+| `GymActivityPublicAssets.java`、`GymMobilePublicService.java` | 新增/修改 | 活动封面公开引用、营业门店归属、工作用途隔离及受控下载 |
+| `GymActivityDO.java`、`GymActivitySaveReqVO.java`、`GymActivityRespVO.java`、`V013__gym_activity_cancel_deadline.sql`、测试schema | 新增/修改 | 可空取消截止及旧活动开始前回退，不改变历史状态/名额 |
+| `GymOrganizationServiceTest.java`、`GymMobileActivitiesControllerTest.java`、`script/gym/verify-migrations.py` | 修改/新增 | 九项业务、三项MVC、跨端并发、回滚及50项隔离迁移检查 |
+| `docs/uniapp/`设计/总表/实施说明/清单、`architecture.md`、`testing.md`、脚本README/DATABASE | 修改 | 73/135进度、跨店选店、旧键重放、封面和部署边界 |
+
+### 结构关系
+
+移动创建在幂等事务中调用原活动创建及发布；两端报名先授权、锁活动与会员后调用公共名额服务。会员取消与旧后台取消同样持活动锁，取消保留记录，重报复用ID。公开素材服务增加活动引用授权，文件内容继续走原实际内容检查。
+
+### 验证证据
+
+gym578项和member4项通过，1项既有禁用跳过；Spotless与server依赖打包成功。真实隔离MySQL/Flyway50检查通过并清理临时库，源码映射73/135。新增12项包含后台/会员竞争名额、同键并发、失败回滚、取消边界、跨店、匿名公开及封面用途隔离；命令和日志见testing本批条目。
+
+### 影响面 / 风险
+
+部署前须V013，表数仍65。移动新活动单店且有限名额，旧多店及NULL不限量保留；无body报名按有效默认店优先，否则最小有效关联店，已有记录不转店。会员取消截止可早于报名截止，后台管理取消仍按开始前。已有报名后截止不可变；旧已绑定工作用途图片不可作为公开封面。列表投影有逐项关联读取，大数据量性能未专项验证。前端未修改。
+
+### 未做 / 后续
+
+69项新增本地实现、4项复用源码、62项待开发，继续内部业务。没有活动专用移动封面上传用途、自动消息推送或前端页面改动；四类第三方实际接入保持暂缓。业务库未迁移，不推送；本批独立本地提交，原始uniapp.md及暂存状态保留。
+
+## [2026-10-24 21:24 ~ 2026-10-25 16:49] 匿名反馈与门店一次回复
+
+### 意图
+
+补齐总表64–65、119–120，支持会员本人反馈/历史及门店授权读取/回复，同时保护附件元信息与会员身份，继续按小步独立提交。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../AppGymFeedbackController.java`、`GymMobileFeedbackController.java`、`GymMobileFeedbackVO.java`、`GymMobileFeedbackService.java` | 新增 | 四目标路由及专用图片辅助读取、本人/整店隔离、幂等一次回复及可选卡数量快照 |
+| `GymFeedbackImages.java`、`GymFeedbackDO.java`、`GymFeedbackAttachmentDO.java`及对应Mapper | 新增 | 图片解码重编码、受限归属及一图一反馈 |
+| `ErrorCodeConstants.java`、`V014__gym_anonymous_feedback.sql`、测试create_tables/clean | 修改/新增 | 四个错误码、两表、两权限定义，不自动授权 |
+| `GymOrganizationServiceTest.java`、`GymMobileFeedbackControllerTest.java`、`GymFeedbackImagesTest.java`、`script/gym/verify-migrations.py` | 修改/新增 | 十四项新测试及54项隔离迁移检查 |
+| `docs/uniapp/`设计/总表/实施说明/清单、`architecture.md`、`testing.md`、脚本README/DATABASE | 修改 | 77/135进度、匿名与同意边界、部署要求及验证证据 |
+
+### 结构关系
+
+Controller鉴权后调用服务，SQL先限制本人/门店再分页；提交按文件ID顺序锁定并检查真实所有权，反馈/附件/幂等结果同事务。回复锁定反馈保留首次内容。图片服务复制像素重编码，专用下载验证关联及范围；旧通用文件入口仍拒绝会员私有类别。
+
+### 验证证据
+
+gym592项、member4项通过，1项既有禁用跳过；Spotless及server依赖打包成功。真实隔离MySQL/Flyway54检查通过，临时库清理，源码映射77/135。新增测试覆盖跨身份/租户/门店、显式卡摘要、图片元数据、同键与竞争回复/附件并发、故障回滚、历史和MVC；具体命令及日志见testing本批条目。
+
+### 影响面 / 风险
+
+部署前须V014并validate，当前67张gym表。只登记权限，授权由管理员明确处理。默认不附卡摘要，显式同意也只记录有效数量，不包含卡号等身份字段；图片元数据去除不等于图像正文脱敏。ImageIO图片处理需评估生产并发内存，当前测试不证明负载能力。前端未修改，业务数据库未迁移。
+
+### 未做 / 后续
+
+73项新增本地实现、4项复用源码、58项待开发，继续内部接口。没有反馈编辑/撤回、回复覆盖、完全匿名或自动通知；第三方实际接入仍按用户要求暂缓。不同历史接口幂等payload键序的跨进程稳定性需单独审计，本批新反馈用有序外层Map，未修改已有幂等摘要。保留原始uniapp.md及暂存状态，不推送。
+
+## [2026-10-25 16:51 ~ 16:55] 修复活动报名重试摘要顺序
+
+### 意图
+
+核查上一批记录的幂等摘要风险，修复总表68活动报名使用Map.of导致不同JVM迭代顺序变化、相同请求可能误报冲突的问题。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../service/mobile/GymMobileActivityService.java` | 修改 | 新请求固定activityId/memberId顺序，并构造逆序历史兼容候选 |
+| `yudao-module-gym/.../service/mobile/GymMobileIdempotency.java` | 修改 | 增加服务端显式历史payload兼容入口，原execute行为保持，存量摘要不改写 |
+| `yudao-module-gym/.../service/GymOrganizationServiceTest.java` | 修改 | 两种历史摘要重放、取消后不重报、身份/活动差异和非法键拒绝 |
+| `docs/testing.md`、`docs/uniapp/uniapp-api.md`、`docs/uniapp/uniapp-implementation.md` | 修改 | 594项回归证据、兼容范围及部署边界 |
+
+### 结构关系
+
+原调用链和事务边界不变。活动服务构造同一可信活动/会员数据的两种编码，幂等服务持原请求锁检查其中一种匹配即可恢复首次响应；不接受客户端hash，不重写存量摘要。其他入口沿用原execute编码。
+
+### 验证证据
+
+活动专项11项、完整gym594项与member4项通过，1项既有禁用跳过；Spotless及server依赖打包通过。H2真实请求行分别写两种旧摘要，取消后重放均不占名额；新请求摘要稳定、活动/会员改变拒绝。源码覆盖77/135；命令及日志见testing对应条目。
+
+### 影响面 / 风险
+
+无需新迁移，不影响已保存响应或其他接口摘要。所有实例须升级才能消除旧实现的误冲突；旧版本回退仍有原顺序风险。没有生产多节点重启证据，不声称任意未来DTO演进自动兼容。前端、业务数据库未修改。
+
+### 未做 / 后续
+
+135个目标仍覆盖77个、待开发58个，本次为已有报名接口可靠性修复，不增加数量。继续内部接口；第三方接入按要求暂缓。小步本地提交，不推送，原始uniapp.md和暂存状态保留。
+
+## [2026-10-25 16:56 ~ 17:16] 器械扫码与公开教学
+
+### 意图
+
+实现总表71–72，复用原后台器械/教程数据提供游客扫码解析和图文、视频教学；在公开读取前增加明确发布与撤销，避免历史内部教程自动公开。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../AppGymEquipmentController.java`、`GymMobileEquipmentVO.java`、`GymMobileEquipmentService.java` | 新增 | 两条目标接口，租户内场景解析与受控教学投影 |
+| `GymEquipmentPublicationController.java` | 新增 | 后台明确生成场景码/公开教程及撤销，整店权限与有效账号 |
+| `GymEquipmentPublicAssets.java`、`GymMobilePublicService.java` | 新增/修改 | 图片/MP4公开引用、文件归属及工作用途隔离，共用素材下载 |
+| `GymEquipmentDO.java`、`V015__gym_equipment_public_scene.sql`、测试schema、`ErrorCodeConstants.java` | 新增/修改 | 可空发布场景码、租户唯一索引与明确错误，无历史公开回填 |
+| `GymOrganizationServiceTest.java`、`GymMobileEquipmentControllerTest.java`、`script/gym/verify-migrations.py` | 修改/新增 | 七项业务、两项MVC及57项隔离迁移检查 |
+| `docs/uniapp/`设计/总表/实施说明/清单、`architecture.md`、`testing.md`、脚本README/DATABASE | 修改 | 79/135进度、image字段、发布/撤销及扫码/播放验证边界 |
+
+### 结构关系
+
+游客Controller进入租户只读事务，按已发布active器械和营业门店查询；素材服务关联有效教程与同店普通文件并检查用途。后台发布/撤销在原器械行锁内生成或清空scene，与旧器械编辑锁一致；下载复用公开媒体Controller，重新校验当前引用及魔数。
+
+### 验证证据
+
+gym603项与member4项通过，1项既有禁用跳过；Spotless、server依赖打包及真实隔离MySQL/Flyway57项检查通过，临时库清理。新增9项验证匿名访问、历史默认不公开、跨租户/权限/用途隔离、撤销与状态、共享文件引用、并发发布及故障回滚。源码映射79/135；命令、日志及初轮测试断言修正见testing本批条目。
+
+### 影响面 / 风险
+
+部署前须V015并validate，仍67张gym表，无新权限/自动授权。历史教程默认不公开，管理员明确发布后该器械当前及后续active教程对游客可见；停用后再启用恢复原码，永久废止需撤销。教程响应补充image字段，使用纯文本instructions及受控Media URL。逐项关联读取和视频全量字节加载未压测；前端未修改，业务库未迁移。
+
+### 未做 / 后续
+
+75项新增本地实现、4项复用源码、56项待开发，继续后续内部业务。生成本地scene不等于生成微信官方小程序码，未完成手机扫码/实际视频播放/真实设备渠道联调，不修改前端。四类第三方仍暂缓。小步本地提交，不推送；原始uniapp.md及暂存状态保留。
+
+## [2026-10-25 17:17 ~ 17:31] 移动销售明细与完整筛选汇总
+
+### 意图
+
+补齐总表105，按实际财务事件提供授权门店销售明细和卡/私教汇总，保持已确认实收、退款发生日及已保存归属份额口径，避免多员工/多商品重复金额或分页汇总失真。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../GymMobileSalesReportController.java`、`GymMobileSalesReportVO.java`、`GymMobileSalesReportService.java` | 新增 | 功能和整店范围、日期窗口、金额字符串、显式销售响应 |
+| `GymMobileSalesReportMapper.java`、`GymMobileSalesReportAggregate.java` | 新增 | SQL筛选/分组/分页、完整summary、原付款时间及可信订单元信息 |
+| `V016__gym_financial_report_indexes.sql`、测试schema、`script/gym/verify-migrations.py` | 新增/修改 | 两条查询索引、60项隔离迁移检查，历史流水不改写 |
+| `GymOrganizationServiceTest.java`、`GymMobileSalesReportControllerTest.java` | 修改/新增 | 七项财务/范围测试及两项MVC，真实服务收退款、跨期、归属和多商品防放大 |
+| `docs/uniapp/`设计/总表/实施说明/清单、`architecture.md`、`testing.md`、脚本README/DATABASE | 修改 | 80/135进度、列表分组/ID/均价/可空字段口径与部署边界 |
+
+### 结构关系
+
+Controller检查gym:reports:read，服务检查当前后台身份和整店范围并生成Criteria；Mapper共享财务事件筛选，数据库聚合及分页，页后批量投影快照名称。全链路只读REPEATABLE_READ，金额不JOIN多商品行，不改原支付/退款或报表服务。V016增加门店时间和订单付款查找索引。
+
+### 验证证据
+
+gym612项、member4项通过，1项既有禁用跳过；Spotless及server依赖打包成功。真实隔离MySQL/Flyway60检查通过且清理临时库。专项验证99.99实收/20退款/79.99净额，多员工份额不重复订单数，跨期负净额、分页完整汇总、权限及旧流水保留；命令与日志见testing本批条目。源码映射80/135。
+
+### 影响面 / 风险
+
+部署前须V016并validate，仍67张gym表，不修改财务数据或授权。列表一行是订单/门店/员工/商品组，id为当前区间首条流水ID，不能当订单详情ID；summary订单数去重，可能少于total行数。paidAt允许区间外原付款时间，无可信元信息时编号/名称为空；没有伪造历史数据。索引构建及生产查询计划需要按真实规模评估，未压测。前端和业务数据库未修改。
+
+### 未做 / 后续
+
+76项新增本地实现、4项复用源码、55项待开发。106员工/门店业绩、107会员汇总、77首页概览继续后续批次；第三方真实支付/退款等仍按用户要求暂缓。小步本地提交，不推送，原始uniapp.md及暂存状态保留。
+
+## [2026-10-25 17:32 ~ 17:44] 员工与门店业绩、排名和平均值
+
+### 意图
+
+补齐总表106，支持管理者查看授权门店/员工业绩和员工只看本人，分别读取财务与课消数据，避免跨店重复人数、未归属收入冒充员工和分页平均值失真。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../GymMobilePerformanceController.java`、`GymMobilePerformanceVO.java`、`GymMobilePerformanceService.java` | 新增 | 整店或SELF范围、当前零业绩对象、历史归属、竞争排名与完整均值 |
+| `GymMobilePerformanceMapper.java`、`GymMobilePerformanceAggregate.java` | 新增 | 先限定范围再按员工/门店聚合财务与课消，独立指标 |
+| `GymOrganizationServiceTest.java`、`GymMobilePerformanceControllerTest.java` | 修改/新增 | 七项实际业务和两项MVC，混合范围、零业绩、并列排名和负退款 |
+| `docs/uniapp/`设计/总表/实施说明/清单、`architecture.md`、`testing.md` | 修改 | 81/135进度、可空storeId/rank、平均口径及历史人事数据限制 |
+
+### 结构关系
+
+服务根据整店数据范围或有效SELF员工当前任职生成查询条件，Mapper只加载按主体聚合的金额和课消。服务合并零业绩对象、计算完整summary与排名后分页；同员工多店合并，未归属行单列；整个请求共享只读事务。既有财务/课消写入和销售报表不变。
+
+### 验证证据
+
+gym621项、member4项通过，1项既有禁用跳过；Spotless和server依赖打包通过。新增9项验证200总净额/180员工归属额/3员工/2店及均值，SELF仅80及本人课消，1/1/3并列排名、历史人员和负退款、分页不改summary，真实收退款与105一致。源码映射81/135；具体命令和日志见testing本批条目。
+
+### 影响面 / 风险
+
+无新迁移、权限定义或自动授权，复用gym:reports:read及V016索引。员工不允许store分组，rank为空；员工跨店合并时storeId为空。员工分母采用当前可核实任职及期间实际归属人员，缺完整任职历史时不能精确还原过去零业绩在职人数，此限制已写入契约，不能作为完整历史编制报表。生产聚合计划和大量主体排序尚未压测；前端未修改。
+
+### 未做 / 后续
+
+77项新增本地实现、4项复用源码、54项待开发。继续107会员汇总和77首页概览；完整历史任职建模及真实外部接入仍未完成。小步本地提交，不推送，业务库未迁移，原始uniapp.md及暂存状态保留。
+
+## [2026-10-25 17:45 ~ 17:59] 当前会员、私教及临期权益人数汇总
+
+### 意图
+
+补齐总表107，按授权门店提供去重人数；明确date仅筛选注册自然日，避免在没有完整历史状态时把当前会员和权益总量包装成历史快照。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../GymMobileMemberSummaryController.java`、`GymMobileMemberSummaryVO.java`、`GymMobileMemberSummaryService.java` | 新增 | 后台身份、整店范围、日期校验、实际统计时点与明确响应 |
+| `GymMobileMemberSummaryMapper.java`、`GymMobileMemberSummaryAggregate.java` | 新增 | 当前人群及同店权益EXISTS聚合，临期窗口与跨店去重 |
+| `GymOrganizationServiceTest.java`、`GymMobileMemberSummaryControllerTest.java` | 修改/新增 | 七项业务、两项MVC，微秒边界、权益状态、当前人群与权限 |
+| `docs/uniapp/`设计/总表/实施说明/清单、`architecture.md`、`testing.md` | 修改 | 82/135进度、五项人数字段、date/updatedAt区别及历史数据限制 |
+
+### 结构关系
+
+Controller复用reports:read，Service检查有效后台身份和整店范围后捕获一次业务时钟，Mapper按当前会员档案一人一行，用同租户同门店关系及权益EXISTS避免乘积。全部查询共享只读事务，响应不暴露个人信息；不修改原会员/开卡/发放写流程。
+
+### 验证证据
+
+gym630项、member4项通过，1项既有禁用跳过；新增专项9项先行通过。Spotless和server依赖打包通过，打包跳过测试。验证联合3人/分店各2人、同人多权益仅1人、临期微秒边界、注册日上海边界、跨租户关联及SELF不可查看整店。完整回归后仅补OpenAPI说明，最终打包覆盖注解。源码映射82/135；命令及日志见testing本批条目。
+
+### 影响面 / 风险
+
+无新DDL、权限定义、自动授权或业务库修改。五项均为人数且互有交集；memberCount包含潜客，临期不等于卡/包数量，预占不重复扣减。date只筛选当前可见人群的初次注册日，updatedAt表明当前权益统计时点；缺历史版本时无法精确重建过去总量，也不冻结历史新增。此限制已同步契约及OpenAPI。生产查询规模和部署HTTP未验证；前端未修改。
+
+### 未做 / 后续
+
+78项新增本地实现、4项复用源码、53项待开发。继续后续内部接口；历史快照及真实第三方接入仍未完成。小步本地提交，不推送；原始uniapp.md的内容及暂存状态保留。
+
+## [2026-10-25 18:01 ~ 18:12] 移动工作台首页概览与逐项授权
+
+### 意图
+
+补齐总表77，将业绩、签到、课消、会员及当前待办组合成受控概览；避免员工读取整店指标、缺少功能权限仍返回汇总，或将列表前10条误当全部待办数。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../GymMobileDashboardController.java`、`GymMobileDashboardVO.java`、`GymMobileDashboardService.java` | 新增 | 整店/SELF范围、逐项权限、日期与显式null指标 |
+| `GymMobileDashboardMapper.java`、`GymMobileDashboardAggregate.java` | 新增 | 五类SQL聚合、同店负责关系、当前步骤计数 |
+| `GymOrganizationServiceTest.java`、`GymMobileDashboardControllerTest.java` | 修改/新增 | 九项业务与两项MVC，实际签到签课及12条真实审批 |
+| `docs/uniapp/`设计/总表/实施说明/清单、`architecture.md`、`testing.md` | 修改 | 83/135进度、功能权限矩阵、历史日期与当前人口/待办区别 |
+
+### 结构关系
+
+有效后台身份进入服务后解析整店或本人任职范围，分别检查功能权限，仅执行已授权聚合。财务按本人份额，签到按同店当前负责关系，课消同时限定本人授课；成员EXISTS去重，审批按当前账号有效绑定及当前pending步骤计数。源表SQL先限定租户/门店/时间/责任，全部读取共享只读事务，无既有写流程变化。
+
+### 验证证据
+
+gym641项、member4项通过，1项既有禁用跳过；Spotless及server依赖打包通过。整店630/750与本人90/210金额、跨店成员去重、逐项null、12条待审批及流转后11/1、月初/微秒/未来边界、实际签课重复确认仍1条均验证。首轮夹具漏booking_id被约束拒绝，补齐夹具后专项及全量通过；源码映射83/135，命令及日志见testing。
+
+### 影响面 / 风险
+
+无新DDL、权限定义或自动授权，前端和业务库未修改。SELF不返回整店会员总量或审批待办；未授权指标显式null。date决定当天/昨日/截至当天的月累计，但成员总量、负责关系和待办是当前状态，无法重建完整历史快照。生产MySQL聚合计划、规模压测和部署HTTP联调未验证。
+
+### 未做 / 后续
+
+79项新增本地实现、4项复用源码、52项待开发，继续审批及其余内部业务。真实支付、自动续费、电子签约、门禁和监控仍按用户要求暂缓；不伪造成功。小步本地提交，不推送；原始uniapp.md内容及暂存状态保留。
+
+## [2026-10-25 18:14 ~ 18:30] 移动审批查询、可用模板与版本化决策
+
+### 意图
+
+补齐总表112–115，按申请人/指定审批人/授权管理者返回受控审批信息，并让移动决策与既有后台共享真实业务事务；解决重复点击、并发相反决策和过期页面处理风险。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../GymMobileApprovalsController.java`、`GymMobileApprovalsVO.java`、`GymMobileApprovalsService.java` | 新增 | 四路由、查询视图、受控摘要、可用模板、版本及持久化幂等 |
+| `GymApprovalDO.java`、`GymApprovalService.java`、`ErrorCodeConstants.java` | 修改 | 版本初值、原后台真实处理递增、独立过期版本错误 |
+| `V017__gym_approval_version.sql`、测试schema、`script/gym/verify-migrations.py` | 新增/修改 | 新库和历史审批version基线，62项隔离检查 |
+| `GymOrganizationServiceTest.java`、`GymMobileApprovalsControllerTest.java` | 修改/新增 | 十二项业务与三项MVC，实际发卡、回滚及移动/旧后台竞争 |
+| `docs/uniapp/`设计/总表/实施说明/清单、`architecture.md`、`testing.md`、脚本README/DATABASE | 修改 | 87/135进度、参与者范围、版本和首次响应语义、部署顺序 |
+
+### 结构关系
+
+Controller分别校验read/create/read+decide，服务用SQL在分页前限定申请账号或当前有效步骤绑定，批量投影白名单响应。移动决策先校验处理资格，再进入请求幂等锁、原门店权益互斥和审批行锁，比较expectedVersion并委托原GymApprovalService完成业务；状态、任务、version和请求结果同事务。旧后台也递增同一版本，原请求格式保留。
+
+### 验证证据
+
+gym656项、member4项通过，1项既有禁用跳过；Spotless和server依赖打包通过。15项专项验证待办/已处理、模板有效性、当前参与者权限、实际发卡一次、黑名单失败回滚及同键恢复、相反决策竞争和旧后台混合竞争。真实隔离MySQL/Flyway62检查通过且临时库清理，旧审批pending/步骤2/原因保持，version为1。源码映射87/135，详见testing命令及日志。
+
+### 影响面 / 风险
+
+部署先V017 migrate/validate，统一更新所有审批写入实例后再开放移动决策；旧版不递增version，混跑不能保证版本语义。历史版本1为迁移基线，不表示审批没被处理过。受控响应不含手机号、附件URL或业务结果卡号；原后台摘要和请求契约未改，移动拒绝另要求原因。无权限定义/自动授权，前端及业务库未改，仍67表；未做生产滚动部署和规模压测。
+
+### 未做 / 后续
+
+83项新增本地实现、4项复用源码、48项待开发。104发卡/私教申请、116专属改价和117–118报价继续后续批次，旧price_change仍是商品公开价变更，不能冒充单客户报价。真实第三方接入继续暂缓。小步本地提交，不推送；原始uniapp.md内容和暂存状态保留。
+
+## [2026-10-25 18:31 ~ 18:53] 会员卡及私教课包的真实发放申请
+
+### 意图
+
+补齐总表104，两类产品只在最终审批后生成实际权益；私教产品申请期间发生变化时阻断发放，避免悄悄使用新课时/价格，且不将内部授予权益伪装成已收款。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../GymMobileCardIssueController.java`、`GymMobileCardIssueVO.java`、`GymMobileCardIssueService.java` | 新增 | 严格申请参数、双功能权限与整店范围、幂等创建及首次审批响应 |
+| `GymApprovalService.java`、`GymCourseService.java`、`GymMobileApprovalsService.java`、`ErrorCodeConstants.java` | 修改 | 私教开通来源、冻结条款与最终重查、实际发课包及摘要白名单 |
+| `V018__gym_mobile_card_issue_permission.sql`、`script/gym/verify-migrations.py` | 新增/修改 | 独立权限定义，无角色授权；64项隔离检查 |
+| `GymOrganizationServiceTest.java`、`GymMobileCardIssueControllerTest.java` | 修改/新增 | 十一项业务与两项MVC，实际权益/未签合同、并发与回滚 |
+| `docs/uniapp/`设计/总表/实施说明/清单、`architecture.md`、`testing.md`、脚本README/DATABASE | 修改 | 88/135进度、无虚假收入、无限期私教、模板/权限及部署边界 |
+
+### 结构关系
+
+移动申请通过cards:issue及approvals:create检查后，在幂等事务内构造真实card_opening请求并调用原审批服务。会员卡使用选中不可变模板；私教快照和最终发放按教练→会员→商品锁序核对版本/教练/名称/数量/时长/价格，之后复用issuePack及可选合同生成。申请、审批决策、权益和合同分别处于相应完整事务，最后业务失败回滚版本/步骤/权益/幂等结果。
+
+### 验证证据
+
+gym669项、member4项通过，1项既有禁用跳过；Spotless及server依赖打包通过，打包跳过测试。专项及全量验证卡/课包最终发放、unsigned合同、财务事件0、产品变化阻断、原模板不被新版本替换、合同失败整体回滚及同键重试、同键并发仅一审批、商品编辑与批准竞争不混用条款。真实隔离MySQL/Flyway64检查通过且临时库清理。源码映射88/135，命令与日志见testing。
+
+### 影响面 / 风险
+
+V018只定义gym:cards:issue，不授予角色、不新增页面或表，仍67表；原后台审批授权策略保留。须V017/V018及全体审批节点更新后再授权启用，旧节点不能处理新私教开通来源。课包明确无固定到期日，配置对应合同模板时才生成内部未签合同，不证明真实付款或签约。前端和业务库未改，未执行生产多节点/规模及第三方联调。
+
+### 未做 / 后续
+
+84项新增本地实现、4项复用源码、47项待开发。116–118专属改价及报价继续后续批次；私教产品有效期建模和真实外部接入未完成。小步本地提交，不推送，原始uniapp.md内容及暂存状态保留。
+
+## [2026-10-25 19:00 ~ 19:09] 私教专属改价申请与公开价格隔离
+
+### 意图
+
+按小步提交补齐总表116，允许教练或管理者申请指定会员或不限会员的专属报价金额，防止单客户改价审批覆盖商品公开售价。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../GymMobileCoursePriceController.java`、`GymMobileCoursePriceVO.java`、`GymMobileCoursePriceService.java` | 新增 | 受控六字段、现有审批权限、商品/会员范围与规范化幂等 |
+| `GymApprovalService.java`、`GymCourseService.java`、`GymMobileApprovalsService.java` | 修改 | 专属来源及冻结条款、最终重查、无公开改价副作用及白名单摘要 |
+| `GymOrganizationServiceTest.java`、`GymMobileCoursePriceControllerTest.java` | 修改/新增 | 九项业务及两项MVC，实际审批、范围、幂等、回滚与并发 |
+| `docs/uniapp/`设计/总表/实施说明/机器清单、`architecture.md`、`testing.md` | 修改 | 89/135进度、专属与公开价区别、旧程序兼容及报价待实现边界 |
+
+### 结构关系
+
+移动服务在幂等缓存前校验当前身份/商品及会员范围，构造price_change且sourceType=course-quote-products的服务端请求。课程服务按教练→会员→商品锁顺序冻结版本与条款，最终审批重新验证后仅记录报价授权。公开改价分支保持既有行为。专属快照使用productId且不保存旧程序改价必须的sourceId，使旧程序在产生副作用前失败回滚；新投影明确priceScope=quote。
+
+### 验证证据
+
+11项专项及最终完整gym680项通过，member4项通过/1既有禁用跳过；Spotless、server依赖打包及diff检查通过，打包跳过测试。验证批准/拒绝不改公开价格或商品版本，商品变化阻断并回滚，会员恢复后同键可重试，同键并发只有一申请，编辑与批准竞争不混用快照，SELF/功能权限/身份/租户/门店关系隔离。源码映射89/135；日志与命令见testing。本步无迁移，不重跑此前隔离MySQL证据。
+
+### 影响面 / 风险
+
+复用approvals:create和已发布price_change模板，无权限定义或自动授权；仍V018/67表。旧二进制拒绝专属申请的行为根据其解析必需参数推断，未进行混版本部署验证，启用前须统一更新审批实例。原公开改价接口保留；前端和业务库未改，无第三方调用，未做生产HTTP或规模联调。
+
+### 未做 / 后续
+
+85项新增本地实现、4项复用源码、46项待开发。117–118报价实体、链接/有效期、会员读取及订单结算绑定继续后续小步；批准结果目前不能直接下单。外部支付/签约/设备/监控继续暂缓。本地提交不推送，保留原始uniapp.md内容和暂存状态。
+
+## [2026-10-25 19:10 ~ 19:21] 私教报价生成和会员受控读取
+
+### 意图
+
+补齐总表117–118，让原价或经批准的专属价格成为持久化报价，固定期限并限定可读取会员，换请求键不能续期或绕过审批。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../GymMobileCourseQuotesController.java`、`AppGymCourseQuotesController.java`、`GymMobileCourseQuoteVO.java`、`GymMobileCourseQuoteService.java` | 新增 | 创建/本人读取、金额来源和审批归属、当前范围、幂等及安全投影 |
+| `GymCourseQuoteDO.java`、`GymCourseQuoteMapper.java`、`GymMobileQuoteProperties.java` | 新增 | 报价持久化、锁入口与受限分享路径配置 |
+| `ErrorCodeConstants.java` | 修改 | 报价不可见及审批不可用错误 |
+| `V019__gym_course_quotes.sql`、`script/gym/verify-migrations.py`、H2建表/清理 | 新增/修改 | 报价表和租户唯一约束、权限定义、不授予角色，真实MySQL验证 |
+| `GymOrganizationServiceTest.java`、`GymMobileCourseQuotesControllerTest.java` | 修改/新增 | 十四项业务及三项MVC，实际报价/过期/隔离/并发 |
+| `docs/uniapp/`四份接口文档/清单、`architecture.md`、`testing.md`、脚本README/DATABASE | 修改 | 91/135、报价与订单边界、分享对接配置和V019部署说明 |
+
+### 结构关系
+
+后台接口校验courses:quote、当前商品/会员范围及SELF申请人归属，再进入幂等记录、租户互斥、审批行和课程共享资格锁。首次报价验证批准快照并保存24小时期限，数据库租户/审批唯一保证只发一次；重复新键读取原报价不续期。会员接口按真实绑定身份及同店关系，在只读快照中检查当前商品/营业店/教练资格并投影八字段，不借用后台身份。分享路径配置仅生成quoteId链接。
+
+### 验证证据
+
+17项专项与完整gym697项通过，member4项通过/1既有禁用跳过；Spotless、server依赖打包及差异检查通过。真实隔离MySQL/Flyway73检查通过、临时库清理；实际验证NULL审批多报价、同租户重复审批拒绝和跨租户独立唯一。业务覆盖按批准金额、同审批不续期、精确到期边界、商品编辑竞争、幂等失败回滚及会员/SELF/功能权限隔离。源码映射91/135，日志与命令见testing。
+
+### 影响面 / 风险
+
+新增V019表及gym:courses:quote权限定义，当前68表，无历史回填/角色授权；部署先迁移验证、更新审批和报价服务后显式授权。share-page默认路径为预留对接约定，未验证前端注册，部署需配置真实页面；前端和业务库未改。active不代表有可用支付渠道，过期也涵盖当前商品/营业/任职条件失效。未执行生产HTTP、分享页面或规模联调。
+
+### 未做 / 后续
+
+87项新增本地实现、4项复用源码、44项待开发。used_order_id仅预留及读取映射，创建报价不消费；后续20–26订单须原子验证并绑定报价，当前不宣称可以下单/付款。真实支付、签约、设备与监控继续暂缓。小步本地提交，不推送，原始uniapp.md内容及暂存状态保留。
+
+## [2026-10-25 19:22 ~ 19:48] 会员订单准备、报价绑定与本人取消
+
+### 意图
+
+补总表20–22、24，把服务端商品价或有效报价变成真实订单并绑定一次，提供本人查询及未支付取消，避免客户端冒充金额/会员或重复使用报价；明确与后续支付、会员自动履约的边界。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../AppGymOrdersController.java`、`GymMobileOrdersVO.java`、`GymMobileOrdersService.java` | 新增 | 会员下单、本人分页/详情和取消；服务端条款、幂等及状态投影 |
+| `GymMobileCourseQuoteService.java`、`GymCourseQuoteDO.java` | 修改 | 真实会员报价锁定、订单/明细金额版本和期限校验、原子used绑定 |
+| `GymBusinessOrderDO.java`、`GymCommerceService.java`、`ErrorCodeConstants.java` | 修改 | 会员账号/到期/取消审计，可信收款发生时刻校验及取消错误 |
+| `V020__gym_member_order_lifecycle.sql`、`script/gym/verify-migrations.py`、H2建表 | 新增/修改 | 四个可空字段、本人分页索引及旧交易数据保留验证 |
+| `GymOrganizationServiceTest.java`、`GymMobileOrdersControllerTest.java` | 修改/新增 | 十六项业务及三项MVC，报价竞争、实际收退款筛选、销售窗口和身份隔离 |
+| `docs/uniapp/`四份文档/清单、`architecture.md`、`testing.md`、脚本README/DATABASE | 修改 | 95/135、订单与权益/支付边界、生命周期和V020部署 |
+
+### 结构关系
+
+会员身份来自令牌，创建在幂等请求锁及租户互斥下按门店/报价→教练→会员→商品锁冻结条款，写共享订单/明细/策略表；真实订单存在后报价服务重查数量、会员、商品版本、金额及期限再绑定，所有写入同事务。读接口在SQL分页前限定本人及计算支付状态，批量读关联投影。取消和原收款共用互斥/订单行锁，并停止未完成旧任务；没有借用后台身份执行会员下单。
+
+### 验证证据
+
+最终gym716项、member4项通过，1项既有禁用跳过；Spotless、server依赖打包及差异检查通过。真实隔离MySQL/Flyway77检查通过，临时库清理，旧订单100.00/20.00及partially_paid保持、新字段NULL。并发验证一报价一订单、同键一订单、取消与实际收款互斥；实际收退款业务验证状态筛选，销售窗口/坏配置拒绝及修复后重试，会员/租户/历史数据隔离。源码映射95/135，完整命令和日志见testing。
+
+### 影响面 / 风险
+
+V020无新表/角色授权，仍68表；须迁移验证并统一更新订单/收款实例，旧无期限订单返回NULL。订单支付期限最长30分钟且不晚于报价；取消/超时不释放已绑定报价。0元paymentStatus=paid表示无需支付，实收为0且权益仍待发放。真实渠道的在途支付和晚到通知补偿未验证；前端/业务库未改，未做生产HTTP或规模联调。
+
+### 未做 / 后续
+
+91项新增本地实现、4项复用源码、40项待开发。新会员订单未进入依赖后台账号的旧自动履约队列，必须在下一步补安全的会员购买发卡/发课包及失败重试；当前真实pending，不把会员ID冒用为后台员工ID。23支付会话、25–26退款申请仍待开发，外部支付/签约/设备/监控继续暂缓；完整购买入口仍标注不可用。小步本地提交不推送，原始uniapp.md及暂存状态保留。
+
+
+## [2026-10-25 19:56 ~ 20:09] 履约任务区分会员和后台账号类型
+
+### 意图
+
+按小步提交为会员自动履约建立身份边界，防止会员与员工数字ID相同时被当作后台账号执行，或经人工重试改变身份类型。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `GymFulfillmentTaskDO.java`、`GymFulfillmentQueueService.java`、`GymFulfillmentWorker.java` | 修改 | 持久化账号类型，后台入队显式写2，执行及重试先核对类型 |
+| `sql/gym/migration/mysql/V021__gym_fulfillment_principal_type.sql` | 新增 | 历史后台任务默认2，保留原账号、租约及执行记录，不创建会员任务 |
+| `script/gym/verify-migrations.py`、H2建表 | 修改 | 新字段与五项真实MySQL验证 |
+| `GymOrganizationServiceTest.java` | 修改 | 四项实际领取、拒绝、重试、入队与上下文恢复测试 |
+| `docs/architecture.md`、`testing.md`、`uniapp/uniapp-implementation.md`、脚本README/DATABASE | 修改 | 部署边界、720项回归及82项隔离迁移证据；进度仍95/135 |
+
+### 结构关系
+
+任务以principal_user_type和principal_user_id组成执行身份。旧后台入队显式写UserTypeEnum.ADMIN；Worker领取后先判断类型，再查询后台账号和实时权限。非后台任务安全失败并沿用有限退避，后台重试拒绝替换其身份。后台类型仍沿用原租约、事务、门店权限与幂等履约链路，对外响应字段不变。
+
+### 验证证据
+
+4项专项与完整gym720项通过（组织服务437项），member4通过、1项既有禁用跳过。Spotless、server依赖打包和diff检查通过，打包跳过测试。隔离MySQL/Flyway82检查通过且临时库清理：旧processing任务的主体、次数、租约、token及失败信息保持；同号会员与员工类型独立，NULL拒绝且不伪造任务。接口源码映射仍95/135。命令及日志见testing。
+
+### 影响面 / 风险
+
+V021新增非空字段默认2，仍68表，无角色授权。默认值依据历史队列只接受后台身份；先迁移再更新所有执行器，后续不得在旧执行器仍运行时启用会员任务。失败的非后台类型任务不发放权益或新增财务事件，重试不转换身份。前端、业务数据库及原始uniapp.md的内容与暂存状态保持不变。
+
+### 未做 / 后续
+
+本批是身份隔离前置工作，没有新增路由，仍91项新增本地实现、4项复用源码、40项待开发。会员订单入队、按冻结条款发卡/发课包、合同和会员失败重试继续后续小步；当前不宣称会员自动履约可用。真实支付/自动续费、电子签、设备、监控继续暂缓，未做生产HTTP或规模联调。本地提交不推送。
+
+## [2026-10-25 20:10 ~ 20:32] 会员购买订单实际发卡发课包及失败重试
+
+### 意图
+
+补齐20–22订单背后的真实会员履约，避免订单已经足额收款却无权益或因管理员身份混用而发错；冻结商品条款与实际权益、合同及任务状态一起落库。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `GymOrderEntitlementAccess.java`、`GymMemberOrderFulfillmentService.java` | 新增 | 持久订单/明细授权、真实会员及当前资格、冻结条款和事务完成 |
+| `GymMobileOrdersService.java`、`GymFulfillmentQueueService.java`、`GymFulfillmentWorker.java` | 修改 | 同事务会员入队、类型1执行、保留买家身份的自动/人工重试 |
+| `GymCardService.java`、`GymCourseService.java`、`GymContractService.java` | 修改 | 必须已有事务的购买钩子、实际权益来源校验、共享内部写入及未签合同 |
+| `GymCoursePackDO.java`、`GymBookingRules.java`、`GymMobileBookingsService.java`、`GymContractEventDO.java` | 修改 | 购买单节时长和查询/预约一致校验、合同事件账号类型 |
+| `GymCommerceService.java` | 修改 | 可信私教收款按private记账和分摊，旧卡退款仍拒绝私教 |
+| `V022__gym_member_order_fulfillment.sql`、H2建表、`verify-migrations.py` | 新增/修改 | 兼容字段和受限旧订单任务恢复，真实V021升级回归 |
+| `GymOrganizationServiceTest.java` | 修改 | 15项业务、事务、身份、并发与预约可用性测试，更新旧会员分支预期 |
+| `docs/uniapp/`四份文档/清单、`architecture.md`、`testing.md`、脚本README/DATABASE | 修改 | 实际履约边界、735/94验证证据和暂停旧写入/执行器的部署步骤 |
+
+### 结构关系
+
+会员订单/报价绑定与类型1任务同事务创建，正价等待可信收款，零元直接待执行；需审批不自动入队。Worker设置真实会员身份，Access以已落库订单/明细验证buyer、绑定、资金/审批、当前资格和快照，按共享锁顺序发放实际权益。内部合同核验权益来源，记录会员类型，不冒用后台上传人。权益/合同/明细/策略/订单/任务完成同事务；已付款事务保留，失败任务独立退避。购买时长进入课包，预约读写共同校验。V022只补满足约束的历史缺失任务，保留已有租约/主体/次数。
+
+### 验证证据
+
+最终gym735项通过（组织服务452项），member4通过、1项既有禁用跳过；Spotless、server依赖打包及差异检查通过，打包跳过测试。隔离MySQL/Flyway94检查通过且全部临时库清理，含真实V021库15种订单恢复和旧课包/合同审计兼容。验证零元及批准0元报价无资金伪造，实际受控分笔收款才激活私教任务，改商品/并发编辑不改变原课时/时长，短课不可消耗长课包，合同及最终任务失败全业务回滚，有权重试保留会员主体。命令、失败夹具修复及日志见testing。
+
+### 影响面 / 风险
+
+仍68表、无角色授权或新增HTTP路由，映射仍95/135。迁移前须暂停会员下单和全部履约执行器，统一升级再恢复，防止旧程序漏入队或忽略账号类型。当前私教商品教练不可通过正常API修改；另校验异常导入数据的快照不一致。旧/人工课包时长未知时保留NULL。外部文件blob不随SQL回滚，未引用文件需清理；本地测试不证明真实支付、签约、部署HTTP、多节点或规模联调。前端、业务库及原始uniapp.md内容/暂存状态未改。
+
+### 未做 / 后续
+
+91项新增本地实现、4项复用源码、40项待开发；本批完成订单内部履约深度，不重复计算接口数量。23支付会话、25–26退款申请及私教退款权益撤销仍待后续；支付/自动续费、电子签、设备、监控真实对接继续按用户要求暂缓。商品完整购买入口仍checkout_unavailable，不宣称可以真实付款。小步本地提交，不推送。
+
+## [2026-10-25 21:09 ~ 21:22] 会员退款申请、前置审核与可信退款凭据关联
+
+### 意图
+
+按135项总表补齐25–26退款申请及本人进度查询，落实用户“小步提交、不要改前端、真实渠道先跳过并写清楚”的要求。申请/审核须与真实到账区分，避免申请退款后未发权益继续履约，以及将其他退款误计入本人申请。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `controller/app/mobile/AppGymRefundApplicationsController.java`、`vo/GymMobileRefundVO.java` | 新增 | 两个会员目标接口、严格请求及公开响应；当前身份和幂等键校验 |
+| `controller/admin/sales/GymRefundApplicationsController.java` | 新增 | 三个后台辅助查询/审核接口，沿用销售读与审批决定权限，不重复统计为目标接口 |
+| `service/sales/GymRefundApplicationService.java`、`dal/dataobject/sales/GymRefundApplicationDO.java`、`dal/mysql/sales/GymRefundApplicationMapper.java` | 新增 | 实收上限、活动申请唯一、版本审核、本人读取及真实凭据关联进度 |
+| `GymCommerceService.java`、`GymOrderRefundDO.java`、`GymOrderEntitlementAccess.java`、`GymFulfillmentQueueService.java` | 修改 | 内部退款关联、直接/自动发放拦截、waiting_refund暂停及驳回恢复，保留原重试预算 |
+| `enums/ErrorCodeConstants.java` | 修改 | 申请不存在、状态不符及已有活动申请错误 |
+| `sql/gym/migration/mysql/V023__gym_refund_applications.sql` | 新增 | 新申请表、唯一活动位置与CHECK约束、旧退款可空关联及索引；无历史审批回填 |
+| `script/gym/verify-migrations.py`、测试`sql/create_tables.sql`、`sql/clean.sql` | 修改 | 69表结构、13项新增隔离MySQL检查，保持V021升级夹具按版本隔离 |
+| `GymOrganizationServiceTest.java`、`GymMobileRefundControllerTest.java` | 修改/新增 | 20项业务并发/权限/事务测试及5项MVC契约测试 |
+| `docs/uniapp/`接口设计、总表、实施进度及机器清单 | 修改 | 97/135覆盖、准确数量、状态/字段、真实渠道与私教退款未完成边界 |
+| `docs/architecture.md`、`docs/testing.md`、`script/gym/README.md`、`script/gym/DATABASE.md` | 修改 | 调用关系、验证证据、统一升级步骤及下一版本V024 |
+
+Java相对文件名均位于`yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/`对应目录；测试位于同模块`src/test/`。
+
+### 结构关系
+
+会员Controller→RefundApplicationService验证本人订单及真实实收，租户互斥和订单/申请行锁下创建申请并暂停未发任务；活动唯一约束防重复。后台审核同时校验功能权限、有效管理员及整店范围，版本决定与驳回恢复同事务。履约服务和失败重试都检查活动申请，旧领取token不可继续执行。批准只记录允许退款，已发权益不因此撤销。
+
+Commerce内部关联退款入口核验可信凭据、原订单、审核时间及申请余额，原退款/财务/权益处理与申请进度同事务落库。无关联退款保留原行为，可关闭不足余额的申请但不会增加其已退金额。原GymRefundReviewService负责退款后的部分卡权益人工处理，与本次退款前审核分离。课程申请与审核支持，课程实际退款/撤销仍拒绝。
+
+### 验证证据
+
+`mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' -Dsurefire.failIfNoSpecifiedTests=false`（本机Mockito agent参数详见testing）最终gym760通过、组织服务472通过；member4通过、1项既有禁用跳过。新增20项业务和5项MVC覆盖三类并发、身份/权限撤销、部分付款/迟到付款、真实凭据关联、旧任务token与预算，以及队列/审核/最终退款失败回滚。
+
+`PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py`真实隔离MySQL107检查通过且临时库全部清理；`mvn -B -ntp -pl yudao-server -am package -DskipTests`构建成功，打包跳过测试；`python3 script/gym/verify-uniapp-api-coverage.py`输出Contract135/mapped97/missing38；`git diff --check`通过。完整命令与最终日志见testing本批章节。
+
+### 影响面 / 风险
+
+当前69表，部署前需备份、暂停相关写入及全部履约执行器，migrate/validate并统一升级后恢复；旧程序无法识别退款暂停，不能混用。申请金额是剩余实收上限，尚不自动折算已消费权益或手续费，审核人员须核实退款政策。驳回说明对会员公开。已有退款关联保持NULL，无新增角色授权。前端、业务库及用户原始uniapp.md内容/暂存状态保留；本地mock核验器测试不证明真实渠道或部署HTTP联调。
+
+### 未做 / 后续
+
+93项新增并本地测试、4项复用源码、38项待开发，总数仍135；三个后台辅助接口不增加目标总数。真实支付/退款、自动续费、电子签、设备及监控接入继续暂缓；私教实际退款/课包撤销仍未实现，23支付会话未开放。仅本地小步提交，不推送。
+
+## [2026-10-25 21:24 ~ 21:31] 工作台设备与柜格的授权分页查询
+
+### 意图
+
+补齐135项总表122–123，让工作台从已有后台资料查询设备和柜格；保留“真实设备接入先跳过、不要改前端、小步提交”的边界，不把设备配置状态当作遥测或操作成功。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileDevicesController.java` | 新增 | 设备和柜格两个GET路由，原gym:devices:read权限 |
+| 同目录`vo/GymMobileDevicesVO.java` | 新增 | 必填门店/类型及分页校验，设备4字段、柜格3字段投影 |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileDevicesService.java` | 新增 | 有效后台身份、整店授权、父资源校验及SQL过滤后分页 |
+| `yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java` | 修改 | 7项真实数据库、权限、租户、参数与状态测试 |
+| `yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileDevicesControllerTest.java` | 新增 | 3项MVC参数与严格返回字段契约测试，实际被测为后台Controller |
+| `docs/uniapp/`接口设计、总表、实施进度及机器清单 | 修改 | 99/135覆盖、当前数量、配置状态及设备暂缓边界 |
+| `docs/architecture.md`、`docs/testing.md`、`script/gym/README.md` | 修改 | 调用链、验证证据和运行说明 |
+
+### 结构关系
+
+MobileDevicesController经功能权限进入MobileDevicesService，WorkAccess验证当前有效后台账号，DataScope约束整店范围。设备按指定门店和door/locker类型过滤；柜格先由真实父设备确认门店及locker类型，再按configured过滤。直接复用原Mapper和资料，只读REPEATABLE_READ；范围和筛选在SQL分页前生效，total与列表一致。没有调用设备操作或遥测写入服务。
+
+### 验证证据
+
+`mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' -Dsurefire.failIfNoSpecifiedTests=false`（本机Mockito agent参数见testing）最终gym770项通过、组织服务479项，member4项通过、1项既有禁用跳过。新增7业务+3MVC覆盖方法权限、租户隔离、SELF不足、已撤权限、父设备类型、逻辑删除、移除柜格、分页总数及配置状态不冒充实时占用。
+
+`mvn -B -ntp -pl yudao-server -am package -DskipTests`成功，打包跳过测试；`python3 script/gym/verify-uniapp-api-coverage.py`输出Contract135/mapped99/missing36；`git diff --check`通过。完整日志见testing；无schema变化，本批不重复MySQL迁移验证。
+
+### 影响面 / 风险
+
+设备status=active/inactive、柜格status=available/inactive均为配置状态；available不证明空闲或硬件可开。后台有权人员可读停用店/设备，已删除父资源拒绝。不返回设备UID、厂商、位置、online或occupancyState。无新迁移、权限定义或角色授权，仍V023/69表；前端、业务库和用户uniapp.md原始内容及暂存状态保留。本地验证不证明部署HTTP或设备联调。
+
+### 未做 / 后续
+
+当前95项新增本地实现、4项复用源码、36项待开发，总目标仍135。124–126远程指令/真实回执/二次确认及132–133集成事件仍待实现；厂商设备通信按约定暂缓，没有成功开门/开柜声明。只作本地小步提交，不推送。
+
+## [2026-10-25 21:33 ~ 21:56] 站内通知、本人已读与会员通知意愿
+
+### 意图
+
+实现总表127–131五个消息接口，使查询建立在真实业务事件及持久化记录上；支持会员和员工独立收件箱、当前权限校验、首次已读时间及会员意愿保存。继续遵守真实外部服务暂缓、前端不改、按功能小步本地提交的要求。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `controller/app/mobile/AppGymNotificationsController.java`、`controller/admin/mobile/GymMobileNotificationsController.java`、`controller/app/mobile/vo/GymMobileNotificationsVO.java` | 新增 | 两侧列表/已读与会员偏好共五个接口，严格输入及公开字段 |
+| `service/mobile/GymMobileNotificationPublisher.java`、`GymMobileNotificationsService.java` | 新增 | 已落库业务源投影、事件去重、当前收件权限、原子已读及偏好更新 |
+| `dal/dataobject/mobile/GymMobileNotificationDO.java`、`GymMobileNotificationPreferenceDO.java`及对应Mapper | 新增 | 收件人账号类型、源/目标ID、时间和意愿模型 |
+| `service/mobile/GymMobileBookingsService.java`、`service/course/GymBookingRules.java`、`GymCourseService.java` | 修改 | 两侧真实预约与共享取消、课包发放同事务发布 |
+| `service/card/GymCardService.java`、`service/contract/GymContractService.java` | 修改 | 实际发卡及未签合同生成通知，不冒充支付或电子签结果 |
+| `service/marketing/GymActivityParticipationService.java`、`GymMarketingService.java`、`service/mobile/GymMobileActivityService.java` | 修改 | 报名、本人/后台/整场取消真实事件通知 |
+| `enums/ErrorCodeConstants.java` | 修改 | 通知不存在或无权访问错误 |
+| `sql/gym/migration/mysql/V024__gym_mobile_notifications.sql`、H2建表/清理、`script/gym/verify-migrations.py` | 新增/修改 | 两表至71表，收件唯一及意愿约束，10项新增隔离MySQL检查 |
+| `GymOrganizationServiceTest.java`、`GymMobileBookingsServiceTest.java`、`GymMobileNotificationsControllerTest.java` | 修改/新增 | 14项业务、4项MVC，原完整业务回归装配真实发布器 |
+| `docs/uniapp/`四份契约/清单、`docs/architecture.md`、`docs/testing.md`、脚本README/DATABASE | 修改 | 104/135进度、事件目标映射、真实渠道边界、验证和统一升级顺序 |
+
+Java相对路径位于`yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/`；测试位于同模块`src/test/`。
+
+### 结构关系
+
+实际业务写入→MANDATORY站内发布器→源行锁/最新事件当前读→按会员绑定或当前授课员工账号保存通知，与原业务事务共同提交。重复投影无重复通知，取消后同一时钟重新参与生成新事件；一次事件的不同账号类型及接收人独立记录。活动对外目标是activity而非registration，权益类型区分card和course_pack。
+
+查询/已读→当前身份→收件人SQL范围；工作台再校验bookings:read、会员负责关系和当前授课范围后分页，撤销权限影响正文、total和已读。标记已读仅首次写时间，偏好多键同事务且同值不变。没有外部消息发送调用。
+
+### 验证证据
+
+`mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' -Dsurefire.failIfNoSpecifiedTests=false`（Mockito agent参数见testing）最终gym788通过、组织服务493通过；member4通过、1项既有禁用跳过。14业务+4MVC覆盖实际业务通知、同一时钟重入、并发去重/已读/偏好、当前权限撤销、两类身份/租户隔离、字段白名单与事务失败重试。
+
+`PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py`真实隔离MySQL117检查通过、全部临时库清理；`mvn -B -ntp -pl yudao-server -am package -DskipTests`成功，打包跳过测试。`python3 script/gym/verify-uniapp-api-coverage.py`输出135/104/31，`git diff --check`通过。首轮MVC未知字段错误码断言修正及日志详见testing，生产严格字段拒绝规则未放松。
+
+### 影响面 / 风险
+
+当前71表、下一迁移V025；升级前备份并暂停相关预约/权益/合同/活动和履约写入，迁移至V024并统一升级后恢复，避免旧实例漏事件。通知数据库写入失败会回滚所在业务，不能将未提交业务的消息当成成功记录。会员偏好只保存外部订阅意愿，不表示微信授权或送达，也不屏蔽业务站内记录。无历史消息/意愿回填或额外角色授权；前端、业务库和原始uniapp.md内容/暂存状态保留。未验证部署HTTP、多节点、规模或真实外部渠道。
+
+### 未做 / 后续
+
+100项新增本地实现、4项复用源码、31项待开发，135项总目标保持。员工站内事件当前为授课预约变更；门禁入场路由及审批/工资等其他工作台事件尚未接入发布器。微信/短信/App远程推送及原合同远程提醒仍未接入，不用站内记录代替渠道成功。设备、支付/自动续费、签约和监控外部边界不变；本地小步提交，不推送。
+
+## [2026-10-25 21:57 ~ 23:34] 门店服务私信与会员已读确认
+
+### 意图
+
+补齐135项总表92–97，使工作台与会员能保存、分页查询和回复真实站内消息，提供可靠未读摘要；继续保持前端不改、第三方暂缓和按功能小步本地提交。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `controller/admin/mobile/GymMobileConversationsController.java`、`controller/app/mobile/AppGymConversationsController.java`、`controller/app/mobile/vo/GymMobileConversationsVO.java` | 新增 | 六项目标接口及会员已读辅助接口，严格输入与最小字段，关闭正文日志 |
+| `service/mobile/GymMobileConversationsService.java` | 新增 | 当前身份/权限/范围、共享会话、幂等发送、分页摘要及单调已读游标 |
+| `dal/dataobject/mobile/GymMobileConversationDO.java`、`GymMobileMessageDO.java`及对应Mapper | 新增 | 会话、消息和真实账号审计模型 |
+| `enums/ErrorCodeConstants.java` | 修改 | 会话不存在、关系不可用、已读消息无效错误 |
+| `sql/gym/migration/mysql/V025__gym_mobile_conversations.sql`、H2建表/清理、`script/gym/verify-migrations.py` | 新增/修改 | 新增两表至73表、独立read/send权限定义，12项新增MySQL检查 |
+| `GymOrganizationServiceTest.java`、`GymMobileConversationsControllerTest.java` | 修改/新增 | 17项业务、5项MVC；修正既有课程测试夜间跨日窗口 |
+| `docs/uniapp/`四份契约/总表/实施进度/机器清单 | 修改 | 110/135进度、会话参与和未读口径、辅助接口及暂缓说明 |
+| `docs/architecture.md`、`docs/testing.md`、`script/gym/README.md`、`script/gym/DATABASE.md` | 修改 | 调用链、真实验证、部署顺序与下一迁移V026 |
+
+Java相对路径位于yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym，测试位于同模块src/test。
+
+### 结构关系
+
+双侧Controller→ConversationsService→当前Identity/WorkAccess/Permission/MemberScope→会话及消息Mapper。创建用幂等行、租户互斥和会话唯一键；发送用幂等行及会话锁，消息/摘要/未读/缓存同事务；已读同一会话锁下验证真实目标并推进游标，GET不清未读。会话是当前有权员工共享的门店会员服务记录，不是创建人永久私有记录；历史归属gym会员，经有效身份初始化绑定后可读。
+
+### 验证证据
+
+完整命令见testing本批章节：Maven Spotless及gym回归810通过（组织服务510），member4通过、1项既有禁用跳过；新增17业务+5MVC。隔离MySQL/Flyway129检查通过并清理临时库；server package -DskipTests成功。源码覆盖脚本输出Contract135/mapped110/missing25，git diff --check通过。
+
+首轮潜客测试补正缺失平台账号夹具；首轮全量遇既有课程测试第二节跨日超出窗口，只将查询结束日按实际第二节排期计算，业务规则和快照断言不变。最终重跑完整通过，日志路径及覆盖边界已记录testing。
+
+### 影响面 / 风险
+
+V025两表、当前73表、下一V026；先备份、migrate/validate再开放新入口，跨V024升级遵守其暂停业务写入要求。本批只定义权限、不授角色、不回填消息；有当前权限和会员范围的其他员工可读同一门店会话。会员门店关系移除后可读本人历史和确认已读，不能发送；工作台仍要求当前关系。潜客绑定后可读该会员历史，不表示曾向未绑定账号送达。前端、业务库、原始uniapp.md内容及暂存状态保留；未做部署HTTP、多节点或规模联调。
+
+### 未做 / 后续
+
+106项新增本地实现、4项复用源码、25项待开发，总数135；已读辅助路由不计新增目标。微信客服、外部消息推送、WebSocket、附件、编辑撤回、员工未读均未实现。支付/自动续费、电子签约、设备及监控真实接入按要求暂缓，未伪造成功。本地小步提交，不推送。
+
+## [2026-10-25 23:35 ~ 23:46] 会员邀请推广与首次建档验证归属
+
+### 意图
+
+实现135项总表60，提供真实邀请推广码及可配置分享路径，并使首次建档校验邀请关系；保留既有客户阶段/门店/负责关系。生成邀请不直接授予尚未定义规则的积分奖励，继续遵守前端不改和小步本地提交。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `controller/app/mobile/AppGymInvitationController.java`、`controller/app/mobile/vo/GymMobileInvitationVO.java` | 新增 | 会员发码接口、严格门店输入、三字段响应及关闭正文日志 |
+| `service/mobile/GymMobileInvitationService.java`、`framework/mobile/GymMobileInvitationProperties.java` | 新增 | 当前资格、幂等签发、随机码、固定期限及安全分享路径配置 |
+| `dal/dataobject/mobile/GymMobileInvitationDO.java`、`dal/mysql/mobile/GymMobileInvitationMapper.java` | 新增 | 邀请门店、真实邀请人、随机码、签发页面及时间持久化 |
+| `service/mobile/GymMobileIdentityService.java`、`dal/dataobject/mobile/GymMobileIdentityDO.java` | 修改 | 首次建档核验邀请并同事务保存归属、新旧会员标记；已有身份不覆盖 |
+| `enums/ErrorCodeConstants.java` | 修改 | 邀请码无效、当前门店无法邀请两个错误 |
+| `sql/gym/migration/mysql/V026__gym_mobile_invitations.sql`、H2建表/清理、`script/gym/verify-migrations.py` | 新增/修改 | 一表至74表，身份四字段、完整归属及自邀约束，真实V025升级测试 |
+| `GymMobileMemberServiceTest.java`、`GymMobileInvitationControllerTest.java` | 修改/新增 | 12业务+3MVC，资格、跨租户、并发和故障回滚 |
+| `docs/uniapp/`四份契约/总表/实施进度/机器清单 | 修改 | 111/135、邀请归属、旧数据与奖励未实现边界 |
+| `docs/architecture.md`、`docs/testing.md`、`script/gym/README.md`、`script/gym/DATABASE.md` | 修改 | 调用关系、可复现验证、配置和统一升级步骤 |
+
+Java相对文件名位于yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym；测试位于同模块src/test。
+
+### 结构关系
+
+Controller→InvitationService→当前Identity及门店关系；幂等行后获取租户互斥，重查资格、签发随机码并与首次响应一起提交。IdentityService直接读取邀请码Mapper，在原首次绑定互斥事务校验租户、门店、到期及邀请人当前账号/绑定/会员关系，防止循环依赖。身份四项归属与会员/门店关系同事务，已有身份不可补绑或替换，老会员保持原资料且标记非新建。无积分、发卡或外部分享调用。
+
+### 验证证据
+
+Maven完整命令见testing：Spotless通过，gym825项通过（会员专项35、组织服务510），member4通过、1项既有禁用跳过；新增12业务+3MVC。隔离MySQL/Flyway141检查通过、临时库全部清理；新增12检查覆盖时间/唯一/归属约束、老客标记及V025旧码升级保留、无回填、无权限改动。server package -DskipTests成功，打包跳过测试；源码覆盖脚本输出Contract135/mapped111/missing24，git diff --check通过。
+
+### 影响面 / 风险
+
+V026新增一表及身份字段，当前74表、下一V027；先暂停首次建档，备份、migrate/validate后统一升级身份及邀请实例再恢复，避免旧实例绕过邀请码核验。现有身份及历史自由文本码保留，归属列为空，不回填来源。首次初始化提供无效非空码现在会明确拒绝，而非原样接收；已绑定会员仍保持原归属。默认30天和预留/pages/invitation/index路径可配置；返回路径不证明前端页面存在或微信分享可用。前端、业务库及用户原始uniapp.md内容/暂存状态保留。
+
+### 未做 / 后续
+
+107项新增本地实现、4项复用源码、24项待开发，总目标仍135。邀请奖励条件、积分账本与兑换、微信码/短链、分享页面、实际渠道联调尚未实现；生成链接和归属不算获奖，不伪造积分或卡。支付/自动续费、电子签约、设备及监控第三方继续暂缓。仅本地小步提交，不推送。
+
+## [2026-10-25 23:47 ~ 23:56] 会员本人连续包月历史查询
+
+### 意图
+
+补齐135项总表29–30，让会员查询本人真实订阅记录；区分历史未配置/失败与真实授权状态，不用当前商品价或协议版本覆盖过去事实。真实签约、周期扣款及解约渠道继续按要求暂缓，前端不改。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `controller/app/mobile/AppGymSubscriptionsController.java`、`controller/app/mobile/vo/GymMobileSubscriptionsVO.java` | 新增 | 本人列表/详情、门店分页参数与严格8字段投影 |
+| `service/mobile/GymMobileSubscriptionsService.java` | 新增 | SQL本人/租户/删除/门店过滤、历史查询、固定状态映射和原记录金额/时间 |
+| `dal/dataobject/sales/GymSubscriptionDO.java` | 修改 | 可空的协议确认版本字段，不读取当前销售配置 |
+| `sql/gym/migration/mysql/V027__gym_subscription_agreement_snapshot.sql`、H2建表、`script/gym/verify-migrations.py` | 新增/修改 | 新列及本人门店索引，3项迁移检查，旧协议NULL与原事实保留 |
+| `GymMobileMemberServiceTest.java`、`GymMobileSubscriptionsControllerTest.java` | 修改/新增 | 8业务+3MVC，身份/历史/状态/分页/无写副作用 |
+| `docs/uniapp/`契约、总表、实施进度及机器清单 | 修改 | 113/135、状态扩展、历史版本为空和真实渠道未接入边界 |
+| `docs/architecture.md`、`docs/testing.md`、`script/gym/README.md`、`script/gym/DATABASE.md` | 修改 | 调用链、验证证据、迁移与下一版本V028 |
+
+Java相对路径位于yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym；测试位于同模块src/test。
+
+### 结构关系
+
+会员Controller→SubscriptionsService→IdentityService当前有效会员→SubscriptionMapper，SQL先过滤再分页，详情同样加入本人条件。只读REPEATABLE_READ中直接投影原协议，避免依赖当前门店/商品状态；账号失效拒绝，换店或关系移除不删除历史。固定状态映射保留unconfigured/failed、未知为unknown；无写入、外部调用或周期驱动，现有后台签约审批逻辑保持。
+
+### 验证证据
+
+完整命令见testing本批章节：Spotless通过，gym836通过（会员专项43、组织服务510），member4通过及1项既有禁用跳过；新增8项业务+3项MVC。专项46项亦通过。真实隔离MySQL/Flyway144检查通过，临时库全部清理；新增版本列、索引和旧协议升级保留3检查。server package -DskipTests成功（打包跳过测试），覆盖脚本输出Contract135/mapped113/missing22，git diff --check通过。
+
+### 影响面 / 风险
+
+V027新增可空agreement_version及查询索引，表数仍74、下一V028；先备份、migrate/validate再升级相关应用，索引构建按数据量安排维护。旧记录不回填协议版本，不改金额、状态、计划时间或渠道协议号。扩展公开状态unconfigured/failed/unknown以准确呈现历史；agreementVersion允许null，调用方不能当作已有授权版本。nextChargeAt只代表已存计划，不保证真实扣费。无权限变更；前端、业务库和用户原始uniapp.md内容/暂存状态保留。
+
+### 未做 / 后续
+
+当前109项新增本地实现、4项复用源码、22项待开发，总目标135保持。28创建签约、31解约及真实扣款周期、查询同步、对账未接入，两个GET不宣称渠道可用；无部署HTTP、多节点或规模联调。支付、自动续费、电子签约、设备及监控外部边界不变；仅本地小步提交，不推送。
+
+## [2026-10-26 00:00 ~ 00:03] 记录消费与邀请积分自动奖励暂缓
+
+### 意图
+
+落实用户对消费积分比例及邀请奖励条件的回复“跳过，记在文档里”，避免自行补定业务政策或将邀请归属误报为已获奖励。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `docs/uniapp/uniapp-api-summary.md` | 修改 | 更新统计日期及邀请奖励状态，明确暂缓不增加完成数量 |
+| `docs/uniapp/uniapp-api.md` | 修改 | 记录奖励规则、自动赠分及历史补发暂缓，保留账本/兑换约束 |
+| `docs/uniapp/uniapp-implementation.md` | 修改 | 保存用户确认、受影响接口及后续恢复所需规则 |
+
+### 结构关系
+
+仅修改文档，调用关系和数据结构不变。已实现邀请归属、真实交易记录与尚未实现的积分奖励分开记录，58–59、61–63保持待开发。
+
+### 验证证据
+
+python3 script/gym/verify-uniapp-api-coverage.py输出Contract135/mapped113/missing22；git diff --check通过，文档引用指向现存文件。纯文档变更未重复运行业务测试；上一功能批的836项gym及144项迁移证据不冒充本批新测试。
+
+### 影响面 / 风险
+
+不修改前端、后端代码、迁移或业务数据库，不启用奖励、不回填历史积分。保留用户原始uniapp.md内容与暂存状态；已有111/113等历史批次数字保持原历史含义，当前仍113/135。
+
+### 未做 / 后续
+
+消费/邀请奖励规则及自动发放按用户要求暂缓；积分账本、商品及兑换仍在原135项目标内待继续实现。本次不把暂缓等同完成，不改变支付、签约、设备和监控的既有暂缓边界。独立本地文档提交，不推送。
+
+## [2026-10-26 00:04 ~ 00:18] 积分账本与本人余额流水查询
+
+### 意图
+
+补齐135项总表58–59，提供真实持久化积分账户与流水读取，并为后续兑换建立原子记账基础。消费及邀请奖励规则按用户要求跳过，不设置默认赠分、不补算历史奖励。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `controller/app/mobile/AppGymPointsController.java`、`controller/app/mobile/vo/GymMobilePointsVO.java` | 新增 | 本人余额与流水两个GET，严格响应字段与筛选分页参数 |
+| `service/mobile/GymMobilePointsService.java` | 新增 | 校验有效身份、SQL本人及租户过滤、无账户时只读返回零 |
+| `service/points/GymPointLedgerService.java`、`dal/dataobject/points/`、`dal/mysql/points/` | 新增 | 内部账本、业务键去重、账户锁及原流水累计返还约束 |
+| `enums/ErrorCodeConstants.java` | 修改 | 非法记账、重复事件冲突与余额不足错误 |
+| `sql/gym/migration/mysql/V028__gym_point_ledger.sql`、H2建表/清理、`script/gym/verify-migrations.py` | 新增/修改 | 两表至76表，唯一键、金额约束、索引及15项隔离迁移检查 |
+| `GymMobileMemberServiceTest.java`、`GymMobilePointsControllerTest.java` | 修改/新增 | 16业务+3MVC，覆盖权限、字段、并发、幂等和事务故障 |
+| `docs/uniapp/`契约、总表、实施进度及机器清单 | 修改 | 115/135、积分字段和内部记账边界、自动奖励继续暂缓 |
+| `docs/architecture.md`、`docs/testing.md`、`script/gym/README.md`、`script/gym/DATABASE.md` | 修改 | 调用关系、验证证据、迁移操作及下一版本V029 |
+
+Java相对路径位于yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym；测试位于同模块src/test。
+
+### 结构关系
+
+会员Controller→MobilePointsService→当前Identity及积分Mapper；查询在只读快照中先过滤本人/租户再分页，不创建账户。内部LedgerService要求调用方已有事务，获取租户互斥、会员及账户行锁后同时更新流水和余额；相同业务键核对完整载荷，返还或冲回须关联同账户原流水且累计不超原额。调用方后续失败、流水失败或账户更新失败均整体回滚。当前没有生产业务调用者，也没有HTTP增减分入口。
+
+### 验证证据
+
+完整命令见docs/testing.md本批章节：Spotless通过，gym855项通过（会员专项59、组织服务510），member4通过及1项既有禁用跳过；新增16业务+3MVC。真实隔离MySQL/Flyway159检查通过，临时库全部清理；server package -DskipTests成功，打包阶段跳过测试。python3 script/gym/verify-uniapp-api-coverage.py输出Contract135/mapped115/missing20，git diff --check通过。
+
+### 影响面 / 风险
+
+V028新增两表，当前76表、下一V029；先备份并migrate/validate再开放新查询，不回填账户或奖励，不修改权限或角色。累计收入/支出分别统计正向及负向流水，包含返还/冲回；原获分被消费后的冲回可形成欠额，新增消费不得透支。所有公开积分值保持JavaScript安全整数范围。当前采用租户互斥保证一致性，规模性能尚未验证。业务库未迁移，前端和用户原始uniapp.md内容及暂存状态保留。
+
+### 未做 / 后续
+
+当前111项新增本地实现、4项复用源码、20项待开发。61–63商品及兑换、真实发卡和失败返还业务尚未接入；内部账本测试不代表完整兑换验收。消费/邀请自动奖励、退款自动积分冲回和历史补发按已确认边界暂缓；支付、签约、设备及监控外部服务继续暂缓。未做部署HTTP、多节点或规模联调，仅本地小步提交，不推送。
+
+## [2026-10-26 09:30 ~ 09:42] 积分兑换商品配置与会员目录
+
+### 意图
+
+完成135项总表61，并提供真实后台配置来源，作为下一步积分兑换事务的商品与库存依据。不根据卡片现金价格推算积分成本，不将商品查询等同于兑换成功；积分自动奖励继续按用户要求暂缓。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `controller/app/mobile/AppGymPointProductsController.java`、`vo/GymMobilePointProductsVO.java` | 新增 | 本人门店积分商品目录，五字段及分页参数 |
+| `controller/admin/points/GymPointProductsController.java`、`vo/GymPointProductVO.java` | 新增 | 后台列表、新建和完整更新，专属功能权限 |
+| `service/points/GymPointProductsService.java` | 新增 | 真实模板/门店核验、身份及范围、版本冲突、库存可空与SQL分页 |
+| `dal/dataobject/points/GymPointProductDO.java`、`dal/mysql/points/GymPointProductMapper.java` | 新增 | 固定归属、成本、库存、上架状态及版本持久化 |
+| `enums/ErrorCodeConstants.java` | 修改 | 配置无效、不存在、版本冲突、门店不可用四类错误 |
+| `sql/gym/migration/mysql/V029__gym_point_products.sql`、H2建表/清理、`script/gym/verify-migrations.py` | 新增/修改 | 一表至77表、权限定义、约束/索引及11项隔离检查 |
+| `GymMobileMemberServiceTest.java`、`GymOrganizationServiceTest.java`、`GymMobilePointProductsControllerTest.java` | 修改/新增 | 10业务、1项功能权限、3项MVC测试 |
+| `docs/uniapp/`契约、总表、实施进度和机器清单 | 修改 | 116/135、后台辅助接口、库存/版本语义与兑换未完成边界 |
+| `docs/architecture.md`、`docs/testing.md`、`script/gym/README.md`、`script/gym/DATABASE.md` | 修改 | 调用关系、证据、部署及下一版本V030 |
+
+Java相对路径位于yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym；测试位于同模块src/test。
+
+### 结构关系
+
+会员和后台Controller进入同一ProductsService的不同方法。会员身份及门店关系检查后，先筛出当前可用模板，再在商品SQL加入租户/门店/启用/库存条件后分页。后台独立权限加门店数据范围，禁止会员账号使用；修改按租户互斥→门店→商品→模板锁，校验最新版本后整体保存。模板失效可下架商品，不能重新启用；固定门店及模板不得改写。商品目录不调用积分账本或现有发卡服务。
+
+### 验证证据
+
+Spotless通过，完整gym869项通过（会员专项69、组织服务511），member4通过及1项既有禁用跳过；新增14项。覆盖真实字段、权限/租户、适用模板和库存过滤后的分页、无副作用、旧版本、并发三次仅一次更新及失败回滚。早期夹具重复全局主键问题修正后重新运行完整回归。隔离MySQL/Flyway170检查通过且临时库全部清理；server package -DskipTests成功（打包跳过测试）。源码覆盖Contract135/mapped116/missing19；git diff --check通过，命令与日志见docs/testing.md本批章节。
+
+### 影响面 / 风险
+
+V029新增一表至77表，下一V030；先备份、migrate/validate再升级应用。新增gym:points:products定义，不自动授予已有角色，不回填商品/奖励。后台PUT完整替换，stock省略/null改为不限库存，有限库存必须传明确值；旧版本拒绝，固定归属改变须另建商品。同模板允许多个独立商品，后台POST不承诺幂等，结果未知先查列表。当前模板候选在内存检查，大规模性能未测。业务库、前端和用户原始uniapp.md内容/暂存状态保持。
+
+### 未做 / 后续
+
+112项新增本地实现、4项复用源码、19项仍待开发；三个后台辅助接口不计入135项。62–63兑换扣分/库存消耗/真实发卡及结果仍待接入，目录查询不宣称兑换闭环完成。消费/邀请自动奖励以及已确认的外部服务继续暂缓。未做部署HTTP、多节点或规模联调；仅本地小步提交，不推送。
+
+## [2026-10-26 09:43 ~ 10:18] 积分兑换发卡、失败返还与持久化恢复
+
+### 意图
+
+完成135项总表62–63，以真实余额兑换会员卡，并在发放失败时可查询且完整返还。延续已实现的积分账本/商品，保持消费及邀请自动奖励暂缓，避免用虚假现金订单或后台身份获得会员权益。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `controller/app/mobile/AppGymPointRedemptionsController.java`、`vo/GymMobilePointRedemptionVO.java`、`service/mobile/GymMobilePointRedemptionsService.java` | 新增 | 幂等兑换提交、本人四字段结果，三段事务编排 |
+| `service/points/GymPointRedemptionTransactions.java`、`GymPointRedemptionAccess.java` | 新增 | 原子扣分/预留、冻结条款、真实扣分授权、成功与返还终态 |
+| `service/points/GymPointRedemptionWorker.java`、`GymPointRedemptionScheduler.java`、`GymPointRedemptionTimer.java` | 新增 | 实际会员上下文、异常返还、各租户处理中恢复、自有定时线程 |
+| `dal/dataobject/points/GymPointRedemptionDO.java`、`dal/mysql/points/GymPointRedemptionMapper.java` | 新增 | 兑换单、独立请求键、原扣分/卡/返还、快照与时间 |
+| `service/card/GymCardService.java`、`service/contract/GymContractService.java` | 修改 | 增加仅持久化兑换可用的会员发放分支，复用真实卡/未签合同/通知 |
+| `service/points/GymPointLedgerService.java`、`GymPointProductsService.java`、账户与商品DO | 修改 | 返还数值空间、待完成库存和版本容量，防止配置覆盖预留 |
+| `enums/ErrorCodeConstants.java` | 修改 | 发放条件无效及本人兑换不存在错误 |
+| `sql/gym/migration/mysql/V030__gym_point_redemptions.sql`、H2建表/清理、`script/gym/verify-migrations.py` | 新增/修改 | 一表至78表、两预留列、唯一/终态/数值约束及19项迁移检查 |
+| `GymOrganizationServiceTest.java`、`GymMobilePointRedemptionsControllerTest.java` | 修改/新增 | 23项实际业务/权限/并发/恢复与3项MVC |
+| `docs/uniapp/`契约、总表、实施进度和机器清单 | 修改 | 118/135、三种状态、净支出、重试/返还和暂缓边界 |
+| `docs/architecture.md`、`docs/testing.md`、`script/gym/README.md`、`script/gym/DATABASE.md` | 修改 | 事务调用链、验证、统一升级/恢复操作及下一V031 |
+
+Java相对路径位于yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym；测试位于同模块src/test。
+
+### 结构关系
+
+提交先以当前会员准备兑换，在租户互斥事务中写独立兑换请求、冻结卡模板/成本、spend流水、返还容量及库存预留；通用幂等保存兑换ID，业务表另有用户请求键唯一约束。发放通过RedemptionAccess验证原扣分和真实会员资格，复用CardService/ContractService的受控分支，不生成现金订单。卡、门店权益、内部未签合同和通知同事务，成功释放预留；异常先回滚发放，再独立事务关联原spend返还积分/库存并写failed。返还故障保持processing。后台恢复与请求共享业务行锁，重试返回原单最新状态；晚到失败不能退款已成功的单。
+
+### 验证证据
+
+完整gym895项通过（组织服务534、会员专项69），member4通过及1项既有禁用跳过，新增23业务+3MVC；Spotless通过。测试覆盖真实次卡/周期卡及未签合同、无现金收入、冻结条款、业务键持久化、权限、同键及异键并发不超扣/超卖、通知/合同链路整体回滚、返还故障恢复、定时租户/会员上下文、积分/库存安全上限。真实隔离MySQL/Flyway189检查通过且临时库全部清理，含真实V029升级余额/商品/角色保持。server package -DskipTests成功（打包跳过测试）；源码覆盖Contract135/mapped118/missing17，git diff --check通过。命令、日志和修正H2多上下文初始化后的最终证据见testing本批章节。
+
+### 影响面 / 风险
+
+V030新增一表至78表、下一V031；账户refund_reserve和商品reserved_stock默认0，不回填历史兑换/扣分、不改变角色。升级须暂停兑换、所有积分/商品写入与gym.points.redemption.enabled定时器，备份并migrate/validate后统一更新实例再恢复，旧写入实例不能与新版混用。商品预留和终结都会增加revision；配置不得侵占可返还库存/数值空间。定时器默认开启，每30秒扫描等待至少30秒的processing，每租户100条；容量未压力验证。外部合同blob不随数据库回滚，未引用文件沿用现有清理。业务库未迁移，前端及用户原始uniapp.md内容/暂存状态保留。
+
+### 未做 / 后续
+
+当前114项新增本地实现、4项复用源码、17项待开发，总目标135保持。消费/邀请自动奖励、历史补发及真实支付/自动续费、电子签约、设备和监控仍按已确认边界暂缓。无真实积分来源时零余额仍拒绝兑换，隔离测试余额不导入业务库。未验证部署HTTP、真实存储、多节点或规模场景。本批独立本地提交，不推送。
+
+
+## [2026-10-26 10:19 ~ 10:43] 风控告警查询、一次处置与受控证据
+
+### 意图
+
+完成135项总表134–135的内部查询与审计处置，保留真实设备接入暂缓边界。人工复核不得覆盖来源事件，也不能凭告警直接冻结会员权益。消费/邀请积分发放规则及自动奖励继续按用户答复跳过，记录在同级接口文档中。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `controller/admin/mobile/GymMobileRiskController.java`、`vo/GymMobileRiskVO.java` | 新增 | 列表、处置及辅助证据流，9字段响应和版本/权限校验 |
+| `service/mobile/GymMobileRiskService.java`、`service/risk/GymRiskAlertPublisher.java` | 新增 | 范围分页、幂等一次处置、规范化来源去重和证据授权 |
+| `dal/dataobject/risk/`、`dal/mysql/risk/` | 新增 | 告警/处置模型与Mapper |
+| `service/file/GymFileServiceImpl.java`、`enums/ErrorCodeConstants.java` | 修改 | 通用文件拒绝risk_evidence及4类风险业务错误 |
+| `sql/gym/migration/mysql/V031__gym_risk_alerts.sql`、H2建表/清理、`script/gym/verify-migrations.py` | 新增/修改 | 两表至80表、权限定义、约束/索引及15项隔离检查 |
+| `GymOrganizationServiceTest.java`、`GymMobileRiskControllerTest.java`、`GymFileServiceImplTest.java` | 修改/新增 | 14业务、3MVC及1通用文件隐私测试 |
+| `docs/uniapp/`契约、总表、实施进度及机器清单 | 修改 | 120/135和真实告警来源、冻结未接入边界 |
+| `docs/architecture.md`、`docs/testing.md`、`script/gym/README.md`、`script/gym/DATABASE.md` | 修改 | 调用关系、验证、权限/部署及下一版本V032 |
+
+Java相对路径位于yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym，测试在同模块src/test。
+
+### 结构关系
+
+内部Publisher需现有事务，从登记设备取得门店，在租户互斥下写入不可变来源快照，以租户/设备/来源键/类型去重。工作台Controller进入RiskService，当前后台身份、功能权限与整店范围先校验再查询/幂等执行；行锁和处置唯一约束保证一次结论，操作人及时间由服务端生成。证据先核验告警授权与实际关联，再读取私有文件原字节；通用文件服务拒绝该类别，防止绕过业务授权。
+
+### 验证证据
+
+完整gym913项通过（组织服务548、会员专项69、文件服务19），member4通过及1项既有禁用跳过，Spotless通过；新增18项覆盖来源重复/并发、审计原子性、版本冲突、权限撤销、证据关联和无自动冻结副作用。真实隔离MySQL/Flyway204检查通过且临时库全部清理，V001–V030不改；server package -DskipTests成功（打包跳过测试）。源码覆盖Contract135/mapped120/missing15，git diff --check通过；命令及日志见testing本批章节。初次专项Mockito异常重设方式修正后完整回归通过。
+
+### 影响面 / 风险
+
+V031新增两表至80表、下一V032，只创建gym:risk:read/resolve定义，不自动授权。部署先备份、migrate/validate后升级应用并显式授权；跨V030升级仍须暂停积分相关写入和恢复定时器。版本及处置字段是响应新增字段；当前只支持一次处置，没有撤回/编辑入口。证据保留原字节，需受控读取；真实存储及内存读取规模未验证。业务库未迁移，前端及用户原始uniapp.md内容和暂存状态保持。
+
+### 未做 / 后续
+
+当前116项新增本地实现、4项复用源码、15项待开发。内部告警Publisher无生产调用者，未接入可信网关、采集/分类及证据上传；未实现第4次违规冻结、违规周期统计、申诉或解冻，不把人工confirmed当作自动处罚完成。消费/邀请自动奖励和真实支付/自动续费、签约、设备、监控继续暂缓。未做部署HTTP、真实存储、多实例或规模联调；仅本地小步提交，不推送。
+
+
+## [2026-10-26 10:44 ~ 10:54] 设备命令结果授权读取与可信完成时间
+
+### 意图
+
+完成135项目标125，对已持久化命令提供本人或授权管理者查询；保留真实设备通信暂缓范围，避免将旧模拟成功或缺少回执的历史状态显示为已开门。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `controller/admin/mobile/GymMobileDeviceCommandsController.java`、`vo/GymMobileDeviceCommandVO.java` | 新增 | 结果GET及7字段投影 |
+| `service/mobile/GymMobileDeviceCommandsService.java` | 新增 | 本人/管理者授权、当前身份/租户、状态与失败原因处理 |
+| `dal/dataobject/device/GymDeviceCommandDO.java`、`service/device/GymDeviceService.java` | 修改 | 可空完成时间及本地未发送失败同事务记时 |
+| `enums/ErrorCodeConstants.java` | 修改 | 不存在/无权读取统一错误1070017008 |
+| `sql/gym/migration/mysql/V032__gym_device_command_completion.sql`、H2结构、`script/gym/verify-migrations.py` | 新增/修改 | 可空微秒列、完成约束和8项隔离迁移检查 |
+| `GymOrganizationServiceTest.java`、`GymMobileDeviceCommandsControllerTest.java` | 修改/新增 | 8项业务及2项MVC回归 |
+| `docs/uniapp/`契约、总表、实施与机器清单 | 修改 | 121/135、历史读取与真实设备回执边界 |
+| `docs/architecture.md`、`docs/testing.md`、`script/gym/README.md`、`script/gym/DATABASE.md` | 修改 | 调用关系、证据、部署和下一V033 |
+
+Java相对路径在yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym，测试在同模块src/test。
+
+### 结构关系
+
+新Controller进入只读事务Service，先校验当前后台账号与租户，再读取命令；本人按requesterId授权，他人需设备读取功能权限加当前整店范围，设备归属不可迁移。只投影结果、不调用发送服务；未知/模拟成功不转成真实成功，原始失败文本只允许已知服务端说明。既有GymDeviceService未发送失败写入同时记录completed_at，迁移不回填历史时间或改变状态。
+
+### 验证证据
+
+完整gym923通过（组织服务556、会员专项69），member4通过及1项既有禁用跳过；Spotless通过。新增8业务+2MVC，覆盖权限/历史/租户、状态、字段与敏感原因、完成约束。真实隔离MySQL/Flyway212检查通过，临时库清理；server package -DskipTests成功（打包跳过测试）。源码覆盖Contract135/mapped121/missing14；git diff --check通过。早期专项夹具Import/非法ID异常类型修正后完整回归通过，最终命令和日志见testing本批章节。
+
+### 影响面 / 风险
+
+V032新增可空列及约束，仍80表、下一V033，无角色或权限变更。先备份并migrate/validate后升级应用；旧程序不填写新列时保持NULL，不把更新时间当作执行完成。本人保留历史读取权限，但停用账号或会员令牌仍拒绝；他人需当前管理权限。原失败原因可能含内部内容，仅白名单说明透出。业务库未迁移，前端与用户原始uniapp.md内容/暂存状态保留。
+
+### 未做 / 后续
+
+当前117项新增本地实现、4项复用源码、14项待开发。124命令下发、126二次验证及132–133网关事件/回执仍待实现，真实设备通信继续按用户要求暂缓；当前已记录failed只代表实际未发送失败。支付/续费、签约、监控、消费/邀请积分自动奖励仍暂缓。未做真实硬件、部署HTTP、多节点或规模验证；仅本地小步提交，不推送。
+
+
+## [2026-10-26 10:55 ~ 11:29] 会员团购券归属预览与私有加密保存
+
+### 意图
+
+推进135项目标32，复用现有美团服务零售客户端，先验证当前会员确实拥有团购券，再建立可供后续核销使用的短时预览。原后台任意券查询不能直接作为会员授权；本批不提前把33核销或34结果视为完成。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `controller/app/mobile/AppGymCouponPreviewsController.java`、`vo/GymMobileCouponPreviewVO.java` | 新增 | 预览POST、5字段响应、限流、敏感日志关闭及额外字段拒绝 |
+| `service/mobile/GymMobileCouponPreviewsService.java`、`service/groupbuy/GymCouponPreviewTransactions.java` | 新增 | 网络与事务分离、会员/配置重查、真实模板/单券资格与快照保存 |
+| `service/groupbuy/GymMemberCouponProvider.java` | 新增 | 可信手机号归属、本人券分页、平台枚举反转及结果校验 |
+| `service/groupbuy/GymCouponCipher.java`、`framework/mobile/GymMobileCouponProperties.java` | 新增 | 用途分离的AES-GCM/HMAC、账号/店/租户认证数据及精确商品映射 |
+| `dal/dataobject/groupbuy/GymCouponPreviewDO.java`、`dal/mysql/groupbuy/GymCouponPreviewMapper.java` | 新增 | 私有预览模型和Mapper |
+| `enums/ErrorCodeConstants.java` | 修改 | 未配置、平台结果无效、归属不符和预览变化四类错误 |
+| `sql/gym/migration/mysql/V033__gym_coupon_previews.sql`、H2建表/清理、`script/gym/verify-migrations.py` | 新增/修改 | 一表至81表、快照/有效期约束、索引及10项隔离检查 |
+| `GymMobileMemberServiceTest.java`、`GymMobileCouponPreviewsControllerTest.java` | 修改/新增 | 15业务及3MVC，覆盖加密、归属、配置、事务和无核销副作用 |
+| `docs/uniapp/`契约、总表、实施与机器清单 | 修改 | 122/135、支持范围及33–34仍待实现边界 |
+| `docs/architecture.md`、`docs/testing.md`、团购两份说明、`script/gym/README.md`、`script/gym/DATABASE.md` | 修改 | 调用关系、官方字段复核、证据、部署配置和下一V034 |
+
+Java相对路径在yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym，测试在同模块src/test。
+
+### 结构关系
+
+Controller进入无事务编排，先独立只读核对会员、门店/关系、购卡黑名单和验券设置，再由Provider调用prepare及必要的本人手机号查券；完整手机号不同或未找到精确券码拒绝。prepare与querybymobile平台编码相反，显式转换。平台请求完成后另开事务，重查账号/手机号/设置版本/映射并保存冻结模板与加密预览。AES-GCM绑定租户、门店、用户，派生HMAC用于券索引；不调用消费、发卡、签到、财务或积分服务。
+
+### 验证证据
+
+完整gym941通过（会员专项84、组织服务556），member4通过及1项既有禁用跳过；Spotless通过，新增18项。真实隔离MySQL/Flyway222检查通过且临时库清理；server package -DskipTests成功（打包跳过测试）。源码覆盖Contract135/mapped122/missing13；git diff --check通过。首次测试密钥字节数错误修正后全量通过，未放宽生产32字节约束。官方prepare/querybymobile字段通过浏览器可见参数表复核，来源链接和测试日志见API文档及testing。
+
+### 影响面 / 风险
+
+V033新增一表至81表、下一V034，无历史券/预览/权限/角色回填。部署先备份、migrate/validate再升级，移动入口默认关闭，需32字节Base64密钥、精确租户/门店商品映射及既有平台授权和验券配置。所有节点配置须一致，未提供自动密钥轮换/过期清理；不能直接换钥使已保存券不可解密。最多10页本人券查询，超过300条尚未匹配时拒绝自助，规模与真实Redis限流未验证。业务库未迁移，前端及用户原始uniapp.md内容/暂存状态保留。
+
+### 未做 / 后续
+
+当前118项新增本地实现、4项复用源码、13项仍待开发。32只支持美团普通单张团购券，无自动签到；其他券型、抖音、33核销提交/真实发卡/未知结果补查和34本人结果仍待实现。redeemable仅是预览资格，不代表核销或发卡成功。真实授权、实券、部署HTTP、多实例与规模未联调；既定支付/续费、签约、设备、监控及积分自动奖励暂缓保持。仅本地小步提交，不推送。
+
+## [2026-10-26 11:30 ~ 12:27] 会员单券核销凭据与查单观察适配
+
+### 意图
+
+为目标33–34先完成可独立验证的小步平台边界，避免只凭OP_SUCCESS或已验券查询误发权益。真实消费的持久化占券、派发和本地履约留在下一业务批次，接口计数不提前增加。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `service/groupbuy/GymMemberCouponConsumption.java` | 新增 | 固定单券消费、授权指纹重查、严格成功确认及不同类型的只读观察 |
+| `service/groupbuy/GymCouponCipher.java` | 修改 | 新增独立authorization用途HMAC，不改变既有券加密/索引 |
+| `framework/mobile/GymMobileCouponProperties.java` | 修改 | 默认关闭消费开关、精确租户/店商家审计账号配置 |
+| `framework/groupbuy/meituan/dto/retail/MeituanAccountRequest.java` | 修改 | 补充商家系统操作账号语义，保留客户端不可写约束 |
+| `GymMemberCouponConsumptionTest.java`、`GymMeituanConfigurationTest.java` | 新增/修改 | 49项HTTP适配/异常/事务边界和2项配置绑定增量测试 |
+| `docs/architecture.md`、`docs/testing.md`、两份团购说明 | 修改 | 组件关系、官方依据、证据与未知结果限制 |
+| `docs/uniapp/uniapp-api.md`、`uniapp-implementation.md` | 修改 | 记录内部准备及992测试，33–34仍待实现、122/135不变 |
+| `script/gym/README.md`、`script/gym/DATABASE.md` | 修改 | 消费独立开关、商家审计账号及授权变化运维边界 |
+
+Java相对路径在yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym，测试在同模块src/test/java的framework/groupbuy/meituan。
+
+### 结构关系
+
+内部适配器复用Client/Transport；调用者提供持久化requestId和scope，消费固定count=1并检查精确券/商品及真实流水/订单。scope使用用途分离HMAC绑定租户、店、开发者凭据和商家账号；不自动生成或重发请求。同步Confirmation与只读Observation独立，后者无法证明本次requestId消费。网络方法NEVER事务；当前没有生产编排或HTTP调用者，原后台16项行为未改变。
+
+### 验证证据
+
+新增51测试，完整gym992通过、0失败/错误/跳过；member4通过及1项既有禁用跳过。Spotless通过，server package -DskipTests成功（打包跳过测试），源码映射122/135、缺13，git diff --check通过。MockRestServiceServer验证真实签名/表单及超时不重发，真实Spring事务代理/H2验证外层事务禁止网络。详见testing日志及复现命令。无迁移变更，本批未重跑MySQL；V033的222检查仅保留历史证据。
+
+### 影响面 / 风险
+
+无SQL/权限/角色变更，V033/81表/下一V034不变。新增开关默认false，仅开启预览不能消费；商家账号不能由会员ID代替。授权/密钥变化将拒绝旧scope，当前无动态配置或自动换权流程。官方getconsumed缺少本次请求关联凭据，观察不能认定发卡成功；结果未知必须留待后续持久化和受信核实流程。前端、业务库及用户原始uniapp.md内容/暂存状态保留。
+
+### 未做 / 后续
+
+当前118项新增本地实现、4项复用源码、13项待开发。33–34持久化核销、占券并发、一次派发、真实发卡/合同与恢复仍待实现，适配器没有生产调用者。未对真实平台发核销请求，实券、部署HTTP、多节点、换权未验证。支付/续费、电子签约、真实设备/监控和消费/邀请积分自动奖励继续按用户要求暂缓。仅本地小步提交，不推送。
+
+## [2026-10-26 12:28 ~ 12:45] 会员团购核销持久化与发卡恢复
+
+### 意图
+
+完成135项目标33–34的内部业务链，连接上一批单券适配器，确保同券并发只发送一次；平台已核销时，本地发卡失败可恢复而不会重复消费或释放占用。只读本人结果必须展示真实持久化状态，未知不能伪造成功。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `controller/app/mobile/AppGymCouponVerificationsController.java`、`vo/GymMobileCouponVerificationVO.java` | 新增 | 核销提交/本人读取、四字段结果、未知字段拒绝及敏感日志关闭 |
+| `service/mobile/GymMobileCouponVerificationsService.java` | 新增 | 外层无事务编排、持久化ID幂等与最新状态返回 |
+| `service/groupbuy/GymCouponVerificationTransactions.java`、`GymCouponVerificationWorker.java` | 新增 | 唯一占券、网络前后重查、一次派发、独立确认、未知查单与本地发卡事务 |
+| `service/groupbuy/GymCouponVerificationAccess.java` | 新增 | 真实会员/门店/购卡资格、匹配消费凭据和冻结模板授权 |
+| `service/groupbuy/GymCouponVerificationScheduler.java`、`GymCouponVerificationTimer.java` | 新增 | 独立有效租户扫描、持久化会员身份恢复与上下文还原 |
+| `service/groupbuy/GymCouponPreviewTransactions.java` | 修改 | 提取共用单券适用性判定，预览/提交一致 |
+| `service/card/GymCardService.java`、`service/contract/GymContractService.java` | 修改 | 专用消费凭据授权路径、冻结卡权益及内部未签合同/会员审计 |
+| `dal/dataobject/groupbuy/GymCouponVerificationDO.java`、`dal/mysql/groupbuy/GymCouponVerificationMapper.java` | 新增 | 核销私有流水、状态与唯一关联 |
+| `enums/ErrorCodeConstants.java` | 修改 | 不存在、重复占券、状态/凭据无效错误 |
+| `sql/gym/migration/mysql/V034__gym_coupon_verifications.sql`、H2建表/清理、`script/gym/verify-migrations.py` | 新增/修改 | 一表至82表、状态/时间/凭据约束及20项MySQL检查 |
+| `GymOrganizationServiceTest.java`、`GymMobileCouponVerificationsControllerTest.java` | 修改/新增 | 24实际业务/并发/故障测试及4MVC |
+| `docs/uniapp/`契约、总表、实施和机器清单 | 修改 | 124/135、状态流转、未知上限与实券未联调边界 |
+| `docs/README.md`、`architecture.md`、`testing.md`、团购/全量进度和脚本两份手册 | 修改 | 调用关系、部署/保留数据、恢复开关、证据及下一V035 |
+
+Java相对路径在yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym，测试在同模块src/test。
+
+### 结构关系
+
+会员Controller → 无事务Service → prepare事务持久化请求/占用 → Worker以持久化会员身份检查并调用平台准备 → start事务只允许一个prepared→sending赢家 → consume一次 → confirm独立事务 → Access/Card/Contract/通知/旧核销记录/成功状态同一履约事务。网络不占SQL事务。未知态使用先提交的有限查询租约，观察不是消费证明；confirmed失败只恢复本地发卡，不返券、不重消费。专用调度器扫描有效租户并恢复线程上下文。
+
+### 验证证据
+
+新增28测试，专项28及完整gym1020通过（组织服务580、会员专项84），0失败/错误/跳过；member4通过及1项既有禁用跳过。Spotless、server package -DskipTests通过（打包跳过测试）。真实隔离MySQL242检查通过且临时库全部清理；源码映射124/135、缺11，git diff --check通过。并发、真实卡/合同/通知回滚、核销响应持久化失败、预览过期后恢复、有限查询及跨账号授权均有实际断言，完整日志与初期夹具修正见testing。
+
+### 影响面 / 风险
+
+V034新增一表至82表，下一V035；已应用V001–V033未改，无历史消费/卡/权限回填。需备份、migrate/validate后部署，消费仍默认关闭且需真实商家授权。未决请求引用的预览/密钥/授权指纹必须保留，不能直接换钥/换授权或清理记录。卡起始时间固定本地核销确认时刻，延迟恢复不顺延期限；外部合同blob不受SQL回滚控制，仍需清理孤立文件。业务库未迁移，前端与原始uniapp.md内容/暂存状态保留。
+
+### 未做 / 后续
+
+当前120新增本地验证、4复用源码、11项目标未实现。真实授权/实券、部署HTTP、外部存储、多实例和压力尚未验证；未知结果最多6次观察后仍处理中，缺请求关联凭据/成功确认始终无法落库时没有自动或人工强制成功方案，需受信外部核实与后续关联流程。无现金收入、积分赠送、自动签到或真实签约。支付/续费、电子签约、真实设备/监控和消费/邀请自动奖励按用户要求暂缓；仅本地小步提交，不推送。
+
+## [2026-10-26 12:43 ~ 13:14] 设备认证器二次确认与一次性令牌（V035）
+
+### 意图
+
+按用户选择采用认证器动态验证码，完成总表126，给未来设备命令提供真实二次授权；继续按用户要求跳过实际设备厂商接入，保持前端不变并小步本地提交。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `docs/CHANGELOG.md` | 修改 | 同步接口数量、契约、配置、结构或验证证据 |
+| `docs/README.md` | 修改 | 同步接口数量、契约、配置、结构或验证证据 |
+| `docs/architecture.md` | 修改 | 同步接口数量、契约、配置、结构或验证证据 |
+| `docs/gym-full-api-progress.md` | 修改 | 同步接口数量、契约、配置、结构或验证证据 |
+| `docs/testing.md` | 修改 | 同步接口数量、契约、配置、结构或验证证据 |
+| `docs/uniapp/api-implementation.json` | 修改 | 同步接口数量、契约、配置、结构或验证证据 |
+| `docs/uniapp/uniapp-api-summary.md` | 修改 | 同步接口数量、契约、配置、结构或验证证据 |
+| `docs/uniapp/uniapp-api.md` | 修改 | 同步接口数量、契约、配置、结构或验证证据 |
+| `docs/uniapp/uniapp-implementation.md` | 修改 | 同步接口数量、契约、配置、结构或验证证据 |
+| `script/gym/DATABASE.md` | 修改 | 同步接口数量、契约、配置、结构或验证证据 |
+| `script/gym/README.md` | 修改 | 同步接口数量、契约、配置、结构或验证证据 |
+| `script/gym/verify-migrations.py` | 修改 | 隔离MySQL新增15检查，总计257 |
+| `sql/gym/migration/mysql/V035__gym_action_confirmations.sql` | 新增 | 追加两表及唯一性/状态约束至84表 |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileActionConfirmationsController.java` | 新增 | 鉴权、最小响应、禁缓存及敏感错误处理 |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/vo/GymActionConfirmationVO.java` | 新增 | 认证器请求与令牌响应，拒绝额外字段 |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/dal/dataobject/device/GymActionConfirmationDO.java` | 新增 | 绑定主体、设备/柜格、摘要及消费时间 |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/dal/dataobject/device/GymActionVerificationStateDO.java` | 新增 | 持久化账号失败次数和锁定截止 |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/dal/mysql/device/GymActionConfirmationMapper.java` | 新增 | 包括逻辑删除历史的已接受步数查询 |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/dal/mysql/device/GymActionVerificationStateMapper.java` | 新增 | 账号唯一状态行加锁及失败计数更新 |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/enums/ErrorCodeConstants.java` | 修改 | 增加二次验证与消费错误码 |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/framework/mobile/GymActionConfirmationProperties.java` | 新增 | 租户/后台账号独立密钥配置，默认关闭 |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/device/GymActionTotp.java` | 新增 | 规范Base32、TOTP与常数时间比较 |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileActionConfirmationsService.java` | 新增 | 持久化失败锁定、签发和事务内一次消费 |
+| `yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileActionConfirmationsControllerTest.java` | 新增 | 3项请求绑定和敏感响应测试 |
+| `yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java` | 修改 | 新增25项身份、锁定、并发及事务测试 |
+| `yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/device/GymActionTotpTest.java` | 新增 | 9项RFC向量和边界测试 |
+| `yudao-module-gym/src/test/resources/sql/clean.sql` | 修改 | 清理两张测试表 |
+| `yudao-module-gym/src/test/resources/sql/create_tables.sql` | 修改 | 同步H2最终表结构 |
+| `yudao-server/src/main/resources/application.yaml` | 修改 | 默认关闭且不设置凭据 |
+
+### 结构关系
+
+Controller→Service→TOTP/Mapper；配置按租户及后台账号取独立密钥，无默认值。签发禁止外层事务，内部READ_COMMITTED按设备/门店/柜格→账号状态锁定，失败计数先提交再报错，成功生成120秒token并只存摘要。动态码最大接受步数含逻辑删除历史。消费要求外层事务、锁定重读指令与token，与真实queued非模拟指令原子提交；生产设备写入/派发尚未调用该入口。V035追加两表至84，下一V036，旧迁移及角色授权不变；architecture同步。
+
+### 验证证据
+
+最终`mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' -Dsurefire.failIfNoSpecifiedTests=false -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'`成功：gym1057项、member4通过/1项既有跳过。新增37项，含RFC向量、跨门店并发防重放、账号/租户隔离、失败锁定、命令消费及回滚。`PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py`257检查通过，随机库清理；`mvn -B -ntp -pl yudao-server -am package -DskipTests`成功但跳过测试。覆盖脚本125/135，缺10，`git diff --check`通过；日志与H2快照冲突验证边界见testing。原始uniapp.md内容及暂存状态、旧迁移、dashboard保持不变。
+
+### 影响面 / 风险
+
+部署需先备份并迁移至V035，再受控配置独立认证器；默认关闭且缺配置明确拒绝。动态码及token只通过受保护请求传输，不保存敏感明文或成功响应缓存。5次连续无效/重放锁定300秒；密钥轮换不重置锁定，当前指纹不符的token不能消费。恢复旧数据库可能丢失防重放事实，应先关闭功能并换发密钥后恢复使用。未修改前端、业务库、现有后台命令诚实失败行为或授予权限。
+
+### 未做 / 后续
+
+尚无真实手机认证器配置/联调、自助绑定/恢复码、生产设备指令消费者、厂商通信/网关事件/回执；支付/续费、电子签约、监控及积分自动奖励规则继续按用户要求暂缓。未进行部署HTTP、多节点或压力验收，未push。总计135项、源码覆盖125项，不宣称已全量上线。
+
+## [2026-10-26 13:41 ~ 13:44] 修复私教销售报表的商品名称映射
+
+### 意图
+
+修复代码审查确认的P2问题：财务private与移动订单course类型不一致，导致成交商品名称丢失。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileSalesReportService.java` | 修改 | 私教类型统一映射，兼容历史明细并读取名称快照 |
+| `yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java` | 修改 | 新增2项当前/历史类型及课程更名回归 |
+| `docs/testing.md` | 修改 | 记录先复现失败、修复后9项通过的证据 |
+| `docs/uniapp/uniapp-implementation.md` | 修改 | 更新报表行为和修复边界 |
+| `docs/CHANGELOG.md` | 修改 | 追加本条记录 |
+
+### 结构关系
+
+原Controller→Service→报表聚合/订单明细Mapper关系不变。请求筛选和订单明细匹配共用course→private转换，名称仍取订单冻结快照。纯bugfix，无架构或API结构变化。
+
+### 验证证据
+
+新增用例修复前course分支失败（期望私教产品、实际null）；修复后`mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test -Dtest='GymOrganizationServiceTest#mobileSalesReport*' -Dsurefire.failIfNoSpecifiedTests=false -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'`销售9项通过；日志`/tmp/uniapp-review-sales-red.log`、`/tmp/uniapp-review-sales-green.log`。`git diff --check`通过。
+
+### 影响面 / 风险
+
+只修复销售名称投影；不改金额、归属、权限、历史订单、当前商品或数据库结构。兼容course及private订单明细。前端和原始uniapp.md内容及暂存状态保留。
+
+### 未做 / 后续
+
+另一项风控处置摘要稳定性问题在后续独立提交修复；本批未运行全量回归或打包。真实第三方接入及自动积分奖励仍按约定暂缓，未迁移业务库、未push。
+
+## [2026-10-26 13:44 ~ 13:47] 稳定风控处置幂等摘要并兼容旧请求
+
+### 意图
+
+修复审查确认的P2问题：Map.of外层字段顺序跨JVM不稳定，同一风控处置的重试可能误报内容冲突。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileRiskService.java` | 修改 | 固定外层字段顺序，并兼容反向历史编码 |
+| `yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java` | 修改 | 新增3项新摘要/历史重放/内容冲突回归 |
+| `docs/testing.md` | 修改 | 补充复现及完整1062项测试/打包证据 |
+| `docs/uniapp/uniapp-implementation.md` | 修改 | 更新重放行为、兼容及边界 |
+| `docs/CHANGELOG.md` | 修改 | 追加本条记录 |
+
+### 结构关系
+
+现有Service→GymMobileIdempotency关系不变，改用既有executeWithLegacyPayload入口；两个候选都由服务端从当前已校验请求生成。新摘要固定id→request，兼容request→id；历史摘要及响应不改写，权限、整店范围及账户复核仍先于幂等返回。纯bugfix，不修改共享幂等实现或架构。
+
+### 验证证据
+
+新增3项用例修复前2项报1070023004；日志`/tmp/uniapp-review-risk-red.log`。最终`mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' -Dsurefire.failIfNoSpecifiedTests=false -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'`gym1062通过（组织610）、member4通过/1既有跳过；日志`/tmp/uniapp-review-fixes-final-tests.log`。本轮两处修复共新增5项。`mvn -B -ntp -pl yudao-server -am package -DskipTests`成功但跳过测试；日志`/tmp/uniapp-review-fixes-package.log`。路由核对仍125/135；Spotless及`git diff --check`通过。
+
+### 影响面 / 风险
+
+兼容已提交旧请求，不回填摘要，不允许客户端提供候选摘要；变更告警ID、结论、备注、版本仍报冲突，不重复处置或覆盖审计。无DDL、角色权限、API字段及配置变化；原始uniapp.md内容及暂存状态、前端、业务库保留。
+
+### 未做 / 后续
+
+本次已完成审查发现的两项修复；未进行真实多JVM或生产部署联调，历史键序通过持久化摘要模拟验证。无迁移变更不重复跑MySQL回归；暂缓的第三方接入及积分自动奖励规则保持原边界，未push。
+
 ## [2026-10-26 13:50 ~ 13:59] main 同步 jdk25 上游更新与冲突处理
 
 ### 意图
@@ -1924,3 +3643,36 @@ MeituanCouponHistoryRequest 承载业务参数；Client 将其一次序列化后
 ### 未做 / 后续
 
 当前功能分支尚待合入main；最终回归、打包、远端推送及原始文档恢复在后续执行。第三方暂缓边界不变，未将源码映射125/135视为全量上线。
+
+## [2026-10-26 14:00 ~ 14:06] main 合入当前全部移动接口提交并完成集成验证
+
+### 意图
+
+完成用户要求：jdk25上游更新先进入main，再合入当前分支全部提交并推送；处理冲突并保留未提交工作，不改变第三方暂缓约定。
+
+### 改了什么
+
+| 文件 / 范围 | 类型 | 说明 |
+| --- | --- | --- |
+| `codex/uniapp-135-apis`至`f27ce5ad7f`的全部提交 | 合并 | 纳入main之后52个功能/修复提交及其既有依赖历史 |
+| `pom.xml`、`yudao-server/pom.xml`、`application.yaml` | 合并 | 保留上游依赖升级及本地member/gym模块和运行配置 |
+| `yudao-module-gym/`、`sql/gym/`、`script/gym/`、`docs/uniapp/` | 合并 | 保持当前分支完整实现和V001–V035迁移 |
+| `yudao-module-system/`、member及其他分支改动 | 合并 | 保留权限查询、会员状态校验等本地实现并与上游共同验证 |
+| `docs/CHANGELOG.md` | 合并/修改 | 按时间拼接双方追加原文，补充最终验证记录 |
+| `docs/testing.md`、`docs/architecture.md` | 修改 | 记录集成版本、完整验证证据和范围 |
+
+### 结构关系
+
+main已先生成上游合并d5872e1ff0，本次将功能分支f27ce5ad7f作为第二父节点纳入；没有rebase或强制改写历史。代码自动三方合并，只有CHANGELOG追加区需要拼接。gym源码、迁移、脚本和uniapp文档与功能分支逐字节一致；架构/测试记录额外补充上游Spring Boot4.1.2及框架变化。
+
+### 验证证据
+
+`mvn -B -ntp -pl yudao-server -am spotless:apply spotless:check test -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'`默认服务端依赖链2018项，1999通过/19跳过、无失败错误，含gym1062全过；`/tmp/server-main-merged-tests.log`。`mvn -B -ntp -pl yudao-server -am package -DskipTests`成功（跳过测试），`/tmp/server-main-merged-package.log`。`PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py`257检查通过且随机库清理，`/tmp/server-main-merged-migrations.log`。路由125/135，差异检查通过；精确范围见testing。
+
+### 影响面 / 风险
+
+上游框架/依赖升级已与默认启用模块一起验证；未启用的可选模块不声明构建或运行验收。真实渠道、业务库和前端未操作。原始uniapp.md的内容与暂存状态保持独立保护，最终恢复；推送只包含已提交历史，不包含该未提交文件。
+
+### 未做 / 后续
+
+完成本地合并和验证后，按用户授权对origin/main及origin/codex/uniapp-135-apis执行非强制原子推送并核对远端提交。真实第三方接入、剩余10项目标路由、生产部署及业务库迁移仍未执行，不声明135项全部上线。

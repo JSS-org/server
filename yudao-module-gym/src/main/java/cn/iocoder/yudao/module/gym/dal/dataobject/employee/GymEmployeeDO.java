@@ -21,4 +21,6 @@ public class GymEmployeeDO extends TenantBaseDO {
     private String jobTitle;
     private LocalDate hiredOn;
     private String status;
+    private Boolean coachPublished;
+    private String coachProfile;
 }

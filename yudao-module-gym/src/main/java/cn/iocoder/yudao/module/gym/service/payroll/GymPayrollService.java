@@ -74,7 +74,7 @@ public class GymPayrollService {
                         if (self != null) {
                             if (!allowed.isEmpty()) w.or();
                             w.apply(
-                                    "EXISTS (SELECT 1 FROM gym_payroll_item pi WHERE pi.payroll_id=gym_payroll.id AND pi.deleted=0 AND pi.tenant_id="
+                                    "gym_payroll.status='confirmed' AND gym_payroll.published_at IS NOT NULL AND EXISTS (SELECT 1 FROM gym_payroll_item pi WHERE pi.payroll_id=gym_payroll.id AND pi.deleted=0 AND pi.tenant_id="
                                             + TenantContextHolder.getRequiredTenantId()
                                             + " AND pi.employee_id="
                                             + self
@@ -105,7 +105,20 @@ public class GymPayrollService {
         var permission =
                 permissionApi.getDeptDataPermission(SecurityFrameworkUtils.getLoginUserId());
         if (permission == null || !Boolean.TRUE.equals(permission.getSelf())) return null;
-        return linkedEmployee();
+        var rows =
+                gymEmployeeMapper.selectList(
+                        new LambdaQueryWrapper<GymEmployeeDO>()
+                                .eq(
+                                        GymEmployeeDO::getUserId,
+                                        SecurityFrameworkUtils.getLoginUserId())
+                                .eq(GymEmployeeDO::getStatus, "active")
+                                .le(
+                                        GymEmployeeDO::getHiredOn,
+                                        gymBusinessClock
+                                                .now()
+                                                .atZone(GymDateRange.ZONE)
+                                                .toLocalDate()));
+        return rows.size() == 1 ? rows.getFirst().getId() : null;
     }
 
     private boolean storeReadable(Long id) {
@@ -121,6 +134,8 @@ public class GymPayrollService {
         if (!storeReadable(row.getStoreId())) {
             Long self = selfEmployee();
             if (self == null
+                    || row.getPublishedAt() == null
+                    || !"confirmed".equals(row.getStatus())
                     || gymPayrollItemMapper.selectCount(
                                     new LambdaQueryWrapper<GymPayrollItemDO>()
                                             .eq(GymPayrollItemDO::getPayrollId, id)

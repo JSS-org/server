@@ -34,6 +34,9 @@ import java.util.*;
 
 @Service
 public class GymContractService {
+    @Resource
+    private cn.iocoder.yudao.module.gym.service.mobile.GymMobileNotificationPublisher notifications;
+
     @Resource private GymContractMapper gymContractMapper;
     @Resource private GymContractEventMapper gymContractEventMapper;
     @Resource private GymContractReminderMapper gymContractReminderMapper;
@@ -120,8 +123,83 @@ public class GymContractService {
                         true));
     }
 
+    @Resource
+    private cn.iocoder.yudao.module.gym.service.sales.GymOrderEntitlementAccess purchaseAccess;
+
+    @Transactional(
+            propagation = org.springframework.transaction.annotation.Propagation.MANDATORY,
+            rollbackFor = Exception.class)
+    public GymContractDO issueForPurchasedItem(Long itemId, String type, Long id) {
+        var purchase = purchaseAccess.requireItem(itemId);
+        return issue(
+                type,
+                id,
+                null,
+                null,
+                Boolean.TRUE.equals(purchase.policy().getContractRequired()),
+                purchase);
+    }
+
+    @Resource
+    private cn.iocoder.yudao.module.gym.service.points.GymPointRedemptionAccess redemptionAccess;
+
+    @Transactional(
+            propagation = org.springframework.transaction.annotation.Propagation.MANDATORY,
+            rollbackFor = Exception.class)
+    public GymContractDO issueForRedeemedCard(Long redemptionId, Long cardId) {
+        var redemption = redemptionAccess.require(redemptionId);
+        return issue("member-cards", cardId, null, null, false, null, redemption);
+    }
+
+    @Resource
+    private cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponVerificationAccess couponAccess;
+
+    @Transactional(
+            propagation = org.springframework.transaction.annotation.Propagation.MANDATORY,
+            rollbackFor = Exception.class)
+    public GymContractDO issueForCouponCard(Long verificationId, Long cardId) {
+        var coupon = couponAccess.require(verificationId);
+        return issue("member-cards", cardId, null, null, false, null, null, coupon);
+    }
+
     private GymContractDO issue(
             String type, Long id, Long templateId, Instant dueAt, boolean required) {
+        return issue(type, id, templateId, dueAt, required, null);
+    }
+
+    private GymContractDO issue(
+            String type,
+            Long id,
+            Long templateId,
+            Instant dueAt,
+            boolean required,
+            cn.iocoder.yudao.module.gym.service.sales.GymOrderEntitlementAccess.Purchase purchase) {
+        return issue(type, id, templateId, dueAt, required, purchase, null);
+    }
+
+    private GymContractDO issue(
+            String type,
+            Long id,
+            Long templateId,
+            Instant dueAt,
+            boolean required,
+            cn.iocoder.yudao.module.gym.service.sales.GymOrderEntitlementAccess.Purchase purchase,
+            cn.iocoder.yudao.module.gym.service.points.GymPointRedemptionAccess.Redemption
+                    redemption) {
+        return issue(type, id, templateId, dueAt, required, purchase, redemption, null);
+    }
+
+    private GymContractDO issue(
+            String type,
+            Long id,
+            Long templateId,
+            Instant dueAt,
+            boolean required,
+            cn.iocoder.yudao.module.gym.service.sales.GymOrderEntitlementAccess.Purchase purchase,
+            cn.iocoder.yudao.module.gym.service.points.GymPointRedemptionAccess.Redemption
+                    redemption,
+            cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponVerificationAccess.Verification
+                    coupon) {
         Long memberId, storeId;
         String applicable, name;
         Instant effective;
@@ -153,8 +231,50 @@ public class GymContractService {
             effective = subscription.getRequestedAt();
             entitlement = subscriptionTerms(subscription);
         } else throw exception(CONTRACT_SOURCE_INVALID);
-        scope.check(storeId);
-        members.checkMemberStore(memberId, storeId);
+        if (purchase == null && redemption == null && coupon == null) {
+            scope.check(storeId);
+            members.checkMemberStore(memberId, storeId);
+        } else if (coupon != null) {
+            if (!(entitlement
+                            instanceof
+                            cn.iocoder.yudao.module.gym.dal.dataobject.card.GymMemberCardDO card)
+                    || !coupon.member().getId().equals(memberId)
+                    || !coupon.store().getId().equals(storeId)
+                    || !"coupon-verification".equals(card.getSourceType())
+                    || !coupon.row().getId().toString().equals(card.getSourceId())
+                    || !coupon.card().getId().equals(card.getTemplateId()))
+                throw exception(CONTRACT_SOURCE_INVALID);
+        } else if (redemption != null) {
+            if (!(entitlement
+                            instanceof
+                            cn.iocoder.yudao.module.gym.dal.dataobject.card.GymMemberCardDO card)
+                    || !redemption.member().getId().equals(memberId)
+                    || !redemption.store().getId().equals(storeId)
+                    || !"point-redemption".equals(card.getSourceType())
+                    || !redemption.row().getId().toString().equals(card.getSourceId())
+                    || !redemption.card().getId().equals(card.getTemplateId()))
+                throw exception(CONTRACT_SOURCE_INVALID);
+        } else {
+            String sourceType, sourceId;
+            if (entitlement
+                            instanceof
+                            cn.iocoder.yudao.module.gym.dal.dataobject.card.GymMemberCardDO card
+                    && "card".equals(purchase.item().getProductType())) {
+                sourceType = card.getSourceType();
+                sourceId = card.getSourceId();
+            } else if (entitlement
+                            instanceof
+                            cn.iocoder.yudao.module.gym.dal.dataobject.course.GymCoursePackDO pack
+                    && "course".equals(purchase.item().getProductType())) {
+                sourceType = pack.getSourceType();
+                sourceId = pack.getSourceId();
+            } else throw exception(CONTRACT_SOURCE_INVALID);
+            if (!purchase.member().getId().equals(memberId)
+                    || !purchase.store().getId().equals(storeId)
+                    || !"order-item".equals(sourceType)
+                    || !(purchase.item().getId() + ":0").equals(sourceId))
+                throw exception(CONTRACT_SOURCE_INVALID);
+        }
         var existing =
                 gymContractMapper.selectList(
                         new LambdaQueryWrapper<GymContractDO>()
@@ -200,7 +320,10 @@ public class GymContractService {
         privateFile.setName("contract-" + UUID.randomUUID() + ".pdf");
         privateFile.setMimeType("application/pdf");
         privateFile.setSize((long) content.length);
-        privateFile.setUploaderId(SecurityFrameworkUtils.getLoginUserId());
+        privateFile.setUploaderId(
+                purchase == null && redemption == null && coupon == null
+                        ? SecurityFrameworkUtils.getLoginUserId()
+                        : null);
         privateFile.setUrl(
                 storageConfigId == null
                         ? fileApi.createFile(
@@ -220,7 +343,14 @@ public class GymContractService {
         row.setTemplateId(template.getId());
         row.setTemplateSnapshot(JsonUtils.toJsonString(template));
         var snapshot = new LinkedHashMap<String, Object>();
-        var member = members.requireMember(memberId, false);
+        var member =
+                coupon != null
+                        ? coupon.member()
+                        : redemption != null
+                                ? redemption.member()
+                                : purchase == null
+                                        ? members.requireMember(memberId, false)
+                                        : purchase.member();
         snapshot.put("memberId", memberId.toString());
         snapshot.put("memberName", member.getName());
         snapshot.put("memberPhone", member.getPhone());
@@ -242,6 +372,7 @@ public class GymContractService {
         row.setContractNo("GYM-CT-" + String.format(Locale.ROOT, "%010d", row.getId()));
         gymContractMapper.updateById(row);
         event(row.getId(), "issued", "合同原件与业务快照已保存，尚未签署");
+        notifications.contract(row.getId());
         return row;
     }
 
@@ -397,6 +528,7 @@ public class GymContractService {
         event.setType(type);
         event.setOccurredAt(now());
         event.setActorUserId(SecurityFrameworkUtils.getLoginUserId());
+        event.setActorUserType(SecurityFrameworkUtils.getLoginUser().getUserType());
         event.setDetail(detail);
         gymContractEventMapper.insert(event);
     }

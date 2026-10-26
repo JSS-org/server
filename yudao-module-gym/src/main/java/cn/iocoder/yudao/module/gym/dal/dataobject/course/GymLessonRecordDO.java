@@ -20,6 +20,7 @@ public class GymLessonRecordDO extends TenantBaseDO {
     private Long memberCardId;
     private Long memberCoursePackId;
     private Integer sessionUnits;
+    private Integer remainingLessonsAfter;
     private java.time.Instant confirmedAt;
     private String method;
     private String status;

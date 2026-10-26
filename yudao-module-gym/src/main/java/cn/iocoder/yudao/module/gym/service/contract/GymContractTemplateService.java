@@ -24,6 +24,7 @@ import java.util.*;
 
 @Service
 public class GymContractTemplateService {
+    @Resource private cn.iocoder.yudao.module.gym.service.file.GymWorkFileBindings workFiles;
     @Resource private GymContractTemplateMapper gymContractTemplateMapper;
     @Resource private GymFileMapper gymFileMapper;
     @Resource private GymDataScope scope;
@@ -137,7 +138,8 @@ public class GymContractTemplateService {
         var file = gymFileMapper.selectById(req.getFileId());
         if (file == null
                 || !"contract".equals(file.getCategory())
-                || !"application/pdf".equals(file.getMimeType()))
+                || !"application/pdf".equals(file.getMimeType())
+                || !workFiles.template(file.getId()))
             throw exception(CONTRACT_TEMPLATE_FILE_INVALID);
         // Headquarters writes; the referenced PDF remains a private gym file and its immutable ID
         // is frozen on publication.

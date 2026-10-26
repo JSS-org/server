@@ -21,4 +21,5 @@ public class GymCourseProductDO extends TenantBaseDO {
     private Integer durationMinutes;
     private java.math.BigDecimal price;
     private String status;
+    private Integer version;
 }

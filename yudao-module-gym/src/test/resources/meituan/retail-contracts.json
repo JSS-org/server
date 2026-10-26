@@ -1,0 +1,448 @@
+[
+  {
+    "method": "prepare",
+    "path": "/ddzh/tuangou/receipt/prepare",
+    "request": "MeituanReceiptCodeRequest",
+    "response": "Prepare",
+    "route": "receipts/prepare",
+    "permission": "gym:sales:read",
+    "biz": {
+      "receiptCode": "0012345678901"
+    },
+    "data": {
+      "receiptCode": "0012345678901",
+      "count": 1,
+      "dealId": 9007199254740993,
+      "dealPrice": 12.3,
+      "receiptInfoMap": "{\"1\":[]}",
+      "paymentDetail": [
+        {
+          "paymentDetailId": "pay-1",
+          "amount": "12.30",
+          "amountType": 1
+        }
+      ]
+    },
+    "source": "https://developer.meituan.com/docs/api/ddzh-tuangou-receipt-prepare"
+  },
+  {
+    "method": "consume",
+    "path": "/ddzh/tuangou/receipt/consume",
+    "request": "MeituanConsumeRequest",
+    "response": "Consume",
+    "route": "receipts/consume",
+    "permission": "gym:verifications:manage",
+    "biz": {
+      "appShopAccount": "7",
+      "appShopAccountName": "测试店员",
+      "receiptCode": "0012345678901",
+      "count": 1,
+      "requestId": "consume-stable-1",
+      "orderId": "order-1",
+      "thirdDeviceId": "device-1",
+      "thirdDeviceLocation": "116.4,39.9",
+      "thirdDeviceType": "兑币机",
+      "thirdDeviceCity": "北京市-密云区",
+      "thirdVenueId": "venue-1",
+      "thirdLocationType": "其他"
+    },
+    "data": {
+      "result": [
+        {
+          "receiptCode": "0012345678901",
+          "orderId": "order-1",
+          "dealPrice": 12.3,
+          "flowId": "900719925474099312345"
+        }
+      ]
+    },
+    "source": "https://developer.meituan.com/docs/api/ddzh-tuangou-receipt-consume"
+  },
+  {
+    "method": "reverseConsume",
+    "path": "/ddzh/tuangou/receipt/reverseconsume",
+    "request": "MeituanReverseConsumeRequest",
+    "response": "ReverseConsume",
+    "route": "receipts/reverse-consume",
+    "permission": "gym:verifications:manage",
+    "biz": {
+      "appShopAccount": "7",
+      "appShopAccountName": "测试店员",
+      "receiptCode": "0012345678901",
+      "dealId": "9007199254740993"
+    },
+    "data": {
+      "result": [
+        {
+          "receiptCode": "0012345678901",
+          "dealgroupId": 22
+        }
+      ]
+    },
+    "source": "https://developer.meituan.com/docs/api/ddzh-tuangou-receipt-reverseconsume"
+  },
+  {
+    "method": "getConsumed",
+    "path": "/ddzh/tuangou/receipt/getconsumed",
+    "request": "MeituanReceiptCodeRequest",
+    "response": "Consumed",
+    "route": "receipts/consumed/query",
+    "permission": "gym:sales:read",
+    "biz": {
+      "receiptCode": "0012345678901"
+    },
+    "data": {
+      "receiptCode": "0012345678901",
+      "orderId": "order-1",
+      "userId": "mixed-id",
+      "verifyTime": "2026-10-19 12:00:00",
+      "orderShopPromoDetails": [
+        {
+          "promoAmount": 1.2,
+          "promoType": 2,
+          "desc": "商家优惠"
+        }
+      ]
+    },
+    "source": "https://developer.meituan.com/docs/api/ddzh-tuangou-receipt-getconsumed"
+  },
+  {
+    "method": "history",
+    "path": "/ddzh/tuangou/receipt/querylistbydate",
+    "request": "MeituanReceiptHistoryRequest",
+    "response": "History",
+    "route": "receipts/history/query",
+    "permission": "gym:sales:read",
+    "biz": {
+      "date": "2026-10-19",
+      "bizType": 0,
+      "offset": 0,
+      "type": 1,
+      "limit": 300
+    },
+    "data": {
+      "totalCount": 1,
+      "records": [
+        {
+          "receiptCode": "0012345678901",
+          "flowId": "flow-1",
+          "refundStatus": 1
+        }
+      ]
+    },
+    "source": "https://developer.meituan.com/docs/api/ddzh-tuangou-receipt-querylistbydate"
+  },
+  {
+    "method": "shopDeals",
+    "path": "/ddzh/tuangou/deal/queryshopdeal",
+    "request": "MeituanShopDealsRequest",
+    "response": "Deals",
+    "route": "deals/query",
+    "permission": "gym:sales:read",
+    "biz": {
+      "offset": 1,
+      "limit": 100,
+      "source": 2
+    },
+    "data": {
+      "result": [
+        {
+          "dealId": 9007199254740993,
+          "dealGroupId": 22,
+          "price": 12.3,
+          "title": "健身体验券"
+        }
+      ]
+    },
+    "source": "https://developer.meituan.com/docs/api/ddzh-tuangou-deal-queryshopdeal"
+  },
+  {
+    "method": "productsByType",
+    "path": "/ddzh/tuangou/product/queryproductbytype",
+    "request": "MeituanProductsByTypeRequest",
+    "response": "ProductsByType",
+    "route": "products/by-type/query",
+    "permission": "gym:sales:read",
+    "biz": {
+      "pageNo": 1,
+      "pageSize": 100,
+      "type": 723
+    },
+    "data": {
+      "result": [
+        {
+          "productIdLong": 9007199254740993,
+          "type": 723,
+          "productItemList": [
+            {
+              "productItemIdLong": 123,
+              "price": "12.30",
+              "serviceSkuList": [
+                {
+                  "skuIdLong": 1,
+                  "quantity": 2,
+                  "price": "6.15"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "source": "https://developer.meituan.com/docs/api/ddzh-tuangou-product-queryproductbytype"
+  },
+  {
+    "method": "products",
+    "path": "/ddzh/tuangou/product/queryproduct",
+    "request": "MeituanProductsRequest",
+    "response": "Products",
+    "route": "products/query",
+    "permission": "gym:sales:read",
+    "biz": {
+      "pageNo": 1,
+      "pageSize": 20
+    },
+    "data": {
+      "result": [
+        {
+          "productItemIdLong": 9007199254740993,
+          "price": "12.30",
+          "type": 1081
+        }
+      ]
+    },
+    "source": "https://developer.meituan.com/docs/api/ddzh-tuangou-product-queryproduct"
+  },
+  {
+    "method": "mobileReceipts",
+    "path": "/ddzh/tuangou/receipt/querybymobile",
+    "request": "MeituanMobileReceiptsRequest",
+    "response": "MobileReceipts",
+    "route": "receipts/by-mobile/query",
+    "permission": "gym:sales:read",
+    "biz": {
+      "mobile": "65_666666",
+      "dealGroupId": 22,
+      "dealId": 11,
+      "offset": 0,
+      "limit": 30,
+      "platform": 2
+    },
+    "data": {
+      "result": [
+        {
+          "serialNumber": "0012345678901"
+        }
+      ]
+    },
+    "source": "https://developer.meituan.com/docs/api/ddzh-tuangou-receipt-querybymobile"
+  },
+  {
+    "method": "batchConsume",
+    "path": "/ddzh/tuangou/receipt/batchconsume",
+    "request": "MeituanBatchConsumeRequest",
+    "response": "BatchConsume",
+    "route": "receipts/batch-consume",
+    "permission": "gym:verifications:manage",
+    "biz": {
+      "appShopAccount": "7",
+      "appShopAccountName": "测试店员",
+      "requestId": "batch-stable-1",
+      "receiptCodeInfos": [
+        {
+          "receiptCode": "0012345678901",
+          "count": "2"
+        }
+      ]
+    },
+    "data": {
+      "result": [
+        {
+          "singleConsumeCode": 1,
+          "singleConsumeMsg": "平台逐项结果",
+          "consumeDetailList": [
+            {
+              "receiptCode": "0012345678901",
+              "dealgroupId": 22,
+              "dealPrice": 12.3
+            }
+          ]
+        }
+      ]
+    },
+    "source": "https://developer.meituan.com/docs/api/ddzh-tuangou-receipt-batchconsume"
+  },
+  {
+    "method": "standardProducts",
+    "path": "/ddzh/tuangou/receipt/queryproduct",
+    "request": null,
+    "response": "StandardProducts",
+    "route": "standard-products/query",
+    "permission": "gym:sales:read",
+    "biz": null,
+    "data": {
+      "result": [
+        {
+          "platformProductSkuId": 1,
+          "spuId": 2,
+          "platformProductPrice": 12.3,
+          "cityName": "上海"
+        }
+      ]
+    },
+    "source": "https://developer.meituan.com/docs/api/ddzh-tuangou-receipt-queryproduct"
+  },
+  {
+    "method": "refundPrecheck",
+    "path": "/ddzh/tuangou/pre/refund/valid",
+    "request": "MeituanRefundPrecheckRequest",
+    "response": "RefundPrecheck",
+    "route": "refunds/precheck",
+    "permission": "gym:group-buy:refund",
+    "biz": {
+      "operatorId": "7",
+      "orderId": "order-1",
+      "serialNumbers": [
+        "0012345678901"
+      ],
+      "sequenceId": "pre-1"
+    },
+    "data": {
+      "result": {
+        "canRefund": true,
+        "maxRefundQuantity": 1,
+        "receiptList": {
+          "receiptId": "rid-1",
+          "receiptCode": "0012345678901",
+          "receiptVerifyShopId": 12
+        },
+        "refundAmountItemList": {
+          "amountType": 1,
+          "value": 1230,
+          "refundable": true
+        },
+        "canPartRefund": true,
+        "maxRefundAmount": 1230
+      }
+    },
+    "source": "https://developer.meituan.com/docs/api/ddzh-tuangou-pre-refund-valid"
+  },
+  {
+    "method": "refundApply",
+    "path": "/ddzh/tuangou/apply/refund",
+    "request": "MeituanRefundApplyRequest",
+    "response": "RefundApply",
+    "route": "refunds/apply",
+    "permission": "gym:group-buy:refund",
+    "biz": {
+      "operatorId": "7",
+      "orderId": "order-1",
+      "serialNumbers": [
+        "0012345678901"
+      ],
+      "receiptList": [
+        "rid-1"
+      ],
+      "sequenceId": "apply-stable-1",
+      "refundFeeType": true,
+      "refundAmount": 1230,
+      "refundReason": "按约退款"
+    },
+    "data": {
+      "result": {
+        "refundId": "refund-1",
+        "settleRefundAmount": 1230
+      }
+    },
+    "source": "https://developer.meituan.com/docs/api/ddzh-tuangou-apply-refund"
+  },
+  {
+    "method": "refundQuery",
+    "path": "/ddzh/tuangou/query/refund/info",
+    "request": "MeituanRefundQueryRequest",
+    "response": "RefundQuery",
+    "route": "refunds/query",
+    "permission": "gym:group-buy:refund",
+    "biz": {
+      "operatorId": "7",
+      "orderId": "order-1",
+      "refundId": "refund-1",
+      "sequenceId": "query-1"
+    },
+    "data": {
+      "result": {
+        "canRefund": true,
+        "maxRefundQuantity": 1,
+        "receiptList": [
+          {
+            "receiptId": "rid-1",
+            "receiptCode": "0012345678901",
+            "receiptVerifyShopId": 12
+          }
+        ],
+        "refundAmountItemList": [
+          {
+            "amountType": 1,
+            "value": 1230,
+            "refundable": true
+          }
+        ],
+        "canPartRefund": true,
+        "maxRefundAmount": 1230
+      }
+    },
+    "source": "https://developer.meituan.com/docs/api/ddzh-tuangou-query-refund-info"
+  },
+  {
+    "method": "refundAudit",
+    "path": "/ddzh/tuangou/refund/audit",
+    "request": "MeituanRefundAuditRequest",
+    "response": "RefundAudit",
+    "route": "refunds/audit",
+    "permission": "gym:group-buy:refund",
+    "biz": {
+      "operatorId": "7",
+      "sequenceId": "audit-stable-1",
+      "orderId": "order-1",
+      "refundId": "refund-1",
+      "auditResult": 1,
+      "operatorName": "测试店员",
+      "operatorIp": "127.0.0.1",
+      "operatorRemark": "已核对",
+      "refundFeeType": false,
+      "refundAmount": 1230
+    },
+    "data": {
+      "result": {
+        "settleRefundAmount": 1230
+      }
+    },
+    "source": "https://developer.meituan.com/docs/api/ddzh-tuangou-refund-audit"
+  },
+  {
+    "method": "batchReverseConsume",
+    "path": "/ddzh/tuangou/receipt/batch/reverseconsume",
+    "request": "MeituanBatchReverseConsumeRequest",
+    "response": "ReverseConsume",
+    "route": "receipts/batch-reverse-consume",
+    "permission": "gym:verifications:manage",
+    "biz": {
+      "appShopAccount": "7",
+      "appShopAccountName": "测试店员",
+      "receiptCodeList": [
+        "0012345678901",
+        "0012345678902"
+      ],
+      "dealId": "11"
+    },
+    "data": {
+      "result": [
+        {
+          "receiptCode": "0012345678901",
+          "dealgroupId": 22
+        }
+      ]
+    },
+    "source": "https://developer.meituan.com/docs/api/ddzh-tuangou-receipt-batch-reverseconsume"
+  }
+]

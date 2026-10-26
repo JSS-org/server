@@ -8,18 +8,37 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import cn.iocoder.yudao.framework.common.biz.system.permission.dto.DeptDataPermissionRespDTO;
+import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.framework.tenant.config.TenantProperties;
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
 import cn.iocoder.yudao.framework.tenant.core.db.TenantDatabaseInterceptor;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
+import cn.iocoder.yudao.module.gym.controller.admin.common.GymBusinessPageReqVO;
 import cn.iocoder.yudao.module.gym.controller.admin.common.GymPageReqVO;
 import cn.iocoder.yudao.module.gym.controller.admin.employee.vo.*;
+import cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileWorkCourseWriteVO.*;
+import cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileWorkCoursesVO.*;
+import cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileWorkMembersVO;
+import cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileWorkRecordsVO;
 import cn.iocoder.yudao.module.gym.controller.admin.store.vo.*;
+import cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileCouponPreviewVO;
+import cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileCouponVerificationVO;
 import cn.iocoder.yudao.module.gym.dal.dataobject.file.GymFileDO;
 import cn.iocoder.yudao.module.gym.dal.mysql.file.GymFileMapper;
+import cn.iocoder.yudao.module.gym.dal.mysql.groupbuy.GymCouponVerificationMapper;
 import cn.iocoder.yudao.module.gym.dal.mysql.store.GymStoreMapper;
+import cn.iocoder.yudao.module.gym.framework.groupbuy.meituan.GymMeituanProperties;
+import cn.iocoder.yudao.module.gym.framework.groupbuy.meituan.dto.MeituanResponse;
+import cn.iocoder.yudao.module.gym.framework.groupbuy.meituan.dto.retail.MeituanRetailResponses;
+import cn.iocoder.yudao.module.gym.framework.mobile.GymMobileCouponProperties;
 import cn.iocoder.yudao.module.gym.service.common.GymDataScope;
 import cn.iocoder.yudao.module.gym.service.employee.GymEmployeeService;
+import cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponVerificationScheduler;
+import cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponVerificationTransactions;
+import cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponVerificationWorker;
+import cn.iocoder.yudao.module.gym.service.groupbuy.GymMemberCouponConsumption;
+import cn.iocoder.yudao.module.gym.service.mobile.GymMobileCouponPreviewsService;
+import cn.iocoder.yudao.module.gym.service.mobile.GymMobileCouponVerificationsService;
 import cn.iocoder.yudao.module.gym.service.store.GymStoreService;
 import cn.iocoder.yudao.module.system.api.permission.PermissionApi;
 import cn.iocoder.yudao.module.system.dal.dataobject.dept.DeptDO;
@@ -45,6 +64,101 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.framework.mobile.GymActionConfirmationProperties.class,
+    cn.iocoder.yudao.module.gym.service.device.GymActionTotp.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileActionConfirmationsService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileActionConfirmationsController
+            .class,
+    cn.iocoder.yudao.module.gym.framework.mobile.GymMobileCouponProperties.class,
+    cn.iocoder.yudao.module.gym.framework.groupbuy.meituan.GymMeituanProperties.class,
+    cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponCipher.class,
+    cn.iocoder.yudao.module.gym.service.groupbuy.GymMemberCouponProvider.class,
+    cn.iocoder.yudao.module.gym.service.groupbuy.GymMemberCouponConsumption.class,
+    cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponPreviewTransactions.class,
+    cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponVerificationAccess.class,
+    cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponVerificationTransactions.class,
+    cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponVerificationWorker.class,
+    cn.iocoder.yudao.module.gym.service.groupbuy.GymCouponVerificationScheduler.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileCouponPreviewsService.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileCouponVerificationsService.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileDeviceCommandsService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileDeviceCommandsController.class,
+    cn.iocoder.yudao.module.gym.service.risk.GymRiskAlertPublisher.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileRiskService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileRiskController.class,
+    cn.iocoder.yudao.module.gym.service.points.GymPointLedgerService.class,
+    cn.iocoder.yudao.module.gym.service.points.GymPointRedemptionAccess.class,
+    cn.iocoder.yudao.module.gym.service.points.GymPointRedemptionTransactions.class,
+    cn.iocoder.yudao.module.gym.service.points.GymPointRedemptionWorker.class,
+    cn.iocoder.yudao.module.gym.service.points.GymPointRedemptionScheduler.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobilePointRedemptionsService.class,
+    cn.iocoder.yudao.module.gym.service.points.GymPointProductsService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.points.GymPointProductsController.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileConversationsService.class,
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymConversationsController.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileConversationsController.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileNotificationPublisher.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileNotificationsService.class,
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymNotificationsController.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileNotificationsController.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileDevicesService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileDevicesController.class,
+    cn.iocoder.yudao.module.gym.service.sales.GymRefundApplicationService.class,
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymRefundApplicationsController.class,
+    cn.iocoder.yudao.module.gym.controller.admin.sales.GymRefundApplicationsController.class,
+    cn.iocoder.yudao.module.gym.service.sales.GymOrderEntitlementAccess.class,
+    cn.iocoder.yudao.module.gym.service.sales.GymMemberOrderFulfillmentService.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileOrdersService.class,
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymOrdersController.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileCourseQuoteService.class,
+    cn.iocoder.yudao.module.gym.framework.mobile.GymMobileQuoteProperties.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileCourseQuotesController.class,
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymCourseQuotesController.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileCoursePriceService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileCoursePriceController.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileCardIssueService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileCardIssueController.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileApprovalsService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileApprovalsController.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileDashboardService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileDashboardController.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileMemberSummaryService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileMemberSummaryController.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobilePerformanceService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobilePerformanceController.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileSalesReportService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileSalesReportController.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileFeedbackService.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymFeedbackImages.class,
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymFeedbackController.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileFeedbackController.class,
+    cn.iocoder.yudao.module.gym.service.marketing.GymActivityParticipationService.class,
+    cn.iocoder.yudao.module.gym.service.marketing.GymActivityPublicAssets.class,
+    cn.iocoder.yudao.module.gym.service.device.GymEquipmentPublicAssets.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileEquipmentService.class,
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymEquipmentController.class,
+    cn.iocoder.yudao.module.gym.controller.admin.device.GymEquipmentPublicationController.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileActivityService.class,
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymActivitiesController.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileActivityController.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobilePayrollService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobilePayrollController.class,
+    cn.iocoder.yudao.module.gym.service.payroll.GymPayrollPublicationService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.payroll.GymPayrollPublicationController.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileAttendanceService.class,
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymAttendanceController.class,
+    cn.iocoder.yudao.module.gym.service.course.GymLessonConfirmationService.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileLessonService.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileLessonToken.class,
+    cn.iocoder.yudao.module.gym.framework.mobile.GymMobileLessonProperties.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileLessonQrController.class,
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymLessonConfirmationController.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkCourseWriteService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileWorkCourseWriteController.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkCoursesService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileWorkCoursesController.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkContextService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileWorkContextController.class,
     cn.iocoder.yudao.module.gym.service.member.GymTrainingPlanService.class,
     cn.iocoder.yudao.module.gym.controller.admin.member.GymTrainingPlanController.class,
     cn.iocoder.yudao.module.gym.service.file.GymMemberFileAccess.class,
@@ -83,6 +197,7 @@ import java.util.*;
     cn.iocoder.yudao.module.gym.controller.admin.approval.GymApprovalTemplateController.class,
     cn.iocoder.yudao.module.gym.service.common.GymBusinessMutex.class,
     cn.iocoder.yudao.module.gym.service.course.GymCourseService.class,
+    cn.iocoder.yudao.module.gym.service.course.GymBookingRules.class,
     cn.iocoder.yudao.module.gym.service.common.GymBusinessClock.class,
     cn.iocoder.yudao.module.gym.controller.admin.course.GymCourseController.class,
     cn.iocoder.yudao.module.gym.service.card.GymCardService.class,
@@ -94,15 +209,148 @@ import java.util.*;
     cn.iocoder.yudao.module.gym.controller.admin.member.GymMemberController.class,
     cn.iocoder.yudao.module.gym.service.salary.GymSalaryService.class,
     cn.iocoder.yudao.module.gym.controller.admin.salary.GymSalaryController.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileIdentityService.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileIdempotency.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileBookingsService.class,
+    cn.iocoder.yudao.module.gym.framework.mobile.GymMobileBookingProperties.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkAccess.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkRecordsService.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkMembersService.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkMemberQueryService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileWorkRecordsController.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileWorkMembersController.class,
+    cn.iocoder.yudao.framework.web.config.WebProperties.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobilePublicService.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileCatalogService.class,
     GymStoreService.class,
     GymEmployeeService.class,
+    cn.iocoder.yudao.module.gym.service.file.GymWorkFileBindings.class,
+    cn.iocoder.yudao.module.gym.service.file.GymFileServiceImpl.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkFilesService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileWorkFilesController.class,
+    cn.iocoder.yudao.module.gym.service.employee.GymCoachPublicProfiles.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileCoachService.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileCoachProfileService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileCoachProfileController.class,
     GymDataScope.class,
     cn.iocoder.yudao.module.gym.controller.admin.store.GymStoreController.class,
     cn.iocoder.yudao.module.gym.controller.admin.employee.GymEmployeeController.class,
     GymOrganizationServiceTest.Config.class
 })
+@org.springframework.test.context.TestPropertySource(
+        properties = "yudao.web.admin-ui.url=http://localhost")
 public class GymOrganizationServiceTest extends BaseDbUnitTest {
+    @org.springframework.test.context.bean.override.mockito.MockitoBean
+    cn.iocoder.yudao.module.gym.framework.groupbuy.meituan.GymMeituanRetailClient couponClient;
+
     @Resource GymStoreService stores;
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileFeedbackService feedback;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymFeedbackController feedbackController;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileFeedbackController
+            workFeedbackController;
+
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileActivityService mobileActivities;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymActivitiesController
+            mobileActivitiesController;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileActivityController
+            workActivitiesController;
+
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobilePayrollService mobilePayrolls;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobilePayrollController
+            mobilePayrollController;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.payroll.GymPayrollPublicationService payrollPublications;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.payroll.GymPayrollPublicationController
+            payrollPublicationController;
+
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileAttendanceService attendance;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymAttendanceController
+            attendanceController;
+
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileLessonService mobileLessons;
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileLessonToken lessonTokens;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.framework.mobile.GymMobileLessonProperties lessonProperties;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileLessonQrController
+            lessonQrController;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymLessonConfirmationController
+            lessonConfirmController;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkCourseWriteService workCourseWrites;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileWorkCourseWriteController
+            workCourseWriteController;
+
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkCoursesService workCourses;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileWorkCoursesController
+            workCoursesController;
+
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkContextService workContext;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileWorkContextController
+            workContextController;
+
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkFilesService workFiles;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileWorkFilesController
+            workFilesController;
+
+    @MockitoBean cn.iocoder.yudao.module.system.api.dept.DeptApi fileDepartments;
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileCoachProfileService coachSelf;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileCoachProfileController
+            coachSelfController;
+
+    @MockitoBean
+    cn.iocoder.yudao.framework.web.core.handler.GlobalExceptionHandler mobileErrorHandler;
+
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileCoachService publicCoaches;
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileCatalogService catalog;
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobilePublicService publicContent;
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkRecordsService workRecords;
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkMembersService workMembers;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileWorkRecordsController
+            workRecordsController;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileWorkMembersController
+            workMembersController;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkMemberQueryService workMemberQueries;
+
+    @MockitoBean cn.iocoder.yudao.module.system.api.user.AdminUserApi workAccounts;
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileBookingsService mobileBookings;
+    @MockitoBean cn.iocoder.yudao.module.member.api.user.MemberUserApi memberAccounts;
     @Resource GymEmployeeService employees;
     @Resource GymFileMapper files;
     @Resource GymStoreMapper storeMapper;
@@ -160,6 +408,13 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
 
     @BeforeEach
     void setup() {
+        lessonProperties.setQrSigningKey(
+                java.util.Base64.getEncoder()
+                        .encodeToString(
+                                "test-only-lesson-key-32-byte-value"
+                                        .getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        lessonProperties.setQrTtlSeconds(60);
+        lessonProperties.setConfirmAfterEndMinutes(120);
         TenantContextHolder.setTenantId(1L);
         var login = new cn.iocoder.yudao.framework.security.core.LoginUser();
         login.setId(1L);
@@ -168,6 +423,16 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
         cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.setLoginUser(
                 login, new org.springframework.mock.web.MockHttpServletRequest());
         headquarters();
+        when(workAccounts.getUser(anyLong()))
+                .thenAnswer(
+                        inv -> {
+                            var account =
+                                    new cn.iocoder.yudao.module.system.api.user.dto
+                                            .AdminUserRespDTO();
+                            account.setId(inv.getArgument(0));
+                            account.setStatus(0);
+                            return account;
+                        });
         when(businessClock.now()).thenAnswer(i -> java.time.Instant.now());
         when(depts.getDept(anyLong()))
                 .thenAnswer(
@@ -1495,6 +1760,14 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
                                         .GymBusinessPageReqVO())
                         .getFirst();
         assertEquals(1, remaining.getRemainingSessions());
+        assertEquals(
+                1,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymLessonRecordMapper
+                                        .class)
+                        .selectById(Long.valueOf(lesson.getId()))
+                        .getRemainingLessonsAfter());
         assertEquals(0, remaining.getReservedSessions());
         assertEquals("attended", courses.booking(bid).getStatus());
         assertEquals("completed", courses.session(session).getStatus());
@@ -3057,6 +3330,8 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
         var full = payrolls.calculate(payrollRequest(101L));
         Long id = Long.valueOf(full.getId());
         assertEquals(2, full.getEmployeeCount());
+        payrolls.confirm(id);
+        payrollPublications.publish(id);
         loginAs(91L);
         var self = new DeptDataPermissionRespDTO();
         self.setSelf(true);
@@ -6193,6 +6468,150 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
     }
 
     @Test
+    void fulfillmentPrincipalMemberCollisionNeverLooksUpAdministratorOrIssuesRights() {
+        fulfillmentUnsupportedPrincipal(1);
+    }
+
+    @Test
+    void fulfillmentPrincipalUnknownNamespaceFailsWithoutAdministratorFallback() {
+        fulfillmentUnsupportedPrincipal(99);
+    }
+
+    private void fulfillmentUnsupportedPrincipal(int userType) {
+        var order = commerceOrder();
+        payCommerceOrder(order);
+        publishedContractPdf();
+        validFulfillmentPrincipal();
+        Long taskId = Long.valueOf(fulfillmentQueue.get(order.getId()).getId());
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        assertEquals(
+                2,
+                jdbc.queryForObject(
+                        "SELECT principal_user_type FROM gym_fulfillment_task WHERE id=?",
+                        Integer.class,
+                        taskId));
+        // Same numeric ID as a valid, authorized administrator: namespace must win.
+        jdbc.update(
+                "UPDATE gym_fulfillment_task SET principal_user_type=? WHERE id=?",
+                userType,
+                taskId);
+        loginAs(91L);
+        var saved = org.springframework.security.core.context.SecurityContextHolder.getContext();
+        org.mockito.Mockito.clearInvocations(users, permissions);
+        assertTrue(fulfillmentWorker.process(taskId));
+        verify(users, never()).getUser(anyLong());
+        verify(permissions, never()).hasAnyPermissions(eq(1L), eq("gym:sales:read"));
+        assertSame(
+                saved,
+                org.springframework.security.core.context.SecurityContextHolder.getContext());
+        assertEquals(1L, TenantContextHolder.getRequiredTenantId());
+        var failed = fulfillmentQueue.get(order.getId());
+        assertEquals("failed", failed.getStatus());
+        assertEquals(1, failed.getAttemptCount());
+        assertTrue(
+                failed.getFailureReason()
+                        .contains(
+                                userType == 1
+                                        ? MOBILE_IDENTITY_INVALID.getCode().toString()
+                                        : "账号类型暂不支持"));
+        assertNotNull(failed.getNextAttemptAt());
+        assertEquals("paid", salesRecords.order(order.getId()).getStatus());
+        assertTrue(salesRecords.order(order.getId()).getMemberCardIds().isEmpty());
+        assertEquals(1L, financialEvents.selectCount());
+        assertFalse(fulfillmentWorker.process(taskId));
+    }
+
+    @Test
+    void fulfillmentPrincipalRetryCannotConvertMemberOrUnknownTaskIntoAdministrator() {
+        var order = commerceOrder();
+        payCommerceOrder(order);
+        Long taskId = Long.valueOf(fulfillmentQueue.get(order.getId()).getId());
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update(
+                "UPDATE gym_fulfillment_task SET status='failed', attempt_count=8, principal_user_id=50 WHERE id=?",
+                taskId);
+        loginAs(91L);
+        for (int userType : List.of(1, 99)) {
+            jdbc.update(
+                    "UPDATE gym_fulfillment_task SET principal_user_type=? WHERE id=?",
+                    userType,
+                    taskId);
+            assertServiceException(
+                    () -> fulfillmentQueue.retry(order.getId()), COMMERCE_FULFILLMENT_INVALID);
+            var task = fulfillmentQueue.get(order.getId());
+            assertEquals("failed", task.getStatus());
+            assertEquals(8, task.getAttemptCount());
+            assertEquals(8, task.getAttemptLimit());
+            assertEquals(
+                    50L,
+                    jdbc.queryForObject(
+                            "SELECT principal_user_id FROM gym_fulfillment_task WHERE id=?",
+                            Long.class,
+                            taskId));
+            assertEquals(
+                    userType,
+                    jdbc.queryForObject(
+                            "SELECT principal_user_type FROM gym_fulfillment_task WHERE id=?",
+                            Integer.class,
+                            taskId));
+        }
+        jdbc.update("UPDATE gym_fulfillment_task SET principal_user_type=2 WHERE id=?", taskId);
+        assertEquals("pending", fulfillmentQueue.retry(order.getId()).getStatus());
+        assertEquals(16, fulfillmentQueue.get(order.getId()).getAttemptLimit());
+        assertEquals(
+                91L,
+                jdbc.queryForObject(
+                        "SELECT principal_user_id FROM gym_fulfillment_task WHERE id=?",
+                        Long.class,
+                        taskId));
+        assertEquals(
+                2,
+                jdbc.queryForObject(
+                        "SELECT principal_user_type FROM gym_fulfillment_task WHERE id=?",
+                        Integer.class,
+                        taskId));
+    }
+
+    @Test
+    void fulfillmentPrincipalAdministratorQueueRejectsMemberCallerBeforeWritingTask() {
+        var order = commerceOrder();
+        var policy =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.sales.GymOrderPolicyMapper
+                                        .class)
+                        .selectOne(
+                                cn.iocoder.yudao.module.gym.dal.dataobject.sales.GymOrderPolicyDO
+                                        ::getOrderId,
+                                order.getId());
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("DELETE FROM gym_fulfillment_task WHERE order_id=?", order.getId());
+        qrMemberLogin();
+        var tx =
+                new org.springframework.transaction.support.TransactionTemplate(
+                        applicationContext.getBean(
+                                org.springframework.transaction.PlatformTransactionManager.class));
+        assertServiceException(
+                () -> tx.executeWithoutResult(status -> fulfillmentQueue.enqueue(order, policy)),
+                COMMERCE_REQUEST_INVALID);
+        assertEquals(
+                0,
+                jdbc.queryForObject(
+                        "SELECT COUNT(*) FROM gym_fulfillment_task WHERE order_id=?",
+                        Integer.class,
+                        order.getId()));
+        loginAs(1L);
+        tx.executeWithoutResult(status -> fulfillmentQueue.enqueue(order, policy));
+        assertEquals(
+                2,
+                jdbc.queryForObject(
+                        "SELECT principal_user_type FROM gym_fulfillment_task WHERE order_id=?",
+                        Integer.class,
+                        order.getId()));
+        assertEquals("waiting_payment", fulfillmentQueue.get(order.getId()).getStatus());
+    }
+
+    @Test
     void durableFulfillmentWaitsForFullPaymentThenRunsAsLivePrincipalAndRestoresCaller() {
         var order = commerceOrder();
         Long id = order.getId();
@@ -8492,5 +8911,14245 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
                 () -> controller.get(Long.valueOf(saved.getId())));
         when(permissions.hasAnyPermissions(eq(91L), eq("gym:approvals:read"))).thenReturn(true);
         assertEquals(saved.getId(), controller.get(Long.valueOf(saved.getId())).getData().getId());
+    }
+
+    @Test
+    void adminAndMemberConcurrentOverlappingBookingsUseTheSameMemberLock() throws Exception {
+        stores.create(store(101L, "A"));
+        Long coach1 = Long.valueOf(employees.create(employee("MIX1", 101L)).getId());
+        Long coach2 = Long.valueOf(employees.create(employee("MIX2", 101L)).getId());
+        Long product1 = Long.valueOf(courses.createProduct(courseProduct(101L, coach1)).getId());
+        Long product2 = Long.valueOf(courses.createProduct(courseProduct(101L, coach2)).getId());
+        var from = java.time.Instant.now().plusSeconds(7200);
+        Long session1 =
+                Long.valueOf(courses.createSession(courseSession(product1, coach1, from)).getId());
+        Long session2 =
+                Long.valueOf(
+                        courses.createSession(
+                                        courseSession(product2, coach2, from.plusSeconds(1800)))
+                                .getId());
+        Long member = Long.valueOf(members.create(member(101L, "13800000001")).getId());
+        var pack1 =
+                courses.issuePack(
+                        member,
+                        product1,
+                        from.minusSeconds(86400),
+                        from.plusSeconds(86400),
+                        "test-payment",
+                        "mixed-pack1");
+        var pack2 =
+                courses.issuePack(
+                        member,
+                        product2,
+                        from.minusSeconds(86400),
+                        from.plusSeconds(86400),
+                        "test-payment",
+                        "mixed-pack2");
+        var account = new cn.iocoder.yudao.module.member.api.user.dto.MemberUserRespDTO();
+        account.setId(50L);
+        account.setStatus(0);
+        account.setMobile("13800000001");
+        when(memberAccounts.getUser(50L)).thenReturn(account);
+        var identity = new cn.iocoder.yudao.module.gym.dal.dataobject.mobile.GymMobileIdentityDO();
+        identity.setUserId(50L);
+        identity.setMemberId(member);
+        identity.setDefaultStoreId(101L);
+        identity.setSource("test");
+        identity.setFaceStatus("unregistered");
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileIdentityMapper.class)
+                .insert(identity);
+        var start = new java.util.concurrent.CountDownLatch(1);
+        var ready = new java.util.concurrent.CountDownLatch(2);
+        try (var executor = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            java.util.concurrent.Callable<Object> admin =
+                    () -> {
+                        setupThreadContext();
+                        ready.countDown();
+                        assertTrue(start.await(3, java.util.concurrent.TimeUnit.SECONDS));
+                        try {
+                            return courses.createBooking(
+                                    bookingRequest(member, session1, pack1.getId()));
+                        } catch (cn.iocoder.yudao.framework.common.exception.ServiceException e) {
+                            return e;
+                        } finally {
+                            cleanupContext();
+                        }
+                    };
+            java.util.concurrent.Callable<Object> mobile =
+                    () -> {
+                        TenantContextHolder.setTenantId(1L);
+                        cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils
+                                .setLoginUser(
+                                        new cn.iocoder.yudao.framework.security.core.LoginUser()
+                                                .setId(50L)
+                                                .setUserType(1)
+                                                .setTenantId(1L),
+                                        new org.springframework.mock.web.MockHttpServletRequest());
+                        ready.countDown();
+                        assertTrue(start.await(3, java.util.concurrent.TimeUnit.SECONDS));
+                        var req =
+                                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo
+                                        .GymMobileBookingVO.Create();
+                        req.setSessionId(session2);
+                        req.setCoursePackId(pack2.getId());
+                        try {
+                            return mobileBookings.create(req, "mixed-mobile-key");
+                        } catch (cn.iocoder.yudao.framework.common.exception.ServiceException e) {
+                            return e;
+                        } finally {
+                            cleanupContext();
+                        }
+                    };
+            var a = executor.submit(admin);
+            var b = executor.submit(mobile);
+            assertTrue(ready.await(3, java.util.concurrent.TimeUnit.SECONDS));
+            start.countDown();
+            var results =
+                    List.of(
+                            a.get(8, java.util.concurrent.TimeUnit.SECONDS),
+                            b.get(8, java.util.concurrent.TimeUnit.SECONDS));
+            assertEquals(
+                    1,
+                    results.stream()
+                            .filter(
+                                    r ->
+                                            r
+                                                            instanceof
+                                                            cn.iocoder.yudao.framework.common
+                                                                            .exception
+                                                                            .ServiceException
+                                                                    e
+                                                    && e.getCode()
+                                                            .equals(
+                                                                    MOBILE_BOOKING_TIME_CONFLICT
+                                                                            .getCode()))
+                            .count());
+            var mapper =
+                    applicationContext.getBean(
+                            cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper.class);
+            assertEquals(
+                    1,
+                    mapper.selectById(pack1.getId()).getReservedSessions()
+                            + mapper.selectById(pack2.getId()).getReservedSessions());
+        }
+    }
+
+    Long workMember() {
+        stores.create(store(101L, "A"));
+        return Long.valueOf(members.create(member(101L, "13800000901")).getId());
+    }
+
+    GymMobileWorkRecordsVO.Page workPage(Long member) {
+        var req = new GymMobileWorkRecordsVO.Page();
+        req.setMemberId(member);
+        req.setStoreId(101L);
+        return req;
+    }
+
+    GymMobileWorkRecordsVO.MeasurementCreate workMeasurement(Long member) {
+        var req = new GymMobileWorkRecordsVO.MeasurementCreate();
+        req.setMemberId(member);
+        req.setStoreId(101L);
+        req.setMeasuredAt(java.time.Instant.parse("2026-10-23T04:00:00Z"));
+        req.setWeightKg(new BigDecimal("70.00"));
+        return req;
+    }
+
+    GymMobileWorkRecordsVO.PlanCreate workPlan(Long member) {
+        var req = new GymMobileWorkRecordsVO.PlanCreate();
+        req.setMemberId(member);
+        req.setStoreId(101L);
+        req.setTitle("力量训练");
+        req.setContent("三组深蹲");
+        req.setStatus("active");
+        return req;
+    }
+
+    GymMobileWorkMembersVO.FollowupCreate followupRequest() {
+        var req = new GymMobileWorkMembersVO.FollowupCreate();
+        req.setStoreId(101L);
+        req.setContent("预约到店体验");
+        req.setNextContactAt(java.time.Instant.now().plusSeconds(86400));
+        return req;
+    }
+
+    GymMobileWorkMembersVO.Assignment assignment(int version, Long... employees) {
+        var req = new GymMobileWorkMembersVO.Assignment();
+        req.setStoreId(101L);
+        req.setExpectedVersion(version);
+        req.setEmployeeIds(Arrays.asList(employees));
+        return req;
+    }
+
+    int assignmentVersion(Long member, Long store) {
+        return applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.card.GymMemberStoreMapper.class)
+                .selectOne(
+                        new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<
+                                        cn.iocoder.yudao.module.gym.dal.dataobject.card
+                                                .GymMemberStoreDO>()
+                                .eq(
+                                        cn.iocoder.yudao.module.gym.dal.dataobject.card
+                                                        .GymMemberStoreDO
+                                                ::getMemberId,
+                                        member)
+                                .eq(
+                                        cn.iocoder.yudao.module.gym.dal.dataobject.card
+                                                        .GymMemberStoreDO
+                                                ::getStoreId,
+                                        store))
+                .getAssignmentVersion();
+    }
+
+    @Test
+    void mobileWorkMeasurementsValidateReplayAndScopeBeforePagination() {
+        Long own = workMember(),
+                other = Long.valueOf(members.create(member(101L, "13800000902")).getId());
+        var req = workMeasurement(own);
+        var saved = workRecords.createMeasurement(req, "work-measurement");
+        assertEquals(saved, workRecords.createMeasurement(req, "work-measurement"));
+        workRecords.createMeasurement(workMeasurement(other), "work-other-measurement");
+        var page = workRecords.measurements(workPage(own));
+        assertEquals(1L, page.getTotal());
+        assertEquals(saved, page.getList().getFirst());
+        assertEquals("2026-10-23T12:00+08:00", saved.measuredAt());
+        req.setWeightKg(new BigDecimal("71.00"));
+        assertServiceException(
+                () -> workRecords.createMeasurement(req, "work-measurement"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        req.setWeightKg(new BigDecimal("501.00"));
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> workRecords.createMeasurement(req, "invalid-measurement"));
+        scoped(102L);
+        assertServiceException(() -> workRecords.measurements(workPage(own)), STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void mobileWorkSelfCanWriteResponsibleMemberButReplayLosesAccessWhenReassigned() {
+        Long own = workMember(),
+                other = Long.valueOf(members.create(member(101L, "13800000902")).getId());
+        Long coach = responsibleEmployee(91L);
+        memberCoaches.replace(own, 101L, responsibility(coach));
+        personalScope(91L);
+        var req = workMeasurement(own);
+        var result = workRecords.createMeasurement(req, "self-measurement");
+        assertEquals(result, workRecords.measurements(workPage(own)).getList().getFirst());
+        assertServiceException(
+                () -> workRecords.createMeasurement(workMeasurement(other), "foreign-measurement"),
+                STORE_NO_PERMISSION);
+        headquarters();
+        memberCoaches.replace(own, 101L, responsibility());
+        personalScope(91L);
+        assertServiceException(
+                () -> workRecords.createMeasurement(req, "self-measurement"), STORE_NO_PERMISSION);
+        assertServiceException(() -> workRecords.measurements(workPage(own)), STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void mobileWorkPlanFailureRollsBackRequestAndKeepsExplicitArchiveStatus() {
+        Long own = workMember();
+        var req = workPlan(own);
+        req.setContent("");
+        assertServiceException(
+                () -> workRecords.createPlan(req, "retry-plan-key"), TRAINING_PLAN_INVALID);
+        req.setContent("康复动作");
+        req.setStatus("archived");
+        var result = workRecords.createPlan(req, "retry-plan-key");
+        assertEquals(result, workRecords.createPlan(req, "retry-plan-key"));
+        var query = workPage(own);
+        query.setStatus("archived");
+        assertEquals(1L, workRecords.plans(query).getTotal());
+        assertEquals("archived", result.status());
+        assertNull(result.coachId());
+        query.setStatus("active");
+        assertEquals(0L, workRecords.plans(query).getTotal());
+        req.setTitle("不允许更改重试");
+        assertServiceException(
+                () -> workRecords.createPlan(req, "retry-plan-key"), MOBILE_IDEMPOTENCY_CONFLICT);
+    }
+
+    @Test
+    void mobileWorkContractUsesActualEntitlementAndOnlyPublicSnapshotVersion() {
+        Long own = workMember(),
+                other = Long.valueOf(members.create(member(101L, "13800000902")).getId());
+        Long ct = Long.valueOf(cards.create(cardTemplate("count")).getId());
+        var card =
+                cards.issue(
+                        own,
+                        101L,
+                        ct,
+                        java.time.Instant.now(),
+                        "approval",
+                        "mobile-contract-source");
+        Long template = publishedContractPdf();
+        var req = new GymMobileWorkRecordsVO.ContractCreate();
+        req.setMemberId(own);
+        req.setStoreId(101L);
+        req.setSourceType("member_card");
+        req.setSourceId(card.getId());
+        req.setTemplateId(template);
+        var result = workRecords.createContract(req, "work-contract-key");
+        assertEquals(result, workRecords.createContract(req, "work-contract-key"));
+        assertEquals(result, workRecords.createContract(req, "second-contract-key"));
+        assertEquals("unsigned", result.status());
+        assertNotNull(result.originalFileId());
+        assertEquals("1", result.agreementVersion());
+        assertEquals(1L, workRecords.contracts(workPage(own)).getTotal());
+        String json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(result);
+        assertFalse(json.contains("businessSnapshot"));
+        assertFalse(json.contains("signIp"));
+        assertFalse(json.contains("events"));
+        req.setMemberId(other);
+        assertServiceException(
+                () -> workRecords.createContract(req, "foreign-contract"), CONTRACT_SOURCE_INVALID);
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.contract.GymContractMapper.class);
+        var row = mapper.selectById(Long.valueOf(result.id()));
+        row.setSigningStatus("signing");
+        mapper.updateById(row);
+        var query = workPage(own);
+        query.setStatus("unsigned");
+        assertEquals(0L, workRecords.contracts(query).getTotal());
+        query.setStatus("signing");
+        assertEquals("signing", workRecords.contracts(query).getList().getFirst().status());
+    }
+
+    @Test
+    void mobileWorkRejectsMemberTokensTenantMismatchAndDisabledAdminBeforeReplays() {
+        Long own = workMember();
+        var req = workPlan(own);
+        workRecords.createPlan(req, "work-plan-access");
+        var login =
+                cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser();
+        login.setUserType(1);
+        assertServiceException(
+                () -> workRecords.createPlan(req, "work-plan-access"), MOBILE_IDENTITY_INVALID);
+        login.setUserType(2);
+        login.setTenantId(2L);
+        assertServiceException(() -> workRecords.plans(workPage(own)), MOBILE_IDENTITY_INVALID);
+        login.setTenantId(1L);
+        var disabled = new cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO();
+        disabled.setId(1L);
+        disabled.setStatus(1);
+        when(workAccounts.getUser(1L)).thenReturn(disabled);
+        assertServiceException(
+                () -> workRecords.createPlan(req, "work-plan-access"), MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void mobileWorkFollowupRecordsCurrentEmployeeAndReplaysAfterNextContactTime() {
+        Long own = workMember();
+        Long coach = responsibleEmployee(91L);
+        memberCoaches.replace(own, 101L, responsibility(coach));
+        personalScope(91L);
+        var req = followupRequest();
+        var result = workMembers.createFollowup(own, req, "work-followup-key");
+        assertEquals(coach.toString(), result.employeeId());
+        assertEquals(own.toString(), result.memberId());
+        when(businessClock.now()).thenReturn(req.getNextContactAt().plusSeconds(1));
+        assertEquals(result, workMembers.createFollowup(own, req, "work-followup-key"));
+        assertServiceException(
+                () -> workMembers.createFollowup(own, req, "new-expired-followup"),
+                MOBILE_REQUEST_INVALID);
+        var page = new GymMobileWorkMembersVO.FollowupPage();
+        page.setStoreId(101L);
+        assertEquals(1L, workMembers.followups(own, page).getTotal());
+        req.setContent("换内容");
+        assertServiceException(
+                () -> workMembers.createFollowup(own, req, "work-followup-key"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+    }
+
+    @Test
+    void mobileWorkFollowupsRequireEmployeeAndAreIsolatedByResponsibilityAndTenant() {
+        Long own = workMember(),
+                other = Long.valueOf(members.create(member(101L, "13800000902")).getId());
+        assertServiceException(
+                () -> workMembers.createFollowup(own, followupRequest(), "without-employee"),
+                MOBILE_EMPLOYEE_REQUIRED);
+        Long coach = responsibleEmployee(91L);
+        memberCoaches.replace(own, 101L, responsibility(coach));
+        personalScope(91L);
+        var req = followupRequest();
+        var saved = workMembers.createFollowup(own, req, "followup-private");
+        var page = new GymMobileWorkMembersVO.FollowupPage();
+        page.setStoreId(101L);
+        assertServiceException(() -> workMembers.followups(other, page), STORE_NO_PERMISSION);
+        headquarters();
+        memberCoaches.replace(own, 101L, responsibility());
+        personalScope(91L);
+        assertServiceException(
+                () -> workMembers.createFollowup(own, req, "followup-private"),
+                STORE_NO_PERMISSION);
+        headquarters();
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMemberFollowupMapper.class);
+        var row = mapper.selectById(Long.valueOf(saved.id()));
+        row.setTenantId(2L);
+        mapper.updateById(row);
+        assertEquals(0L, workMembers.followups(own, page).getTotal());
+    }
+
+    @Test
+    void mobileWorkAssignmentsShareVersionWithLegacyAndDoNotIncrementUnchangedSet() {
+        Long own = workMember();
+        Long coach = responsibleEmployee(91L), other = responsibleEmployee(92L);
+        stores.create(store(102L, "B"));
+        var otherStore = new cn.iocoder.yudao.module.gym.dal.dataobject.card.GymMemberStoreDO();
+        otherStore.setMemberId(own);
+        otherStore.setStoreId(102L);
+        otherStore.setJoinedAt(java.time.Instant.now());
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.card.GymMemberStoreMapper.class)
+                .insert(otherStore);
+        assertEquals(0, assignmentVersion(own, 101L));
+        memberCoaches.replace(own, 101L, responsibility(coach));
+        assertEquals(1, assignmentVersion(own, 101L));
+        assertServiceException(
+                () -> workMembers.assign(own, assignment(0, other), "stale-assignment"),
+                MOBILE_VERSION_CONFLICT);
+        var req = assignment(1, other);
+        var result = workMembers.assign(own, req, "current-assignment");
+        assertEquals(2, result.version());
+        assertEquals(List.of(other.toString()), result.employeeIds());
+        assertEquals(result, workMembers.assign(own, req, "current-assignment"));
+        assertEquals(
+                2, workMembers.assign(own, assignment(2, other), "unchanged-assignment").version());
+        assertEquals(3, workMembers.assign(own, assignment(2), "clear-assignment").version());
+        assertServiceException(
+                () -> workMembers.assign(own, assignment(3, coach, coach), "duplicate-assignment"),
+                MEMBER_COACH_INVALID);
+        assertEquals(3, assignmentVersion(own, 101L));
+        assertEquals(0, assignmentVersion(own, 102L));
+    }
+
+    @Test
+    void mobileWorkAssignmentsRequireWholeStoreScopeEvenWithSelfRelationship() {
+        Long own = workMember();
+        Long coach = responsibleEmployee(91L);
+        memberCoaches.replace(own, 101L, responsibility(coach));
+        personalScope(91L);
+        assertServiceException(
+                () -> workMembers.assign(own, assignment(1), "self-assignment"),
+                STORE_NO_PERMISSION);
+        headquarters();
+        var req = assignment(1, coach);
+        workMembers.assign(own, req, "replayed-assignment");
+        personalScope(91L);
+        assertServiceException(
+                () -> workMembers.assign(own, req, "replayed-assignment"), STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void mobileWorkConcurrentAssignmentVersionsAllowOnlyOneWriter() throws Exception {
+        Long own = workMember();
+        Long a = responsibleEmployee(91L), b = responsibleEmployee(92L);
+        var start = new java.util.concurrent.CountDownLatch(1);
+        var ready = new java.util.concurrent.CountDownLatch(2);
+        try (var executor = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            var futures = new ArrayList<java.util.concurrent.Future<Object>>();
+            for (Long employee : List.of(a, b))
+                futures.add(
+                        executor.submit(
+                                () -> {
+                                    setupThreadContext();
+                                    ready.countDown();
+                                    assertTrue(
+                                            start.await(3, java.util.concurrent.TimeUnit.SECONDS));
+                                    try {
+                                        return workMembers.assign(
+                                                own,
+                                                assignment(0, employee),
+                                                "concurrent-assign-" + employee);
+                                    } catch (
+                                            cn.iocoder.yudao.framework.common.exception
+                                                            .ServiceException
+                                                    e) {
+                                        return e;
+                                    } finally {
+                                        cleanupContext();
+                                    }
+                                }));
+            assertTrue(ready.await(3, java.util.concurrent.TimeUnit.SECONDS));
+            start.countDown();
+            var results =
+                    List.of(
+                            futures.get(0).get(8, java.util.concurrent.TimeUnit.SECONDS),
+                            futures.get(1).get(8, java.util.concurrent.TimeUnit.SECONDS));
+            assertEquals(
+                    1,
+                    results.stream()
+                            .filter(GymMobileWorkMembersVO.AssignmentResult.class::isInstance)
+                            .count());
+            assertEquals(
+                    1,
+                    results.stream()
+                            .filter(
+                                    r ->
+                                            r
+                                                            instanceof
+                                                            cn.iocoder.yudao.framework.common
+                                                                            .exception
+                                                                            .ServiceException
+                                                                    e
+                                                    && e.getCode()
+                                                            .equals(
+                                                                    MOBILE_VERSION_CONFLICT
+                                                                            .getCode()))
+                            .count());
+            assertEquals(1, assignmentVersion(own, 101L));
+        }
+    }
+
+    @Test
+    void allMobileWorkRoutesRequireTheirExplicitBusinessPermissions() {
+        var read = workPage(1L);
+        var measurement = workMeasurement(1L);
+        var plan = workPlan(1L);
+        var contract = new GymMobileWorkRecordsVO.ContractCreate();
+        contract.setStoreId(101L);
+        contract.setMemberId(1L);
+        contract.setSourceType("member_card");
+        contract.setSourceId(1L);
+        contract.setTemplateId(1L);
+        var followupPage = new GymMobileWorkMembersVO.FollowupPage();
+        followupPage.setStoreId(101L);
+        var calls =
+                List.<Runnable>of(
+                        () -> workMembersController.page(new GymMobileWorkMembersVO.MemberPage()),
+                        () -> workMembersController.get(1L, 101L),
+                        () -> workRecordsController.measurements(read),
+                        () -> workRecordsController.measurement(measurement, "permission-test"),
+                        () -> workRecordsController.plans(read),
+                        () -> workRecordsController.plan(plan, "permission-test"),
+                        () -> workRecordsController.contracts(read),
+                        () -> workRecordsController.contract(contract, "permission-test"),
+                        () -> workMembersController.followups(1L, followupPage),
+                        () ->
+                                workMembersController.followup(
+                                        1L, followupRequest(), "permission-test"),
+                        () -> workMembersController.assign(1L, assignment(0), "permission-test"));
+        var expected =
+                List.of(
+                        "gym:members:read",
+                        "gym:members:read",
+                        "gym:measurements:read",
+                        "gym:measurements:write",
+                        "gym:measurements:read",
+                        "gym:measurements:write",
+                        "gym:contracts:read",
+                        "gym:contracts:manage",
+                        "gym:members:read",
+                        "gym:members:write",
+                        "gym:members:write");
+        for (int i = 0; i < calls.size(); i++) {
+            clearInvocations(permissions);
+            assertThrows(
+                    org.springframework.security.access.AccessDeniedException.class,
+                    calls.get(i)::run);
+            verify(permissions).hasAnyPermissions(1L, expected.get(i));
+        }
+    }
+
+    @Test
+    void mobileWorkAssignmentRejectsFutureHireAndStoreJoinWithoutChangingVersion() {
+        Long own = workMember();
+        Long coach = responsibleEmployee(91L);
+        var employeeMapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeMapper.class);
+        var employee = employeeMapper.selectById(coach);
+        var today =
+                businessClock
+                        .now()
+                        .atZone(cn.iocoder.yudao.module.gym.service.common.GymDateRange.ZONE)
+                        .toLocalDate();
+        employee.setHiredOn(today.plusDays(1));
+        employeeMapper.updateById(employee);
+        assertServiceException(
+                () -> workMembers.assign(own, assignment(0, coach), "future-assignment"),
+                MEMBER_COACH_INVALID);
+        assertEquals(0, assignmentVersion(own, 101L));
+        employee.setHiredOn(today);
+        employeeMapper.updateById(employee);
+        var employmentMapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeStoreMapper
+                                .class);
+        var employment =
+                employmentMapper.selectOne(
+                        new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<
+                                        cn.iocoder.yudao.module.gym.dal.dataobject.employee
+                                                .GymEmployeeStoreDO>()
+                                .eq(
+                                        cn.iocoder.yudao.module.gym.dal.dataobject.employee
+                                                        .GymEmployeeStoreDO
+                                                ::getEmployeeId,
+                                        coach)
+                                .eq(
+                                        cn.iocoder.yudao.module.gym.dal.dataobject.employee
+                                                        .GymEmployeeStoreDO
+                                                ::getStoreId,
+                                        101L));
+        employment.setJoinedOn(today.plusDays(1));
+        employmentMapper.updateById(employment);
+        assertServiceException(
+                () -> workMembers.assign(own, assignment(0, coach), "future-assignment"),
+                MEMBER_COACH_INVALID);
+        employment.setJoinedOn(today);
+        employmentMapper.updateById(employment);
+        assertEquals(
+                1, workMembers.assign(own, assignment(0, coach), "future-assignment").version());
+    }
+
+    void workJoin(Long member, Long store) {
+        var relation = new cn.iocoder.yudao.module.gym.dal.dataobject.card.GymMemberStoreDO();
+        relation.setMemberId(member);
+        relation.setStoreId(store);
+        relation.setJoinedAt(java.time.Instant.now());
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.card.GymMemberStoreMapper.class)
+                .insert(relation);
+    }
+
+    cn.iocoder.yudao.module.gym.dal.dataobject.card.GymMemberCardDO workCard(
+            Long member,
+            Long store,
+            String kind,
+            int remaining,
+            int reserved,
+            java.time.Instant start,
+            java.time.Instant end) {
+        var row = new cn.iocoder.yudao.module.gym.dal.dataobject.card.GymMemberCardDO();
+        row.setMemberId(member);
+        row.setIssuedStoreId(store);
+        row.setTemplateId(1L);
+        row.setCardNo(UUID.randomUUID().toString());
+        row.setDisplayPrefix("TEST");
+        row.setName("测试卡");
+        row.setKind(kind);
+        row.setAccessScope("all");
+        row.setStoreIds("[]");
+        row.setStartsAt(start);
+        row.setExpiresAt(end);
+        row.setTotalUses(remaining);
+        row.setRemainingUses(remaining);
+        row.setReservedUses(reserved);
+        row.setStatus("active");
+        row.setTemplateSnapshot("{}");
+        row.setSourceType("test");
+        row.setSourceId(UUID.randomUUID().toString());
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.card.GymMemberCardMapper.class)
+                .insert(row);
+        var relation = new cn.iocoder.yudao.module.gym.dal.dataobject.card.GymMemberCardStoreDO();
+        relation.setCardId(row.getId());
+        relation.setStoreId(store);
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.card.GymMemberCardStoreMapper.class)
+                .insert(relation);
+        return row;
+    }
+
+    cn.iocoder.yudao.module.gym.dal.dataobject.course.GymCoursePackDO workPack(
+            Long member,
+            Long store,
+            int remaining,
+            int reserved,
+            java.time.Instant start,
+            java.time.Instant end) {
+        var row = new cn.iocoder.yudao.module.gym.dal.dataobject.course.GymCoursePackDO();
+        row.setMemberId(member);
+        row.setStoreId(store);
+        row.setCourseProductId(1L);
+        row.setAssignedCoachId(1L);
+        row.setName("测试课包");
+        row.setStartsAt(start);
+        row.setExpiresAt(end);
+        row.setTotalSessions(remaining);
+        row.setRemainingSessions(remaining);
+        row.setReservedSessions(reserved);
+        row.setStatus("active");
+        row.setPriceSnapshot(BigDecimal.TEN);
+        row.setSourceType("test");
+        row.setSourceId(UUID.randomUUID().toString());
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper.class)
+                .insert(row);
+        return row;
+    }
+
+    @Test
+    void mobileWorkMemberListDeduplicatesStoresMasksPhoneAndReadsCurrentAssignmentVersion() {
+        Long own = workMember();
+        stores.create(store(102L, "B"));
+        workJoin(own, 102L);
+        var req = new GymMobileWorkMembersVO.MemberPage();
+        req.setPageSize(1);
+        var page = workMemberQueries.page(req);
+        assertEquals(1L, page.getTotal());
+        var result = page.getList().getFirst();
+        assertEquals("101", result.storeId());
+        assertEquals("138****0901", result.maskedPhone());
+        assertEquals("prospect", result.customerType());
+        assertEquals(0, result.assignmentVersion());
+        assertEquals(0, result.cardSummary().activeCount());
+        Long coach = responsibleEmployee(91L);
+        var assigned = workMembers.assign(own, assignment(0, coach), "read-assignment-version");
+        result = workMemberQueries.get(own, 101L);
+        assertEquals(assigned.version(), result.assignmentVersion());
+        assertEquals(assigned.employeeIds(), result.coachIds());
+        assertEquals(0, workMemberQueries.get(own, 102L).assignmentVersion());
+        req.setPageNo(2);
+        assertEquals(1L, workMemberQueries.page(req).getTotal());
+        assertTrue(workMemberQueries.page(req).getList().isEmpty());
+        String json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(result);
+        assertFalse(json.contains("13800000901"));
+        assertFalse(json.contains("tenantId"));
+        assertFalse(json.contains("creator"));
+    }
+
+    @Test
+    void mobileWorkMemberListAppliesSelfScopeBeforeCountAndDoesNotExposeOtherStores() {
+        Long own = workMember();
+        Long other = Long.valueOf(members.create(member(101L, "13800000902")).getId());
+        stores.create(store(102L, "B"));
+        workJoin(own, 102L);
+        Long coach = responsibleEmployee(91L);
+        memberCoaches.replace(own, 101L, responsibility(coach));
+        var now = java.time.Instant.now();
+        workPack(own, 102L, 99, 0, now.minusSeconds(1), null);
+        workCard(own, 102L, "count", 88, 0, now.minusSeconds(1), null);
+        personalScope(91L);
+        var req = new GymMobileWorkMembersVO.MemberPage();
+        req.setPageSize(1);
+        var page = workMemberQueries.page(req);
+        assertEquals(1L, page.getTotal());
+        assertEquals(own.toString(), page.getList().getFirst().id());
+        assertEquals(0, page.getList().getFirst().courseSummary().activeCount());
+        assertEquals(0, page.getList().getFirst().cardSummary().activeCount());
+        assertServiceException(() -> workMemberQueries.get(other, 101L), STORE_NO_PERMISSION);
+        assertServiceException(() -> workMemberQueries.get(own, 102L), STORE_NO_PERMISSION);
+        req.setStoreId(102L);
+        assertServiceException(() -> workMemberQueries.page(req), STORE_NO_PERMISSION);
+        req.setStoreId(null);
+        headquarters();
+        memberCoaches.replace(own, 101L, responsibility());
+        personalScope(91L);
+        assertEquals(0L, workMemberQueries.page(req).getTotal());
+    }
+
+    @Test
+    void mobileWorkCardExpiryUsesActualRelationsAndEffectiveValidityBeforePaging() {
+        Long own = workMember();
+        stores.create(store(102L, "B"));
+        workJoin(own, 102L);
+        Long other = Long.valueOf(members.create(member(101L, "13800000902")).getId());
+        var now = java.time.Instant.parse("2026-10-23T00:00:00Z");
+        when(businessClock.now()).thenReturn(now);
+        var end = now.plusSeconds(30 * 86400L);
+        workCard(own, 102L, "count", 3, 1, now, end);
+        workCard(other, 101L, "count", 0, 0, now, end);
+        workCard(other, 101L, "period", 0, 0, now.minusSeconds(1), now);
+        workCard(other, 101L, "period", 0, 0, now.plusSeconds(1), end);
+        var inactive = workCard(other, 101L, "period", 0, 0, now, end);
+        inactive.setStatus("inactive");
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.card.GymMemberCardMapper.class)
+                .updateById(inactive);
+        var req = new GymMobileWorkMembersVO.MemberPage();
+        req.setSegment("card_expiring");
+        req.setPageSize(1);
+        assertEquals(1L, workMemberQueries.page(req).getTotal());
+        var result = workMemberQueries.page(req).getList().getFirst();
+        assertEquals(own.toString(), result.id());
+        assertEquals("102", result.storeId());
+        assertEquals(3L, result.cardSummary().remainingUses());
+        assertEquals(2L, result.cardSummary().availableUses());
+        assertEquals("2026-11-22T08:00+08:00", result.cardSummary().nearestExpiresAt());
+        req.setStoreId(101L);
+        assertEquals(0L, workMemberQueries.page(req).getTotal());
+        req.setStoreId(102L);
+        req.setExpireWithinDays(29);
+        assertEquals(0L, workMemberQueries.page(req).getTotal());
+        scoped(101L);
+        req.setStoreId(null);
+        req.setExpireWithinDays(30);
+        assertEquals(0L, workMemberQueries.page(req).getTotal());
+    }
+
+    @Test
+    void mobileWorkCourseSegmentsAndSummarySeparateReservedFromAvailableAndIgnoreInvalidPacks() {
+        Long own = workMember();
+        Long other = Long.valueOf(members.create(member(101L, "13800000902")).getId());
+        var now = java.time.Instant.parse("2026-10-23T00:00:00Z");
+        when(businessClock.now()).thenReturn(now);
+        var end = now.plusSeconds(30 * 86400L);
+        workPack(own, 101L, 5, 5, now, end);
+        workPack(own, 101L, 4, 1, now, null);
+        workPack(other, 101L, 99, 0, now.minusSeconds(1), now);
+        workPack(other, 101L, 99, 0, now.plusSeconds(1), end);
+        workPack(other, 101L, 0, 0, now, end);
+        var frozen = workPack(other, 101L, 99, 0, now, end);
+        frozen.setStatus("frozen");
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper.class)
+                .updateById(frozen);
+        var req = new GymMobileWorkMembersVO.MemberPage();
+        req.setSegment("private_course");
+        assertEquals(1L, workMemberQueries.page(req).getTotal());
+        var result = workMemberQueries.page(req).getList().getFirst().courseSummary();
+        assertEquals(2, result.activeCount());
+        assertEquals(9L, result.remainingLessons());
+        assertEquals(6L, result.reservedLessons());
+        assertEquals(3L, result.availableLessons());
+        req.setSegment("course_expiring");
+        assertEquals(1L, workMemberQueries.page(req).getTotal());
+        req.setExpireWithinDays(29);
+        assertEquals(0L, workMemberQueries.page(req).getTotal());
+        req.setSegment("all");
+        assertEquals(2L, workMemberQueries.page(req).getTotal());
+    }
+
+    @Test
+    void mobileWorkMemberFiltersKeepProspectStageDistinctFromConsumptionAndCoachStoreCorrelated() {
+        Long own = workMember();
+        Long other = Long.valueOf(members.create(member(101L, "13800000902")).getId());
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.member.GymMemberMapper.class);
+        var changed = mapper.selectById(other);
+        changed.setCustomerStage("member");
+        mapper.updateById(changed);
+        workPack(own, 101L, 1, 0, java.time.Instant.now().minusSeconds(1), null);
+        var req = new GymMobileWorkMembersVO.MemberPage();
+        req.setSegment("prospect");
+        assertEquals(1L, workMemberQueries.page(req).getTotal());
+        assertEquals(own.toString(), workMemberQueries.page(req).getList().getFirst().id());
+        Long coach = responsibleEmployee(91L);
+        memberCoaches.replace(own, 101L, responsibility(coach));
+        stores.create(store(102L, "B"));
+        workJoin(own, 102L);
+        req.setCoachId(coach);
+        req.setStoreId(102L);
+        assertEquals(0L, workMemberQueries.page(req).getTotal());
+        req.setStoreId(null);
+        req.setKeyword("00901");
+        assertEquals(1L, workMemberQueries.page(req).getTotal());
+        assertEquals("101", workMemberQueries.page(req).getList().getFirst().storeId());
+        req.setKeyword("' OR 1=1 --");
+        assertEquals(0L, workMemberQueries.page(req).getTotal());
+        req.setKeyword("00902");
+        assertEquals(0L, workMemberQueries.page(req).getTotal());
+        req.setCoachId(null);
+        req.setSegment("all");
+        assertEquals(1L, workMemberQueries.page(req).getTotal());
+        assertEquals("member", workMemberQueries.page(req).getList().getFirst().customerType());
+    }
+
+    @Test
+    void mobileWorkMemberQueryTenantAndIdentityChecksApplyToListAndDetail() {
+        Long own = workMember();
+        var req = new GymMobileWorkMembersVO.MemberPage();
+        var login =
+                cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser();
+        login.setUserType(1);
+        assertServiceException(() -> workMemberQueries.page(req), MOBILE_IDENTITY_INVALID);
+        assertServiceException(() -> workMemberQueries.get(own, 101L), MOBILE_IDENTITY_INVALID);
+        login.setUserType(2);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> workMemberQueries.page(req), MOBILE_IDENTITY_INVALID);
+        login.setTenantId(2L);
+        assertEquals(0L, workMemberQueries.page(req).getTotal());
+        assertServiceException(() -> workMemberQueries.get(own, 101L), MEMBER_NOT_EXISTS);
+        TenantContextHolder.setTenantId(1L);
+        login.setTenantId(1L);
+        var disabled = workAccounts.getUser(1L);
+        disabled.setStatus(1);
+        when(workAccounts.getUser(1L)).thenReturn(disabled);
+        assertServiceException(() -> workMemberQueries.page(req), MOBILE_IDENTITY_INVALID);
+        assertServiceException(() -> workMemberQueries.get(own, 101L), MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void mobileWorkMemberQueriesValidateFiltersAndDoNotAllowUnboundedPages() {
+        var req = new GymMobileWorkMembersVO.MemberPage();
+        req.setPageSize(-1);
+        assertThrows(ConstraintViolationException.class, () -> workMemberQueries.page(req));
+        req.setPageSize(10);
+        req.setSegment("unknown");
+        assertThrows(ConstraintViolationException.class, () -> workMemberQueries.page(req));
+        req.setSegment("all");
+        req.setExpireWithinDays(0);
+        assertThrows(ConstraintViolationException.class, () -> workMemberQueries.page(req));
+        req.setExpireWithinDays(366);
+        assertThrows(ConstraintViolationException.class, () -> workMemberQueries.page(req));
+        req.setExpireWithinDays(1);
+        req.setCoachId(0L);
+        assertThrows(ConstraintViolationException.class, () -> workMemberQueries.page(req));
+        assertServiceException(() -> workMemberQueries.get(0L, 101L), MOBILE_REQUEST_INVALID);
+        assertServiceException(() -> workMemberQueries.get(1L, null), MOBILE_REQUEST_INVALID);
+    }
+
+    @Test
+    void mobileWorkMemberNestedFiltersAndSummariesIgnoreForeignTenantRelations() {
+        Long own = workMember();
+        var now = java.time.Instant.now();
+        when(businessClock.now()).thenReturn(now);
+        TenantContextHolder.setTenantId(2L);
+        workCard(own, 101L, "count", 50, 0, now, now.plusSeconds(86400));
+        workPack(own, 101L, 60, 0, now, now.plusSeconds(86400));
+        var relation = new cn.iocoder.yudao.module.gym.dal.dataobject.member.GymMemberCoachDO();
+        relation.setMemberId(own);
+        relation.setStoreId(101L);
+        relation.setEmployeeId(999L);
+        relation.setActive(true);
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.member.GymMemberCoachMapper.class)
+                .insert(relation);
+        TenantContextHolder.setTenantId(1L);
+        var req = new GymMobileWorkMembersVO.MemberPage();
+        for (String segment : List.of("card_expiring", "course_expiring", "private_course")) {
+            req.setSegment(segment);
+            assertEquals(0L, workMemberQueries.page(req).getTotal());
+        }
+        req.setSegment("all");
+        req.setCoachId(999L);
+        assertEquals(0L, workMemberQueries.page(req).getTotal());
+        var result = workMemberQueries.get(own, 101L);
+        assertTrue(result.coachIds().isEmpty());
+        assertEquals(0, result.cardSummary().activeCount());
+        assertEquals(0, result.courseSummary().activeCount());
+    }
+
+    @Test
+    void mobileWorkMemberSummaryCountsUnlimitedDurationWithoutInventingUsesOrExpiry() {
+        Long own = workMember();
+        var now = java.time.Instant.now();
+        when(businessClock.now()).thenReturn(now);
+        workCard(own, 101L, "period", 0, 0, now, null);
+        workCard(own, 101L, "count", 3, 3, now, null);
+        var summary = workMemberQueries.get(own, 101L).cardSummary();
+        assertEquals(2, summary.activeCount());
+        assertEquals(1, summary.durationCount());
+        assertEquals(1, summary.timesCount());
+        assertEquals(3L, summary.remainingUses());
+        assertEquals(3L, summary.reservedUses());
+        assertEquals(0L, summary.availableUses());
+        assertNull(summary.nearestExpiresAt());
+        var req = new GymMobileWorkMembersVO.MemberPage();
+        req.setSegment("card_expiring");
+        assertEquals(0L, workMemberQueries.page(req).getTotal());
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobilePublicVO.StorePage
+            publicStorePage() {
+        return new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobilePublicVO
+                .StorePage();
+    }
+
+    GymFileDO publicImage(Long store) {
+        var f = file(store, "image");
+        f.setUrl("private-storage:" + f.getId());
+        files.updateById(f);
+        when(fileApi.getFileContentByUrl(f.getUrl()))
+                .thenReturn(
+                        new byte[] {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2});
+        return f;
+    }
+
+    @Test
+    void publicStoresAreAnonymousTenantScopedAndInactiveStoresAreAbsentBeforePagination() {
+        stores.create(store(101L, "A"));
+        var inactive = store(102L, "B");
+        inactive.setStatus("inactive");
+        stores.create(inactive);
+        TenantContextHolder.setTenantId(2L);
+        stores.create(store(103L, "C"));
+        TenantContextHolder.setTenantId(1L);
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        var req = publicStorePage();
+        req.setPageSize(1);
+        var page = publicContent.stores(req);
+        assertEquals(1L, page.getTotal());
+        assertEquals("101", page.getList().getFirst().id());
+        assertNull(page.getList().getFirst().distanceMeters());
+        assertServiceException(() -> publicContent.store(102L), STORE_NOT_EXISTS);
+        assertServiceException(() -> publicContent.home(102L), STORE_NOT_EXISTS);
+        assertServiceException(() -> publicContent.occupancy(103L), STORE_NOT_EXISTS);
+        assertServiceException(() -> publicContent.settings(103L), STORE_NOT_EXISTS);
+        req.setKeyword("不存在");
+        assertEquals(0L, publicContent.stores(req).getTotal());
+        assertEquals(List.of("私教", "力量,训练"), publicContent.store(101L).features());
+        assertEquals("06:00", publicContent.store(101L).businessHours().opens());
+    }
+
+    @Test
+    void publicStoresSortDistanceBeforePaginationIncludingDateLineAndUnknownCoordinates() {
+        var far = store(101L, "A");
+        far.setLongitude(new BigDecimal("0"));
+        far.setLatitude(BigDecimal.ZERO);
+        stores.create(far);
+        var near = store(102L, "B");
+        near.setLongitude(new BigDecimal("-179.9"));
+        near.setLatitude(BigDecimal.ZERO);
+        stores.create(near);
+        stores.create(store(103L, "C"));
+        var req = publicStorePage();
+        req.setLongitude(new BigDecimal("179.9"));
+        req.setLatitude(BigDecimal.ZERO);
+        req.setPageSize(1);
+        var page = publicContent.stores(req);
+        assertEquals(3L, page.getTotal());
+        assertEquals("102", page.getList().getFirst().id());
+        assertTrue(
+                page.getList().getFirst().distanceMeters() > 22000
+                        && page.getList().getFirst().distanceMeters() < 23000);
+        req.setPageNo(2);
+        assertEquals("101", publicContent.stores(req).getList().getFirst().id());
+        req.setPageNo(3);
+        assertNull(publicContent.stores(req).getList().getFirst().distanceMeters());
+        req.setPageNo(1);
+        req.setLongitude(new BigDecimal("-179.9"));
+        assertEquals(0L, publicContent.stores(req).getList().getFirst().distanceMeters());
+    }
+
+    @Test
+    void publicMediaUsesOnlyExplicitPublishedReferencesAndRevokesWhenStoreIsHidden() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        var image = publicImage(101L);
+        var unlinked = publicImage(101L);
+        stores.saveMedia(101L, media(image.getId(), true));
+        var detail = publicContent.store(101L);
+        assertEquals(image.getId().toString(), detail.cover().fileId());
+        assertTrue(
+                detail.cover()
+                        .url()
+                        .contains("/gym/public-media/" + image.getId() + "/content?tenantId=1"));
+        assertFalse(detail.cover().url().contains("private-storage"));
+        assertArrayEquals(
+                fileApi.getFileContentByUrl(image.getUrl()),
+                publicContent.mediaContent(image.getId()).getContent());
+        assertServiceException(() -> publicContent.mediaContent(unlinked.getId()), FILE_NOT_EXISTS);
+        var bad = file(101L, "member_face");
+        var link = new cn.iocoder.yudao.module.gym.dal.dataobject.store.GymStoreMediaDO();
+        link.setStoreId(101L);
+        link.setFileId(bad.getId());
+        link.setIsCover(false);
+        link.setSortOrder(1);
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.store.GymStoreMediaMapper.class);
+        mapper.insert(link);
+        assertEquals(1, publicContent.store(101L).media().size());
+        assertServiceException(() -> publicContent.mediaContent(bad.getId()), FILE_NOT_EXISTS);
+        var patch = new GymStoreSaveReqVO();
+        patch.setStatus("inactive");
+        stores.patch(101L, patch);
+        assertServiceException(() -> publicContent.mediaContent(image.getId()), FILE_NOT_EXISTS);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> publicContent.mediaContent(image.getId()), FILE_NOT_EXISTS);
+    }
+
+    @Test
+    void publicMediaRejectsCrossStoreReferencesAndIncorrectStoredContentType() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        var image = publicImage(102L);
+        var link = new cn.iocoder.yudao.module.gym.dal.dataobject.store.GymStoreMediaDO();
+        link.setStoreId(101L);
+        link.setFileId(image.getId());
+        link.setIsCover(true);
+        link.setSortOrder(0);
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.store.GymStoreMediaMapper.class)
+                .insert(link);
+        assertNull(publicContent.store(101L).cover());
+        assertServiceException(() -> publicContent.mediaContent(image.getId()), FILE_NOT_EXISTS);
+        stores.saveMedia(102L, media(image.getId(), true));
+        when(fileApi.getFileContentByUrl(image.getUrl()))
+                .thenReturn("<html>no</html>".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        assertServiceException(() -> publicContent.mediaContent(image.getId()), FILE_NOT_EXISTS);
+        when(fileApi.getFileContentByUrl(image.getUrl())).thenReturn(null);
+        assertServiceException(
+                () -> publicContent.mediaContent(image.getId()), FILE_CONTENT_NOT_EXISTS);
+    }
+
+    void publicEntry(Long store, java.time.Instant at, String status) {
+        var row = new cn.iocoder.yudao.module.gym.dal.dataobject.course.GymCheckinDO();
+        row.setStoreId(store);
+        row.setMemberId(1L);
+        row.setBookingId(
+                applicationContext
+                                .getBean(
+                                        cn.iocoder.yudao.module.gym.dal.mysql.course
+                                                .GymCheckinMapper.class)
+                                .selectCount()
+                        + 1);
+        row.setEnteredAt(at);
+        row.setMethod("manual");
+        row.setVisitorType("member");
+        row.setStatus(status);
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.course.GymCheckinMapper.class)
+                .insert(row);
+    }
+
+    @Test
+    void publicOccupancyCountsShanghaiDaySuccessfulEntriesWithoutInventingLiveOccupancy() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        var now = java.time.Instant.parse("2026-10-23T17:00:00Z");
+        when(businessClock.now()).thenReturn(now);
+        var empty = publicContent.occupancy(101L);
+        assertNull(empty.updatedAt());
+        assertEquals(0L, empty.todayEntryCount());
+        publicEntry(101L, java.time.Instant.parse("2026-10-23T15:59:59Z"), "succeeded");
+        publicEntry(101L, java.time.Instant.parse("2026-10-23T16:00:00Z"), "succeeded");
+        publicEntry(101L, now, "succeeded");
+        publicEntry(101L, now.minusSeconds(1), "failed");
+        publicEntry(101L, now.plusSeconds(1), "succeeded");
+        publicEntry(102L, now, "succeeded");
+        TenantContextHolder.setTenantId(2L);
+        publicEntry(101L, now, "succeeded");
+        TenantContextHolder.setTenantId(1L);
+        var result = publicContent.occupancy(101L);
+        assertEquals(2L, result.todayEntryCount());
+        assertNull(result.currentCount());
+        assertEquals("unavailable", result.dataStatus());
+        assertEquals("2026-10-24T01:00+08:00", result.updatedAt());
+        assertEquals(result, publicContent.home(101L).occupancy());
+        assertTrue(
+                publicContent.home(101L).features().stream()
+                        .filter(
+                                f ->
+                                        List.of(
+                                                        "payment",
+                                                        "auto_renewal",
+                                                        "e_sign",
+                                                        "access_control",
+                                                        "camera")
+                                                .contains(f.key()))
+                        .allMatch(f -> !f.enabled() && f.disabledReason() != null));
+    }
+
+    @Test
+    void publicClientSettingsFallbackIsWholeDocumentAndDisabledOverridesDoNotPublishGlobalCover() {
+        stores.create(store(101L, "A"));
+        var image = publicImage(101L);
+        var global = clientSettings(null, "miniapp");
+        global.setCoverFileId(image.getId());
+        global.setAppId("internal-app-id");
+        contentService.save(global);
+        assertEquals(image.getId().toString(), publicContent.settings(101L).entryCover().fileId());
+        assertNull(publicContent.settings(101L).appDownload().url());
+        assertFalse(publicContent.settings(101L).franchise().configured());
+        assertFalse(
+                cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(
+                                publicContent.settings(101L))
+                        .contains("internal-app-id"));
+        var override = clientSettings(101L, "miniapp");
+        override.setEnabled(false);
+        contentService.save(override);
+        assertNull(publicContent.settings(101L).entryCover());
+        assertNotNull(publicContent.settings(null).entryCover());
+        var app = clientSettings(null, "app");
+        app.setAppDownloadUrl("https://example.test/app");
+        app.setAppBenefitText("下载后查看活动");
+        contentService.save(app);
+        assertTrue(publicContent.settings(101L).appDownload().enabled());
+        assertEquals("下载后查看活动", publicContent.settings(101L).appDownload().benefitText());
+        app.setStoreId(101L);
+        app.setEnabled(false);
+        contentService.save(app);
+        assertFalse(publicContent.settings(101L).appDownload().enabled());
+    }
+
+    cn.iocoder.yudao.module.gym.controller.admin.content.vo.GymClientSettingsReqVO.Franchise
+            publicFranchise(Long image) {
+        var f =
+                new cn.iocoder.yudao.module.gym.controller.admin.content.vo.GymClientSettingsReqVO
+                        .Franchise();
+        f.setIntroduction("品牌介绍");
+        f.setPhone("4001234567");
+        var models =
+                new ArrayList<
+                        cn.iocoder.yudao.module.gym.controller.admin.content.vo
+                                .GymClientSettingsReqVO.Model>();
+        for (int i = 0; i < 3; i++) {
+            var model =
+                    new cn.iocoder.yudao.module.gym.controller.admin.content.vo
+                            .GymClientSettingsReqVO.Model();
+            model.setName("模型" + i);
+            model.setPreviewFileId(image);
+            model.setModelUrl("https://example.test/model/" + i);
+            models.add(model);
+        }
+        f.setModels(models);
+        return f;
+    }
+
+    @Test
+    void publicFranchisePublishesThreeConfiguredModelsAndMediaRevokesWithConfiguration() {
+        stores.create(store(101L, "A"));
+        var image = publicImage(101L);
+        var config = clientSettings(101L, "miniapp");
+        config.setFranchise(publicFranchise(image.getId()));
+        contentService.save(config);
+        var result = publicContent.settings(101L).franchise();
+        assertTrue(result.configured());
+        assertEquals(3, result.models().size());
+        assertEquals("品牌介绍", result.introduction());
+        assertNotNull(publicContent.mediaContent(image.getId()));
+        config.setEnabled(false);
+        contentService.save(config);
+        assertFalse(publicContent.settings(101L).franchise().configured());
+        assertServiceException(() -> publicContent.mediaContent(image.getId()), FILE_NOT_EXISTS);
+    }
+
+    cn.iocoder.yudao.module.gym.controller.admin.content.vo.GymClientSettingsReqVO.Notice
+            publicNotice(long id, java.time.Instant start, java.time.Instant end) {
+        var n =
+                new cn.iocoder.yudao.module.gym.controller.admin.content.vo.GymClientSettingsReqVO
+                        .Notice();
+        n.setId(id);
+        n.setTitle("公告" + id);
+        n.setContent("内容" + id);
+        n.setPublishedAt(start);
+        n.setExpiresAt(end);
+        return n;
+    }
+
+    @Test
+    void publicHomeNoticesRespectPublicationExpiryAndDisabledOverrides() {
+        stores.create(store(101L, "A"));
+        var now = java.time.Instant.parse("2026-10-24T00:00:00Z");
+        when(businessClock.now()).thenReturn(now);
+        var config = clientSettings(null, "miniapp");
+        config.setNotices(
+                List.of(
+                        publicNotice(1, now.minusSeconds(60), null),
+                        publicNotice(2, now, null),
+                        publicNotice(3, now.plusSeconds(1), null),
+                        publicNotice(4, now.minusSeconds(60), now)));
+        contentService.save(config);
+        assertEquals(
+                List.of("2", "1"),
+                publicContent.home(101L).notices().stream().map(n -> n.id()).toList());
+        var override = clientSettings(101L, "miniapp");
+        override.setEnabled(false);
+        contentService.save(override);
+        assertTrue(publicContent.home(101L).notices().isEmpty());
+    }
+
+    @Test
+    void publicDisplayConfigurationValidatesModelCountFileOwnershipUrlsAndNoticeIds() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        var image = publicImage(101L);
+        var config = clientSettings(101L, "miniapp");
+        var franchise = publicFranchise(image.getId());
+        config.setFranchise(franchise);
+        franchise.getModels().removeLast();
+        assertThrows(ConstraintViolationException.class, () -> contentService.save(config));
+        franchise = publicFranchise(image.getId());
+        config.setFranchise(franchise);
+        franchise.getModels().getFirst().setModelUrl("javascript:alert(1)");
+        assertServiceException(() -> contentService.save(config), CLIENT_CONTENT_INVALID);
+        config.setFranchise(publicFranchise(publicImage(102L).getId()));
+        assertServiceException(() -> contentService.save(config), CLIENT_CONTENT_FILE_INVALID);
+        config.setFranchise(publicFranchise(image.getId()));
+        var now = java.time.Instant.now();
+        config.setNotices(List.of(publicNotice(1, now, null), publicNotice(1, now, null)));
+        assertServiceException(() -> contentService.save(config), CLIENT_CONTENT_INVALID);
+        config.setNotices(List.of(publicNotice(1, now, now)));
+        assertServiceException(() -> contentService.save(config), CLIENT_CONTENT_INVALID);
+    }
+
+    @Test
+    void publicStoresValidateCoordinatesAndRejectUnboundedPaging() {
+        var req = publicStorePage();
+        req.setLongitude(BigDecimal.ONE);
+        assertThrows(ConstraintViolationException.class, () -> publicContent.stores(req));
+        req.setLatitude(new BigDecimal("91"));
+        assertThrows(ConstraintViolationException.class, () -> publicContent.stores(req));
+        req.setLatitude(BigDecimal.ONE);
+        req.setLongitude(new BigDecimal("181"));
+        assertThrows(ConstraintViolationException.class, () -> publicContent.stores(req));
+        req.setLongitude(BigDecimal.ONE);
+        req.setPageSize(-1);
+        assertThrows(ConstraintViolationException.class, () -> publicContent.stores(req));
+    }
+
+    @Test
+    void incompleteFranchiseGroupStopsPublishingModelImagesWithoutOtherPublicReferences() {
+        stores.create(store(101L, "A"));
+        var first = publicImage(101L);
+        var second = publicImage(101L);
+        var config = clientSettings(101L, "miniapp");
+        var franchise = publicFranchise(first.getId());
+        franchise.getModels().get(1).setPreviewFileId(second.getId());
+        config.setFranchise(franchise);
+        contentService.save(config);
+        assertTrue(publicContent.settings(101L).franchise().configured());
+        assertNotNull(publicContent.mediaContent(first.getId()));
+        files.deleteById(second.getId());
+        assertFalse(publicContent.settings(101L).franchise().configured());
+        assertServiceException(() -> publicContent.mediaContent(first.getId()), FILE_NOT_EXISTS);
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileCatalogVO.StorePage catalogPage(
+            Long store) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileCatalogVO
+                        .StorePage();
+        req.setStoreId(store);
+        return req;
+    }
+
+    @Test
+    void publicCardCatalogUsesActualStorePriceAndScopeWithPaginationAfterSaleFiltering() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        Long first = Long.valueOf(cards.create(cardTemplate("count")).getId());
+        Long second = Long.valueOf(cards.create(cardTemplate("period")).getId());
+        var settings = onlineSettings(first);
+        var other = onlineSettings(second).getOffers().getFirst();
+        other.setEnabled(false);
+        settings.setOffers(List.of(settings.getOffers().getFirst(), other));
+        salesSettings.saveOnline(101L, settings);
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        var req = catalogPage(101L);
+        req.setPageSize(1);
+        var page = catalog.cards(req);
+        assertEquals(1L, page.getTotal());
+        var product = page.getList().getFirst();
+        assertEquals("99.99", product.price());
+        assertEquals("times", product.cardType());
+        assertEquals(10, product.includedUses());
+        assertEquals(1, product.version());
+        assertEquals(1L, product.saleRevision());
+        assertEquals("checkout_unavailable", product.purchaseLimitReason());
+        assertEquals(0L, catalog.cards(catalogPage(102L)).getTotal());
+        req.setPageNo(2);
+        assertEquals(1L, catalog.cards(req).getTotal());
+        assertTrue(catalog.cards(req).getList().isEmpty());
+        assertServiceException(
+                () -> catalog.product(second, "card", 101L), MOBILE_PRODUCT_NOT_AVAILABLE);
+    }
+
+    @Test
+    void
+            publicCardCatalogTimeWindowHasInclusiveStartAndExclusiveEndAndDoesNotExposeRetiredTemplates() {
+        stores.create(store(101L, "A"));
+        Long id = Long.valueOf(cards.create(cardTemplate("period")).getId());
+        var start = java.time.Instant.parse("2026-10-24T00:00:00Z");
+        var offer = onlineSettings(id);
+        offer.getOffers().getFirst().setStartsAt(start);
+        offer.getOffers().getFirst().setEndsAt(start.plusSeconds(60));
+        salesSettings.saveOnline(101L, offer);
+        when(businessClock.now()).thenReturn(start.minusSeconds(1));
+        assertEquals(0L, catalog.cards(catalogPage(101L)).getTotal());
+        assertEquals("not_started", catalog.product(id, "card", 101L).saleStatus());
+        when(businessClock.now()).thenReturn(start);
+        assertEquals(1L, catalog.cards(catalogPage(101L)).getTotal());
+        when(businessClock.now()).thenReturn(start.plusSeconds(60));
+        assertEquals(0L, catalog.cards(catalogPage(101L)).getTotal());
+        assertEquals("ended", catalog.product(id, "card", 101L).saleStatus());
+        var patch =
+                new cn.iocoder.yudao.module.gym.controller.admin.card.vo.GymCardTemplateSaveReqVO();
+        patch.setStatus("inactive");
+        cards.patch(id, patch);
+        assertServiceException(
+                () -> catalog.product(id, "card", 101L), MOBILE_PRODUCT_NOT_AVAILABLE);
+    }
+
+    @Test
+    void publicProductDetailSelectsOneSalesStoreAndTenantNeverCombinesPrices() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        Long id = Long.valueOf(cards.create(cardTemplate("period")).getId());
+        salesSettings.saveOnline(101L, onlineSettings(id));
+        var second = onlineSettings(id);
+        second.getOffers().getFirst().setSalePrice(new BigDecimal("88.50"));
+        salesSettings.saveOnline(102L, second);
+        assertEquals("101", catalog.product(id, "card", null).storeId());
+        assertEquals("88.50", catalog.product(id, "card", 102L).price());
+        var patch = new GymStoreSaveReqVO();
+        patch.setStatus("inactive");
+        stores.patch(101L, patch);
+        assertEquals("102", catalog.product(id, "card", null).storeId());
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(
+                () -> catalog.product(id, "card", null), MOBILE_PRODUCT_NOT_AVAILABLE);
+        assertServiceException(() -> catalog.cards(catalogPage(102L)), STORE_NOT_EXISTS);
+    }
+
+    @Test
+    void publicSubscriptionCatalogRequiresPublishedTermsAndRetainsRealMonthlyPriceAndVersion() {
+        stores.create(store(101L, "A"));
+        Long id = Long.valueOf(cards.create(cardTemplate("period")).getId());
+        var req = subscriptionSettings(id);
+        salesSettings.saveSubscription(101L, req);
+        assertEquals(0L, catalog.subscriptions(catalogPage(101L)).getTotal());
+        var item = req.getItems().getFirst();
+        item.setRenewalTerms("按月扣费，解约申请经渠道确认后生效");
+        item.setAgreementVersion("terms-v1");
+        item.setBillingDay(8);
+        salesSettings.saveSubscription(101L, req);
+        var product = catalog.subscriptions(catalogPage(101L)).getList().getFirst();
+        assertEquals("59.99", product.price());
+        assertEquals("terms-v1", product.agreementVersion());
+        assertEquals(item.getRenewalTerms(), product.renewalTerms());
+        assertEquals(8, product.billingDay());
+        assertEquals(30, product.validDays());
+        assertEquals(2L, product.saleRevision());
+        assertEquals("auto_renewal_integration_deferred", product.purchaseLimitReason());
+        assertEquals(product, catalog.product(id, "subscription", 101L));
+        item.setEnabled(false);
+        salesSettings.saveSubscription(101L, req);
+        assertEquals(0L, catalog.subscriptions(catalogPage(101L)).getTotal());
+        item.setAgreementVersion(null);
+        assertServiceException(
+                () -> salesSettings.saveSubscription(101L, req), SALES_SETTINGS_INVALID);
+    }
+
+    @Test
+    void publicCourseCatalogUsesActiveCurrentEmploymentBeforeCountingAndHidesInternalData() {
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L);
+        Long product = Long.valueOf(courses.createProduct(courseProduct(101L, coach)).getId());
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileCatalogVO
+                        .CoursePage();
+        req.setStoreId(101L);
+        req.setCoachId(coach);
+        var result = catalog.courses(req);
+        assertEquals(1L, result.getTotal());
+        assertEquals("200.00", result.getList().getFirst().price());
+        assertEquals(2, result.getList().getFirst().lessonCount());
+        assertNull(result.getList().getFirst().validDays());
+        String json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(result);
+        assertFalse(json.contains("phone"));
+        assertFalse(json.contains("userId"));
+        assertFalse(json.contains("employeeNo"));
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeMapper.class);
+        var employee = mapper.selectById(coach);
+        employee.setHiredOn(LocalDate.now().plusDays(1));
+        mapper.updateById(employee);
+        assertEquals(0L, catalog.courses(req).getTotal());
+        assertServiceException(
+                () -> catalog.product(product, "course", 101L), MOBILE_PRODUCT_NOT_AVAILABLE);
+        employee.setHiredOn(LocalDate.of(2026, 1, 1));
+        mapper.updateById(employee);
+        var relations =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeStoreMapper
+                                .class);
+        var relation =
+                relations.selectList().stream()
+                        .filter(r -> r.getEmployeeId().equals(coach))
+                        .findFirst()
+                        .orElseThrow();
+        relation.setJoinedOn(LocalDate.now().plusDays(1));
+        relations.updateById(relation);
+        assertEquals(0L, catalog.courses(req).getTotal());
+        relation.setJoinedOn(LocalDate.of(2026, 1, 1));
+        relations.updateById(relation);
+        assertEquals(1L, catalog.courses(req).getTotal());
+        employee.setStatus("inactive");
+        mapper.updateById(employee);
+        assertEquals(0L, catalog.courses(req).getTotal());
+    }
+
+    @Test
+    void courseProductVersionTracksContentAndApprovedPricesButNotNoOpsOrRejectedChanges() {
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L);
+        Long id = Long.valueOf(courses.createProduct(courseProduct(101L, coach)).getId());
+        assertEquals(1, catalog.product(id, "course", 101L).version());
+        var patch =
+                new cn.iocoder.yudao.module.gym.controller.admin.course.vo
+                        .GymCourseProductSaveReqVO();
+        patch.setName("新名称");
+        courses.patchProduct(id, patch);
+        assertEquals(2, catalog.product(id, "course", 101L).version());
+        courses.patchProduct(id, patch);
+        assertEquals(2, catalog.product(id, "course", 101L).version());
+        courses.applyApprovedPrice(id, new BigDecimal("200.00"), new BigDecimal("199.99"));
+        assertEquals(3, catalog.product(id, "course", 101L).version());
+        assertEquals("199.99", catalog.product(id, "course", 101L).price());
+        courses.applyApprovedPrice(id, new BigDecimal("199.99"), new BigDecimal("199.99"));
+        assertEquals(3, catalog.product(id, "course", 101L).version());
+        assertServiceException(
+                () -> courses.applyApprovedPrice(id, new BigDecimal("200.00"), BigDecimal.TEN),
+                COURSE_PRICE_APPROVAL_REQUIRED);
+        assertEquals(3, catalog.product(id, "course", 101L).version());
+    }
+
+    @Test
+    void publicCatalogValidatesParametersAndDoesNotExposeDraftTemplatesOrMalformedSettings() {
+        stores.create(store(101L, "A"));
+        Long id = Long.valueOf(cards.create(cardTemplate("period")).getId());
+        salesSettings.saveOnline(101L, onlineSettings(id));
+        var req = catalogPage(101L);
+        req.setPageSize(-1);
+        assertThrows(ConstraintViolationException.class, () -> catalog.cards(req));
+        assertThrows(
+                ConstraintViolationException.class, () -> catalog.subscriptions(catalogPage(null)));
+        assertServiceException(() -> catalog.product(id, "unknown", 101L), MOBILE_REQUEST_INVALID);
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.sales.GymSalesSettingMapper.class);
+        var config = mapper.selectList().getFirst();
+        config.setContent("{}");
+        mapper.updateById(config);
+        assertEquals(0L, catalog.cards(catalogPage(101L)).getTotal());
+        var draft = cardTemplate("period");
+        draft.setStatus("draft");
+        Long draftId = Long.valueOf(cards.create(draft).getId());
+        config.setContent(
+                cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(
+                        onlineSettings(draftId)));
+        mapper.updateById(config);
+        assertEquals(0L, catalog.cards(catalogPage(101L)).getTotal());
+        assertServiceException(
+                () -> catalog.product(draftId, "card", 101L), MOBILE_PRODUCT_NOT_AVAILABLE);
+        config.setContent("invalid json");
+        mapper.updateById(config);
+        assertEquals(0L, catalog.cards(catalogPage(101L)).getTotal());
+    }
+
+    cn.iocoder.yudao.module.gym.controller.admin.employee.vo.GymPublicCoachProfileVO coachProfile(
+            Long image) {
+        var profile =
+                new cn.iocoder.yudao.module.gym.controller.admin.employee.vo
+                        .GymPublicCoachProfileVO();
+        profile.setPublished(true);
+        profile.setAvatarFileId(image);
+        profile.setIntroduction("力量训练教练介绍");
+        profile.setSpecialties(List.of("力量", "体能"));
+        profile.setQualificationFileIds(image == null ? List.of() : List.of(image));
+        return profile;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileCoachVO.CoachPage coachPage(
+            Long store) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileCoachVO
+                        .CoachPage();
+        req.setStoreId(store);
+        return req;
+    }
+
+    @Test
+    void publicCoachesRequireExplicitPublicationBeforePaginationAndNeverExposeInternalFields() {
+        stores.create(store(101L, "A"));
+        var hidden = employees.create(employee("HIDDEN", 101L));
+        var req = employee("PUBLIC", 101L);
+        req.setPublicCoachProfile(coachProfile(null));
+        var published = employees.create(req);
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        var page = coachPage(101L);
+        page.setPageSize(1);
+        var result = publicCoaches.page(page);
+        assertEquals(1L, result.getTotal());
+        assertEquals(published.getId(), result.getList().getFirst().id());
+        assertEquals("力量训练教练介绍", result.getList().getFirst().introduction());
+        assertEquals(List.of("力量", "体能"), result.getList().getFirst().specialties());
+        assertServiceException(
+                () -> publicCoaches.detail(Long.valueOf(hidden.getId()), 101L),
+                MOBILE_COACH_NOT_AVAILABLE);
+        String json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(result);
+        assertFalse(json.contains("13800000000"));
+        assertFalse(json.contains("phone"));
+        assertFalse(json.contains("employeeNo"));
+        assertFalse(json.contains("userId"));
+        page.setPageNo(2);
+        assertEquals(1L, publicCoaches.page(page).getTotal());
+        assertTrue(publicCoaches.page(page).getList().isEmpty());
+    }
+
+    @Test
+    void publicCoachesRespectCurrentEmploymentAndInactiveEmployeesAndStores() {
+        when(businessClock.now()).thenReturn(java.time.Instant.parse("2026-10-24T04:00:00Z"));
+        stores.create(store(101L, "A"));
+        var req = employee("DATES", 101L);
+        req.setPublicCoachProfile(coachProfile(null));
+        Long id = Long.valueOf(employees.create(req).getId());
+        var em =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeMapper.class);
+        var memberships =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeStoreMapper
+                                .class);
+        var row = em.selectById(id);
+        row.setHiredOn(LocalDate.of(2026, 10, 25));
+        em.updateById(row);
+        assertEquals(0L, publicCoaches.page(coachPage(101L)).getTotal());
+        row.setHiredOn(LocalDate.of(2026, 1, 1));
+        em.updateById(row);
+        var membership =
+                memberships.selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.employee.GymEmployeeStoreDO
+                                ::getEmployeeId,
+                        id);
+        membership.setJoinedOn(LocalDate.of(2026, 10, 25));
+        memberships.updateById(membership);
+        assertServiceException(() -> publicCoaches.detail(id, 101L), MOBILE_COACH_NOT_AVAILABLE);
+        membership.setJoinedOn(LocalDate.of(2026, 10, 24));
+        memberships.updateById(membership);
+        assertEquals(id.toString(), publicCoaches.detail(id, 101L).id());
+        row.setStatus("inactive");
+        em.updateById(row);
+        assertEquals(0L, publicCoaches.page(coachPage(101L)).getTotal());
+        row.setStatus("active");
+        em.updateById(row);
+        var patch = new GymStoreSaveReqVO();
+        patch.setStatus("inactive");
+        stores.patch(101L, patch);
+        assertServiceException(() -> publicCoaches.page(coachPage(101L)), STORE_NOT_EXISTS);
+    }
+
+    @Test
+    void publicCoachMediaUsesPublishedReferencesAndRevokesAfterRemovalAndUnpublishing() {
+        stores.create(store(101L, "A"));
+        var avatar = publicImage(101L);
+        var certificate = publicImage(101L);
+        var profile = coachProfile(avatar.getId());
+        profile.setQualificationFileIds(List.of(certificate.getId()));
+        var req = employee("MEDIA", 101L);
+        req.setPublicCoachProfile(profile);
+        Long id = Long.valueOf(employees.create(req).getId());
+        var result = publicCoaches.detail(id, 101L);
+        assertEquals(avatar.getId().toString(), result.avatar().fileId());
+        assertEquals(
+                certificate.getId().toString(), result.qualificationFiles().getFirst().fileId());
+        assertTrue(result.avatar().url().contains("/gym/public-media/"));
+        assertFalse(result.avatar().url().contains("private-storage"));
+        assertNotNull(publicContent.mediaContent(avatar.getId()));
+        assertNotNull(publicContent.mediaContent(certificate.getId()));
+        var patch = new GymEmployeeSaveReqVO();
+        patch.setName("更名");
+        employees.patch(id, patch);
+        assertEquals(profile, employees.get(id).getPublicCoachProfile());
+        profile.setAvatarFileId(null);
+        profile.setQualificationFileIds(List.of());
+        patch = new GymEmployeeSaveReqVO();
+        patch.setPublicCoachProfile(profile);
+        employees.patch(id, patch);
+        assertNull(publicCoaches.detail(id, 101L).avatar());
+        assertServiceException(() -> publicContent.mediaContent(avatar.getId()), FILE_NOT_EXISTS);
+        profile.setPublished(false);
+        patch.setPublicCoachProfile(profile);
+        employees.patch(id, patch);
+        assertEquals(0L, publicCoaches.page(coachPage(101L)).getTotal());
+    }
+
+    @Test
+    void coachPublicationRejectsPrivateForeignAndOtherStoreFilesAndInvalidProfiles() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        var req = employee("FILES", 101L);
+        var profile = coachProfile(file(101L, "member_face").getId());
+        req.setPublicCoachProfile(profile);
+        assertServiceException(() -> employees.create(req), MOBILE_FILE_NOT_OWNED);
+        profile.setAvatarFileId(null);
+        profile.setQualificationFileIds(List.of(publicImage(102L).getId()));
+        assertServiceException(() -> employees.create(req), MOBILE_FILE_NOT_OWNED);
+        TenantContextHolder.setTenantId(2L);
+        var foreign = publicImage(101L);
+        TenantContextHolder.setTenantId(1L);
+        profile.setQualificationFileIds(List.of(foreign.getId()));
+        assertServiceException(() -> employees.create(req), MOBILE_FILE_NOT_OWNED);
+        profile.setQualificationFileIds(List.of());
+        profile.setSpecialties(List.of("力量", " 力量 "));
+        assertServiceException(() -> employees.create(req), MOBILE_REQUEST_INVALID);
+        profile.setSpecialties(List.of("力量"));
+        profile.setQualificationFileIds(List.of(9L, 9L));
+        assertServiceException(() -> employees.create(req), MOBILE_REQUEST_INVALID);
+        profile.setQualificationFileIds(List.of());
+        profile.setIntroduction("a".repeat(4001));
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class, () -> employees.create(req));
+        profile.setIntroduction("介绍");
+        assertNotNull(
+                employees.create(req).getId()); // Failed writes did not leave a partial employee.
+    }
+
+    @Test
+    void coachPublicationRetainsSharedEmployeeScopeAndCannotUseForeignEmploymentLinks() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        var req = employee("SHARED", 101L, 102L);
+        Long shared = Long.valueOf(employees.create(req).getId());
+        var patch = new GymEmployeeSaveReqVO();
+        patch.setPublicCoachProfile(coachProfile(null));
+        scoped(101L);
+        assertServiceException(() -> employees.patch(shared, patch), STORE_NO_PERMISSION);
+        headquarters();
+        req = employee("SECOND", 102L);
+        req.setPublicCoachProfile(coachProfile(null));
+        Long other = Long.valueOf(employees.create(req).getId());
+        assertServiceException(() -> publicCoaches.detail(other, 101L), MOBILE_COACH_NOT_AVAILABLE);
+        TenantContextHolder.setTenantId(2L);
+        var link = new cn.iocoder.yudao.module.gym.dal.dataobject.employee.GymEmployeeStoreDO();
+        link.setEmployeeId(other);
+        link.setStoreId(101L);
+        link.setJoinedOn(LocalDate.of(2026, 1, 1));
+        link.setIsPrimary(true);
+        link.setIsManager(false);
+        applicationContext
+                .getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeStoreMapper.class)
+                .insert(link);
+        TenantContextHolder.setTenantId(1L);
+        assertEquals(0L, publicCoaches.page(coachPage(101L)).getTotal());
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> publicCoaches.detail(other, 102L), STORE_NOT_EXISTS);
+    }
+
+    @Test
+    void coachMediaRevokesWhenEmploymentEndsAndInvalidJsonNeverPublishesFiles() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        var photo = publicImage(101L);
+        var req = employee("MOVE", 101L, 102L);
+        req.setPublicCoachProfile(coachProfile(photo.getId()));
+        Long id = Long.valueOf(employees.create(req).getId());
+        assertNotNull(publicContent.mediaContent(photo.getId()));
+        var replacement = employee("MOVE", 102L);
+        employees.patch(id, replacement);
+        assertNull(publicCoaches.detail(id, 102L).avatar());
+        assertServiceException(() -> publicContent.mediaContent(photo.getId()), FILE_NOT_EXISTS);
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeMapper.class);
+        var row = mapper.selectById(id);
+        row.setCoachProfile("malformed");
+        mapper.updateById(row);
+        assertEquals("", publicCoaches.detail(id, 102L).introduction());
+        assertTrue(publicCoaches.detail(id, 102L).qualificationFiles().isEmpty());
+        var patch = new GymEmployeeSaveReqVO();
+        var profile = coachProfile(photo.getId());
+        profile.setPublished(false);
+        patch.setPublicCoachProfile(profile);
+        files.deleteById(photo.getId());
+        employees.patch(id, patch);
+        assertEquals(0L, publicCoaches.page(coachPage(102L)).getTotal());
+    }
+
+    @Test
+    void coachPhotoIsPublicOnlyWhileAtLeastOnePublishedCurrentCoachReferencesIt() {
+        stores.create(store(101L, "A"));
+        var image = publicImage(101L);
+        var first = employee("FIRSTPUBLIC", 101L);
+        first.setPublicCoachProfile(coachProfile(image.getId()));
+        var second = employee("SECONDPUBLIC", 101L);
+        second.setPublicCoachProfile(coachProfile(image.getId()));
+        Long firstId = Long.valueOf(employees.create(first).getId());
+        Long secondId = Long.valueOf(employees.create(second).getId());
+        var hidden = coachProfile(image.getId());
+        hidden.setPublished(false);
+        var patch = new GymEmployeeSaveReqVO();
+        patch.setPublicCoachProfile(hidden);
+        employees.patch(firstId, patch);
+        assertNotNull(publicContent.mediaContent(image.getId()));
+        var inactive = new GymEmployeeSaveReqVO();
+        inactive.setStatus("inactive");
+        employees.patch(secondId, inactive);
+        assertServiceException(() -> publicContent.mediaContent(image.getId()), FILE_NOT_EXISTS);
+        inactive.setStatus("active");
+        employees.patch(secondId, inactive);
+        assertNotNull(publicContent.mediaContent(image.getId()));
+        var storePatch = new GymStoreSaveReqVO();
+        storePatch.setStatus("inactive");
+        stores.patch(101L, storePatch);
+        assertServiceException(() -> publicContent.mediaContent(image.getId()), FILE_NOT_EXISTS);
+    }
+
+    Long selfCoach(Long user, boolean published) {
+        Long id = approvalEmployee("SELF-COACH-" + user, user);
+        users.getUser(user).setDeptId(101L);
+        var p = coachProfile(null);
+        p.setPublished(published);
+        var req = new GymEmployeeSaveReqVO();
+        req.setPublicCoachProfile(p);
+        employees.patch(id, req);
+        return id;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileCoachProfilePatch
+            selfCoachPatch() {
+        return new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo
+                .GymMobileCoachProfilePatch();
+    }
+
+    @Test
+    void selfCoachEditsOnlyOwnFieldsAndPreservesAdministratorPublicationAndIdentity() {
+        stores.create(store(101L, "A"));
+        Long own = selfCoach(91L, true), other = selfCoach(92L, true);
+        personalScope(91L);
+        assertEquals(own.toString(), coachSelfController.get().getData().id());
+        var patch = selfCoachPatch();
+        patch.setIntroduction("本人更新");
+        patch.setSpecialties(List.of("柔韧"));
+        var result = coachSelfController.patch(patch).getData();
+        assertEquals("本人更新", result.introduction());
+        assertEquals(List.of("柔韧"), result.specialties());
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeMapper.class);
+        var saved = mapper.selectById(own);
+        assertTrue(saved.getCoachPublished());
+        assertEquals("测试员工", saved.getName());
+        assertEquals("13800000000", saved.getPhone());
+        assertEquals(91L, saved.getUserId());
+        assertEquals("91", saved.getUpdater());
+        assertEquals("本人更新", publicCoaches.detail(own, 101L).introduction());
+        assertEquals("力量训练教练介绍", publicCoaches.detail(other, 101L).introduction());
+        assertFalse(
+                cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(result)
+                        .contains("13800000000"));
+        assertEquals(result, coachSelf.patch(selfCoachPatch()));
+    }
+
+    @Test
+    void selfCoachDraftUsesActualPrivateProductWithoutAutomaticallyPublishing() {
+        stores.create(store(101L, "A"));
+        Long id = approvalEmployee("DRAFT", 91L);
+        personalScope(91L);
+        assertServiceException(() -> coachSelf.get(), MOBILE_COACH_NOT_AVAILABLE);
+        headquarters();
+        courses.createProduct(courseProduct(101L, id));
+        personalScope(91L);
+        assertEquals("", coachSelf.get().introduction());
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeMapper.class);
+        assertNull(mapper.selectById(id).getCoachProfile());
+        var image = publicImage(101L);
+        image.setUploaderId(91L);
+        files.updateById(image);
+        var patch = selfCoachPatch();
+        patch.setIntroduction("待发布介绍");
+        patch.setAvatarFileId(image.getId());
+        var result = coachSelf.patch(patch);
+        assertFalse(mapper.selectById(id).getCoachPublished());
+        assertTrue(
+                result.avatar().url().startsWith("/admin-api/gym/mobile/me/coach-profile/files/"));
+        assertNotNull(coachSelf.content(image.getId()));
+        assertServiceException(() -> publicContent.mediaContent(image.getId()), FILE_NOT_EXISTS);
+        assertEquals(0L, publicCoaches.page(coachPage(101L)).getTotal());
+    }
+
+    @Test
+    void selfCoachRejectsWrongTokenDisabledAccountMissingEmployeeAndDuplicateBinding() {
+        stores.create(store(101L, "A"));
+        Long id = selfCoach(91L, false);
+        assertServiceException(() -> coachSelf.get(), MOBILE_EMPLOYEE_REQUIRED);
+        loginAs(91L);
+        var account = new cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO();
+        account.setId(91L);
+        account.setStatus(1);
+        when(workAccounts.getUser(91L)).thenReturn(account);
+        assertServiceException(() -> coachSelf.get(), MOBILE_IDENTITY_INVALID);
+        account.setStatus(0);
+        var login =
+                cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser();
+        login.setUserType(1);
+        assertServiceException(() -> coachSelf.get(), MOBILE_IDENTITY_INVALID);
+        login.setUserType(2);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> coachSelf.get(), MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        Long duplicate = Long.valueOf(employees.create(employee("DUPLICATE-COACH", 101L)).getId());
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeMapper.class);
+        var row = mapper.selectById(duplicate);
+        row.setUserId(91L);
+        assertThrows(
+                org.springframework.dao.DuplicateKeyException.class, () -> mapper.updateById(row));
+        row.setUserId(92L);
+        mapper.updateById(row);
+        assertEquals(id.toString(), coachSelf.get().id());
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        assertThrows(
+                org.springframework.security.core.AuthenticationException.class,
+                () -> coachSelfController.get());
+        assertThrows(
+                org.springframework.security.core.AuthenticationException.class,
+                () -> coachSelfController.patch(selfCoachPatch()));
+        assertThrows(
+                org.springframework.security.core.AuthenticationException.class,
+                () -> coachSelfController.content(1L));
+    }
+
+    @Test
+    void selfCoachRequiresCurrentEmployeeAndActiveEmploymentForEveryReadAndWrite() {
+        when(businessClock.now()).thenReturn(java.time.Instant.parse("2026-10-24T04:00:00Z"));
+        stores.create(store(101L, "A"));
+        Long id = selfCoach(91L, false);
+        loginAs(91L);
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeMapper.class);
+        var row = mapper.selectById(id);
+        row.setStatus("inactive");
+        mapper.updateById(row);
+        assertServiceException(() -> coachSelf.get(), MOBILE_EMPLOYEE_REQUIRED);
+        row.setStatus("active");
+        row.setHiredOn(LocalDate.of(2026, 10, 25));
+        mapper.updateById(row);
+        assertServiceException(() -> coachSelf.get(), MOBILE_EMPLOYEE_REQUIRED);
+        row.setHiredOn(LocalDate.of(2026, 1, 1));
+        mapper.updateById(row);
+        var links =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeStoreMapper
+                                .class);
+        var link =
+                links.selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.employee.GymEmployeeStoreDO
+                                ::getEmployeeId,
+                        id);
+        link.setJoinedOn(LocalDate.of(2026, 10, 25));
+        links.updateById(link);
+        assertServiceException(() -> coachSelf.patch(selfCoachPatch()), MOBILE_COACH_NOT_AVAILABLE);
+        link.setJoinedOn(LocalDate.of(2026, 1, 1));
+        links.updateById(link);
+        var storePatch = new GymStoreSaveReqVO();
+        storePatch.setStatus("inactive");
+        stores.patch(101L, storePatch);
+        assertServiceException(() -> coachSelf.get(), MOBILE_COACH_NOT_AVAILABLE);
+    }
+
+    @Test
+    void selfCoachNewFilesMustBeOwnUploadsAndPrivateDraftPreviewRequiresCurrentBinding() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        selfCoach(91L, false);
+        loginAs(91L);
+        var other = publicImage(101L);
+        other.setUploaderId(92L);
+        files.updateById(other);
+        var patch = selfCoachPatch();
+        patch.setAvatarFileId(other.getId());
+        assertServiceException(() -> coachSelf.patch(patch), MOBILE_FILE_NOT_OWNED);
+        var privateFile = file(101L, "contract");
+        privateFile.setUploaderId(91L);
+        files.updateById(privateFile);
+        patch.setAvatarFileId(privateFile.getId());
+        assertServiceException(() -> coachSelf.patch(patch), MOBILE_FILE_NOT_OWNED);
+        var different = publicImage(102L);
+        different.setUploaderId(91L);
+        files.updateById(different);
+        patch.setAvatarFileId(different.getId());
+        assertServiceException(() -> coachSelf.patch(patch), MOBILE_FILE_NOT_OWNED);
+        TenantContextHolder.setTenantId(2L);
+        var foreign = publicImage(101L);
+        foreign.setUploaderId(91L);
+        files.updateById(foreign);
+        TenantContextHolder.setTenantId(1L);
+        patch.setAvatarFileId(foreign.getId());
+        assertServiceException(() -> coachSelf.patch(patch), MOBILE_FILE_NOT_OWNED);
+        var own = publicImage(101L);
+        own.setUploaderId(91L);
+        files.updateById(own);
+        assertServiceException(() -> coachSelf.content(own.getId()), MOBILE_FILE_NOT_OWNED);
+        patch.setAvatarFileId(own.getId());
+        coachSelf.patch(patch);
+        assertArrayEquals(
+                fileApi.getFileContentByUrl(own.getUrl()),
+                coachSelf.content(own.getId()).getContent());
+        loginAs(92L);
+        assertServiceException(() -> coachSelf.content(own.getId()), MOBILE_EMPLOYEE_REQUIRED);
+        loginAs(91L);
+        when(fileApi.getFileContentByUrl(own.getUrl()))
+                .thenReturn("not an image".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        assertServiceException(() -> coachSelf.content(own.getId()), FILE_NOT_EXISTS);
+        patch.setAvatarFileId(null);
+        coachSelf.patch(patch);
+        assertServiceException(() -> coachSelf.content(own.getId()), MOBILE_FILE_NOT_OWNED);
+    }
+
+    @Test
+    void selfCoachKeepsAdminAssignedImagesButCanClearThemAndRejectsInvalidMergedFields() {
+        stores.create(store(101L, "A"));
+        Long id = selfCoach(91L, true);
+        var image = publicImage(101L);
+        image.setUploaderId(1L);
+        files.updateById(image);
+        var profile = coachProfile(image.getId());
+        var admin = new GymEmployeeSaveReqVO();
+        admin.setPublicCoachProfile(profile);
+        employees.patch(id, admin);
+        personalScope(91L);
+        var patch = selfCoachPatch();
+        patch.setIntroduction("更新介绍");
+        coachSelf.patch(patch);
+        assertEquals(image.getId().toString(), coachSelf.get().avatar().fileId());
+        patch.setIntroduction(null);
+        assertThrows(ConstraintViolationException.class, () -> coachSelf.patch(patch));
+        assertEquals("更新介绍", coachSelf.get().introduction());
+        patch.setIntroduction("");
+        patch.setSpecialties(List.of("力量", "力量"));
+        assertServiceException(() -> coachSelf.patch(patch), MOBILE_REQUEST_INVALID);
+        patch.setSpecialties(List.of());
+        patch.setQualificationFileIds(null);
+        assertThrows(ConstraintViolationException.class, () -> coachSelf.patch(patch));
+        patch.setQualificationFileIds(List.of());
+        patch.setAvatarFileId(null);
+        var result = coachSelf.patch(patch);
+        assertEquals("", result.introduction());
+        assertNull(result.avatar());
+        assertTrue(result.qualificationFiles().isEmpty());
+        assertServiceException(() -> coachSelf.content(image.getId()), MOBILE_FILE_NOT_OWNED);
+        assertServiceException(() -> publicContent.mediaContent(image.getId()), FILE_NOT_EXISTS);
+    }
+
+    @Test
+    void simultaneousSelfCoachPatchesMergeDifferentFieldsUnderEmployeeRowLock() throws Exception {
+        stores.create(store(101L, "A"));
+        selfCoach(91L, true);
+        var ready = new java.util.concurrent.CountDownLatch(2);
+        var start = new java.util.concurrent.CountDownLatch(1);
+        try (var executor = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            var tasks = new ArrayList<java.util.concurrent.Future<?>>();
+            for (boolean introduction : List.of(true, false))
+                tasks.add(
+                        executor.submit(
+                                () -> {
+                                    try {
+                                        TenantContextHolder.setTenantId(1L);
+                                        loginAs(91L);
+                                        var patch = selfCoachPatch();
+                                        if (introduction) patch.setIntroduction("并发介绍");
+                                        else patch.setSpecialties(List.of("并发特长"));
+                                        ready.countDown();
+                                        assertTrue(
+                                                start.await(
+                                                        3, java.util.concurrent.TimeUnit.SECONDS));
+                                        coachSelf.patch(patch);
+                                        return null;
+                                    } finally {
+                                        cleanupContext();
+                                    }
+                                }));
+            assertTrue(ready.await(3, java.util.concurrent.TimeUnit.SECONDS));
+            start.countDown();
+            for (var task : tasks) task.get(8, java.util.concurrent.TimeUnit.SECONDS);
+        }
+        loginAs(91L);
+        assertEquals("并发介绍", coachSelf.get().introduction());
+        assertEquals(List.of("并发特长"), coachSelf.get().specialties());
+    }
+
+    void workFilePermissions(Long user) {
+        for (String p :
+                List.of(
+                        "gym:files:upload",
+                        "gym:files:read",
+                        "gym:measurements:write",
+                        "gym:measurements:read",
+                        "gym:contracts:write",
+                        "gym:contracts:read",
+                        "gym:contracts:templates"))
+            when(permissions.hasAnyPermissions(eq(user), eq(p))).thenReturn(true);
+    }
+
+    void workFileStorage() {
+        var contents = new java.util.concurrent.ConcurrentHashMap<String, byte[]>();
+        when(fileApi.createFile(
+                        any(byte[].class),
+                        anyString(),
+                        anyString(),
+                        anyString(),
+                        nullable(Long.class)))
+                .thenAnswer(
+                        inv -> {
+                            String url = "private-work:" + inv.getArgument(1);
+                            contents.put(url, inv.getArgument(0));
+                            return url;
+                        });
+        when(fileApi.getFileContentByUrl(startsWith("private-work:")))
+                .thenAnswer(inv -> contents.get(inv.getArgument(0)));
+    }
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileWorkFileUploadReqVO
+            workFileRequest(String purpose, Long member) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo
+                        .GymMobileWorkFileUploadReqVO();
+        req.setPurpose(purpose);
+        req.setStoreId(101L);
+        req.setMemberId(member);
+        byte[] content =
+                "contract".equals(purpose)
+                        ? "%PDF-1.7\nwork-file".getBytes(java.nio.charset.StandardCharsets.UTF_8)
+                        : new byte[] {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2};
+        req.setFile(
+                new org.springframework.mock.web.MockMultipartFile(
+                        "file",
+                        "contract".equals(purpose) ? "doc.pdf" : "photo.png",
+                        "contract".equals(purpose) ? "application/pdf" : "image/png",
+                        content));
+        return req;
+    }
+
+    @Test
+    void workCoachUploadUsesOwnEmployeeTargetAndCompletesSelfPhotoFlowWithoutStoreWriteScope() {
+        stores.create(store(101L, "A"));
+        Long coach = selfCoach(91L, false);
+        selfCoach(92L, false);
+        workFileStorage();
+        workFilePermissions(91L);
+        personalScope(91L);
+        var req = workFileRequest("coach_profile", null);
+        var result = workFiles.upload(req);
+        Long id = Long.valueOf(result.fileId());
+        var row = files.selectById(id);
+        assertEquals(91L, row.getUploaderId());
+        assertEquals("image", row.getCategory());
+        var link =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileWorkFileMapper
+                                        .class)
+                        .selectOne(
+                                cn.iocoder.yudao.module.gym.dal.dataobject.mobile
+                                                .GymMobileWorkFileDO
+                                        ::getFileId,
+                                id);
+        assertEquals(coach, link.getEmployeeId());
+        assertNull(link.getMemberId());
+        assertNotNull(workFiles.content(id));
+        assertServiceException(() -> coachSelf.content(id), MOBILE_FILE_NOT_OWNED);
+        var patch = selfCoachPatch();
+        patch.setAvatarFileId(id);
+        coachSelf.patch(patch);
+        assertNotNull(coachSelf.content(id));
+        assertServiceException(() -> publicContent.mediaContent(id), FILE_NOT_EXISTS);
+        workFilePermissions(92L);
+        personalScope(92L);
+        assertServiceException(() -> workFiles.content(id), MOBILE_FILE_NOT_OWNED);
+        assertServiceException(() -> coachSelf.patch(patch), MOBILE_FILE_NOT_OWNED);
+        assertFalse(
+                cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(result)
+                        .contains("private-work"));
+    }
+
+    @Test
+    void workReportUploadKeepsTargetThroughBindingAndRevocationEvenForOriginalUploader() {
+        Long member = workMember(),
+                other = Long.valueOf(members.create(member(101L, "13800000988")).getId());
+        Long coach = responsibleEmployee(91L), second = responsibleEmployee(92L);
+        memberCoaches.replace(member, 101L, responsibility(coach, second));
+        memberCoaches.replace(other, 101L, responsibility(coach));
+        workFileStorage();
+        workFilePermissions(91L);
+        workFilePermissions(92L);
+        personalScope(91L);
+        Long report =
+                Long.valueOf(workFiles.upload(workFileRequest("body_report", member)).fileId());
+        assertNotNull(workFiles.content(report));
+        personalScope(92L);
+        assertServiceException(() -> workFiles.content(report), MOBILE_FILE_NOT_OWNED);
+        personalScope(91L);
+        var wrong = workMeasurement(other);
+        wrong.setReportFileId(report);
+        assertServiceException(
+                () -> workRecords.createMeasurement(wrong, "wrong-upload-target"),
+                MEASUREMENT_FILE_INVALID);
+        var good = workMeasurement(member);
+        good.setReportFileId(report);
+        workRecords.createMeasurement(good, "same-upload-target");
+        personalScope(92L);
+        assertNotNull(workFiles.content(report));
+        headquarters();
+        memberCoaches.replace(member, 101L, responsibility(second));
+        personalScope(91L);
+        assertServiceException(() -> workFiles.content(report), STORE_NO_PERMISSION);
+        assertServiceException(
+                () -> workFiles.upload(workFileRequest("body_report", member)),
+                STORE_NO_PERMISSION);
+        headquarters();
+        loginAs(1L);
+        workFilePermissions(1L);
+        assertServiceException(
+                () -> workRecords.createMeasurement(wrong, "broad-wrong-upload-target"),
+                MEASUREMENT_FILE_INVALID);
+    }
+
+    @Test
+    void workTrainingUploadCannotBeRepurposedForAnotherMemberThroughLegacyBinding() {
+        Long member = workMember(),
+                other = Long.valueOf(members.create(member(101L, "13800000987")).getId());
+        workFileStorage();
+        workFilePermissions(1L);
+        Long file =
+                Long.valueOf(workFiles.upload(workFileRequest("training_plan", member)).fileId());
+        var wrong = workPlan(other);
+        wrong.setFileId(file);
+        assertServiceException(
+                () -> workRecords.createPlan(wrong, "wrong-training-file"),
+                TRAINING_PLAN_FILE_INVALID);
+        var good = workPlan(member);
+        good.setFileId(file);
+        workRecords.createPlan(good, "good-training-file");
+        assertNotNull(workFiles.content(file));
+        when(permissions.hasAnyPermissions(eq(1L), eq("gym:measurements:read"))).thenReturn(false);
+        assertServiceException(
+                () -> workFiles.content(file),
+                cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants
+                        .FORBIDDEN);
+    }
+
+    @Test
+    void workContractMemberUploadsStayPrivateAndCannotBecomeSharedTemplates() {
+        Long member = workMember();
+        workFileStorage();
+        workFilePermissions(1L);
+        Long privatePdf =
+                Long.valueOf(workFiles.upload(workFileRequest("contract", member)).fileId());
+        assertNotNull(workFiles.content(privatePdf));
+        assertServiceException(
+                () -> contractTemplates.create(contractTemplate(privatePdf)),
+                CONTRACT_TEMPLATE_FILE_INVALID);
+        Long templatePdf =
+                Long.valueOf(workFiles.upload(workFileRequest("contract", null)).fileId());
+        assertNotNull(contractTemplates.create(contractTemplate(templatePdf)).getId());
+        assertNotNull(workFiles.content(templatePdf));
+        var png = workFileRequest("contract", null);
+        png.setFile(workFileRequest("coach_profile", null).getFile());
+        assertServiceException(() -> workFiles.upload(png), FILE_TYPE_NOT_ALLOWED, "文件内容不符合用途要求");
+        personalScope(91L);
+        workFilePermissions(91L);
+        assertServiceException(
+                () -> workFiles.upload(workFileRequest("contract", null)), STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void workFileFunctionPermissionsAndBusinessPermissionsAreBothRequiredAndTokenTypeChecked()
+            throws Exception {
+        Long member = workMember();
+        workFileStorage();
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () ->
+                        workFilesController.upload(
+                                workFileRequest("body_report", member),
+                                new org.springframework.validation.BeanPropertyBindingResult(
+                                        workFileRequest("body_report", member), "file")));
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () ->
+                        workFilesController.content(
+                                1L, new org.springframework.mock.web.MockHttpServletResponse()));
+        assertServiceException(
+                () -> workFiles.upload(workFileRequest("body_report", member)),
+                cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants
+                        .FORBIDDEN);
+        when(permissions.hasAnyPermissions(eq(1L), eq("gym:files:upload"))).thenReturn(true);
+        assertServiceException(
+                () -> workFiles.upload(workFileRequest("body_report", member)),
+                cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants
+                        .FORBIDDEN);
+        workFilePermissions(1L);
+        assertServiceException(
+                () -> workFiles.upload(workFileRequest("body_report", null)),
+                MOBILE_REQUEST_INVALID);
+        assertServiceException(
+                () -> workFiles.upload(workFileRequest("coach_profile", member)),
+                MOBILE_REQUEST_INVALID);
+        var login =
+                cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser();
+        login.setUserType(1);
+        assertServiceException(
+                () -> workFiles.upload(workFileRequest("body_report", member)),
+                MOBILE_IDENTITY_INVALID);
+        login.setUserType(2);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> workFiles.content(1L), MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        verify(fileApi, never())
+                .createFile(
+                        any(byte[].class),
+                        anyString(),
+                        anyString(),
+                        anyString(),
+                        nullable(Long.class));
+    }
+
+    @Test
+    void workUploadsValidateMagicDeclaredTypeByteSizeAndUseUniqueSafeStorageNames() {
+        stores.create(store(101L, "A"));
+        selfCoach(91L, false);
+        workFilePermissions(91L);
+        workFileStorage();
+        personalScope(91L);
+        var req = workFileRequest("coach_profile", null);
+        req.setFile(
+                new org.springframework.mock.web.MockMultipartFile(
+                        "file",
+                        "face.png",
+                        "image/png",
+                        "%PDF-1.7\nnot a photo".getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        assertServiceException(() -> workFiles.upload(req), FILE_TYPE_NOT_ALLOWED, "文件内容不符合用途要求");
+        var original = workFileRequest("coach_profile", null).getFile();
+        byte[] png;
+        try {
+            png = original.getBytes();
+        } catch (java.io.IOException e) {
+            throw new AssertionError(e);
+        }
+        req.setFile(
+                new org.springframework.mock.web.MockMultipartFile(
+                        "file", "face.pdf", "application/pdf", png));
+        assertServiceException(() -> workFiles.upload(req), FILE_TYPE_NOT_ALLOWED, "文件声明类型与内容不一致");
+        var oversized = mock(org.springframework.web.multipart.MultipartFile.class);
+        when(oversized.getSize()).thenReturn(5L * 1024 * 1024 + 1);
+        req.setFile(oversized);
+        assertServiceException(
+                () -> workFiles.upload(req),
+                FILE_SIZE_EXCEED_LIMIT,
+                "coach_profile",
+                5L * 1024 * 1024,
+                5L * 1024 * 1024 + 1);
+        req.setFile(
+                new org.springframework.mock.web.MockMultipartFile(
+                        "file", "../photo\r\n.png", "image/png", png));
+        var a = workFiles.upload(req);
+        var b = workFiles.upload(req);
+        assertEquals("photo.png", a.name());
+        assertNotEquals(a.fileId(), b.fileId());
+        assertNotEquals(
+                files.selectById(Long.valueOf(a.fileId())).getUrl(),
+                files.selectById(Long.valueOf(b.fileId())).getUrl());
+        when(fileApi.getFileContentByUrl(files.selectById(Long.valueOf(a.fileId())).getUrl()))
+                .thenReturn(new byte[] {1, 2});
+        assertServiceException(() -> workFiles.content(Long.valueOf(a.fileId())), FILE_NOT_EXISTS);
+    }
+
+    @Test
+    void workUploadStorageFailureLeavesNoMetadataAndHistoricalFilesKeepTheirOriginalScope() {
+        Long member = workMember();
+        workFilePermissions(1L);
+        workFileStorage();
+        when(fileApi.createFile(
+                        any(byte[].class),
+                        anyString(),
+                        anyString(),
+                        anyString(),
+                        nullable(Long.class)))
+                .thenThrow(new IllegalStateException("storage offline"));
+        long before = files.selectCount();
+        assertThrows(
+                IllegalStateException.class,
+                () -> workFiles.upload(workFileRequest("body_report", member)));
+        assertEquals(before, files.selectCount());
+        assertEquals(
+                0L,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileWorkFileMapper
+                                        .class)
+                        .selectCount());
+        var old = publicImage(101L);
+        old.setCategory("body_report");
+        files.updateById(old);
+        assertNotNull(workFiles.content(old.getId()));
+        personalScope(91L);
+        workFilePermissions(91L);
+        assertServiceException(
+                () -> workFiles.content(old.getId()), FILE_STORE_NO_PERMISSION, 101L);
+        loginAs(1L);
+        headquarters();
+        TenantContextHolder.setTenantId(2L);
+        cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser()
+                .setTenantId(2L);
+        assertServiceException(() -> workFiles.content(old.getId()), FILE_NOT_EXISTS);
+    }
+
+    @Test
+    void workCoachFileTargetSurvivesAccountRebindingAndCannotBePublishedAsAnotherEmployee() {
+        stores.create(store(101L, "A"));
+        Long first = selfCoach(91L, false), second = selfCoach(92L, false);
+        workFileStorage();
+        workFilePermissions(91L);
+        personalScope(91L);
+        Long file = Long.valueOf(workFiles.upload(workFileRequest("coach_profile", null)).fileId());
+        loginAs(1L);
+        headquarters();
+        var adminPatch = new GymEmployeeSaveReqVO();
+        adminPatch.setPublicCoachProfile(coachProfile(file));
+        assertServiceException(() -> employees.patch(second, adminPatch), MOBILE_FILE_NOT_OWNED);
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeMapper.class);
+        var old = mapper.selectById(first);
+        old.setUserId(93L);
+        mapper.updateById(old);
+        var moved = mapper.selectById(second);
+        moved.setUserId(91L);
+        mapper.updateById(moved);
+        personalScope(91L);
+        assertServiceException(() -> workFiles.content(file), MOBILE_FILE_NOT_OWNED);
+        var patch = selfCoachPatch();
+        patch.setAvatarFileId(file);
+        assertServiceException(() -> coachSelf.patch(patch), MOBILE_FILE_NOT_OWNED);
+    }
+
+    @Test
+    void workUploadMetadataAndTargetRollbackTogetherWhileExternalBlobNeedsSeparateCleanup() {
+        Long member = workMember();
+        workFilePermissions(1L);
+        workFileStorage();
+        var tx =
+                new org.springframework.transaction.support.TransactionTemplate(
+                        applicationContext.getBean(
+                                org.springframework.transaction.PlatformTransactionManager.class));
+        long before = files.selectCount();
+        assertThrows(
+                IllegalStateException.class,
+                () ->
+                        tx.execute(
+                                status -> {
+                                    workFiles.upload(workFileRequest("body_report", member));
+                                    throw new IllegalStateException("later business rollback");
+                                }));
+        assertEquals(before, files.selectCount());
+        assertEquals(
+                0L,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileWorkFileMapper
+                                        .class)
+                        .selectCount());
+        var name = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(fileApi)
+                .createFile(
+                        any(byte[].class),
+                        name.capture(),
+                        eq("gym/body_report"),
+                        eq("image/png"),
+                        nullable(Long.class));
+        assertNotNull(fileApi.getFileContentByUrl("private-work:" + name.getValue()));
+        assertNotNull(workFiles.upload(workFileRequest("body_report", member)).fileId());
+    }
+
+    void contextAuthorization() {
+        when(permissions.getUserPermissionInfo(anyLong()))
+                .thenReturn(
+                        new cn.iocoder.yudao.module.system.api.permission.dto
+                                .UserPermissionInfoRespDTO(
+                                List.of("actual-role"),
+                                List.of("gym:members:read", "system:user:query")));
+    }
+
+    @Test
+    void contextHeadquartersWithoutEmployeeOnlyListsActiveCurrentTenantStores() {
+        contextAuthorization();
+        stores.create(store(103L, "C"));
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        var patch = new GymStoreSaveReqVO();
+        patch.setStatus("inactive");
+        stores.patch(102L, patch);
+        TenantContextHolder.setTenantId(2L);
+        stores.create(store(201L, "OTHER-TENANT"));
+        TenantContextHolder.setTenantId(1L);
+        var result = workContextController.get().getData();
+        assertNull(result.employeeId());
+        assertEquals(List.of("actual-role"), result.roles());
+        assertEquals(List.of("gym:members:read"), result.permissions());
+        assertEquals(List.of("101", "103"), result.stores().stream().map(s -> s.id()).toList());
+        assertNull(result.stores().getFirst().cover());
+        assertNull(result.stores().getFirst().distanceMeters());
+    }
+
+    @Test
+    void contextRestrictedScopeDoesNotExpandToUnassignedOrNonexistentStores() {
+        contextAuthorization();
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        scoped(102L, 999L);
+        assertEquals(List.of("102"), workContext.get().stores().stream().map(s -> s.id()).toList());
+        scoped();
+        assertTrue(workContext.get().stores().isEmpty());
+        verify(permissions, times(2)).getUserPermissionInfo(1L);
+    }
+
+    @Test
+    void contextOwnEmploymentIsAnEntryButNeverGrantsWholeStoreMemberAccess() {
+        contextAuthorization();
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        Long employee = approvalEmployee("CONTEXT-SELF", 91L);
+        personalScope(91L);
+        var result = workContext.get();
+        assertEquals(employee.toString(), result.employeeId());
+        assertEquals(List.of("101"), result.stores().stream().map(s -> s.id()).toList());
+        assertServiceException(
+                () -> applicationContext.getBean(GymDataScope.class).check(101L),
+                STORE_NO_PERMISSION);
+        var req = new GymMobileWorkMembersVO.MemberPage();
+        req.setStoreId(101L);
+        assertServiceException(() -> workMemberQueries.page(req), STORE_NO_PERMISSION);
+        assertEquals(List.of("actual-role"), result.roles());
+    }
+
+    @Test
+    void contextRechecksEmploymentDatesEmployeeStateAndStoreClosure() {
+        contextAuthorization();
+        when(businessClock.now()).thenReturn(java.time.Instant.parse("2026-10-24T04:00:00Z"));
+        stores.create(store(101L, "A"));
+        Long id = approvalEmployee("CONTEXT-DATES", 91L);
+        scoped();
+        loginAs(91L);
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeMapper.class);
+        var links =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeStoreMapper
+                                .class);
+        var link =
+                links.selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.employee.GymEmployeeStoreDO
+                                ::getEmployeeId,
+                        id);
+        link.setJoinedOn(LocalDate.of(2026, 10, 25));
+        links.updateById(link);
+        assertEquals(id.toString(), workContext.get().employeeId());
+        assertTrue(workContext.get().stores().isEmpty());
+        link.setJoinedOn(LocalDate.of(2026, 10, 24));
+        links.updateById(link);
+        assertEquals(1, workContext.get().stores().size());
+        var row = mapper.selectById(id);
+        row.setHiredOn(LocalDate.of(2026, 10, 25));
+        mapper.updateById(row);
+        assertNull(workContext.get().employeeId());
+        assertTrue(workContext.get().stores().isEmpty());
+        row.setHiredOn(LocalDate.of(2026, 10, 24));
+        row.setStatus("inactive");
+        mapper.updateById(row);
+        assertNull(workContext.get().employeeId());
+        assertTrue(workContext.get().stores().isEmpty());
+        row.setStatus("active");
+        mapper.updateById(row);
+        var store = storeMapper.selectById(101L);
+        store.setStatus("inactive");
+        storeMapper.updateById(store);
+        assertEquals(id.toString(), workContext.get().employeeId());
+        assertTrue(workContext.get().stores().isEmpty());
+    }
+
+    @Test
+    void contextRejectsUnauthenticatedMemberCrossTenantAndDisabledAccountsBeforeReadingRoles() {
+        var login =
+                cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser();
+        login.setUserType(1);
+        assertServiceException(() -> workContextController.get(), MOBILE_IDENTITY_INVALID);
+        login.setUserType(2);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> workContext.get(), MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        var account = new cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO();
+        account.setId(1L);
+        account.setStatus(1);
+        when(workAccounts.getUser(1L)).thenReturn(account);
+        assertServiceException(() -> workContext.get(), MOBILE_IDENTITY_INVALID);
+        when(workAccounts.getUser(1L)).thenReturn(null);
+        assertServiceException(() -> workContext.get(), MOBILE_IDENTITY_INVALID);
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        assertServiceException(() -> workContext.get(), MOBILE_IDENTITY_INVALID);
+        assertThrows(
+                org.springframework.security.core.AuthenticationException.class,
+                () -> workContextController.get());
+        verify(permissions, never()).getUserPermissionInfo(anyLong());
+    }
+
+    <T extends Dates> T workCourseDates(T req) {
+        req.setStartDate(LocalDate.of(2026, 10, 24));
+        req.setEndDate(LocalDate.of(2026, 10, 25));
+        return req;
+    }
+
+    void workCourseClock() {
+        when(businessClock.now()).thenReturn(java.time.Instant.parse("2026-10-23T04:00:00Z"));
+    }
+
+    Long workCourseBooking(Long member, Long coach, Long store, java.time.Instant start) {
+        Long product = Long.valueOf(courses.createProduct(courseProduct(store, coach)).getId());
+        var sessionReq = courseSession(product, coach, start);
+        sessionReq.setStoreId(store);
+        Long session = Long.valueOf(courses.createSession(sessionReq).getId());
+        var pack =
+                courses.issuePack(
+                        member,
+                        product,
+                        java.time.Instant.parse("2026-10-22T00:00:00Z"),
+                        start.plusSeconds(7200),
+                        "test-payment",
+                        "work-course-read-" + product);
+        return Long.valueOf(
+                courses.createBooking(bookingRequest(member, session, pack.getId())).getId());
+    }
+
+    void workCourseConfirm(Long id, java.time.Instant start) {
+        when(businessClock.now()).thenReturn(start.plusSeconds(60));
+        courses.checkIn(id);
+        courses.confirmLesson(id);
+    }
+
+    @Test
+    void workCoursesReadActualBookingCheckinAndConsumptionWithHistoricalBalance() {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L);
+        Long member = Long.valueOf(members.create(member(101L, "13800002201")).getId());
+        var start = java.time.Instant.parse("2026-10-24T02:00:00Z");
+        Long booking = workCourseBooking(member, coach, 101L, start);
+        assertFalse(workCourses.booking(booking).checkedIn());
+        workCourseConfirm(booking, start);
+        var result = workCourses.booking(booking);
+        assertEquals("completed", result.status());
+        assertTrue(result.checkedIn());
+        assertEquals("2026-10-24T10:00+08:00", result.startsAt());
+        assertEquals(member.toString(), result.memberId());
+        assertEquals("联调会员", result.memberName());
+        assertEquals(coach.toString(), result.coachId());
+        var lessonsPage = workCourses.lessons(workCourseDates(new LessonPage()));
+        assertEquals(1, lessonsPage.getTotal());
+        var lesson = lessonsPage.getList().getFirst();
+        assertEquals(result.lessonRecordId(), lesson.id());
+        assertEquals(1, lesson.deductedLessons());
+        assertEquals(1, lesson.remainingLessons());
+        assertEquals("101", lesson.storeId());
+        var checkin = workCourses.checkins(workCourseDates(new CheckinPage())).getList().getFirst();
+        assertEquals(lesson.checkinId(), checkin.id());
+        assertEquals(booking.toString(), checkin.bookingId());
+        assertEquals(coach.toString(), checkin.coachId());
+        assertEquals("manual", checkin.source());
+        var req = workCourseDates(new BookingPage());
+        req.setStatus("completed");
+        assertEquals(1, workCourses.bookings(req).getTotal());
+        req.setStatus("confirmed");
+        assertEquals(0, workCourses.bookings(req).getTotal());
+        var lessonMapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymLessonRecordMapper.class);
+        var row = lessonMapper.selectById(Long.valueOf(lesson.id()));
+        row.setRemainingLessonsAfter(null);
+        lessonMapper.update(
+                null,
+                new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<
+                                cn.iocoder.yudao.module.gym.dal.dataobject.course
+                                        .GymLessonRecordDO>()
+                        .eq(
+                                cn.iocoder.yudao.module.gym.dal.dataobject.course.GymLessonRecordDO
+                                        ::getId,
+                                row.getId())
+                        .set(
+                                cn.iocoder.yudao.module.gym.dal.dataobject.course.GymLessonRecordDO
+                                        ::getRemainingLessonsAfter,
+                                null));
+        assertNull(
+                workCourses
+                        .lessons(workCourseDates(new LessonPage()))
+                        .getList()
+                        .getFirst()
+                        .remainingLessons());
+        var store = storeMapper.selectById(101L);
+        store.setStatus("inactive");
+        storeMapper.updateById(store);
+        assertEquals(1, workCourses.bookings(workCourseDates(new BookingPage())).getTotal());
+        assertEquals(1, workCourses.lessons(workCourseDates(new LessonPage())).getTotal());
+    }
+
+    @Test
+    void workCoursesSelfNeedsBothTeachingAndMemberResponsibilityBeforePaginationAndDetail() {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long ownCoach = responsibleEmployee(91L), otherCoach = responsibleEmployee(92L);
+        Long own = Long.valueOf(members.create(member(101L, "13800002202")).getId());
+        Long other = Long.valueOf(members.create(member(101L, "13800002203")).getId());
+        var start = java.time.Instant.parse("2026-10-24T02:00:00Z");
+        Long allowed = workCourseBooking(own, ownCoach, 101L, start);
+        Long otherTeaching = workCourseBooking(own, otherCoach, 101L, start.plusSeconds(7200));
+        Long otherMember = workCourseBooking(other, ownCoach, 101L, start.plusSeconds(14400));
+        workCourseConfirm(allowed, start);
+        workCourseConfirm(otherTeaching, start.plusSeconds(7200));
+        workCourseConfirm(otherMember, start.plusSeconds(14400));
+        memberCoaches.replace(own, 101L, responsibility(ownCoach));
+        personalScope(91L);
+        var req = workCourseDates(new BookingPage());
+        req.setPageSize(1);
+        var page = workCourses.bookings(req);
+        assertEquals(1, page.getTotal());
+        assertEquals(allowed.toString(), page.getList().getFirst().id());
+        assertEquals(allowed.toString(), workCourses.booking(allowed).id());
+        assertServiceException(() -> workCourses.booking(otherTeaching), BOOKING_NOT_EXISTS);
+        assertServiceException(() -> workCourses.booking(otherMember), BOOKING_NOT_EXISTS);
+        req.setPageNo(2);
+        assertTrue(workCourses.bookings(req).getList().isEmpty());
+        assertEquals(1, workCourses.bookings(req).getTotal());
+        req.setPageNo(1);
+        req.setCoachId(otherCoach);
+        assertEquals(0, workCourses.bookings(req).getTotal());
+        assertEquals(1, workCourses.lessons(workCourseDates(new LessonPage())).getTotal());
+        var lessonsReq = workCourseDates(new LessonPage());
+        lessonsReq.setCoachId(otherCoach);
+        assertEquals(0, workCourses.lessons(lessonsReq).getTotal());
+        assertEquals(2, workCourses.checkins(workCourseDates(new CheckinPage())).getTotal());
+        var checkinsReq = workCourseDates(new CheckinPage());
+        checkinsReq.setMemberId(other);
+        assertEquals(0, workCourses.checkins(checkinsReq).getTotal());
+        headquarters();
+        memberCoaches.replace(own, 101L, responsibility());
+        personalScope(91L);
+        assertEquals(0, workCourses.bookings(workCourseDates(new BookingPage())).getTotal());
+        assertEquals(0, workCourses.lessons(workCourseDates(new LessonPage())).getTotal());
+        assertEquals(0, workCourses.checkins(workCourseDates(new CheckinPage())).getTotal());
+        assertServiceException(() -> workCourses.booking(allowed), BOOKING_NOT_EXISTS);
+    }
+
+    @Test
+    void workCoursesWholeStoreScopeAndTenantIsolationApplyToAllFourReads() {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        Long coach =
+                Long.valueOf(employees.create(employee("WORK-MULTI-COACH", 101L, 102L)).getId());
+        Long a = Long.valueOf(members.create(member(101L, "13800002204")).getId());
+        Long b = Long.valueOf(members.create(member(102L, "13800002205")).getId());
+        var start = java.time.Instant.parse("2026-10-24T02:00:00Z");
+        Long first = workCourseBooking(a, coach, 101L, start),
+                second = workCourseBooking(b, coach, 102L, start.plusSeconds(7200));
+        workCourseConfirm(first, start);
+        workCourseConfirm(second, start.plusSeconds(7200));
+        scoped(102L);
+        assertEquals(
+                List.of(second.toString()),
+                workCourses.bookings(workCourseDates(new BookingPage())).getList().stream()
+                        .map(WorkBooking::id)
+                        .toList());
+        assertEquals(1, workCourses.lessons(workCourseDates(new LessonPage())).getTotal());
+        assertEquals(1, workCourses.checkins(workCourseDates(new CheckinPage())).getTotal());
+        assertServiceException(() -> workCourses.booking(first), BOOKING_NOT_EXISTS);
+        var req = workCourseDates(new BookingPage());
+        req.setStoreId(101L);
+        assertServiceException(() -> workCourses.bookings(req), STORE_NO_PERMISSION);
+        headquarters();
+        assertEquals(2, workCourses.bookings(workCourseDates(new BookingPage())).getTotal());
+        var login =
+                cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser();
+        TenantContextHolder.setTenantId(2L);
+        login.setTenantId(2L);
+        assertEquals(0, workCourses.bookings(workCourseDates(new BookingPage())).getTotal());
+        assertEquals(0, workCourses.checkins(workCourseDates(new CheckinPage())).getTotal());
+        assertEquals(0, workCourses.lessons(workCourseDates(new LessonPage())).getTotal());
+        assertServiceException(() -> workCourses.booking(first), BOOKING_NOT_EXISTS);
+    }
+
+    @Test
+    void workCoursesDatesUseShanghaiHalfOpenRangeAndSuccessOnlyRows() {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L),
+                member = Long.valueOf(members.create(member(101L, "13800002206")).getId());
+        var start = java.time.Instant.parse("2026-10-23T16:00:00Z");
+        Long first = workCourseBooking(member, coach, 101L, start),
+                last = workCourseBooking(member, coach, 101L, start.plusSeconds(86400));
+        workCourseConfirm(first, start);
+        workCourseConfirm(last, start.plusSeconds(86400));
+        var req = workCourseDates(new BookingPage());
+        assertEquals(first.toString(), workCourses.bookings(req).getList().getFirst().id());
+        assertEquals(1, workCourses.bookings(req).getTotal());
+        assertEquals(1, workCourses.checkins(workCourseDates(new CheckinPage())).getTotal());
+        assertEquals(1, workCourses.lessons(workCourseDates(new LessonPage())).getTotal());
+        var cm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymCheckinMapper.class);
+        var lm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymLessonRecordMapper.class);
+        var cr =
+                cm.selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.course.GymCheckinDO
+                                ::getBookingId,
+                        first);
+        cr.setStatus("failed");
+        cm.updateById(cr);
+        var lr =
+                lm.selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.course.GymLessonRecordDO
+                                ::getBookingId,
+                        first);
+        lr.setStatus("cancelled");
+        lm.updateById(lr);
+        assertEquals(0, workCourses.checkins(workCourseDates(new CheckinPage())).getTotal());
+        assertEquals(0, workCourses.lessons(workCourseDates(new LessonPage())).getTotal());
+        assertFalse(workCourses.booking(first).checkedIn());
+        assertNull(workCourses.booking(first).lessonRecordId());
+    }
+
+    @Test
+    void workCoursesDoNotLinkMismatchedMemberStoreOrOrphanSession() {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L),
+                member = Long.valueOf(members.create(member(101L, "13800002207")).getId());
+        Long other = Long.valueOf(members.create(member(101L, "13800002208")).getId());
+        var start = java.time.Instant.parse("2026-10-24T02:00:00Z");
+        Long first = workCourseBooking(member, coach, 101L, start);
+        workCourseConfirm(first, start);
+        var cm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymCheckinMapper.class);
+        var lm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymLessonRecordMapper.class);
+        var cr =
+                cm.selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.course.GymCheckinDO
+                                ::getBookingId,
+                        first);
+        cr.setMemberId(other);
+        cm.updateById(cr);
+        var lr =
+                lm.selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.course.GymLessonRecordDO
+                                ::getBookingId,
+                        first);
+        lr.setMemberId(other);
+        lm.updateById(lr);
+        assertFalse(workCourses.booking(first).checkedIn());
+        assertNull(workCourses.booking(first).lessonRecordId());
+        var checked = workCourses.checkins(workCourseDates(new CheckinPage())).getList().getFirst();
+        assertNull(checked.bookingId());
+        assertNull(checked.coachId());
+        var sm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymCourseSessionMapper.class);
+        var session = sm.selectById(Long.valueOf(workCourses.booking(first).sessionId()));
+        session.setStoreId(102L);
+        sm.updateById(session);
+        assertServiceException(() -> workCourses.booking(first), BOOKING_NOT_EXISTS);
+        assertEquals(0, workCourses.bookings(workCourseDates(new BookingPage())).getTotal());
+        session.setStoreId(101L);
+        sm.updateById(session);
+        sm.deleteById(session.getId());
+        assertServiceException(() -> workCourses.booking(first), BOOKING_NOT_EXISTS);
+    }
+
+    @Test
+    void workCoursesRequireRealAdminFunctionalPermissionsAndValidatedBoundedQueries() {
+        var b = workCourseDates(new BookingPage());
+        var c = workCourseDates(new CheckinPage());
+        var l = workCourseDates(new LessonPage());
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> workCoursesController.bookings(b));
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> workCoursesController.booking(1L));
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> workCoursesController.checkins(c));
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> workCoursesController.lessons(l));
+        when(permissions.hasAnyPermissions(1L, "gym:bookings:read")).thenReturn(true);
+        assertEquals(0, workCoursesController.bookings(b).getData().getTotal());
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> workCoursesController.checkins(c));
+        when(permissions.hasAnyPermissions(1L, "gym:checkins:read")).thenReturn(true);
+        when(permissions.hasAnyPermissions(1L, "gym:lessons:read")).thenReturn(true);
+        assertEquals(0, workCoursesController.checkins(c).getData().getTotal());
+        assertEquals(0, workCoursesController.lessons(l).getData().getTotal());
+        b.setPageSize(-1);
+        assertThrows(ConstraintViolationException.class, () -> workCourses.bookings(b));
+        b.setPageSize(201);
+        assertThrows(ConstraintViolationException.class, () -> workCourses.bookings(b));
+        b.setPageSize(10);
+        b.setEndDate(b.getStartDate());
+        assertServiceException(() -> workCourses.bookings(b), BUSINESS_DATE_INVALID);
+        b.setEndDate(null);
+        assertThrows(ConstraintViolationException.class, () -> workCourses.bookings(b));
+        var login =
+                cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser();
+        login.setUserType(1);
+        assertServiceException(() -> workCourses.booking(1L), MOBILE_IDENTITY_INVALID);
+        assertServiceException(() -> workCourses.checkins(c), MOBILE_IDENTITY_INVALID);
+        assertServiceException(() -> workCourses.lessons(l), MOBILE_IDENTITY_INVALID);
+        login.setUserType(2);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> workCourses.booking(1L), MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        when(workAccounts.getUser(1L)).thenReturn(null);
+        assertServiceException(() -> workCourses.booking(1L), MOBILE_IDENTITY_INVALID);
+    }
+
+    SessionCreate mobileSession(Long product, Long coach, java.time.Instant start) {
+        var req = new SessionCreate();
+        req.setStoreId(101L);
+        req.setCoachId(coach);
+        req.setProductId(product);
+        req.setStartsAt(start);
+        req.setEndsAt(start.plusSeconds(3600));
+        return req;
+    }
+
+    BookingCreate staffBooking(Long member, Long session, Long pack) {
+        var req = new BookingCreate();
+        req.setMemberId(member);
+        req.setSessionId(session);
+        req.setCoursePackId(pack);
+        return req;
+    }
+
+    @Test
+    void workScheduleAllowsOwnEffectiveEmploymentWithoutInventingWholeStoreAccessAndReplays() {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L), other = responsibleEmployee(92L);
+        Long product = Long.valueOf(courses.createProduct(courseProduct(101L, coach)).getId());
+        var req = mobileSession(product, coach, java.time.Instant.parse("2026-10-24T02:00:00Z"));
+        personalScope(91L);
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> workCourseWriteController.session(req, "work-schedule-key"));
+        when(permissions.hasAnyPermissions(91L, "gym:courses:write")).thenReturn(true);
+        var first = workCourseWriteController.session(req, "work-schedule-key").getData();
+        assertEquals(first, workCourseWrites.session(req, "work-schedule-key"));
+        assertEquals(1, first.capacity());
+        assertEquals(1, first.remainingCapacity());
+        assertFalse(first.bookable());
+        assertEquals("member_context_required", first.unavailableReason());
+        assertServiceException(
+                () -> applicationContext.getBean(GymDataScope.class).check(101L),
+                STORE_NO_PERMISSION);
+        assertServiceException(
+                () ->
+                        courses.createSession(
+                                courseSession(product, coach, req.getStartsAt().plusSeconds(7200))),
+                STORE_NO_PERMISSION);
+        req.setCoachId(other);
+        assertServiceException(
+                () -> workCourseWrites.session(req, "other-coach-key"), STORE_NO_PERMISSION);
+        req.setCoachId(coach);
+        req.setEndsAt(req.getEndsAt().plusSeconds(1));
+        assertServiceException(
+                () -> workCourseWrites.session(req, "work-schedule-key"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        req.setEndsAt(req.getEndsAt().minusSeconds(1));
+        var links =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeStoreMapper
+                                .class);
+        var link =
+                links.selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.employee.GymEmployeeStoreDO
+                                ::getEmployeeId,
+                        coach);
+        link.setJoinedOn(LocalDate.of(2027, 1, 1));
+        links.updateById(link);
+        assertServiceException(
+                () -> workCourseWrites.session(req, "work-schedule-key"), STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void workScheduleChecksFutureDurationProductStoreAndSharedOverlapWhileAllowingAdjacentTime() {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L),
+                product = Long.valueOf(courses.createProduct(courseProduct(101L, coach)).getId());
+        var at = java.time.Instant.parse("2026-10-24T02:00:00Z");
+        var req = mobileSession(product, coach, at);
+        req.setEndsAt(at.plusSeconds(1800));
+        assertServiceException(
+                () -> workCourseWrites.session(req, "duration-invalid"), COURSE_SESSION_INVALID);
+        var past = mobileSession(product, coach, java.time.Instant.parse("2026-10-23T04:00:00Z"));
+        assertServiceException(
+                () -> workCourseWrites.session(past, "past-schedule-key"), COURSE_SESSION_INVALID);
+        courses.createSession(courseSession(product, coach, at));
+        var overlapping = mobileSession(product, coach, at.plusSeconds(1800));
+        assertServiceException(
+                () -> workCourseWrites.session(overlapping, "overlap-session-key"),
+                COURSE_SESSION_CONFLICT);
+        assertNotNull(
+                workCourseWrites.session(
+                        mobileSession(product, coach, at.plusSeconds(3600)),
+                        "adjacent-session-key"));
+        var pm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymCourseProductMapper.class);
+        var pr = pm.selectById(product);
+        pr.setStatus("inactive");
+        pm.updateById(pr);
+        var later = mobileSession(product, coach, at.plusSeconds(7200));
+        assertServiceException(
+                () -> workCourseWrites.session(later, "inactive-product-key"),
+                COURSE_PRODUCT_INVALID);
+        pr.setStatus("active");
+        pm.updateById(pr);
+        var store = storeMapper.selectById(101L);
+        store.setStatus("inactive");
+        storeMapper.updateById(store);
+        assertServiceException(
+                () -> workCourseWrites.session(later, "inactive-store-key"), MEMBER_STORE_INACTIVE);
+    }
+
+    @Test
+    void workBookingUsesRealReservationAndReplaysOriginalSuccessWithoutReservingAfterCancel() {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L),
+                member = Long.valueOf(members.create(member(101L, "13800002301")).getId());
+        Long product = Long.valueOf(courses.createProduct(courseProduct(101L, coach)).getId());
+        var at = java.time.Instant.parse("2026-10-24T02:00:00Z");
+        Long session =
+                Long.valueOf(courses.createSession(courseSession(product, coach, at)).getId());
+        var pack =
+                courses.issuePack(
+                        member,
+                        product,
+                        at.minusSeconds(86400),
+                        at.plusSeconds(86400),
+                        "test-payment",
+                        "work-write-pack");
+        memberCoaches.replace(member, 101L, responsibility(coach));
+        personalScope(91L);
+        var req = staffBooking(member, session, pack.getId());
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> workCourseWriteController.booking(req, "work-booking-key"));
+        when(permissions.hasAnyPermissions(91L, "gym:bookings:write")).thenReturn(true);
+        var first = workCourseWriteController.booking(req, "work-booking-key").getData();
+        assertEquals(first, workCourseWrites.booking(req, "work-booking-key"));
+        var pm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper.class);
+        assertEquals(1, pm.selectById(pack.getId()).getReservedSessions());
+        assertEquals(2, pm.selectById(pack.getId()).getRemainingSessions());
+        req.setCoursePackId(pack.getId() + 100);
+        assertServiceException(
+                () -> workCourseWrites.booking(req, "work-booking-key"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        req.setCoursePackId(pack.getId());
+        headquarters();
+        loginAs(1L);
+        var cancel =
+                new cn.iocoder.yudao.module.gym.controller.admin.course.vo.GymBookingSaveReqVO();
+        cancel.setStatus("cancelled");
+        courses.patchBooking(Long.valueOf(first.id()), cancel);
+        personalScope(91L);
+        assertEquals("confirmed", workCourseWrites.booking(req, "work-booking-key").status());
+        assertEquals(0, pm.selectById(pack.getId()).getReservedSessions());
+        assertEquals("cancelled", workCourses.booking(Long.valueOf(first.id())).status());
+        assertEquals("confirmed", workCourseWrites.booking(req, "new-work-booking-key").status());
+        assertEquals(1, pm.selectById(pack.getId()).getReservedSessions());
+        headquarters();
+        memberCoaches.replace(member, 101L, responsibility());
+        personalScope(91L);
+        assertServiceException(
+                () -> workCourseWrites.booking(req, "work-booking-key"), STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void workBookingRejectsOtherTeachingMemberInvalidPackProductAndWrongIdentityWithoutWrites() {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L),
+                otherCoach = responsibleEmployee(92L),
+                member = Long.valueOf(members.create(member(101L, "13800002302")).getId());
+        Long other = Long.valueOf(members.create(member(101L, "13800002303")).getId());
+        Long product = Long.valueOf(courses.createProduct(courseProduct(101L, coach)).getId()),
+                otherProduct =
+                        Long.valueOf(
+                                courses.createProduct(courseProduct(101L, otherCoach)).getId());
+        var at = java.time.Instant.parse("2026-10-24T02:00:00Z");
+        Long
+                session =
+                        Long.valueOf(
+                                courses.createSession(courseSession(product, coach, at)).getId()),
+                otherSession =
+                        Long.valueOf(
+                                courses.createSession(courseSession(otherProduct, otherCoach, at))
+                                        .getId());
+        var pack =
+                courses.issuePack(
+                        member,
+                        product,
+                        at.minusSeconds(86400),
+                        at.plusSeconds(86400),
+                        "test-payment",
+                        "work-invalid-pack");
+        memberCoaches.replace(member, 101L, responsibility(coach));
+        personalScope(91L);
+        assertServiceException(
+                () ->
+                        workCourseWrites.booking(
+                                staffBooking(member, otherSession, pack.getId()),
+                                "other-teacher-booking"),
+                STORE_NO_PERMISSION);
+        assertServiceException(
+                () ->
+                        workCourseWrites.booking(
+                                staffBooking(other, session, pack.getId()), "other-member-booking"),
+                STORE_NO_PERMISSION);
+        assertServiceException(
+                () ->
+                        workCourseWrites.booking(
+                                staffBooking(member, session, pack.getId() + 100),
+                                "missing-pack-booking"),
+                COURSE_PACK_NOT_EXISTS);
+        var pm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymCourseProductMapper.class);
+        var pr = pm.selectById(product);
+        pr.setStatus("inactive");
+        pm.updateById(pr);
+        assertServiceException(
+                () ->
+                        workCourseWrites.booking(
+                                staffBooking(member, session, pack.getId()),
+                                "inactive-product-booking"),
+                COURSE_PRODUCT_INVALID);
+        var login =
+                cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser();
+        login.setUserType(1);
+        assertServiceException(
+                () ->
+                        workCourseWrites.booking(
+                                staffBooking(member, session, pack.getId()), "wrong-type-booking"),
+                MOBILE_IDENTITY_INVALID);
+        assertServiceException(
+                () ->
+                        workCourseWrites.session(
+                                mobileSession(product, coach, at), "wrong-type-session"),
+                MOBILE_IDENTITY_INVALID);
+        login.setUserType(2);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(
+                () ->
+                        workCourseWrites.booking(
+                                staffBooking(member, session, pack.getId()),
+                                "wrong-tenant-booking"),
+                MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        assertEquals(
+                0,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymBookingMapper.class)
+                        .selectCount());
+        assertEquals(
+                0,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileRequestMapper
+                                        .class)
+                        .selectCount());
+    }
+
+    @Test
+    void workCourseResponseFailureRollsBackScheduleBookingAndReservationWithTheirKeys() {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L),
+                member = Long.valueOf(members.create(member(101L, "13800002304")).getId());
+        Long product = Long.valueOf(courses.createProduct(courseProduct(101L, coach)).getId());
+        var at = java.time.Instant.parse("2026-10-24T02:00:00Z");
+        var req = mobileSession(product, coach, at);
+        var sm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymCourseSessionMapper.class);
+        var rm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileRequestMapper.class);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_mobile_request ADD CONSTRAINT reject_work_response CHECK (response_json IS NULL)");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () -> workCourseWrites.session(req, "rollback-session-key"));
+            assertEquals(0, sm.selectCount());
+            assertEquals(0, rm.selectCount());
+        } finally {
+            jdbc.execute("ALTER TABLE gym_mobile_request DROP CONSTRAINT reject_work_response");
+        }
+        Long session = Long.valueOf(workCourseWrites.session(req, "rollback-session-key").id());
+        var pack =
+                courses.issuePack(
+                        member,
+                        product,
+                        at.minusSeconds(86400),
+                        at.plusSeconds(86400),
+                        "test-payment",
+                        "rollback-work-pack");
+        jdbc.execute(
+                "ALTER TABLE gym_mobile_request ADD CONSTRAINT reject_work_booking_response CHECK (operation <> 'work-booking-create' OR response_json IS NULL)");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () ->
+                            workCourseWrites.booking(
+                                    staffBooking(member, session, pack.getId()),
+                                    "rollback-booking-key"));
+            assertEquals(0, sm.selectById(session).getReservedCount());
+            assertEquals(
+                    0,
+                    applicationContext
+                            .getBean(
+                                    cn.iocoder.yudao.module.gym.dal.mysql.course.GymBookingMapper
+                                            .class)
+                            .selectCount());
+            assertEquals(1, rm.selectCount());
+            assertEquals(
+                    0,
+                    applicationContext
+                            .getBean(
+                                    cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper
+                                            .class)
+                            .selectById(pack.getId())
+                            .getReservedSessions());
+        } finally {
+            jdbc.execute(
+                    "ALTER TABLE gym_mobile_request DROP CONSTRAINT reject_work_booking_response");
+        }
+        assertNotNull(
+                workCourseWrites.booking(
+                        staffBooking(member, session, pack.getId()), "rollback-booking-key"));
+    }
+
+    List<Object> workCourseRace(
+            java.util.concurrent.Callable<?> first, java.util.concurrent.Callable<?> second)
+            throws Exception {
+        var ready = new java.util.concurrent.CountDownLatch(2);
+        var start = new java.util.concurrent.CountDownLatch(1);
+        try (var executor = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            var futures = new ArrayList<java.util.concurrent.Future<Object>>();
+            for (var action : List.of(first, second))
+                futures.add(
+                        executor.submit(
+                                () -> {
+                                    setupThreadContext();
+                                    ready.countDown();
+                                    try {
+                                        assertTrue(
+                                                start.await(
+                                                        3, java.util.concurrent.TimeUnit.SECONDS));
+                                        return action.call();
+                                    } catch (
+                                            cn.iocoder.yudao.framework.common.exception
+                                                            .ServiceException
+                                                    error) {
+                                        return error;
+                                    } finally {
+                                        cleanupContext();
+                                    }
+                                }));
+            assertTrue(ready.await(3, java.util.concurrent.TimeUnit.SECONDS));
+            start.countDown();
+            return List.of(
+                    futures.get(0).get(8, java.util.concurrent.TimeUnit.SECONDS),
+                    futures.get(1).get(8, java.util.concurrent.TimeUnit.SECONDS));
+        }
+    }
+
+    @Test
+    void mobileAndLegacySchedulingShareCoachLockAndOnlyOneOverlappingSessionCommits()
+            throws Exception {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L),
+                product = Long.valueOf(courses.createProduct(courseProduct(101L, coach)).getId());
+        var at = java.time.Instant.parse("2026-10-24T02:00:00Z");
+        var result =
+                workCourseRace(
+                        () ->
+                                workCourseWrites.session(
+                                        mobileSession(product, coach, at), "mixed-schedule-key"),
+                        () ->
+                                courses.createSession(
+                                        courseSession(product, coach, at.plusSeconds(1800))));
+        assertEquals(
+                1,
+                result.stream()
+                        .filter(
+                                r ->
+                                        r
+                                                        instanceof
+                                                        cn.iocoder.yudao.framework.common.exception
+                                                                        .ServiceException
+                                                                e
+                                                && e.getCode()
+                                                        .equals(COURSE_SESSION_CONFLICT.getCode()))
+                        .count());
+        assertEquals(
+                1,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymCourseSessionMapper
+                                        .class)
+                        .selectCount());
+    }
+
+    @Test
+    void mobileAndLegacyBookingsShareCapacityAndReserveExactlyOnePack() throws Exception {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L),
+                product = Long.valueOf(courses.createProduct(courseProduct(101L, coach)).getId());
+        Long first = Long.valueOf(members.create(member(101L, "13800002305")).getId()),
+                second = Long.valueOf(members.create(member(101L, "13800002306")).getId());
+        var at = java.time.Instant.parse("2026-10-24T02:00:00Z");
+        Long session =
+                Long.valueOf(courses.createSession(courseSession(product, coach, at)).getId());
+        var a =
+                courses.issuePack(
+                        first,
+                        product,
+                        at.minusSeconds(86400),
+                        at.plusSeconds(86400),
+                        "test-payment",
+                        "mixed-work-pack-a");
+        var b =
+                courses.issuePack(
+                        second,
+                        product,
+                        at.minusSeconds(86400),
+                        at.plusSeconds(86400),
+                        "test-payment",
+                        "mixed-work-pack-b");
+        var result =
+                workCourseRace(
+                        () ->
+                                workCourseWrites.booking(
+                                        staffBooking(first, session, a.getId()),
+                                        "mixed-work-booking-key"),
+                        () -> courses.createBooking(bookingRequest(second, session, b.getId())));
+        assertEquals(
+                1,
+                result.stream()
+                        .filter(
+                                r ->
+                                        r
+                                                        instanceof
+                                                        cn.iocoder.yudao.framework.common.exception
+                                                                        .ServiceException
+                                                                e
+                                                && e.getCode()
+                                                        .equals(BOOKING_CAPACITY_FULL.getCode()))
+                        .count());
+        var pm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper.class);
+        assertEquals(
+                1,
+                pm.selectById(a.getId()).getReservedSessions()
+                        + pm.selectById(b.getId()).getReservedSessions());
+        assertEquals(
+                1,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymBookingMapper.class)
+                        .selectCount());
+        assertEquals(
+                1,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymCourseSessionMapper
+                                        .class)
+                        .selectById(session)
+                        .getReservedCount());
+    }
+
+    @Test
+    void concurrentWorkRetriesShareOneSessionAndOneReservationButSeparateOperationKeys()
+            throws Exception {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L),
+                product = Long.valueOf(courses.createProduct(courseProduct(101L, coach)).getId());
+        var at = java.time.Instant.parse("2026-10-24T02:00:00Z");
+        var created =
+                workCourseRace(
+                        () ->
+                                workCourseWrites.session(
+                                        mobileSession(product, coach, at), "same-work-write-key"),
+                        () ->
+                                workCourseWrites.session(
+                                        mobileSession(product, coach, at), "same-work-write-key"));
+        assertEquals(created.getFirst(), created.getLast());
+        var session =
+                (cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileBookingVO
+                                .CourseSession)
+                        created.getFirst();
+        Long member = Long.valueOf(members.create(member(101L, "13800002307")).getId());
+        var pack =
+                courses.issuePack(
+                        member,
+                        product,
+                        at.minusSeconds(86400),
+                        at.plusSeconds(86400),
+                        "test-payment",
+                        "same-work-key-pack");
+        var booked =
+                workCourseRace(
+                        () ->
+                                workCourseWrites.booking(
+                                        staffBooking(
+                                                member, Long.valueOf(session.id()), pack.getId()),
+                                        "same-work-write-key"),
+                        () ->
+                                workCourseWrites.booking(
+                                        staffBooking(
+                                                member, Long.valueOf(session.id()), pack.getId()),
+                                        "same-work-write-key"));
+        assertEquals(booked.getFirst(), booked.getLast());
+        assertInstanceOf(WorkBooking.class, booked.getFirst());
+        assertEquals(
+                1,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymCourseSessionMapper
+                                        .class)
+                        .selectCount());
+        assertEquals(
+                1,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymBookingMapper.class)
+                        .selectCount());
+        assertEquals(
+                1,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper
+                                        .class)
+                        .selectById(pack.getId())
+                        .getReservedSessions());
+        assertEquals(
+                2,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileRequestMapper
+                                        .class)
+                        .selectCount());
+    }
+
+    record LessonFixture(
+            Long member, Long coach, Long booking, Long session, java.time.Instant start) {}
+
+    LessonFixture lessonFixture(boolean checkin) {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L);
+        Long member = Long.valueOf(members.create(member(101L, "13800002401")).getId());
+        var start = java.time.Instant.parse("2026-10-24T02:00:00Z");
+        Long booking = workCourseBooking(member, coach, 101L, start);
+        when(businessClock.now()).thenReturn(start.plusSeconds(60));
+        if (checkin) courses.checkIn(booking);
+        when(permissions.hasAnyPermissions(1L, "gym:bookings:write")).thenReturn(true);
+        return new LessonFixture(
+                member,
+                coach,
+                booking,
+                Long.valueOf(workCourses.booking(booking).sessionId()),
+                start);
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileLessonVO.QrCreate qrRequest(
+            Long session) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileLessonVO
+                        .QrCreate();
+        req.setSessionId(session);
+        return req;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileLessonVO.Confirm qrConfirm(
+            Long booking, String token) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileLessonVO
+                        .Confirm();
+        req.setBookingId(booking);
+        req.setQrToken(token);
+        return req;
+    }
+
+    void qrMemberIdentity(Long member) {
+        var account = new cn.iocoder.yudao.module.member.api.user.dto.MemberUserRespDTO();
+        account.setId(50L);
+        account.setStatus(0);
+        account.setMobile("13800002401");
+        when(memberAccounts.getUser(50L)).thenReturn(account);
+        var identity = new cn.iocoder.yudao.module.gym.dal.dataobject.mobile.GymMobileIdentityDO();
+        identity.setUserId(50L);
+        identity.setMemberId(member);
+        identity.setDefaultStoreId(101L);
+        identity.setSource("test");
+        identity.setFaceStatus("unregistered");
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileIdentityMapper.class)
+                .insert(identity);
+    }
+
+    void qrMemberLogin() {
+        TenantContextHolder.setTenantId(1L);
+        cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.setLoginUser(
+                new cn.iocoder.yudao.framework.security.core.LoginUser()
+                        .setId(50L)
+                        .setUserType(1)
+                        .setTenantId(1L),
+                new org.springframework.mock.web.MockHttpServletRequest());
+    }
+
+    @Test
+    void qrConfirmationConsumesOnceAndManualConfirmationReturnsSameHistoricalRecord() {
+        var f = lessonFixture(true);
+        var req = qrRequest(f.session());
+        var qr = lessonQrController.create(req, "qr-issue-success").getData();
+        assertEquals(qr, mobileLessons.issue(req, "qr-issue-success"));
+        assertTrue(qr.qrToken().matches("v1\\.[A-Za-z0-9_-]{43}\\.[A-Za-z0-9_-]{43}"));
+        var qm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileLessonQrMapper.class);
+        assertFalse(qm.selectList().getFirst().getTokenHash().contains(qr.qrToken()));
+        qrMemberIdentity(f.member());
+        qrMemberLogin();
+        var confirm = qrConfirm(f.booking(), qr.qrToken());
+        var first = lessonConfirmController.confirm(confirm, "qr-confirm-success").getData();
+        assertEquals("qr", first.source());
+        assertEquals(1, first.remainingLessons());
+        assertEquals(first, mobileLessons.confirm(confirm, "qr-confirm-success"));
+        assertEquals(first, mobileLessons.confirm(confirm, "qr-confirm-second-key"));
+        assertNotNull(qm.selectList().getFirst().getUsedAt());
+        assertEquals(first.id(), qm.selectList().getFirst().getLessonRecordId().toString());
+        loginAs(1L);
+        assertEquals(first.id(), courses.confirmLesson(f.booking()).getId());
+        assertEquals(qr, mobileLessons.issue(req, "qr-issue-success"));
+        var bm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymBookingMapper.class);
+        var booking = bm.selectById(f.booking());
+        var pack =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper
+                                        .class)
+                        .selectById(booking.getMemberCoursePackId());
+        assertEquals("attended", booking.getStatus());
+        assertEquals(1, pack.getRemainingSessions());
+        assertEquals(0, pack.getReservedSessions());
+        qrMemberLogin();
+        when(businessClock.now())
+                .thenReturn(java.time.OffsetDateTime.parse(qr.expiresAt()).toInstant());
+        assertEquals(first, mobileLessons.confirm(confirm, "qr-confirm-success"));
+        assertServiceException(
+                () -> mobileLessons.confirm(confirm, "expired-new-confirm"),
+                MOBILE_LESSON_QR_INVALID);
+    }
+
+    @Test
+    void qrNeverCreatesCheckinAndInvalidSignaturesOrDifferentBookingCannotConsume() {
+        var f = lessonFixture(false);
+        var qr = mobileLessons.issue(qrRequest(f.session()), "qr-without-entry");
+        qrMemberIdentity(f.member());
+        qrMemberLogin();
+        var req = qrConfirm(f.booking(), qr.qrToken());
+        assertServiceException(
+                () -> mobileLessons.confirm(req, "qr-needs-entry"), LESSON_CHECKIN_REQUIRED);
+        var broken =
+                qr.qrToken().substring(0, 4)
+                        + (qr.qrToken().charAt(4) == 'A' ? 'B' : 'A')
+                        + qr.qrToken().substring(5);
+        assertServiceException(
+                () -> mobileLessons.confirm(qrConfirm(f.booking(), broken), "qr-bad-signature"),
+                MOBILE_LESSON_QR_INVALID);
+        assertServiceException(
+                () ->
+                        mobileLessons.confirm(
+                                qrConfirm(f.booking() + 100, qr.qrToken()), "qr-other-booking"),
+                BOOKING_NOT_EXISTS);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> lessonTokens.verify(qr.qrToken()), MOBILE_LESSON_QR_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        assertEquals(
+                0,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymCheckinMapper.class)
+                        .selectCount());
+        assertEquals(
+                0,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymLessonRecordMapper
+                                        .class)
+                        .selectCount());
+    }
+
+    @Test
+    void qrChecksSigningConfigurationPermissionCourseWindowAndClipsExpiry() {
+        var f = lessonFixture(true);
+        lessonProperties.setQrSigningKey(null);
+        assertServiceException(
+                () -> mobileLessons.issue(qrRequest(f.session()), "qr-no-signing-key"),
+                MOBILE_LESSON_QR_UNAVAILABLE);
+        assertEquals(
+                0,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileLessonQrMapper
+                                        .class)
+                        .selectCount());
+        lessonProperties.setQrSigningKey(
+                java.util.Base64.getEncoder().encodeToString(new byte[32]));
+        when(permissions.hasAnyPermissions(1L, "gym:bookings:write")).thenReturn(false);
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> lessonQrController.create(qrRequest(f.session()), "qr-no-write-permission"));
+        assertServiceException(
+                () -> mobileLessons.issue(qrRequest(f.session()), "qr-no-write-permission"),
+                MOBILE_LESSON_QR_INVALID);
+        when(permissions.hasAnyPermissions(1L, "gym:bookings:write")).thenReturn(true);
+        when(businessClock.now()).thenReturn(f.start().minusSeconds(1));
+        assertServiceException(
+                () -> mobileLessons.issue(qrRequest(f.session()), "qr-too-early"),
+                LESSON_TIME_INVALID);
+        lessonProperties.setConfirmAfterEndMinutes(0);
+        when(businessClock.now()).thenReturn(f.start().plusSeconds(3570));
+        var qr = mobileLessons.issue(qrRequest(f.session()), "qr-window-clip");
+        assertEquals(
+                f.start().plusSeconds(3600),
+                java.time.OffsetDateTime.parse(qr.expiresAt()).toInstant());
+        when(businessClock.now()).thenReturn(f.start().plusSeconds(3600));
+        assertServiceException(
+                () -> mobileLessons.issue(qrRequest(f.session()), "qr-window-ended"),
+                LESSON_TIME_INVALID);
+    }
+
+    @Test
+    void qrSelfIssuerRequiresTeachingAndCurrentResponsibilityEvenAtConfirmation() {
+        var f = lessonFixture(true);
+        memberCoaches.replace(f.member(), 101L, responsibility(f.coach()));
+        personalScope(91L);
+        when(permissions.hasAnyPermissions(91L, "gym:bookings:write")).thenReturn(true);
+        var qr = mobileLessons.issue(qrRequest(f.session()), "qr-self-issued");
+        headquarters();
+        loginAs(1L);
+        memberCoaches.replace(f.member(), 101L, responsibility());
+        personalScope(91L);
+        assertServiceException(
+                () -> mobileLessons.issue(qrRequest(f.session()), "qr-self-issued"),
+                MOBILE_LESSON_QR_INVALID);
+        qrMemberIdentity(f.member());
+        qrMemberLogin();
+        assertServiceException(
+                () ->
+                        mobileLessons.confirm(
+                                qrConfirm(f.booking(), qr.qrToken()), "qr-revoked-issuer"),
+                MOBILE_LESSON_QR_INVALID);
+        assertEquals(
+                0,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymLessonRecordMapper
+                                        .class)
+                        .selectCount());
+    }
+
+    @Test
+    void qrRejectsChangedBookingRevisionAndWrongCheckinLinkWithoutConsumingToken() {
+        var f = lessonFixture(true);
+        var qr = mobileLessons.issue(qrRequest(f.session()), "qr-bound-revision");
+        qrMemberIdentity(f.member());
+        qrMemberLogin();
+        var bm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymBookingMapper.class);
+        var booking = bm.selectById(f.booking());
+        var original = booking.getBookedAt();
+        booking.setBookedAt(original.plusSeconds(1));
+        bm.updateById(booking);
+        assertServiceException(
+                () -> mobileLessons.confirm(qrConfirm(f.booking(), qr.qrToken()), "qr-old-booking"),
+                MOBILE_LESSON_QR_INVALID);
+        booking.setBookedAt(original);
+        bm.updateById(booking);
+        var cm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymCheckinMapper.class);
+        var checkin = cm.selectById(booking.getCheckinId());
+        checkin.setBookingId(f.booking() + 100);
+        cm.updateById(checkin);
+        assertServiceException(
+                () -> mobileLessons.confirm(qrConfirm(f.booking(), qr.qrToken()), "qr-wrong-entry"),
+                LESSON_CHECKIN_REQUIRED);
+        assertNull(
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileLessonQrMapper
+                                        .class)
+                        .selectList()
+                        .getFirst()
+                        .getUsedAt());
+    }
+
+    @Test
+    void qrConsumptionFailureRollsBackLessonBalanceStatusAndIdempotency() {
+        var f = lessonFixture(true);
+        var qr = mobileLessons.issue(qrRequest(f.session()), "qr-rollback-issue");
+        qrMemberIdentity(f.member());
+        qrMemberLogin();
+        var req = qrConfirm(f.booking(), qr.qrToken());
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_mobile_lesson_qr ADD CONSTRAINT reject_qr_use CHECK (used_at IS NULL)");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () -> mobileLessons.confirm(req, "qr-rollback-confirm"));
+        } finally {
+            jdbc.execute("ALTER TABLE gym_mobile_lesson_qr DROP CONSTRAINT reject_qr_use");
+        }
+        var booking =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymBookingMapper.class)
+                        .selectById(f.booking());
+        assertEquals("confirmed", booking.getStatus());
+        var pack =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper
+                                        .class)
+                        .selectById(booking.getMemberCoursePackId());
+        assertEquals(2, pack.getRemainingSessions());
+        assertEquals(1, pack.getReservedSessions());
+        assertEquals(
+                0,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymLessonRecordMapper
+                                        .class)
+                        .selectCount());
+        assertEquals(
+                1,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileRequestMapper
+                                        .class)
+                        .selectCount());
+        assertEquals("qr", mobileLessons.confirm(req, "qr-rollback-confirm").source());
+    }
+
+    @Test
+    void manualAndQrConfirmationsRaceButConsumeOnlyOnceAndPreserveWinningSource() throws Exception {
+        var f = lessonFixture(true);
+        var qr = mobileLessons.issue(qrRequest(f.session()), "qr-mixed-race");
+        qrMemberIdentity(f.member());
+        var result =
+                workCourseRace(
+                        () -> courses.confirmLesson(f.booking()),
+                        () -> {
+                            qrMemberLogin();
+                            return mobileLessons.confirm(
+                                    qrConfirm(f.booking(), qr.qrToken()), "qr-racing-confirm");
+                        });
+        assertTrue(result.stream().noneMatch(r -> r instanceof Exception));
+        var lm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymLessonRecordMapper.class);
+        assertEquals(1, lm.selectCount());
+        var lesson = lm.selectList().getFirst();
+        assertTrue(Set.of("manual", "qr").contains(lesson.getMethod()));
+        assertEquals(1, lesson.getRemainingLessonsAfter());
+        var qrResult =
+                (cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileBookingVO
+                                .LessonRecord)
+                        result.getLast();
+        assertEquals(lesson.getId().toString(), qrResult.id());
+        assertEquals(lesson.getMethod(), qrResult.source());
+    }
+
+    @Test
+    void concurrentQrConfirmationsReturnOneLessonAndWrongMemberCannotUseKnownCode()
+            throws Exception {
+        var f = lessonFixture(true);
+        var qr = mobileLessons.issue(qrRequest(f.session()), "qr-member-race");
+        Long other = Long.valueOf(members.create(member(101L, "13800002402")).getId());
+        qrMemberIdentity(other);
+        qrMemberLogin();
+        assertServiceException(
+                () ->
+                        mobileLessons.confirm(
+                                qrConfirm(f.booking(), qr.qrToken()), "qr-wrong-member"),
+                BOOKING_NOT_EXISTS);
+        var im =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileIdentityMapper.class);
+        var identity =
+                im.selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.mobile.GymMobileIdentityDO
+                                ::getUserId,
+                        50L);
+        identity.setMemberId(f.member());
+        im.updateById(identity);
+        var result =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            return mobileLessons.confirm(
+                                    qrConfirm(f.booking(), qr.qrToken()), "qr-member-race-a");
+                        },
+                        () -> {
+                            qrMemberLogin();
+                            return mobileLessons.confirm(
+                                    qrConfirm(f.booking(), qr.qrToken()), "qr-member-race-b");
+                        });
+        assertEquals(result.getFirst(), result.getLast());
+        assertInstanceOf(
+                cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileBookingVO.LessonRecord
+                        .class,
+                result.getFirst());
+        assertEquals(
+                1,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymLessonRecordMapper
+                                        .class)
+                        .selectCount());
+        var booking =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymBookingMapper.class)
+                        .selectById(f.booking());
+        var pack =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper
+                                        .class)
+                        .selectById(booking.getMemberCoursePackId());
+        assertEquals(1, pack.getRemainingSessions());
+        assertEquals(0, pack.getReservedSessions());
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileAttendanceVO.Request
+            attendanceRequest(Long store, String month) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileAttendanceVO
+                        .Request();
+        req.setStoreId(store);
+        req.setMonth(month);
+        return req;
+    }
+
+    Long attendanceMember() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        var member = Long.valueOf(members.create(member(101L, "13800002401")).getId());
+        qrMemberIdentity(member);
+        when(businessClock.now()).thenReturn(java.time.Instant.parse("2026-10-24T12:00:00Z"));
+        return member;
+    }
+
+    Long attendanceEntry(Long member, Long store, java.time.Instant at, String status) {
+        var row = new cn.iocoder.yudao.module.gym.dal.dataobject.course.GymCheckinDO();
+        row.setMemberId(member);
+        row.setStoreId(store);
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymCheckinMapper.class);
+        row.setBookingId(100000L + mapper.selectCount());
+        row.setEnteredAt(at);
+        row.setStatus(status);
+        row.setMethod("manual");
+        row.setVisitorType("member");
+        mapper.insert(row);
+        return row.getId();
+    }
+
+    java.time.Instant attendanceDay(int day) {
+        return LocalDate.of(2026, 10, day)
+                .atStartOfDay(cn.iocoder.yudao.module.gym.service.common.GymDateRange.ZONE)
+                .toInstant();
+    }
+
+    @Test
+    void attendanceCountsVisitsDistinctDaysAndCompetitionRankWithoutOtherIdentities() {
+        var own = attendanceMember();
+        var ahead = Long.valueOf(members.create(member(101L, "13800002402")).getId());
+        var tied = Long.valueOf(members.create(member(101L, "13800002403")).getId());
+        var below = Long.valueOf(members.create(member(101L, "13800002404")).getId());
+        for (int day = 1; day <= 3; day++)
+            attendanceEntry(ahead, 101L, attendanceDay(day), "succeeded");
+        for (Long id : List.of(own, tied))
+            for (int day = 1; day <= 2; day++)
+                attendanceEntry(id, 101L, attendanceDay(day), "succeeded");
+        attendanceEntry(own, 101L, attendanceDay(1).plusSeconds(1), "succeeded");
+        attendanceEntry(below, 101L, attendanceDay(1), "succeeded");
+        qrMemberLogin();
+        var result = attendanceController.get(attendanceRequest(101L, "2026-10")).getData();
+        assertEquals(3, result.checkinCount());
+        assertEquals(2, result.activeDays());
+        assertEquals(2L, result.rank());
+        assertEquals(4, result.rankingPopulation());
+        assertEquals("2026-10-24T20:00+08:00", result.updatedAt());
+        attendanceEntry(tied, 101L, attendanceDay(3), "succeeded");
+        assertEquals(3L, attendance.get(attendanceRequest(101L, "2026-10")).rank());
+        attendanceEntry(own, 101L, attendanceDay(3), "succeeded");
+        assertEquals(1L, attendance.get(attendanceRequest(101L, "2026-10")).rank());
+        var json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(result);
+        assertFalse(json.contains("memberId"));
+        assertFalse(json.contains("138000"));
+    }
+
+    @Test
+    void attendanceExcludesFailedDeletedFutureOtherStoreOrTenantAndOrphanRows() {
+        var own = attendanceMember();
+        var inactive = Long.valueOf(members.create(member(101L, "13800002402")).getId());
+        var deleted = Long.valueOf(members.create(member(101L, "13800002403")).getId());
+        var mm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.member.GymMemberMapper.class);
+        var row = mm.selectById(inactive);
+        row.setStatus("inactive");
+        mm.updateById(row);
+        mm.deleteById(deleted);
+        attendanceEntry(own, 101L, attendanceDay(1), "succeeded");
+        attendanceEntry(own, 101L, attendanceDay(1).minusSeconds(1), "succeeded");
+        attendanceEntry(own, 101L, java.time.Instant.parse("2026-10-31T16:00:00Z"), "succeeded");
+        attendanceEntry(own, 101L, attendanceDay(25), "succeeded");
+        attendanceEntry(own, 101L, attendanceDay(2), "failed");
+        attendanceEntry(own, 102L, attendanceDay(2), "succeeded");
+        var erased = attendanceEntry(own, 101L, attendanceDay(3), "succeeded");
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.course.GymCheckinMapper.class)
+                .deleteById(erased);
+        attendanceEntry(inactive, 101L, attendanceDay(1), "succeeded");
+        attendanceEntry(deleted, 101L, attendanceDay(1), "succeeded");
+        attendanceEntry(999999L, 101L, attendanceDay(1), "succeeded");
+        TenantContextHolder.setTenantId(2L);
+        attendanceEntry(own, 101L, attendanceDay(4), "succeeded");
+        TenantContextHolder.setTenantId(1L);
+        qrMemberLogin();
+        var r = attendance.get(attendanceRequest(101L, "2026-10"));
+        assertEquals(1, r.checkinCount());
+        assertEquals(1, r.activeDays());
+        assertEquals(1L, r.rank());
+        assertEquals(2, r.rankingPopulation());
+    }
+
+    @Test
+    void attendanceUsesShanghaiLeapMonthAndHistoricalDaylightSavingBoundaries() {
+        var own = attendanceMember();
+        var zone = cn.iocoder.yudao.module.gym.service.common.GymDateRange.ZONE;
+        var leap = LocalDate.of(2024, 2, 29).atStartOfDay(zone).toInstant();
+        attendanceEntry(own, 101L, leap, "succeeded");
+        attendanceEntry(own, 101L, leap.plusSeconds(86399), "succeeded");
+        attendanceEntry(own, 101L, leap.plusSeconds(86400), "succeeded");
+        var historic = LocalDate.of(1991, 6, 2).atStartOfDay(zone).toInstant();
+        attendanceEntry(own, 101L, historic.minusSeconds(1), "succeeded");
+        attendanceEntry(own, 101L, historic, "succeeded");
+        qrMemberLogin();
+        var r = attendance.get(attendanceRequest(101L, "2024-02"));
+        assertEquals(2, r.checkinCount());
+        assertEquals(1, r.activeDays());
+        r = attendance.get(attendanceRequest(101L, "1991-06"));
+        assertEquals(2, r.checkinCount());
+        assertEquals(2, r.activeDays());
+    }
+
+    @Test
+    void attendanceHasNoRankWithoutOwnVisitsAndRequiresStoreAccessEvenForFutureMonths() {
+        var own = attendanceMember();
+        var other = Long.valueOf(members.create(member(101L, "13800002402")).getId());
+        attendanceEntry(other, 101L, attendanceDay(1), "succeeded");
+        qrMemberLogin();
+        var r = attendance.get(attendanceRequest(101L, "2026-10"));
+        assertEquals(0, r.checkinCount());
+        assertNull(r.rank());
+        assertEquals(1, r.rankingPopulation());
+        r = attendance.get(attendanceRequest(101L, "2026-09"));
+        assertEquals(0, r.checkinCount());
+        assertEquals(0, r.activeDays());
+        assertNull(r.rank());
+        assertEquals(0, r.rankingPopulation());
+        r = attendance.get(attendanceRequest(101L, "9999-12"));
+        assertEquals(0, r.rankingPopulation());
+        assertNull(r.rank());
+        assertServiceException(
+                () -> attendance.get(attendanceRequest(102L, "9999-12")), STORE_NO_PERMISSION);
+        var ms =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.card.GymMemberStoreMapper.class);
+        ms.delete(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<
+                                cn.iocoder.yudao.module.gym.dal.dataobject.card.GymMemberStoreDO>()
+                        .eq(
+                                cn.iocoder.yudao.module.gym.dal.dataobject.card.GymMemberStoreDO
+                                        ::getMemberId,
+                                own));
+        assertServiceException(
+                () -> attendance.get(attendanceRequest(101L, "2026-10")), STORE_NO_PERMISSION);
+        attendanceEntry(own, 101L, attendanceDay(1), "succeeded");
+        assertEquals(1, attendance.get(attendanceRequest(101L, "2026-10")).checkinCount());
+    }
+
+    @Test
+    void attendanceRejectsInvalidMonthsIdsAccountsAndAnonymousAccess() {
+        var own = attendanceMember();
+        qrMemberLogin();
+        for (String month : List.of("2026-13", "2026-1", "abcd-10", "2026-10-01"))
+            assertThrows(
+                    ConstraintViolationException.class,
+                    () -> attendance.get(attendanceRequest(101L, month)));
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> attendance.get(attendanceRequest(0L, "2026-10")));
+        assertServiceException(
+                () -> attendance.get(attendanceRequest(101L, "1899-12")), BUSINESS_DATE_INVALID);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(
+                () -> attendance.get(attendanceRequest(101L, "2026-10")), MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        loginAs(1L);
+        assertServiceException(
+                () -> attendance.get(attendanceRequest(101L, "2026-10")), MOBILE_IDENTITY_INVALID);
+        qrMemberLogin();
+        memberAccounts.getUser(50L).setStatus(1);
+        assertServiceException(
+                () -> attendance.get(attendanceRequest(101L, "2026-10")), MOBILE_IDENTITY_INVALID);
+        memberAccounts.getUser(50L).setStatus(0);
+        var mm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.member.GymMemberMapper.class);
+        var row = mm.selectById(own);
+        row.setStatus("inactive");
+        mm.updateById(row);
+        assertServiceException(
+                () -> attendance.get(attendanceRequest(101L, "2026-10")), MOBILE_IDENTITY_INVALID);
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        assertThrows(
+                org.springframework.security.authentication
+                        .AuthenticationCredentialsNotFoundException.class,
+                () -> attendanceController.get(attendanceRequest(101L, "2026-10")));
+    }
+
+    record MobilePayrollFixture(Long payroll, Long own, Long other, Long ownItem, Long otherItem) {}
+
+    MobilePayrollFixture mobilePayrollFixture() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        when(businessClock.now())
+                .thenReturn(java.time.Instant.parse("2026-10-24T12:00:00.123456Z"));
+        Long own = approvalEmployee("MOBILE-PAY-OWN", 91L),
+                other = approvalEmployee("MOBILE-PAY-OTHER", 92L),
+                template = payrollTemplate();
+        payrollAssign(own, template, 101L);
+        payrollAssign(other, template, 101L);
+        var at = java.time.Instant.parse("2026-06-10T00:00:00Z");
+        financialEvent(own, 101L, "card", "payment", "1200", "mobile-pay-card", at);
+        financialEvent(own, 101L, "card", "refund", "200", "mobile-pay-refund", at);
+        financialEvent(own, 101L, "private", "payment", "200", "mobile-pay-pt", at);
+        var pay = payrolls.calculate(payrollRequest(101L));
+        return new MobilePayrollFixture(
+                Long.valueOf(pay.getId()),
+                own,
+                other,
+                Long.valueOf(
+                        pay.getItems().stream()
+                                .filter(x -> x.getEmployeeId().equals(own.toString()))
+                                .findFirst()
+                                .orElseThrow()
+                                .getId()),
+                Long.valueOf(
+                        pay.getItems().stream()
+                                .filter(x -> x.getEmployeeId().equals(other.toString()))
+                                .findFirst()
+                                .orElseThrow()
+                                .getId()));
+    }
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobilePayrollVO.OwnPage
+            ownPayrollPage() {
+        return new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobilePayrollVO
+                .OwnPage();
+    }
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobilePayrollVO.StorePage
+            storePayrollPage(Long store) {
+        var r =
+                new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobilePayrollVO
+                        .StorePage();
+        r.setStoreId(store);
+        r.setMonth("2026-06");
+        return r;
+    }
+
+    void publishPayroll(MobilePayrollFixture f) {
+        headquarters();
+        loginAs(1L);
+        payrolls.confirm(f.payroll());
+        payrollPublications.publish(f.payroll());
+    }
+
+    @Test
+    void mobilePayrollPublicationIsExplicitAndOwnProjectionNeverLeaksOtherEmployeesOrSnapshots() {
+        var f = mobilePayrollFixture();
+        assertServiceException(
+                () -> payrollPublications.publish(f.payroll()), PAYROLL_PUBLICATION_INVALID);
+        payrolls.confirm(f.payroll());
+        personalScope(91L);
+        assertEquals(0, mobilePayrolls.mine(ownPayrollPage()).getTotal());
+        assertServiceException(() -> mobilePayrolls.mine(f.ownItem()), PAYROLL_NOT_EXISTS);
+        assertEquals(
+                0,
+                payrolls.page(
+                                new cn.iocoder.yudao.module.gym.controller.admin.common
+                                        .GymBusinessPageReqVO())
+                        .getTotal());
+        assertServiceException(() -> payrolls.get(f.payroll()), STORE_NO_PERMISSION);
+        publishPayroll(f);
+        var first = payrollPublications.publish(f.payroll());
+        when(businessClock.now()).thenReturn(java.time.Instant.parse("2026-10-25T12:00:00Z"));
+        assertEquals(first, payrollPublications.publish(f.payroll()));
+        assertEquals("confirmed", payrolls.confirm(f.payroll()).getStatus());
+        assertServiceException(() -> payrolls.recalculate(f.payroll()), PAYROLL_FROZEN);
+        loginAs(91L); // Even a whole-store reader using /me only receives their own item.
+        var result = mobilePayrollController.mine(ownPayrollPage()).getData();
+        assertEquals(1, result.getTotal());
+        var own = result.getList().getFirst();
+        assertEquals(f.ownItem().toString(), own.id());
+        assertEquals(f.own().toString(), own.employeeId());
+        assertEquals("published", own.status());
+        assertEquals("5000.00", own.baseAmount());
+        assertEquals("130.00", own.commissionAmount());
+        assertEquals("100.00", own.bonusAmount());
+        assertEquals("50.00", own.deductionAmount());
+        assertEquals("5180.00", own.totalAmount());
+        assertEquals(own, mobilePayrolls.mine(f.ownItem()));
+        assertEquals(
+                new BigDecimal("5180.00"),
+                own.items().stream()
+                        .map(x -> new BigDecimal(x.amount()))
+                        .reduce(BigDecimal.ZERO, BigDecimal::add));
+        assertTrue(own.items().stream().anyMatch(x -> x.amount().equals("-50.00")));
+        String json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(own);
+        for (String hidden :
+                List.of(
+                        "sourceSnapshot",
+                        "calculationSnapshot",
+                        "salaryAssignmentId",
+                        "confirmedBy",
+                        "mobile-pay-card",
+                        "events")) assertFalse(json.contains(hidden));
+        assertServiceException(() -> mobilePayrolls.mine(f.otherItem()), PAYROLL_NOT_EXISTS);
+        var pm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.payroll.GymPayrollMapper.class);
+        assertEquals(1L, pm.selectById(f.payroll()).getPublishedBy());
+        assertEquals(
+                java.time.Instant.parse("2026-10-24T12:00:00.123456Z"),
+                pm.selectById(f.payroll()).getPublishedAt());
+    }
+
+    @Test
+    void mobilePayrollManagerUsesWholeStorePermissionBeforePaginationAndAllowsDraftReview() {
+        var f = mobilePayrollFixture();
+        when(permissions.hasAnyPermissions(any(), eq("gym:payroll:read"))).thenReturn(true);
+        var req = storePayrollPage(101L);
+        req.setPageSize(1);
+        var page = mobilePayrollController.store(req).getData();
+        assertEquals(2, page.getTotal());
+        assertEquals(1, page.getList().size());
+        assertEquals("calculated", page.getList().getFirst().status());
+        req.setPageNo(2);
+        assertNotEquals(
+                page.getList().getFirst().id(),
+                mobilePayrolls.store(req).getList().getFirst().id());
+        req.setPageNo(1);
+        req.setEmployeeId(f.other());
+        assertEquals(1, mobilePayrolls.store(req).getTotal());
+        assertEquals(f.otherItem().toString(), mobilePayrolls.store(req).getList().getFirst().id());
+        scoped(102L);
+        assertServiceException(
+                () -> mobilePayrolls.store(storePayrollPage(101L)), STORE_NO_PERMISSION);
+        assertServiceException(() -> mobilePayrolls.store(f.ownItem()), STORE_NO_PERMISSION);
+        assertEquals(0, mobilePayrolls.store(storePayrollPage(102L)).getTotal());
+        personalScope(91L);
+        assertServiceException(() -> mobilePayrolls.store(f.ownItem()), STORE_NO_PERMISSION);
+        assertServiceException(
+                () -> mobilePayrolls.store(storePayrollPage(101L)), STORE_NO_PERMISSION);
+        headquarters();
+        when(permissions.hasAnyPermissions(any(), eq("gym:payroll:read"))).thenReturn(false);
+        assertThrows(
+                org.springframework.security.authorization.AuthorizationDeniedException.class,
+                () -> mobilePayrollController.store(storePayrollPage(101L)));
+        assertThrows(
+                org.springframework.security.authorization.AuthorizationDeniedException.class,
+                () -> mobilePayrollController.store(f.ownItem()));
+    }
+
+    @Test
+    void mobilePayrollOwnAccessRechecksEmployeeAccountAndTenantAndValidatesMonths() {
+        var f = mobilePayrollFixture();
+        publishPayroll(f);
+        personalScope(91L);
+        var req = ownPayrollPage();
+        req.setMonth("2026-07");
+        assertEquals(0, mobilePayrolls.mine(req).getTotal());
+        req.setMonth("2026-06");
+        assertEquals(1, mobilePayrolls.mine(req).getTotal());
+        req.setMonth("2026-13");
+        assertThrows(ConstraintViolationException.class, () -> mobilePayrolls.mine(req));
+        req.setMonth("0999-01");
+        assertServiceException(() -> mobilePayrolls.mine(req), PAYROLL_MONTH_INVALID);
+        req.setMonth(null);
+        req.setPageSize(-1);
+        assertThrows(ConstraintViolationException.class, () -> mobilePayrolls.mine(req));
+        var mm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeMapper.class);
+        var employee = mm.selectById(f.own());
+        employee.setStatus("inactive");
+        mm.updateById(employee);
+        assertServiceException(() -> mobilePayrolls.mine(f.ownItem()), MOBILE_EMPLOYEE_REQUIRED);
+        assertServiceException(() -> payrolls.get(f.payroll()), STORE_NO_PERMISSION);
+        assertEquals(
+                0,
+                payrolls.page(
+                                new cn.iocoder.yudao.module.gym.controller.admin.common
+                                        .GymBusinessPageReqVO())
+                        .getTotal());
+        employee.setStatus("active");
+        employee.setHiredOn(LocalDate.of(2027, 1, 1));
+        mm.updateById(employee);
+        assertServiceException(
+                () -> mobilePayrolls.mine(ownPayrollPage()), MOBILE_EMPLOYEE_REQUIRED);
+        employee.setHiredOn(LocalDate.of(2026, 1, 1));
+        mm.updateById(employee);
+        when(workAccounts.getUser(91L))
+                .thenReturn(
+                        new cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO()
+                                .setId(91L)
+                                .setStatus(1));
+        assertServiceException(() -> mobilePayrolls.mine(f.ownItem()), MOBILE_IDENTITY_INVALID);
+        loginAs(1L);
+        assertServiceException(
+                () -> mobilePayrolls.mine(ownPayrollPage()), MOBILE_EMPLOYEE_REQUIRED);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> mobilePayrolls.store(f.ownItem()), MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        qrMemberLogin();
+        assertServiceException(
+                () -> mobilePayrolls.mine(ownPayrollPage()), MOBILE_IDENTITY_INVALID);
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        assertThrows(
+                org.springframework.security.authentication
+                        .AuthenticationCredentialsNotFoundException.class,
+                () -> mobilePayrollController.mine(ownPayrollPage()));
+    }
+
+    @Test
+    void mobilePayrollDeletedItemsParentsAndOtherTenantRowsAreHidden() {
+        var f = mobilePayrollFixture();
+        publishPayroll(f);
+        personalScope(91L);
+        var im =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.payroll.GymPayrollItemMapper.class);
+        im.deleteById(f.ownItem());
+        assertEquals(0, mobilePayrolls.mine(ownPayrollPage()).getTotal());
+        assertServiceException(() -> mobilePayrolls.mine(f.ownItem()), PAYROLL_NOT_EXISTS);
+        loginAs(92L);
+        assertEquals(1, mobilePayrolls.mine(ownPayrollPage()).getTotal());
+        var pm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.payroll.GymPayrollMapper.class);
+        pm.deleteById(f.payroll());
+        assertEquals(0, mobilePayrolls.mine(ownPayrollPage()).getTotal());
+        assertServiceException(() -> mobilePayrolls.mine(f.otherItem()), PAYROLL_NOT_EXISTS);
+        headquarters();
+        assertServiceException(() -> mobilePayrolls.store(f.otherItem()), PAYROLL_NOT_EXISTS);
+        cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.setLoginUser(
+                new cn.iocoder.yudao.framework.security.core.LoginUser()
+                        .setId(1L)
+                        .setUserType(2)
+                        .setTenantId(2L),
+                new org.springframework.mock.web.MockHttpServletRequest());
+        TenantContextHolder.setTenantId(2L);
+        assertEquals(0, mobilePayrolls.store(storePayrollPage(101L)).getTotal());
+        assertServiceException(() -> mobilePayrolls.store(f.otherItem()), PAYROLL_NOT_EXISTS);
+    }
+
+    @Test
+    void mobilePayrollPublicationChecksPermissionCurrentScopeAndIdentity() {
+        var f = mobilePayrollFixture();
+        payrolls.confirm(f.payroll());
+        assertThrows(
+                org.springframework.security.authorization.AuthorizationDeniedException.class,
+                () -> payrollPublicationController.publish(f.payroll()));
+        when(permissions.hasAnyPermissions(any(), eq("gym:payroll:confirm"))).thenReturn(true);
+        personalScope(91L);
+        assertServiceException(
+                () -> payrollPublicationController.publish(f.payroll()), STORE_NO_PERMISSION);
+        scoped(102L);
+        assertServiceException(() -> payrollPublications.publish(f.payroll()), STORE_NO_PERMISSION);
+        headquarters();
+        qrMemberLogin();
+        assertServiceException(
+                () -> payrollPublications.publish(f.payroll()), MOBILE_IDENTITY_INVALID);
+        loginAs(1L);
+        assertEquals(
+                f.payroll().toString(),
+                payrollPublicationController.publish(f.payroll()).getData().id());
+        scoped(102L);
+        assertServiceException(() -> payrollPublications.publish(f.payroll()), STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void mobilePayrollPublicationRollsBackAndConcurrentRetriesPreserveFirstRelease()
+            throws Exception {
+        var f = mobilePayrollFixture();
+        payrolls.confirm(f.payroll());
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .execute(
+                        "ALTER TABLE gym_payroll ADD CONSTRAINT test_payroll_publish CHECK (published_by IS NULL)");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () -> payrollPublications.publish(f.payroll()));
+            var row =
+                    applicationContext
+                            .getBean(
+                                    cn.iocoder.yudao.module.gym.dal.mysql.payroll.GymPayrollMapper
+                                            .class)
+                            .selectById(f.payroll());
+            assertNull(row.getPublishedAt());
+            assertNull(row.getPublishedBy());
+            assertEquals("confirmed", row.getStatus());
+        } finally {
+            new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                    .execute("ALTER TABLE gym_payroll DROP CONSTRAINT test_payroll_publish");
+        }
+        var results =
+                workCourseRace(
+                        () -> payrollPublications.publish(f.payroll()),
+                        () -> payrollPublications.publish(f.payroll()));
+        assertEquals(results.get(0), results.get(1));
+        assertInstanceOf(
+                cn.iocoder.yudao.module.gym.service.payroll.GymPayrollPublicationService.Publication
+                        .class,
+                results.getFirst());
+        personalScope(91L);
+        assertEquals(1, mobilePayrolls.mine(ownPayrollPage()).getTotal());
+    }
+
+    @Test
+    void mobilePayrollLegacyMixedStoreAndSelfScopeKeepsDraftsPrivate() {
+        var f = mobilePayrollFixture();
+        var permission = new DeptDataPermissionRespDTO();
+        permission.setSelf(true);
+        permission.setDeptIds(Set.of(102L));
+        loginAs(91L);
+        when(permissions.getDeptDataPermission(any())).thenReturn(permission);
+        var req = new cn.iocoder.yudao.module.gym.controller.admin.common.GymBusinessPageReqVO();
+        assertEquals(0, payrolls.page(req).getTotal());
+        assertServiceException(() -> payrolls.get(f.payroll()), STORE_NO_PERMISSION);
+        permission.setDeptIds(Set.of(101L));
+        assertEquals(1, payrolls.page(req).getTotal());
+        assertEquals(2, payrolls.get(f.payroll()).getItems().size());
+        publishPayroll(f);
+        permission.setDeptIds(Set.of(102L));
+        loginAs(91L);
+        when(permissions.getDeptDataPermission(any())).thenReturn(permission);
+        assertEquals(1, payrolls.page(req).getTotal());
+        assertEquals(1, payrolls.get(f.payroll()).getItems().size());
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileActivityVO.Create
+            mobileActivityRequest() {
+        var r =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileActivityVO
+                        .Create();
+        r.setStoreId(101L);
+        r.setTitle("会员活动");
+        r.setDescription("公开介绍");
+        r.setStartsAt(activityNow.plusSeconds(7200));
+        r.setEndsAt(activityNow.plusSeconds(10800));
+        r.setRegistrationDeadline(activityNow.plusSeconds(3600));
+        r.setCancelDeadline(activityNow.plusSeconds(5400));
+        r.setCapacity(2);
+        return r;
+    }
+
+    Long mobileActivityMember() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        when(businessClock.now()).thenReturn(activityNow);
+        Long member = Long.valueOf(members.create(member(101L, "13800002401")).getId());
+        qrMemberIdentity(member);
+        return member;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileActivityVO.ActivityPage
+            activityPage(Long store) {
+        var r =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileActivityVO
+                        .ActivityPage();
+        r.setStoreId(store);
+        return r;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileActivityVO.RegistrationPage
+            activityHistory() {
+        return new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileActivityVO
+                .RegistrationPage();
+    }
+
+    @Test
+    void mobileActivityCreationPublishesOnceWithCurrentScopeAndValidDates() {
+        mobileActivityMember();
+        var req = mobileActivityRequest();
+        assertThrows(
+                org.springframework.security.authorization.AuthorizationDeniedException.class,
+                () -> workActivitiesController.create(req, "activity-create-key"));
+        when(permissions.hasAnyPermissions(any(), eq("gym:activities:manage"))).thenReturn(true);
+        var first = workActivitiesController.create(req, "activity-create-key").getData();
+        assertEquals("open", first.status());
+        assertEquals(List.of("101"), first.storeIds());
+        assertEquals(first, mobileActivities.create(req, "activity-create-key"));
+        req.setTitle("different");
+        assertServiceException(
+                () -> mobileActivities.create(req, "activity-create-key"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        scoped(102L);
+        assertServiceException(
+                () -> mobileActivities.create(mobileActivityRequest(), "activity-create-key"),
+                STORE_NO_PERMISSION);
+        headquarters();
+        for (int mode = 0; mode < 4; mode++) {
+            var invalid = mobileActivityRequest();
+            if (mode == 0) invalid.setRegistrationDeadline(activityNow);
+            if (mode == 1) invalid.setEndsAt(invalid.getStartsAt());
+            if (mode == 2) invalid.setCancelDeadline(invalid.getStartsAt().plusSeconds(1));
+            if (mode == 3) invalid.setCancelDeadline(activityNow.minusSeconds(1));
+            assertServiceException(
+                    () ->
+                            mobileActivities.create(
+                                    invalid, "activity-invalid-" + invalid.hashCode()),
+                    ACTIVITY_INVALID);
+        }
+        qrMemberLogin();
+        assertServiceException(
+                () -> mobileActivities.create(mobileActivityRequest(), "activity-member-forbidden"),
+                MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void mobileActivityPublicFiltersBeforePagingAndSupportsLegacyMultiStoreUnlimited() {
+        mobileActivityMember();
+        Long id = publishedActivity(101L, 102L);
+        var patch =
+                new cn.iocoder.yudao.module.gym.controller.admin.marketing.vo
+                        .GymActivitySaveReqVO();
+        patch.setCapacity(null);
+        marketing.patchActivity(id, patch);
+        marketing.createActivity(activityRequest(101L));
+        Long cancelled = publishedActivity(101L);
+        marketing.patchActivity(cancelled, activityStatus("cancelled"));
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        var req = activityPage(102L);
+        req.setStatus("open");
+        req.setPageSize(1);
+        var page = mobileActivitiesController.page(req).getData();
+        assertEquals(1, page.getTotal());
+        var view = page.getList().getFirst();
+        assertEquals("102", view.storeId());
+        assertEquals(List.of("101", "102"), view.storeIds());
+        assertNull(view.capacity());
+        assertEquals("101", mobileActivitiesController.get(id).getData().storeId());
+        assertServiceException(() -> mobileActivities.get(cancelled), ACTIVITY_NOT_EXISTS);
+        when(businessClock.now()).thenReturn(activityNow.plusSeconds(10800));
+        req.setStatus("ended");
+        assertEquals(1, mobileActivities.page(req).getTotal());
+        assertEquals("ended", mobileActivities.get(id).status());
+        req.setStatus("open");
+        assertEquals(0, mobileActivities.page(req).getTotal());
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> mobileActivities.get(id), ACTIVITY_NOT_EXISTS);
+        TenantContextHolder.setTenantId(1L);
+        var store = storeMapper.selectById(102L);
+        store.setStatus("inactive");
+        storeMapper.updateById(store);
+        assertServiceException(() -> mobileActivities.page(activityPage(102L)), STORE_NOT_EXISTS);
+        assertEquals(List.of("101"), mobileActivities.get(id).storeIds());
+    }
+
+    @Test
+    void mobileActivityRegistrationCancellationAndKeyReplayShareExistingLedger() {
+        var member = mobileActivityMember();
+        Long id =
+                Long.valueOf(
+                        mobileActivities
+                                .create(mobileActivityRequest(), "activity-ledger-create")
+                                .id());
+        qrMemberLogin();
+        var first = mobileActivities.register(id, "activity-register-key");
+        assertEquals(first, mobileActivities.register(id, "activity-register-key"));
+        assertEquals(first, mobileActivities.register(id, "activity-register-again"));
+        assertEquals(1, mobileActivities.get(id).registeredCount());
+        assertEquals("cancelled", mobileActivities.cancel(id).status());
+        assertEquals("cancelled", mobileActivities.cancel(id).status());
+        assertEquals(0, mobileActivities.get(id).registeredCount());
+        assertEquals(first, mobileActivities.register(id, "activity-register-key"));
+        assertEquals(0, mobileActivities.get(id).registeredCount());
+        when(businessClock.now()).thenReturn(activityNow.plusSeconds(1));
+        var again = mobileActivities.register(id, "activity-reregister-key");
+        assertEquals(first.id(), again.id());
+        assertNotEquals(first.registeredAt(), again.registeredAt());
+        assertEquals(1, mobileActivities.get(id).registeredCount());
+        loginAs(1L);
+        assertEquals(
+                first.id(), marketing.register(id, activityRegistration(member, 101L)).getId());
+        assertEquals(1, marketing.activity(id).getRegistrationCount());
+    }
+
+    @Test
+    void mobileActivityMemberCancelDeadlineAndAdminOverrideRemainDistinct() {
+        var member = mobileActivityMember();
+        var req = mobileActivityRequest();
+        req.setCancelDeadline(activityNow.plusSeconds(1800));
+        Long id = Long.valueOf(mobileActivities.create(req, "activity-deadline-create").id());
+        qrMemberLogin();
+        var reg = mobileActivities.register(id, "activity-deadline-register");
+        when(businessClock.now()).thenReturn(activityNow.plusSeconds(1800));
+        assertServiceException(() -> mobileActivities.cancel(id), ACTIVITY_REGISTRATION_INVALID);
+        loginAs(1L);
+        var patch =
+                new cn.iocoder.yudao.module.gym.controller.admin.marketing.vo
+                        .GymActivitySaveReqVO();
+        patch.setCancelDeadline(null);
+        assertServiceException(
+                () -> marketing.patchActivity(id, patch), ACTIVITY_REGISTERED_IMMUTABLE);
+        marketing.cancelRegistration(id, Long.valueOf(reg.id()));
+        assertEquals(0, marketing.activity(id).getRegistrationCount());
+        qrMemberLogin();
+        assertEquals("cancelled", mobileActivities.cancel(id).status());
+        when(businessClock.now()).thenReturn(activityNow.plusSeconds(3600));
+        assertServiceException(
+                () -> mobileActivities.register(id, "activity-at-deadline"),
+                ACTIVITY_REGISTRATION_INVALID);
+    }
+
+    @Test
+    void mobileActivityMultiStoreUsesMemberDefaultAndKeepsHistoricalStoreOnRetry() {
+        var member = mobileActivityMember();
+        var relation = new cn.iocoder.yudao.module.gym.dal.dataobject.card.GymMemberStoreDO();
+        relation.setMemberId(member);
+        relation.setStoreId(102L);
+        relation.setJoinedAt(activityNow);
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.card.GymMemberStoreMapper.class)
+                .insert(relation);
+        var identities =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileIdentityMapper.class);
+        var identity =
+                identities.selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.mobile.GymMobileIdentityDO
+                                ::getUserId,
+                        50L);
+        identity.setDefaultStoreId(102L);
+        identities.updateById(identity);
+        Long id = publishedActivity(101L, 102L);
+        qrMemberLogin();
+        var first = mobileActivities.register(id, "activity-default-store");
+        assertEquals(
+                "102",
+                mobileActivities
+                        .history(activityHistory())
+                        .getList()
+                        .getFirst()
+                        .activity()
+                        .storeId());
+        identity.setDefaultStoreId(101L);
+        identities.updateById(identity);
+        assertEquals(first, mobileActivities.register(id, "activity-keep-store"));
+        var ms =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.card.GymMemberStoreMapper.class);
+        ms.deleteById(relation.getId());
+        assertServiceException(
+                () -> mobileActivities.register(id, "activity-lost-store"),
+                ACTIVITY_REGISTRATION_INVALID);
+        assertEquals("cancelled", mobileActivities.cancel(id).status());
+        loginAs(1L);
+        Long second = publishedActivity(102L);
+        qrMemberLogin();
+        assertServiceException(
+                () -> mobileActivities.register(second, "activity-no-membership"),
+                ACTIVITY_REGISTRATION_INVALID);
+    }
+
+    @Test
+    void mobileActivityMixedAdminMemberConcurrencyNeverOverbooksAndSameKeyCreatesOnce()
+            throws Exception {
+        var member = mobileActivityMember();
+        Long other = Long.valueOf(members.create(member(101L, "13800002402")).getId());
+        var req = mobileActivityRequest();
+        req.setCapacity(1);
+        Long id = Long.valueOf(mobileActivities.create(req, "activity-race-create").id());
+        var results =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            return mobileActivities.register(id, "activity-race-member");
+                        },
+                        () -> marketing.register(id, activityRegistration(other, 101L)));
+        assertEquals(
+                1,
+                results.stream()
+                        .filter(
+                                x ->
+                                        x
+                                                instanceof
+                                                cn.iocoder.yudao.framework.common.exception
+                                                        .ServiceException)
+                        .count());
+        assertEquals(1, mobileActivities.get(id).registeredCount());
+        Long second = Long.valueOf(mobileActivities.create(req, "activity-same-key-create").id());
+        results =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            return mobileActivities.register(second, "activity-same-key-reg");
+                        },
+                        () -> {
+                            qrMemberLogin();
+                            return mobileActivities.register(second, "activity-same-key-reg");
+                        });
+        assertEquals(results.get(0), results.get(1));
+        assertEquals(1, mobileActivities.get(second).registeredCount());
+    }
+
+    @Test
+    void mobileActivityRegistrationFailureRollsBackQuotaAndKey() {
+        mobileActivityMember();
+        Long id =
+                Long.valueOf(
+                        mobileActivities
+                                .create(mobileActivityRequest(), "activity-rollback-create")
+                                .id());
+        qrMemberLogin();
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_mobile_request ADD CONSTRAINT test_activity_response CHECK (operation <> 'activity-register' OR response_json IS NULL)");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () -> mobileActivities.register(id, "activity-rollback-key"));
+            assertEquals(0, mobileActivities.get(id).registeredCount());
+            assertEquals(0, mobileActivities.history(activityHistory()).getTotal());
+        } finally {
+            jdbc.execute("ALTER TABLE gym_mobile_request DROP CONSTRAINT test_activity_response");
+        }
+        assertEquals("registered", mobileActivities.register(id, "activity-rollback-key").status());
+    }
+
+    @Test
+    void mobileActivityOwnHistorySurvivesClosedStoreAndMissingActivityWithoutIdentityLeaks() {
+        mobileActivityMember();
+        Long id =
+                Long.valueOf(
+                        mobileActivities
+                                .create(mobileActivityRequest(), "activity-history-create")
+                                .id());
+        qrMemberLogin();
+        mobileActivities.register(id, "activity-history-register");
+        var store = storeMapper.selectById(101L);
+        store.setStatus("inactive");
+        storeMapper.updateById(store);
+        assertServiceException(() -> mobileActivities.get(id), ACTIVITY_NOT_EXISTS);
+        var history = mobileActivities.history(activityHistory());
+        assertEquals(1, history.getTotal());
+        assertEquals("101", history.getList().getFirst().activity().storeId());
+        var json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(history);
+        assertFalse(json.contains("memberId"));
+        assertFalse(json.contains("13800002401"));
+        var am =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.marketing.GymActivityMapper.class);
+        am.deleteById(id);
+        assertNull(mobileActivities.history(activityHistory()).getList().getFirst().activity());
+        loginAs(1L);
+        assertServiceException(
+                () -> mobileActivities.history(activityHistory()), MOBILE_IDENTITY_INVALID);
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        assertThrows(
+                org.springframework.security.authentication
+                        .AuthenticationCredentialsNotFoundException.class,
+                () -> mobileActivitiesController.history(activityHistory()));
+    }
+
+    @Test
+    void mobileActivityCoverUsesPublicReferenceAndRevokesAfterCancellation() {
+        mobileActivityMember();
+        var cover = publicImage(101L);
+        var req = mobileActivityRequest();
+        req.setCoverFileId(cover.getId());
+        var first = mobileActivities.create(req, "activity-cover-create");
+        assertNotNull(first.cover());
+        assertTrue(first.cover().url().contains("/gym/public-media/"));
+        assertNotNull(publicContent.mediaContent(cover.getId()));
+        var binding = new cn.iocoder.yudao.module.gym.dal.dataobject.mobile.GymMobileWorkFileDO();
+        binding.setFileId(cover.getId());
+        binding.setStoreId(101L);
+        binding.setPurpose("coach_profile");
+        binding.setEmployeeId(999L);
+        var bindings =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileWorkFileMapper.class);
+        bindings.insert(binding);
+        assertNull(mobileActivities.get(Long.valueOf(first.id())).cover());
+        assertServiceException(() -> publicContent.mediaContent(cover.getId()), FILE_NOT_EXISTS);
+        assertServiceException(
+                () -> mobileActivities.create(req, "activity-bound-cover"), ACTIVITY_COVER_INVALID);
+        bindings.deleteById(binding.getId());
+        marketing.patchActivity(Long.valueOf(first.id()), activityStatus("cancelled"));
+        assertServiceException(() -> publicContent.mediaContent(cover.getId()), FILE_NOT_EXISTS);
+        req.setStoreId(102L);
+        assertServiceException(
+                () -> mobileActivities.create(req, "activity-cover-other-store"),
+                ACTIVITY_COVER_INVALID);
+    }
+
+    Long feedbackMember() {
+        return mobileActivityMember();
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileFeedbackVO.Submit
+            feedbackRequest() {
+        var r =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileFeedbackVO
+                        .Submit();
+        r.setStoreId(101L);
+        r.setType("feedback");
+        r.setContent("希望增加晚间课程");
+        return r;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileFeedbackVO.StorePage
+            feedbackStore(Long store) {
+        var r =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileFeedbackVO
+                        .StorePage();
+        r.setStoreId(store);
+        return r;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileFeedbackVO.OwnPage
+            feedbackMine() {
+        return new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileFeedbackVO
+                .OwnPage();
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileFeedbackVO.Reply feedbackReply(
+            String text) {
+        var r =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileFeedbackVO
+                        .Reply();
+        r.setContent(text);
+        return r;
+    }
+
+    byte[] feedbackPng() throws Exception {
+        var image =
+                new java.awt.image.BufferedImage(2, 2, java.awt.image.BufferedImage.TYPE_INT_RGB);
+        image.setRGB(0, 0, 0x00ff00);
+        var out = new java.io.ByteArrayOutputStream();
+        javax.imageio.ImageIO.write(image, "png", out);
+        return out.toByteArray();
+    }
+
+    Long feedbackFile(Long member, Long store, String purpose) throws Exception {
+        var f = file(store, "member_" + purpose);
+        f.setName("会员13800002401-私密姓名.png");
+        f.setUrl("private:feedback:" + f.getId());
+        var bytes = feedbackPng();
+        f.setSize((long) bytes.length);
+        files.updateById(f);
+        when(fileApi.getFileContentByUrl(f.getUrl())).thenReturn(bytes);
+        var owner = new cn.iocoder.yudao.module.gym.dal.dataobject.mobile.GymMobileFileOwnerDO();
+        owner.setFileId(f.getId());
+        owner.setMemberId(member);
+        owner.setPurpose(purpose);
+        applicationContext
+                .getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileFileOwnerMapper.class)
+                .insert(owner);
+        return f.getId();
+    }
+
+    @Test
+    void feedbackSubmissionIsOwnScopedAndStaffProjectionIsAnonymous() {
+        var member = feedbackMember();
+        qrMemberLogin();
+        var req = feedbackRequest();
+        var first = feedbackController.submit(req, "feedback-submit-key").getData();
+        assertEquals(first, feedback.submit(req, "feedback-submit-key"));
+        assertEquals(1, feedback.mine(feedbackMine()).getTotal());
+        assertEquals("received", first.status());
+        assertEquals(
+                req.getContent(), feedback.mine(feedbackMine()).getList().getFirst().content());
+        req.setContent("changed");
+        assertServiceException(
+                () -> feedback.submit(req, "feedback-submit-key"), MOBILE_IDEMPOTENCY_CONFLICT);
+        loginAs(1L);
+        var page = feedback.store(feedbackStore(101L));
+        assertEquals(1, page.getTotal());
+        var row = page.getList().getFirst();
+        assertNull(row.cardContext());
+        assertEquals(List.of(), row.fileIds());
+        var json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(row);
+        for (String secret :
+                List.of("memberId", "memberName", "creator", "repliedBy", "13800002401", "cardNo"))
+            assertFalse(json.contains(secret));
+        var stored =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymFeedbackMapper
+                                        .class)
+                        .selectById(Long.valueOf(first.id()));
+        assertEquals(member, stored.getMemberId());
+        assertFalse(stored.getAllowCardContext());
+        assertNull(stored.getCardContext());
+        var other = new cn.iocoder.yudao.module.gym.dal.dataobject.mobile.GymFeedbackDO();
+        other.setMemberId(999L);
+        other.setStoreId(101L);
+        other.setType("review");
+        other.setRating(3);
+        other.setContent("其他会员评价");
+        other.setStatus("received");
+        other.setSubmittedAt(activityNow);
+        other.setAllowCardContext(false);
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymFeedbackMapper.class)
+                .insert(other);
+        var filter = feedbackStore(101L);
+        filter.setPageSize(1);
+        assertEquals(2, feedback.store(filter).getTotal());
+        filter.setType("review");
+        assertEquals(1, feedback.store(filter).getTotal());
+        qrMemberLogin();
+        assertEquals(1, feedback.mine(feedbackMine()).getTotal());
+    }
+
+    @Test
+    void feedbackReviewRatingContentAndDuplicateImagesAreValidated() throws Exception {
+        var member = feedbackMember();
+        Long file = feedbackFile(member, 101L, "feedback");
+        qrMemberLogin();
+        var req = feedbackRequest();
+        req.setType("review");
+        assertServiceException(() -> feedback.submit(req, "feedback-no-rating"), FEEDBACK_INVALID);
+        req.setRating(6);
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> feedback.submit(req, "feedback-bad-rating"));
+        req.setRating(5);
+        req.setContent(" ");
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> feedback.submit(req, "feedback-empty-text"));
+        req.setContent("很好");
+        req.setFileIds(List.of(file, file));
+        assertServiceException(
+                () -> feedback.submit(req, "feedback-duplicate-file"), FEEDBACK_INVALID);
+        req.setFileIds(java.util.Collections.nCopies(10, file));
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> feedback.submit(req, "feedback-too-many-files"));
+        req.setFileIds(List.of(file));
+        assertEquals("received", feedback.submit(req, "feedback-valid-review").status());
+    }
+
+    @Test
+    void feedbackAttachmentsRequireOwnPurposeStoreAndSingleFeedbackBinding() throws Exception {
+        var member = feedbackMember();
+        Long own = feedbackFile(member, 101L, "feedback"),
+                other = feedbackFile(999L, 101L, "feedback"),
+                wrongStore = feedbackFile(member, 102L, "feedback"),
+                face = feedbackFile(member, 101L, "face");
+        qrMemberLogin();
+        for (Long id : List.of(other, wrongStore, face)) {
+            var req = feedbackRequest();
+            req.setFileIds(List.of(id));
+            assertServiceException(
+                    () -> feedback.submit(req, "feedback-bad-file-" + id),
+                    FEEDBACK_ATTACHMENT_INVALID);
+        }
+        var req = feedbackRequest();
+        req.setFileIds(List.of(own));
+        feedback.submit(req, "feedback-file-first");
+        assertServiceException(
+                () -> feedback.submit(req, "feedback-file-reused"), FEEDBACK_ATTACHMENT_INVALID);
+        assertEquals(1, feedback.mine(feedbackMine()).getTotal());
+    }
+
+    @Test
+    void feedbackCardContextRequiresOptInAndFreezesOnlySafeCounts() {
+        var member = feedbackMember();
+        Long template = Long.valueOf(cards.create(cardTemplate("period")).getId());
+        var card =
+                cards.issue(
+                        member,
+                        101L,
+                        template,
+                        activityNow.minusSeconds(1),
+                        "test",
+                        "feedback-card-context");
+        Long coach = Long.valueOf(employees.create(employee("FEEDBACK-COACH", 101L)).getId());
+        Long product = Long.valueOf(courses.createProduct(courseProduct(101L, coach)).getId());
+        courses.issuePack(
+                member,
+                product,
+                activityNow.minusSeconds(1),
+                activityNow.plusSeconds(86400),
+                "test-payment",
+                "feedback-pack-context");
+        qrMemberLogin();
+        feedback.submit(feedbackRequest(), "feedback-context-off");
+        var req = feedbackRequest();
+        req.setAllowCardContext(true);
+        var receipt = feedback.submit(req, "feedback-context-on");
+        var cm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.card.GymMemberCardMapper.class);
+        var stored = cm.selectById(Long.valueOf(card.getId()));
+        stored.setStatus("inactive");
+        cm.updateById(stored);
+        loginAs(1L);
+        var page = feedback.store(feedbackStore(101L));
+        var opted =
+                page.getList().stream()
+                        .filter(x -> x.id().equals(receipt.id()))
+                        .findFirst()
+                        .orElseThrow();
+        assertEquals(1, opted.cardContext().activeCardCount());
+        assertEquals(1, opted.cardContext().activeCoursePackCount());
+        assertTrue(page.getList().stream().anyMatch(x -> x.cardContext() == null));
+        assertFalse(
+                cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(
+                                opted.cardContext())
+                        .contains("cardNo"));
+    }
+
+    @Test
+    void feedbackRepliesAreOnceOnlyReadableToOwnerAndRecheckScopeOnReplay() {
+        feedbackMember();
+        qrMemberLogin();
+        Long id = Long.valueOf(feedback.submit(feedbackRequest(), "feedback-reply-submit").id());
+        loginAs(1L);
+        var reply = feedbackReply("已收到，将评估晚间课程安排");
+        var first = feedback.reply(id, reply, "feedback-reply-key");
+        assertEquals(first, feedback.reply(id, reply, "feedback-reply-key"));
+        assertEquals(first, feedback.reply(id, reply, "feedback-reply-same"));
+        assertServiceException(
+                () -> feedback.reply(id, feedbackReply("overwrite"), "feedback-reply-new"),
+                FEEDBACK_ALREADY_REPLIED);
+        assertEquals(
+                reply.getContent(),
+                feedback.store(feedbackStore(101L)).getList().getFirst().reply());
+        scoped(102L);
+        assertServiceException(
+                () -> feedback.reply(id, reply, "feedback-reply-key"), STORE_NO_PERMISSION);
+        headquarters();
+        qrMemberLogin();
+        var own = feedback.mine(feedbackMine()).getList().getFirst();
+        assertEquals("replied", own.status());
+        assertEquals(reply.getContent(), own.reply());
+    }
+
+    @Test
+    void feedbackStaffPermissionAndTenantNeverBecomeMemberIdentityAccess() {
+        feedbackMember();
+        qrMemberLogin();
+        Long id = Long.valueOf(feedback.submit(feedbackRequest(), "feedback-auth-submit").id());
+        loginAs(1L);
+        assertThrows(
+                org.springframework.security.authorization.AuthorizationDeniedException.class,
+                () -> workFeedbackController.store(feedbackStore(101L)));
+        assertThrows(
+                org.springframework.security.authorization.AuthorizationDeniedException.class,
+                () ->
+                        workFeedbackController.reply(
+                                id, feedbackReply("reply"), "feedback-denied-reply"));
+        when(permissions.hasAnyPermissions(any(), eq("gym:feedbacks:read"))).thenReturn(true);
+        when(permissions.hasAnyPermissions(any(), eq("gym:feedbacks:reply"))).thenReturn(true);
+        assertEquals(1, workFeedbackController.store(feedbackStore(101L)).getData().getTotal());
+        personalScope(1L);
+        assertServiceException(() -> feedback.store(feedbackStore(101L)), STORE_NO_PERMISSION);
+        headquarters();
+        qrMemberLogin();
+        assertServiceException(() -> feedback.store(feedbackStore(101L)), MOBILE_IDENTITY_INVALID);
+        cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.setLoginUser(
+                new cn.iocoder.yudao.framework.security.core.LoginUser()
+                        .setId(1L)
+                        .setUserType(2)
+                        .setTenantId(2L),
+                new org.springframework.mock.web.MockHttpServletRequest());
+        TenantContextHolder.setTenantId(2L);
+        assertEquals(0, feedback.store(feedbackStore(101L)).getTotal());
+        assertServiceException(
+                () -> feedback.reply(id, feedbackReply("reply"), "feedback-other-tenant"),
+                FEEDBACK_NOT_EXISTS);
+        TenantContextHolder.setTenantId(1L);
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        assertThrows(
+                org.springframework.security.authentication
+                        .AuthenticationCredentialsNotFoundException.class,
+                () -> feedbackController.mine(feedbackMine()));
+    }
+
+    @Test
+    void feedbackAttachmentDownloadUsesSafeNameAndCannotBypassThroughGenericFiles()
+            throws Exception {
+        var member = feedbackMember();
+        Long file = feedbackFile(member, 101L, "feedback");
+        qrMemberLogin();
+        var req = feedbackRequest();
+        req.setFileIds(List.of(file));
+        Long id = Long.valueOf(feedback.submit(req, "feedback-download-submit").id());
+        loginAs(1L);
+        var result = feedback.attachment(id, file);
+        assertEquals("feedback-image.png", result.getName());
+        assertEquals("image/png", result.getMimeType());
+        assertEquals(
+                2,
+                javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(result.getContent()))
+                        .getWidth());
+        assertServiceException(
+                () ->
+                        applicationContext
+                                .getBean(
+                                        cn.iocoder.yudao.module.gym.service.file.GymFileServiceImpl
+                                                .class)
+                                .getFile(file),
+                FILE_STORE_NO_PERMISSION,
+                101L);
+        assertServiceException(() -> feedback.attachment(id, file + 1), FILE_NOT_EXISTS);
+        scoped(102L);
+        assertServiceException(() -> feedback.attachment(id, file), STORE_NO_PERMISSION);
+        headquarters();
+        var om =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileFileOwnerMapper
+                                .class);
+        var owner =
+                om.selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.mobile.GymMobileFileOwnerDO
+                                ::getFileId,
+                        file);
+        owner.setMemberId(999L);
+        om.updateById(owner);
+        assertServiceException(() -> feedback.attachment(id, file), FEEDBACK_ATTACHMENT_INVALID);
+    }
+
+    @Test
+    void feedbackConcurrentSubmissionsAndRepliesKeepOneRecordAndNeverOverwrite() throws Exception {
+        var member = feedbackMember();
+        Long file = feedbackFile(member, 101L, "feedback");
+        var results =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            return feedback.submit(feedbackRequest(), "feedback-concurrent-key");
+                        },
+                        () -> {
+                            qrMemberLogin();
+                            return feedback.submit(feedbackRequest(), "feedback-concurrent-key");
+                        });
+        assertEquals(results.get(0), results.get(1));
+        Long id =
+                Long.valueOf(
+                        ((cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileFeedbackVO
+                                                .Receipt)
+                                        results.getFirst())
+                                .id());
+        results =
+                workCourseRace(
+                        () -> feedback.reply(id, feedbackReply("first"), "feedback-first-reply"),
+                        () -> feedback.reply(id, feedbackReply("second"), "feedback-second-reply"));
+        assertEquals(
+                1,
+                results.stream()
+                        .filter(
+                                x ->
+                                        x
+                                                instanceof
+                                                cn.iocoder.yudao.framework.common.exception
+                                                        .ServiceException)
+                        .count());
+        results =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            var req = feedbackRequest();
+                            req.setFileIds(List.of(file));
+                            return feedback.submit(req, "feedback-image-race-a");
+                        },
+                        () -> {
+                            qrMemberLogin();
+                            var req = feedbackRequest();
+                            req.setFileIds(List.of(file));
+                            return feedback.submit(req, "feedback-image-race-b");
+                        });
+        assertEquals(
+                1,
+                results.stream()
+                        .filter(
+                                x ->
+                                        x
+                                                instanceof
+                                                cn.iocoder.yudao.framework.common.exception
+                                                        .ServiceException)
+                        .count());
+        qrMemberLogin();
+        assertEquals(2, feedback.mine(feedbackMine()).getTotal());
+    }
+
+    @Test
+    void feedbackFailureRollsBackFilesRowAndKeyAndHistorySurvivesStoreClosure() throws Exception {
+        var member = feedbackMember();
+        Long file = feedbackFile(member, 101L, "feedback");
+        qrMemberLogin();
+        var req = feedbackRequest();
+        req.setFileIds(List.of(file));
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_mobile_request ADD CONSTRAINT test_feedback_response CHECK (operation <> 'feedback-submit' OR response_json IS NULL)");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () -> feedback.submit(req, "feedback-rollback-key"));
+            assertEquals(0, feedback.mine(feedbackMine()).getTotal());
+            assertEquals(
+                    0,
+                    applicationContext
+                            .getBean(
+                                    cn.iocoder.yudao.module.gym.dal.mysql.mobile
+                                            .GymFeedbackAttachmentMapper.class)
+                            .selectCount());
+        } finally {
+            jdbc.execute("ALTER TABLE gym_mobile_request DROP CONSTRAINT test_feedback_response");
+        }
+        var receipt = feedback.submit(req, "feedback-rollback-key");
+        var store = storeMapper.selectById(101L);
+        store.setStatus("inactive");
+        storeMapper.updateById(store);
+        assertEquals(receipt, feedback.submit(req, "feedback-rollback-key"));
+        assertEquals(1, feedback.mine(feedbackMine()).getTotal());
+        assertServiceException(
+                () -> feedback.submit(feedbackRequest(), "feedback-closed-store"),
+                MEMBER_STORE_INACTIVE);
+    }
+
+    @Test
+    void mobileActivityLegacyHashOrdersReplaySnapshotWithoutRebooking() {
+        Long member = mobileActivityMember();
+        Long activity = publishedActivity(101L);
+        qrMemberLogin();
+        var first = mobileActivities.register(activity, "activity-legacy-order");
+        mobileActivities.cancel(activity);
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileRequestMapper.class);
+        var row =
+                mapper.selectOne(
+                        new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<
+                                        cn.iocoder.yudao.module.gym.dal.dataobject.mobile
+                                                .GymMobileRequestDO>()
+                                .eq("operation", "activity-register")
+                                .eq("request_key", "activity-legacy-order"));
+        String savedResponse = row.getResponseJson();
+        for (String json :
+                List.of(
+                        "{\"activityId\":" + activity + ",\"memberId\":" + member + "}",
+                        "{\"memberId\":" + member + ",\"activityId\":" + activity + "}")) {
+            String oldHash = cn.hutool.crypto.digest.DigestUtil.sha256Hex(json);
+            row.setRequestHash(oldHash);
+            mapper.updateById(row);
+            assertEquals(first, mobileActivities.register(activity, "activity-legacy-order"));
+            assertEquals(
+                    "cancelled",
+                    mobileActivities.history(activityHistory()).getList().getFirst().status());
+            assertEquals(0, mobileActivities.get(activity).registeredCount());
+            var saved = mapper.selectById(row.getId());
+            assertEquals(oldHash, saved.getRequestHash());
+            assertEquals(savedResponse, saved.getResponseJson());
+        }
+    }
+
+    @Test
+    void mobileActivityStableHashRejectsDifferentActivityMemberAndInvalidKeys() {
+        Long member = mobileActivityMember();
+        Long activity = publishedActivity(101L);
+        Long otherActivity = publishedActivity(101L);
+        qrMemberLogin();
+        var first = mobileActivities.register(activity, "activity-stable-order");
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileRequestMapper.class);
+        var row =
+                mapper.selectOne(
+                        new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<
+                                        cn.iocoder.yudao.module.gym.dal.dataobject.mobile
+                                                .GymMobileRequestDO>()
+                                .eq("operation", "activity-register")
+                                .eq("request_key", "activity-stable-order"));
+        String canonical = "{\"activityId\":" + activity + ",\"memberId\":" + member + "}";
+        assertEquals(cn.hutool.crypto.digest.DigestUtil.sha256Hex(canonical), row.getRequestHash());
+        assertServiceException(
+                () -> mobileActivities.register(otherActivity, "activity-stable-order"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        // A reversed legacy encoding with a different principal must not match either candidate.
+        String foreign = "{\"memberId\":" + (member + 1) + ",\"activityId\":" + activity + "}";
+        row.setRequestHash(cn.hutool.crypto.digest.DigestUtil.sha256Hex(foreign));
+        mapper.updateById(row);
+        assertServiceException(
+                () -> mobileActivities.register(activity, "activity-stable-order"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        assertEquals(first, mobileActivities.register(activity, "activity-another-key"));
+        assertEquals(1, mobileActivities.get(activity).registeredCount());
+        assertServiceException(
+                () -> mobileActivities.register(-1L, "activity-invalid-key"),
+                MOBILE_REQUEST_INVALID);
+        assertServiceException(
+                () -> mobileActivities.register(activity, "short"), MOBILE_REQUEST_INVALID);
+    }
+
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileEquipmentService mobileEquipment;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymEquipmentController publicEquipment;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.device.GymEquipmentPublicationController
+            equipmentPublications;
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileEquipmentVO.Resolve
+            equipmentScene(String value) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileEquipmentVO
+                        .Resolve();
+        req.setScene(value);
+        return req;
+    }
+
+    Long publicEquipmentFixture() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        return Long.valueOf(
+                deviceService.createEquipment(equipmentRequest(101L, "EQ-PUBLIC")).getId());
+    }
+
+    @Test
+    void mobileEquipmentExplicitPublicationAndAnonymousImageVideoTutorials() {
+        Long id = publicEquipmentFixture();
+        var image = publicImage(101L);
+        var first = tutorialRequest(image.getId());
+        first.setSortOrder(5);
+        var imageTutorial = deviceService.createTutorial(id, first);
+        var video = publicImage(101L);
+        video.setCategory("video");
+        video.setMimeType("video/mp4");
+        files.updateById(video);
+        byte[] bytes = {0, 0, 0, 20, 'f', 't', 'y', 'p', 'i', 's', 'o', 'm', 0, 0, 0, 0};
+        when(fileApi.getFileContentByUrl(video.getUrl())).thenReturn(bytes);
+        var videoTutorial = deviceService.createTutorial(id, tutorialRequest(video.getId()));
+        assertServiceException(() -> mobileEquipment.tutorials(id), EQUIPMENT_NOT_EXISTS);
+        assertServiceException(() -> publicContent.mediaContent(video.getId()), FILE_NOT_EXISTS);
+        var scene = mobileEquipment.publish(id);
+        assertTrue(scene.scene().matches("[0-9a-f]{32}"));
+        assertEquals(scene, mobileEquipment.publish(id));
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        var resolved = publicEquipment.resolve(equipmentScene(scene.scene())).getData();
+        assertEquals("equipment", resolved.type());
+        assertEquals(id.toString(), resolved.equipmentId());
+        assertEquals("101", resolved.storeId());
+        var view = publicEquipment.tutorials(id).getData();
+        assertEquals(2, view.tutorials().size());
+        assertEquals(videoTutorial.getId(), view.tutorials().get(0).id());
+        assertNull(view.tutorials().get(0).image());
+        assertEquals("video", view.tutorials().get(0).video().type());
+        assertEquals(imageTutorial.getId(), view.tutorials().get(1).id());
+        assertNotNull(view.tutorials().get(1).image());
+        assertNull(view.tutorials().get(1).video());
+        assertEquals("测试说明", view.tutorials().get(1).content());
+        assertTrue(view.tutorials().get(0).video().url().endsWith("?tenantId=1"));
+        assertArrayEquals(bytes, publicContent.mediaContent(video.getId()).getContent());
+        var json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(view);
+        for (String secret :
+                List.of("uploaderId", "creator", "test://", "publicScene", "model", "\"code\""))
+            assertFalse(json.contains(secret));
+    }
+
+    @Test
+    void mobileEquipmentRevocationAndInactiveResourcesInvalidateSceneAndMedia() {
+        Long id = publicEquipmentFixture();
+        var f = publicImage(101L);
+        Long tutorial =
+                Long.valueOf(deviceService.createTutorial(id, tutorialRequest(f.getId())).getId());
+        var scene = mobileEquipment.publish(id);
+        var status =
+                new cn.iocoder.yudao.module.gym.controller.admin.device.vo.GymTutorialStatusReqVO();
+        status.setStatus("inactive");
+        deviceService.patchTutorial(id, tutorial, status);
+        assertEquals(0, mobileEquipment.tutorials(id).tutorials().size());
+        assertServiceException(() -> publicContent.mediaContent(f.getId()), FILE_NOT_EXISTS);
+        status.setStatus("active");
+        deviceService.patchTutorial(id, tutorial, status);
+        var patch =
+                new cn.iocoder.yudao.module.gym.controller.admin.device.vo.GymEquipmentSaveReqVO();
+        patch.setStatus("inactive");
+        deviceService.patchEquipment(id, patch);
+        assertServiceException(
+                () -> mobileEquipment.resolve(equipmentScene(scene.scene())),
+                EQUIPMENT_SCENE_INVALID);
+        assertServiceException(() -> mobileEquipment.tutorials(id), EQUIPMENT_NOT_EXISTS);
+        assertServiceException(() -> publicContent.mediaContent(f.getId()), FILE_NOT_EXISTS);
+        patch.setStatus("active");
+        deviceService.patchEquipment(id, patch);
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_store SET status='inactive' WHERE id=101");
+        assertServiceException(() -> mobileEquipment.publish(id), EQUIPMENT_SCENE_INVALID);
+        assertServiceException(
+                () -> mobileEquipment.resolve(equipmentScene(scene.scene())),
+                EQUIPMENT_SCENE_INVALID);
+        assertServiceException(() -> publicContent.mediaContent(f.getId()), FILE_NOT_EXISTS);
+        assertTrue(mobileEquipment.revoke(id));
+        assertTrue(mobileEquipment.revoke(id));
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_store SET status='active' WHERE id=101");
+        assertServiceException(() -> mobileEquipment.tutorials(id), EQUIPMENT_NOT_EXISTS);
+        var next = mobileEquipment.publish(id);
+        assertNotEquals(scene.scene(), next.scene());
+        assertServiceException(
+                () -> mobileEquipment.resolve(equipmentScene(scene.scene())),
+                EQUIPMENT_SCENE_INVALID);
+        assertEquals(
+                id.toString(), mobileEquipment.resolve(equipmentScene(next.scene())).equipmentId());
+    }
+
+    @Test
+    void mobileEquipmentRestrictedWrongStoreAndCorruptMediaCannotBePublishedThroughTutorials() {
+        Long id = publicEquipmentFixture();
+        var f = publicImage(101L);
+        deviceService.createTutorial(id, tutorialRequest(f.getId()));
+        mobileEquipment.publish(id);
+        var binding = new cn.iocoder.yudao.module.gym.dal.dataobject.mobile.GymMobileWorkFileDO();
+        binding.setFileId(f.getId());
+        binding.setStoreId(101L);
+        binding.setPurpose("coach_profile");
+        binding.setEmployeeId(999L);
+        var bindings =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileWorkFileMapper.class);
+        bindings.insert(binding);
+        assertEquals(0, mobileEquipment.tutorials(id).tutorials().size());
+        assertServiceException(() -> publicContent.mediaContent(f.getId()), FILE_NOT_EXISTS);
+        bindings.deleteById(binding.getId());
+        f.setStoreId(102L);
+        files.updateById(f);
+        assertEquals(0, mobileEquipment.tutorials(id).tutorials().size());
+        assertServiceException(() -> publicContent.mediaContent(f.getId()), FILE_NOT_EXISTS);
+        f.setStoreId(101L);
+        f.setCategory("member_feedback");
+        files.updateById(f);
+        assertEquals(0, mobileEquipment.tutorials(id).tutorials().size());
+        assertServiceException(() -> publicContent.mediaContent(f.getId()), FILE_NOT_EXISTS);
+        f.setCategory("image");
+        files.updateById(f);
+        when(fileApi.getFileContentByUrl(f.getUrl()))
+                .thenReturn("not image".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        assertServiceException(() -> publicContent.mediaContent(f.getId()), FILE_NOT_EXISTS);
+        when(fileApi.getFileContentByUrl(f.getUrl())).thenReturn(null);
+        assertServiceException(
+                () -> publicContent.mediaContent(f.getId()), FILE_CONTENT_NOT_EXISTS);
+    }
+
+    @Test
+    void mobileEquipmentTenantIsolationAndStrictSceneValidation() {
+        Long id = publicEquipmentFixture();
+        var f = publicImage(101L);
+        deviceService.createTutorial(id, tutorialRequest(f.getId()));
+        var scene = mobileEquipment.publish(id);
+        for (String value :
+                List.of(
+                        "",
+                        "equipment:" + id,
+                        "https://example.org/" + scene.scene(),
+                        scene.scene() + "x",
+                        scene.scene().toUpperCase())) {
+            assertThrows(
+                    ConstraintViolationException.class,
+                    () -> mobileEquipment.resolve(equipmentScene(value)));
+        }
+        assertServiceException(
+                () -> mobileEquipment.resolve(equipmentScene("00000000000000000000000000000000")),
+                EQUIPMENT_SCENE_INVALID);
+        assertServiceException(() -> mobileEquipment.tutorials(-1L), MOBILE_REQUEST_INVALID);
+        assertServiceException(() -> mobileEquipment.tutorials(0L), MOBILE_REQUEST_INVALID);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(
+                () -> mobileEquipment.resolve(equipmentScene(scene.scene())),
+                EQUIPMENT_SCENE_INVALID);
+        assertServiceException(() -> mobileEquipment.tutorials(id), EQUIPMENT_NOT_EXISTS);
+        assertServiceException(() -> publicContent.mediaContent(f.getId()), FILE_NOT_EXISTS);
+        TenantContextHolder.setTenantId(1L);
+        assertEquals(
+                id.toString(),
+                mobileEquipment.resolve(equipmentScene(scene.scene())).equipmentId());
+    }
+
+    @Test
+    void mobileEquipmentPublicationRequiresFunctionWholeStoreAndValidAdmin() {
+        Long id = publicEquipmentFixture();
+        assertThrows(
+                org.springframework.security.authorization.AuthorizationDeniedException.class,
+                () -> equipmentPublications.publish(id, null));
+        when(permissions.hasAnyPermissions(any(), eq("gym:equipment:write"))).thenReturn(true);
+        assertNotNull(equipmentPublications.publish(id, null).getData().scene());
+        personalScope(91L);
+        assertServiceException(() -> equipmentPublications.publish(id, null), STORE_NO_PERMISSION);
+        assertServiceException(() -> equipmentPublications.revoke(id), STORE_NO_PERMISSION);
+        scoped(102L);
+        assertServiceException(() -> mobileEquipment.publish(id), STORE_NO_PERMISSION);
+        headquarters();
+        qrMemberLogin();
+        assertServiceException(() -> mobileEquipment.publish(id), MOBILE_IDENTITY_INVALID);
+        assertServiceException(() -> mobileEquipment.revoke(id), MOBILE_IDENTITY_INVALID);
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        assertThrows(
+                org.springframework.security.authorization.AuthorizationDeniedException.class,
+                () -> equipmentPublications.publish(id, null));
+    }
+
+    @Test
+    void mobileEquipmentConcurrentPublicationIsStableAndFailureRollsBack() throws Exception {
+        Long id = publicEquipmentFixture();
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_equipment ADD CONSTRAINT test_equipment_scene CHECK (public_scene IS NULL)");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () -> mobileEquipment.publish(id));
+            assertNull(
+                    jdbc.queryForObject(
+                            "SELECT public_scene FROM gym_equipment WHERE id=?", String.class, id));
+        } finally {
+            jdbc.execute("ALTER TABLE gym_equipment DROP CONSTRAINT test_equipment_scene");
+        }
+        var results =
+                workCourseRace(
+                        () -> mobileEquipment.publish(id), () -> mobileEquipment.publish(id));
+        assertEquals(results.get(0), results.get(1));
+        assertInstanceOf(
+                cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileEquipmentVO.Scene
+                        .class,
+                results.get(0));
+    }
+
+    @Test
+    void mobileEquipmentSharedMediaRequiresAtLeastOneCurrentPublishedReference() {
+        Long id = publicEquipmentFixture();
+        Long other =
+                Long.valueOf(
+                        deviceService.createEquipment(equipmentRequest(101L, "EQ-SHARED")).getId());
+        var f = publicImage(101L);
+        Long tid =
+                Long.valueOf(deviceService.createTutorial(id, tutorialRequest(f.getId())).getId());
+        deviceService.createTutorial(other, tutorialRequest(f.getId()));
+        mobileEquipment.publish(id);
+        mobileEquipment.publish(other);
+        mobileEquipment.revoke(id);
+        assertNotNull(publicContent.mediaContent(f.getId()));
+        mobileEquipment.revoke(other);
+        assertServiceException(() -> publicContent.mediaContent(f.getId()), FILE_NOT_EXISTS);
+        mobileEquipment.publish(id);
+        applicationContext
+                .getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.device.GymEquipmentTutorialMapper
+                                .class)
+                .deleteById(tid);
+        assertEquals(0, mobileEquipment.tutorials(id).tutorials().size());
+        assertServiceException(() -> publicContent.mediaContent(f.getId()), FILE_NOT_EXISTS);
+        deviceService.createTutorial(id, tutorialRequest(f.getId()));
+        files.deleteById(f.getId());
+        assertEquals(0, mobileEquipment.tutorials(id).tutorials().size());
+        assertServiceException(() -> publicContent.mediaContent(f.getId()), FILE_NOT_EXISTS);
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.device.GymEquipmentMapper.class)
+                .deleteById(id);
+        assertServiceException(() -> mobileEquipment.tutorials(id), EQUIPMENT_NOT_EXISTS);
+    }
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileSalesReportService mobileSalesReports;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileSalesReportController
+            mobileSalesReportController;
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileSalesReportVO.Query
+            mobileSalesQuery() {
+        var q =
+                new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileSalesReportVO
+                        .Query();
+        q.setStartDate(LocalDate.of(2026, 6, 10));
+        q.setEndDate(LocalDate.of(2026, 6, 11));
+        return q;
+    }
+
+    Long mobileSalesEvent(
+            Long order,
+            Long store,
+            Long employee,
+            String product,
+            String type,
+            String amount,
+            java.time.Instant at) {
+        var e = new cn.iocoder.yudao.module.gym.dal.dataobject.finance.GymFinancialEventDO();
+        e.setBusinessOrderId(order);
+        e.setStoreId(store);
+        e.setEmployeeId(employee);
+        e.setProductType(product);
+        e.setEventType(type);
+        e.setAmount(new BigDecimal(amount));
+        e.setOccurredAt(at);
+        e.setSourceType("report-test");
+        e.setSourceId(UUID.randomUUID().toString());
+        financialEvents.insert(e);
+        return e.getId();
+    }
+
+    @Test
+    void mobileSalesReportUsesActualVerifiedReceiptsAndFrozenItemNames() {
+        when(businessClock.now()).thenReturn(java.time.Instant.parse("2026-06-10T02:00:00Z"));
+        var order = commerceOrder();
+        when(receiptVerifier.payment("sales-report-p1"))
+                .thenReturn(receipt(order, "REPORT-P1", null, "40.00"));
+        when(receiptVerifier.payment("sales-report-p2"))
+                .thenReturn(receipt(order, "REPORT-P2", null, "59.99"));
+        commerce.acceptPayment(order.getId(), "sales-report-p1");
+        commerce.acceptPayment(order.getId(), "sales-report-p2");
+        commerce.acceptPayment(order.getId(), "sales-report-p2");
+        when(receiptVerifier.refund("sales-report-r1"))
+                .thenReturn(receipt(order, "REPORT-R1", "REPORT-P1", "20.00"));
+        commerce.acceptRefund(order.getId(), "sales-report-r1");
+        var result = mobileSalesReports.sales(mobileSalesQuery());
+        assertEquals(1, result.total());
+        assertEquals("99.99", result.summary().paidAmount());
+        assertEquals("20.00", result.summary().refundedAmount());
+        assertEquals("79.99", result.summary().netAmount());
+        assertEquals(1, result.summary().paidOrderCount());
+        assertEquals("79.99", result.summary().cardAverageOrderAmount());
+        assertEquals("0.00", result.summary().courseAverageOrderAmount());
+        var row = result.list().getFirst();
+        assertEquals(order.getOrderNo(), row.orderNo());
+        assertEquals("card", row.productType());
+        assertNull(row.employeeId());
+        assertNotNull(row.productName());
+        assertEquals(
+                order.getOrderedAt().plusSeconds(1),
+                java.time.OffsetDateTime.parse(row.paidAt()).toInstant());
+        var old =
+                reports.performance(
+                        new cn.iocoder.yudao.module.gym.controller.admin.report.vo
+                                .GymReportReqVO());
+        assertEquals(old.summary().netAmount().toPlainString(), result.summary().netAmount());
+        var items =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.sales.GymOrderItemMapper
+                                        .class)
+                        .selectList(
+                                cn.iocoder.yudao.module.gym.dal.dataobject.sales.GymOrderItemDO
+                                        ::getOrderId,
+                                order.getId());
+        commerce.prepareCardOrder(
+                101L,
+                order.getMemberId(),
+                items.getFirst().getProductId(),
+                1,
+                "miniapp",
+                "unpaid-report-order");
+        assertEquals(result, mobileSalesReports.sales(mobileSalesQuery()));
+        var json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(result);
+        assertFalse(json.contains("memberName"));
+        assertFalse(json.contains("memberId"));
+        assertFalse(json.contains("13800000888"));
+        assertFalse(json.contains("requestKey"));
+    }
+
+    @Test
+    void mobileSalesReportAttributionSharesDoNotMultiplyOrderCountsAndSummaryIgnoresPage() {
+        stores.create(store(101L, "A"));
+        var at = java.time.Instant.parse("2026-06-10T02:00:00Z");
+        mobileSalesEvent(100L, 101L, 91L, "card", "payment", "60", at);
+        mobileSalesEvent(100L, 101L, 92L, "card", "payment", "40", at);
+        mobileSalesEvent(100L, 101L, 91L, "card", "refund", "12", at.plusSeconds(1));
+        mobileSalesEvent(100L, 101L, 92L, "card", "refund", "8", at.plusSeconds(1));
+        mobileSalesEvent(200L, 101L, 91L, "private", "payment", "90", at);
+        mobileSalesEvent(200L, 101L, 91L, "private", "refund", "10", at.plusSeconds(2));
+        var q = mobileSalesQuery();
+        q.setPageSize(1);
+        var first = mobileSalesReports.sales(q);
+        assertEquals(3, first.total());
+        assertEquals(1, first.list().size());
+        assertEquals("course", first.list().getFirst().productType());
+        assertEquals("190.00", first.summary().paidAmount());
+        assertEquals("30.00", first.summary().refundedAmount());
+        assertEquals("160.00", first.summary().netAmount());
+        assertEquals(2, first.summary().paidOrderCount());
+        assertEquals(1, first.summary().cardOrderCount());
+        assertEquals("80.00", first.summary().cardAverageOrderAmount());
+        assertEquals("80.00", first.summary().courseAverageOrderAmount());
+        q.setPageNo(2);
+        var next = mobileSalesReports.sales(q);
+        assertEquals(first.summary(), next.summary());
+        assertNotEquals(first.list().getFirst().id(), next.list().getFirst().id());
+        q.setPageNo(Integer.MAX_VALUE);
+        var empty = mobileSalesReports.sales(q);
+        assertEquals(0, empty.list().size());
+        assertEquals(first.summary(), empty.summary());
+        assertEquals(3, empty.total());
+        q.setPageNo(1);
+        q.setEmployeeId(91L);
+        var employee = mobileSalesReports.sales(q);
+        assertEquals("128.00", employee.summary().netAmount());
+        assertEquals(2, employee.total());
+        q.setProductType("card");
+        var card = mobileSalesReports.sales(q);
+        assertEquals("48.00", card.summary().netAmount());
+        assertEquals(1, card.total());
+        assertEquals("0.00", card.summary().courseAmount());
+        q.setEmployeeId(999L);
+        assertEquals(0, mobileSalesReports.sales(q).total());
+        assertEquals("0.00", mobileSalesReports.sales(q).summary().netAmount());
+    }
+
+    @Test
+    void mobileSalesReportRefundDayAndOriginalPaidAtRespectHalfOpenShanghaiDates() {
+        stores.create(store(101L, "A"));
+        var start =
+                LocalDate.of(2026, 6, 10)
+                        .atStartOfDay(cn.iocoder.yudao.module.gym.service.common.GymDateRange.ZONE)
+                        .toInstant();
+        mobileSalesEvent(100L, 101L, null, "card", "payment", "100", start.minusSeconds(1));
+        mobileSalesEvent(100L, 101L, null, "card", "refund", "30", start);
+        mobileSalesEvent(100L, 101L, null, "card", "refund", "40", start.plusSeconds(86400));
+        var result = mobileSalesReports.sales(mobileSalesQuery());
+        assertEquals(1, result.total());
+        assertEquals("0.00", result.summary().paidAmount());
+        assertEquals("30.00", result.summary().refundedAmount());
+        assertEquals("-30.00", result.summary().netAmount());
+        assertEquals(0, result.summary().paidOrderCount());
+        assertEquals("0.00", result.summary().cardAverageOrderAmount());
+        assertEquals(
+                start.minusSeconds(1),
+                java.time.OffsetDateTime.parse(result.list().getFirst().paidAt()).toInstant());
+        var q = mobileSalesQuery();
+        q.setStartDate(LocalDate.of(2026, 6, 9));
+        assertEquals("70.00", mobileSalesReports.sales(q).summary().netAmount());
+    }
+
+    @Test
+    void mobileSalesReportScopeIdentityAndFunctionPermissionsPrecedeAllData() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        var at = java.time.Instant.parse("2026-06-10T02:00:00Z");
+        mobileSalesEvent(100L, 101L, 91L, "card", "payment", "10", at);
+        mobileSalesEvent(200L, 102L, 92L, "card", "payment", "20", at);
+        assertThrows(
+                org.springframework.security.authorization.AuthorizationDeniedException.class,
+                () -> mobileSalesReportController.sales(mobileSalesQuery()));
+        when(permissions.hasAnyPermissions(any(), eq("gym:reports:read"))).thenReturn(true);
+        assertEquals(
+                "30.00",
+                mobileSalesReportController
+                        .sales(mobileSalesQuery())
+                        .getData()
+                        .summary()
+                        .netAmount());
+        scoped(101L);
+        assertEquals("10.00", mobileSalesReports.sales(mobileSalesQuery()).summary().netAmount());
+        var q = mobileSalesQuery();
+        q.setStoreId(102L);
+        assertServiceException(() -> mobileSalesReports.sales(q), STORE_NO_PERMISSION);
+        personalScope(91L);
+        assertEquals(0, mobileSalesReports.sales(mobileSalesQuery()).total());
+        q.setStoreId(101L);
+        assertServiceException(() -> mobileSalesReports.sales(q), STORE_NO_PERMISSION);
+        headquarters();
+        qrMemberLogin();
+        assertServiceException(
+                () -> mobileSalesReports.sales(mobileSalesQuery()), MOBILE_IDENTITY_INVALID);
+        loginAs(1L);
+        when(workAccounts.getUser(1L))
+                .thenReturn(
+                        new cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO()
+                                .setId(1L)
+                                .setStatus(1));
+        assertServiceException(
+                () -> mobileSalesReports.sales(mobileSalesQuery()), MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void mobileSalesReportExcludesDeletedForeignEventsAndDatabaseRejectsInvalidTypes() {
+        stores.create(store(101L, "A"));
+        var at = java.time.Instant.parse("2026-06-10T02:00:00Z");
+        mobileSalesEvent(100L, 101L, null, "card", "payment", "12.34", at);
+        Long removed = mobileSalesEvent(200L, 101L, null, "card", "payment", "9999", at);
+        financialEvents.deleteById(removed);
+        assertThrows(
+                org.springframework.dao.DataIntegrityViolationException.class,
+                () -> mobileSalesEvent(300L, 101L, null, "card", "pending", "9999", at));
+        assertThrows(
+                org.springframework.dao.DataIntegrityViolationException.class,
+                () -> mobileSalesEvent(400L, 101L, null, "unknown", "payment", "9999", at));
+        TenantContextHolder.setTenantId(2L);
+        mobileSalesEvent(500L, 101L, null, "card", "payment", "9999", at);
+        TenantContextHolder.setTenantId(1L);
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_store SET status='inactive' WHERE id=101");
+        var result = mobileSalesReports.sales(mobileSalesQuery());
+        assertEquals(1, result.total());
+        assertEquals("12.34", result.summary().netAmount());
+        assertNull(result.list().getFirst().orderNo());
+        assertNull(result.list().getFirst().productName());
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(
+                () -> mobileSalesReports.sales(mobileSalesQuery()), MOBILE_IDENTITY_INVALID);
+        cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.setLoginUser(
+                new cn.iocoder.yudao.framework.security.core.LoginUser()
+                        .setId(1L)
+                        .setUserType(2)
+                        .setTenantId(2L),
+                new org.springframework.mock.web.MockHttpServletRequest());
+        assertEquals(0, mobileSalesReports.sales(mobileSalesQuery()).total());
+    }
+
+    @Test
+    void mobileSalesReportValidatesDateWindowPagingAndCalendarDayLimits() {
+        stores.create(store(101L, "A"));
+        var q = mobileSalesQuery();
+        q.setStartDate(null);
+        assertThrows(ConstraintViolationException.class, () -> mobileSalesReports.sales(q));
+        q.setStartDate(q.getEndDate());
+        assertServiceException(() -> mobileSalesReports.sales(q), BUSINESS_DATE_INVALID);
+        q.setStartDate(LocalDate.of(2025, 1, 1));
+        assertServiceException(() -> mobileSalesReports.sales(q), BUSINESS_DATE_INVALID);
+        q.setStartDate(LocalDate.of(999, 1, 1));
+        q.setEndDate(LocalDate.of(999, 1, 2));
+        assertServiceException(() -> mobileSalesReports.sales(q), BUSINESS_DATE_INVALID);
+        q.setStartDate(LocalDate.of(1991, 4, 14));
+        q.setEndDate(q.getStartDate().plusDays(366));
+        assertEquals(0, mobileSalesReports.sales(q).total());
+        var start =
+                LocalDate.of(1991, 6, 10)
+                        .atStartOfDay(cn.iocoder.yudao.module.gym.service.common.GymDateRange.ZONE)
+                        .toInstant();
+        mobileSalesEvent(10L, 101L, null, "card", "payment", "1", start);
+        mobileSalesEvent(20L, 101L, null, "card", "payment", "999", start.minusSeconds(1));
+        q.setStartDate(LocalDate.of(1991, 6, 10));
+        q.setEndDate(q.getStartDate().plusDays(1));
+        assertEquals("1.00", mobileSalesReports.sales(q).summary().netAmount());
+        q.setPageSize(201);
+        assertThrows(ConstraintViolationException.class, () -> mobileSalesReports.sales(q));
+        q.setPageSize(20);
+        q.setPageNo(0);
+        assertThrows(ConstraintViolationException.class, () -> mobileSalesReports.sales(q));
+        q.setPageNo(1);
+        q.setEmployeeId(0L);
+        assertThrows(ConstraintViolationException.class, () -> mobileSalesReports.sales(q));
+    }
+
+    @Test
+    void mobileSalesReportMultipleItemNamesNeverMultiplyLedgerAndWrongStoreMetadataStaysHidden() {
+        when(businessClock.now()).thenReturn(java.time.Instant.parse("2026-06-10T02:00:00Z"));
+        var order = commerceOrder();
+        when(receiptVerifier.payment("report-items-payment"))
+                .thenReturn(receipt(order, "REPORT-ITEMS", null, "99.99"));
+        commerce.acceptPayment(order.getId(), "report-items-payment");
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.sales.GymOrderItemMapper.class);
+        var gift = new cn.iocoder.yudao.module.gym.dal.dataobject.sales.GymOrderItemDO();
+        gift.setOrderId(order.getId());
+        gift.setProductType("card");
+        gift.setProductId(999L);
+        gift.setProductNameSnapshot("赠送体验卡");
+        gift.setProductVersion(1);
+        gift.setQuantity(1);
+        gift.setUnitPrice(BigDecimal.ZERO);
+        gift.setPayableAmount(BigDecimal.ZERO);
+        gift.setEntitlementIds("[]");
+        mapper.insert(gift);
+        var result = mobileSalesReports.sales(mobileSalesQuery());
+        assertEquals("99.99", result.summary().netAmount());
+        assertEquals(1, result.total());
+        assertTrue(result.list().getFirst().productName().contains(" / 赠送体验卡"));
+        assertEquals("99.99", result.list().getFirst().netAmount());
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_business_order SET store_id=102 WHERE id=?", order.getId());
+        result = mobileSalesReports.sales(mobileSalesQuery());
+        assertEquals("99.99", result.summary().netAmount());
+        assertNull(result.list().getFirst().orderNo());
+        assertNull(result.list().getFirst().productName());
+    }
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobilePerformanceService mobilePerformance;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobilePerformanceController
+            mobilePerformanceController;
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobilePerformanceVO.Query
+            performanceQuery() {
+        var r =
+                new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobilePerformanceVO
+                        .Query();
+        r.setStartDate(LocalDate.of(2026, 6, 10));
+        r.setEndDate(LocalDate.of(2026, 6, 12));
+        r.setGroupBy("employee");
+        return r;
+    }
+
+    long performanceBooking = 90000;
+
+    Long performanceLesson(Long store, Long coach, java.time.Instant at) {
+        var r = new cn.iocoder.yudao.module.gym.dal.dataobject.course.GymLessonRecordDO();
+        r.setStoreId(store);
+        r.setCoachId(coach);
+        r.setMemberId(1L);
+        r.setBookingId(++performanceBooking);
+        r.setCheckinId(1L);
+        r.setSessionUnits(3);
+        r.setStatus("confirmed");
+        r.setMethod("manual");
+        r.setConfirmedAt(at);
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.course.GymLessonRecordMapper.class)
+                .insert(r);
+        return r.getId();
+    }
+
+    List<Long> performanceFixture() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        when(businessClock.now()).thenReturn(java.time.Instant.parse("2026-06-10T04:00:00Z"));
+        Long a = approvalEmployee("PERF-A", 91L),
+                b = approvalEmployee("PERF-B", 92L),
+                zero = approvalEmployee("PERF-ZERO", 93L);
+        var link = new cn.iocoder.yudao.module.gym.dal.dataobject.employee.GymEmployeeStoreDO();
+        link.setEmployeeId(a);
+        link.setStoreId(102L);
+        link.setJoinedOn(LocalDate.of(2026, 1, 1));
+        link.setIsPrimary(false);
+        link.setIsManager(false);
+        applicationContext
+                .getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeStoreMapper.class)
+                .insert(link);
+        var at = java.time.Instant.parse("2026-06-10T02:00:00Z");
+        mobileSalesEvent(100L, 101L, a, "card", "payment", "60", at);
+        mobileSalesEvent(200L, 102L, a, "private", "payment", "40", at);
+        mobileSalesEvent(100L, 101L, a, "card", "refund", "20", at);
+        mobileSalesEvent(100L, 101L, b, "card", "payment", "100", at);
+        mobileSalesEvent(300L, 101L, null, "card", "payment", "20", at);
+        performanceLesson(101L, a, at);
+        performanceLesson(101L, b, at);
+        performanceLesson(102L, a, at);
+        return List.of(a, b, zero);
+    }
+
+    @Test
+    void mobilePerformanceEmployeesIncludeZerosHistoricalSharesAndStableTiedRanks() {
+        var ids = performanceFixture();
+        var result = mobilePerformance.performance(performanceQuery());
+        assertEquals(4, result.total());
+        assertEquals("200.00", result.summary().netAmount());
+        assertEquals(3, result.summary().employeeCount());
+        assertEquals(2, result.summary().storeCount());
+        assertEquals("60.00", result.summary().averagePerEmployeeAmount());
+        assertEquals("100.00", result.summary().averagePerStoreAmount());
+        assertEquals(3, result.summary().lessonCount());
+        var first = result.list().get(0);
+        assertEquals(ids.get(1).toString(), first.employeeId());
+        assertEquals(1L, first.rank());
+        assertEquals("50.00", first.averagePerDayAmount());
+        assertNull(first.storeId());
+        var a = result.list().get(1);
+        assertEquals("80.00", a.netAmount());
+        assertEquals(2, a.paidOrderCount());
+        assertEquals(2, a.lessonCount());
+        assertEquals("40.00", a.averagePerDayAmount());
+        assertEquals("0.00", result.list().get(2).netAmount());
+        assertEquals(3L, result.list().get(2).rank());
+        assertEquals("未归属员工", result.list().get(3).name());
+        assertNull(result.list().get(3).rank());
+        mobileSalesEvent(
+                100L,
+                101L,
+                ids.get(1),
+                "card",
+                "refund",
+                "20",
+                java.time.Instant.parse("2026-06-10T02:00:00Z"));
+        result = mobilePerformance.performance(performanceQuery());
+        assertEquals(1L, result.list().get(0).rank());
+        assertEquals(1L, result.list().get(1).rank());
+        assertEquals(3L, result.list().get(2).rank());
+        assertEquals("53.33", result.summary().averagePerEmployeeAmount());
+    }
+
+    @Test
+    void mobilePerformanceStoreGroupingAndPagingKeepDistinctFullScopeSummary() {
+        performanceFixture();
+        var q = performanceQuery();
+        q.setGroupBy("store");
+        q.setPageSize(1);
+        var result = mobilePerformance.performance(q);
+        assertEquals(2, result.total());
+        assertEquals("101", result.list().getFirst().storeId());
+        assertNull(result.list().getFirst().employeeId());
+        assertEquals("160.00", result.list().getFirst().netAmount());
+        assertEquals(2, result.list().getFirst().paidOrderCount());
+        assertEquals(2, result.list().getFirst().lessonCount());
+        assertEquals(3, result.summary().employeeCount());
+        q.setPageNo(2);
+        var second = mobilePerformance.performance(q);
+        assertEquals(result.summary(), second.summary());
+        assertEquals("102", second.list().getFirst().storeId());
+        assertEquals(2L, second.list().getFirst().rank());
+        q.setPageNo(Integer.MAX_VALUE);
+        assertEquals(0, mobilePerformance.performance(q).list().size());
+        assertEquals(result.summary(), mobilePerformance.performance(q).summary());
+        q.setPageNo(1);
+        q.setStoreId(101L);
+        assertEquals("160.00", mobilePerformance.performance(q).summary().netAmount());
+    }
+
+    @Test
+    void mobilePerformanceSelfNeverReturnsStoreOrOtherEmployeesAndRequiresCurrentAssignment() {
+        var ids = performanceFixture();
+        personalScope(91L);
+        var q = performanceQuery();
+        var result = mobilePerformance.performance(q);
+        assertEquals(1, result.total());
+        assertEquals(ids.getFirst().toString(), result.list().getFirst().employeeId());
+        assertNull(result.list().getFirst().rank());
+        assertEquals("80.00", result.summary().netAmount());
+        assertEquals(1, result.summary().employeeCount());
+        assertEquals(2, result.summary().lessonCount());
+        q.setGroupBy("store");
+        assertServiceException(() -> mobilePerformance.performance(q), STORE_NO_PERMISSION);
+        q.setGroupBy("employee");
+        q.setStoreId(101L);
+        result = mobilePerformance.performance(q);
+        assertEquals("40.00", result.summary().netAmount());
+        assertEquals("101", result.list().getFirst().storeId());
+        assertEquals(1, result.summary().storeCount());
+        q.setStoreId(999L);
+        assertServiceException(() -> mobilePerformance.performance(q), STORE_NO_PERMISSION);
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("DELETE FROM gym_employee_store WHERE employee_id=?", ids.getFirst());
+        q.setStoreId(null);
+        assertServiceException(() -> mobilePerformance.performance(q), STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void mobilePerformancePermissionsIdentityAndMixedScopeAreCheckedBeforeAggregation() {
+        var ids = performanceFixture();
+        assertThrows(
+                org.springframework.security.authorization.AuthorizationDeniedException.class,
+                () -> mobilePerformanceController.performance(performanceQuery()));
+        when(permissions.hasAnyPermissions(any(), eq("gym:reports:read"))).thenReturn(true);
+        assertEquals(
+                4, mobilePerformanceController.performance(performanceQuery()).getData().total());
+        var permission = new DeptDataPermissionRespDTO();
+        permission.setSelf(true);
+        permission.setDeptIds(Set.of(101L));
+        loginAs(91L);
+        when(permissions.getDeptDataPermission(91L)).thenReturn(permission);
+        assertEquals(
+                "160.00", mobilePerformance.performance(performanceQuery()).summary().netAmount());
+        var q = performanceQuery();
+        q.setStoreId(102L);
+        assertEquals("40.00", mobilePerformance.performance(q).summary().netAmount());
+        q.setGroupBy("store");
+        assertServiceException(() -> mobilePerformance.performance(q), STORE_NO_PERMISSION);
+        permission.setSelf(false);
+        permission.setDeptIds(Set.of());
+        assertServiceException(
+                () -> mobilePerformance.performance(performanceQuery()), STORE_NO_PERMISSION);
+        personalScope(91L);
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_employee SET status='inactive' WHERE id=?", ids.getFirst());
+        assertServiceException(
+                () -> mobilePerformance.performance(performanceQuery()), MOBILE_EMPLOYEE_REQUIRED);
+        headquarters();
+        qrMemberLogin();
+        assertServiceException(
+                () -> mobilePerformance.performance(performanceQuery()), MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void mobilePerformanceHistoricalEmployeesAndSuccessfulLessonEventsRemainSeparate() {
+        var ids = performanceFixture();
+        var at = java.time.Instant.parse("2026-06-10T02:00:00Z");
+        mobileSalesEvent(999L, 101L, 999L, "private", "refund", "30", at);
+        performanceLesson(101L, 999L, at);
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymLessonRecordMapper.class);
+        Long deleted = performanceLesson(101L, ids.getFirst(), at);
+        mapper.deleteById(deleted);
+        Long notConfirmed = performanceLesson(101L, ids.getFirst(), at);
+        var row = mapper.selectById(notConfirmed);
+        row.setStatus("pending");
+        mapper.updateById(row);
+        performanceLesson(101L, ids.getFirst(), java.time.Instant.parse("2026-06-11T16:00:00Z"));
+        TenantContextHolder.setTenantId(2L);
+        mobileSalesEvent(111L, 101L, 999L, "card", "payment", "9999", at);
+        performanceLesson(101L, 999L, at);
+        TenantContextHolder.setTenantId(1L);
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update(
+                        "UPDATE gym_employee_store SET joined_on='2027-01-01' WHERE employee_id=?",
+                        ids.get(2));
+        var result = mobilePerformance.performance(performanceQuery());
+        assertEquals("170.00", result.summary().netAmount());
+        assertEquals(3, result.summary().employeeCount());
+        assertEquals(4, result.summary().lessonCount());
+        var historical =
+                result.list().stream()
+                        .filter(r -> "999".equals(r.employeeId()))
+                        .findFirst()
+                        .orElseThrow();
+        assertEquals("历史员工", historical.name());
+        assertEquals("-30.00", historical.netAmount());
+        assertEquals(1, historical.lessonCount());
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(
+                () -> mobilePerformance.performance(performanceQuery()), MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void mobilePerformanceValidatesDateWindowGroupAndPagingAndPreservesZeroStores() {
+        stores.create(store(101L, "A"));
+        var q = performanceQuery();
+        q.setGroupBy("store");
+        var result = mobilePerformance.performance(q);
+        assertEquals(1, result.total());
+        assertEquals("0.00", result.list().getFirst().netAmount());
+        assertEquals(0, result.summary().employeeCount());
+        assertEquals("0.00", result.summary().averagePerEmployeeAmount());
+        q.setGroupBy("all");
+        assertThrows(ConstraintViolationException.class, () -> mobilePerformance.performance(q));
+        q.setGroupBy("store");
+        q.setStartDate(null);
+        assertThrows(ConstraintViolationException.class, () -> mobilePerformance.performance(q));
+        q.setStartDate(q.getEndDate());
+        assertServiceException(() -> mobilePerformance.performance(q), BUSINESS_DATE_INVALID);
+        q.setStartDate(LocalDate.of(2025, 1, 1));
+        assertServiceException(() -> mobilePerformance.performance(q), BUSINESS_DATE_INVALID);
+        q.setStartDate(LocalDate.of(2026, 6, 10));
+        q.setPageSize(201);
+        assertThrows(ConstraintViolationException.class, () -> mobilePerformance.performance(q));
+    }
+
+    @Test
+    void mobilePerformanceVerifiedReceiptsAgreeWithSalesReportAndDoNotInventEmployees() {
+        when(businessClock.now()).thenReturn(java.time.Instant.parse("2026-06-10T02:00:00Z"));
+        var order = commerceOrder();
+        when(receiptVerifier.payment("performance-payment"))
+                .thenReturn(receipt(order, "PERFORMANCE-PAY", null, "99.99"));
+        commerce.acceptPayment(order.getId(), "performance-payment");
+        when(receiptVerifier.refund("performance-refund"))
+                .thenReturn(receipt(order, "PERFORMANCE-REFUND", "PERFORMANCE-PAY", "20.00"));
+        commerce.acceptRefund(order.getId(), "performance-refund");
+        var result = mobilePerformance.performance(performanceQuery());
+        assertEquals(
+                mobileSalesReports.sales(mobileSalesQuery()).summary().netAmount(),
+                result.summary().netAmount());
+        assertEquals("79.99", result.summary().netAmount());
+        assertEquals(0, result.summary().employeeCount());
+        assertEquals("0.00", result.summary().averagePerEmployeeAmount());
+        assertEquals("未归属员工", result.list().getFirst().name());
+        assertNull(result.list().getFirst().employeeId());
+        assertEquals(0, result.summary().lessonCount());
+    }
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileMemberSummaryService mobileMemberSummary;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileMemberSummaryController
+            mobileMemberSummaryController;
+
+    final java.time.Instant memberSummaryNow = java.time.Instant.parse("2026-06-10T02:00:00Z");
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileMemberSummaryVO.Query
+            memberSummaryQuery() {
+        var q =
+                new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileMemberSummaryVO
+                        .Query();
+        q.setDate(java.time.LocalDate.of(2026, 6, 10));
+        return q;
+    }
+
+    Long memberSummaryMember(Long store, String phone, java.time.Instant registered) {
+        Long id = Long.valueOf(members.create(member(store, phone)).getId());
+        reportMemberDate(id, registered);
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update(
+                        "UPDATE gym_member_store SET joined_at=? WHERE member_id=?",
+                        java.sql.Timestamp.from(memberSummaryNow.minusSeconds(86400)),
+                        id);
+        return id;
+    }
+
+    Long memberSummaryFixture() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        when(businessClock.now()).thenReturn(memberSummaryNow);
+        Long m = memberSummaryMember(101L, "13800009601", memberSummaryNow);
+        Long template = Long.valueOf(cards.create(cardTemplate("period")).getId());
+        for (String source : List.of("summary-a", "summary-b"))
+            cards.issue(m, 101L, template, memberSummaryNow, "test", source);
+        Long coach = Long.valueOf(employees.create(employee("SUMMARY-COACH", 101L)).getId());
+        Long product = Long.valueOf(courses.createProduct(courseProduct(101L, coach)).getId());
+        for (String source : List.of("summary-pack-a", "summary-pack-b"))
+            courses.issuePack(
+                    m,
+                    product,
+                    memberSummaryNow,
+                    memberSummaryNow.plusSeconds(30 * 86400),
+                    "test",
+                    source);
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update(
+                        "UPDATE gym_member_store SET joined_at=? WHERE member_id=?",
+                        java.sql.Timestamp.from(memberSummaryNow),
+                        m);
+        memberSummaryMember(101L, "13800009602", memberSummaryNow.minusSeconds(86400));
+        memberSummaryMember(102L, "13800009603", memberSummaryNow.minusSeconds(86400));
+        return m;
+    }
+
+    @Test
+    void mobileMemberSummaryDeduplicatesPeopleAcrossStoresCardsAndPacks() {
+        memberSummaryFixture();
+        var q = memberSummaryQuery();
+        var r = mobileMemberSummary.summary(q);
+        assertEquals(3, r.memberCount());
+        assertEquals(1, r.privateCourseMemberCount());
+        assertEquals(1, r.newMemberCount());
+        assertEquals(1, r.expiringCardCount());
+        assertEquals(1, r.expiringCourseCount());
+        assertEquals("2026-06-10", r.date());
+        assertEquals("2026-06-10T10:00+08:00", r.updatedAt());
+        q.setStoreId(101L);
+        var a = mobileMemberSummary.summary(q);
+        assertEquals(2, a.memberCount());
+        assertEquals(1, a.privateCourseMemberCount());
+        q.setStoreId(102L);
+        var b = mobileMemberSummary.summary(q);
+        assertEquals(2, b.memberCount());
+        assertEquals(0, b.privateCourseMemberCount());
+        assertEquals(1, b.expiringCardCount());
+        assertTrue(a.memberCount() + b.memberCount() > r.memberCount());
+        String json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(r);
+        for (String field : List.of("phone", "memberId", "cardNo", "13800009601"))
+            assertFalse(json.contains(field));
+    }
+
+    @Test
+    void mobileMemberSummaryExpiryUsesExclusiveNowInclusiveThirtyDaysAtMicrosecondPrecision() {
+        memberSummaryFixture();
+        var q = memberSummaryQuery();
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        for (var expires :
+                List.of(
+                        memberSummaryNow,
+                        memberSummaryNow.plusNanos(1000),
+                        memberSummaryNow.plusSeconds(30 * 86400),
+                        memberSummaryNow.plusSeconds(30 * 86400).plusNanos(1000))) {
+            jdbc.update(
+                    "UPDATE gym_member_card SET expires_at=?", java.sql.Timestamp.from(expires));
+            jdbc.update(
+                    "UPDATE gym_course_pack SET expires_at=?", java.sql.Timestamp.from(expires));
+            var r = mobileMemberSummary.summary(q);
+            long expected =
+                    expires.isAfter(memberSummaryNow)
+                                    && !expires.isAfter(memberSummaryNow.plusSeconds(30 * 86400))
+                            ? 1
+                            : 0;
+            assertEquals(expected, r.expiringCardCount(), expires.toString());
+            assertEquals(expected, r.expiringCourseCount(), expires.toString());
+            assertEquals(expires.isAfter(memberSummaryNow) ? 1 : 0, r.privateCourseMemberCount());
+        }
+        jdbc.update("UPDATE gym_member_card SET expires_at=NULL");
+        jdbc.update("UPDATE gym_course_pack SET expires_at=NULL");
+        var r = mobileMemberSummary.summary(q);
+        assertEquals(1, r.privateCourseMemberCount());
+        assertEquals(0, r.expiringCourseCount());
+        assertEquals(0, r.expiringCardCount());
+    }
+
+    @Test
+    void mobileMemberSummaryIgnoresInactiveUnstartedExhaustedAndDeletedRightsButNotReservations() {
+        memberSummaryFixture();
+        var q = memberSummaryQuery();
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update(
+                "UPDATE gym_member_card SET kind='count',total_uses=1,remaining_uses=1,reserved_uses=1");
+        jdbc.update("UPDATE gym_course_pack SET remaining_sessions=1,reserved_sessions=1");
+        assertEquals(1, mobileMemberSummary.summary(q).expiringCardCount());
+        assertEquals(1, mobileMemberSummary.summary(q).privateCourseMemberCount());
+        jdbc.update("UPDATE gym_member_card SET remaining_uses=0,reserved_uses=0");
+        jdbc.update("UPDATE gym_course_pack SET remaining_sessions=0,reserved_sessions=0");
+        assertEquals(0, mobileMemberSummary.summary(q).expiringCardCount());
+        assertEquals(0, mobileMemberSummary.summary(q).privateCourseMemberCount());
+        jdbc.update("UPDATE gym_member_card SET remaining_uses=1");
+        jdbc.update("UPDATE gym_course_pack SET remaining_sessions=1");
+        for (String table : List.of("gym_member_card", "gym_course_pack"))
+            jdbc.update(
+                    "UPDATE " + table + " SET starts_at=?",
+                    java.sql.Timestamp.from(memberSummaryNow.plusNanos(1000)));
+        assertEquals(0, mobileMemberSummary.summary(q).expiringCardCount());
+        assertEquals(0, mobileMemberSummary.summary(q).privateCourseMemberCount());
+        for (String table : List.of("gym_member_card", "gym_course_pack"))
+            jdbc.update(
+                    "UPDATE " + table + " SET starts_at=?,status='inactive'",
+                    java.sql.Timestamp.from(memberSummaryNow));
+        assertEquals(0, mobileMemberSummary.summary(q).expiringCardCount());
+        assertEquals(0, mobileMemberSummary.summary(q).privateCourseMemberCount());
+        for (String table : List.of("gym_member_card", "gym_course_pack"))
+            jdbc.update("UPDATE " + table + " SET status='active',deleted=TRUE");
+        assertEquals(0, mobileMemberSummary.summary(q).expiringCardCount());
+        assertEquals(0, mobileMemberSummary.summary(q).privateCourseMemberCount());
+    }
+
+    @Test
+    void mobileMemberSummaryEntitlementsRequireMembershipInTheSameAllowedStoreAndTenant() {
+        Long m = memberSummaryFixture();
+        var q = memberSummaryQuery();
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_course_pack SET store_id=102");
+        jdbc.update("UPDATE gym_member_card_store SET deleted=TRUE WHERE store_id=101");
+        scoped(101L);
+        assertEquals(0, mobileMemberSummary.summary(q).privateCourseMemberCount());
+        assertEquals(0, mobileMemberSummary.summary(q).expiringCardCount());
+        scoped(102L);
+        assertEquals(1, mobileMemberSummary.summary(q).privateCourseMemberCount());
+        assertEquals(1, mobileMemberSummary.summary(q).expiringCardCount());
+        jdbc.update(
+                "UPDATE gym_member_store SET deleted=TRUE WHERE store_id=102 AND member_id=?", m);
+        headquarters();
+        var r = mobileMemberSummary.summary(q);
+        assertEquals(3, r.memberCount());
+        assertEquals(0, r.privateCourseMemberCount());
+        assertEquals(0, r.expiringCardCount());
+        jdbc.update(
+                "UPDATE gym_member_store SET deleted=FALSE WHERE store_id=102 AND member_id=?", m);
+        jdbc.update("UPDATE gym_member_card_store SET tenant_id=2");
+        jdbc.update("UPDATE gym_course_pack SET tenant_id=2");
+        assertEquals(0, mobileMemberSummary.summary(q).expiringCardCount());
+        assertEquals(0, mobileMemberSummary.summary(q).privateCourseMemberCount());
+        jdbc.update("UPDATE gym_member_store SET tenant_id=2 WHERE member_id=?", m);
+        assertEquals(2, mobileMemberSummary.summary(q).memberCount());
+        jdbc.update("UPDATE gym_member SET tenant_id=2");
+        assertEquals(0, mobileMemberSummary.summary(q).memberCount());
+    }
+
+    @Test
+    void mobileMemberSummaryDateSelectsShanghaiRegistrationDayWithinCurrentActivePopulation() {
+        stores.create(store(101L, "A"));
+        var now = memberSummaryNow.plusSeconds(2 * 86400);
+        when(businessClock.now()).thenReturn(now);
+        var start = java.time.Instant.parse("2026-06-09T16:00:00Z");
+        memberSummaryMember(101L, "13800009610", start.minusNanos(1000));
+        memberSummaryMember(101L, "13800009611", start);
+        memberSummaryMember(101L, "13800009612", start.plusSeconds(86400).minusNanos(1000));
+        memberSummaryMember(101L, "13800009613", start.plusSeconds(86400));
+        memberSummaryMember(101L, "13800009614", now.plusNanos(1000));
+        Long futureJoin = memberSummaryMember(101L, "13800009615", start);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update(
+                "UPDATE gym_member_store SET joined_at=? WHERE member_id=?",
+                java.sql.Timestamp.from(now.plusNanos(1000)),
+                futureJoin);
+        Long inactive = memberSummaryMember(101L, "13800009616", start),
+                deleted = memberSummaryMember(101L, "13800009617", start);
+        jdbc.update("UPDATE gym_member SET status='inactive' WHERE id=?", inactive);
+        jdbc.update("UPDATE gym_member SET deleted=TRUE WHERE id=?", deleted);
+        var q = memberSummaryQuery();
+        var r = mobileMemberSummary.summary(q);
+        assertEquals(4, r.memberCount());
+        assertEquals(2, r.newMemberCount());
+        q.setDate(java.time.LocalDate.of(2026, 6, 11));
+        assertEquals(1, mobileMemberSummary.summary(q).newMemberCount());
+        assertEquals(4, mobileMemberSummary.summary(q).memberCount());
+        q.setDate(java.time.LocalDate.of(2030, 1, 1));
+        assertEquals(0, mobileMemberSummary.summary(q).newMemberCount());
+        assertEquals(4, mobileMemberSummary.summary(q).memberCount());
+        jdbc.update("UPDATE gym_store SET status='inactive'");
+        assertEquals(4, mobileMemberSummary.summary(q).memberCount());
+        jdbc.update("UPDATE gym_store SET deleted=TRUE");
+        assertEquals(0, mobileMemberSummary.summary(q).memberCount());
+    }
+
+    @Test
+    void mobileMemberSummaryRequiresFunctionalPermissionValidAdminAndWholeStoreScope() {
+        memberSummaryFixture();
+        var q = memberSummaryQuery();
+        assertThrows(
+                org.springframework.security.authorization.AuthorizationDeniedException.class,
+                () -> mobileMemberSummaryController.summary(q));
+        when(permissions.hasAnyPermissions(any(), eq("gym:reports:read"))).thenReturn(true);
+        assertEquals(3, mobileMemberSummaryController.summary(q).getData().memberCount());
+        scoped(101L);
+        q.setStoreId(102L);
+        assertServiceException(() -> mobileMemberSummary.summary(q), STORE_NO_PERMISSION);
+        personalScope(91L);
+        q.setStoreId(null);
+        assertEquals(0, mobileMemberSummary.summary(q).memberCount());
+        q.setStoreId(101L);
+        assertServiceException(() -> mobileMemberSummary.summary(q), STORE_NO_PERMISSION);
+        headquarters();
+        q.setStoreId(null);
+        qrMemberLogin();
+        assertServiceException(() -> mobileMemberSummary.summary(q), MOBILE_IDENTITY_INVALID);
+        loginAs(1L);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> mobileMemberSummary.summary(q), MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        when(workAccounts.getUser(1L))
+                .thenReturn(
+                        new cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO()
+                                .setId(1L)
+                                .setStatus(1));
+        assertServiceException(() -> mobileMemberSummary.summary(q), MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void mobileMemberSummaryValidatesDateAndStoreAndReturnsZerosForAnEmptyScope() {
+        when(businessClock.now()).thenReturn(memberSummaryNow);
+        var q = memberSummaryQuery();
+        assertEquals(0, mobileMemberSummary.summary(q).memberCount());
+        q.setDate(null);
+        assertThrows(ConstraintViolationException.class, () -> mobileMemberSummary.summary(q));
+        q.setDate(java.time.LocalDate.of(999, 1, 1));
+        assertServiceException(() -> mobileMemberSummary.summary(q), BUSINESS_DATE_INVALID);
+        q.setDate(java.time.LocalDate.of(9999, 1, 1));
+        assertServiceException(() -> mobileMemberSummary.summary(q), BUSINESS_DATE_INVALID);
+        q.setDate(java.time.LocalDate.of(2026, 6, 10));
+        q.setStoreId(0L);
+        assertThrows(ConstraintViolationException.class, () -> mobileMemberSummary.summary(q));
+        q.setStoreId(999L);
+        assertEquals(0, mobileMemberSummary.summary(q).memberCount());
+    }
+
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileDashboardService mobileDashboard;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileDashboardController
+            mobileDashboardController;
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileDashboardVO.Query
+            dashboardQuery() {
+        return new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileDashboardVO
+                .Query();
+    }
+
+    void dashboardPermissions() {
+        for (String code :
+                List.of(
+                        "gym:reports:read",
+                        "gym:members:read",
+                        "gym:checkins:read",
+                        "gym:lessons:read",
+                        "gym:approvals:read",
+                        "gym:approvals:decide"))
+            when(permissions.hasAnyPermissions(any(), eq(code))).thenReturn(true);
+    }
+
+    Long dashboardCheckin(Long store, Long member, java.time.Instant at) {
+        var c = new cn.iocoder.yudao.module.gym.dal.dataobject.course.GymCheckinDO();
+        c.setStoreId(store);
+        c.setBookingId(++performanceBooking);
+        c.setMemberId(member);
+        c.setEnteredAt(at);
+        c.setMethod("manual");
+        c.setVisitorType("member");
+        c.setStatus("succeeded");
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.course.GymCheckinMapper.class)
+                .insert(c);
+        return c.getId();
+    }
+
+    Long dashboardLesson(Long store, Long member, Long coach, java.time.Instant at) {
+        Long id = performanceLesson(store, coach, at);
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_lesson_record SET member_id=? WHERE id=?", member, id);
+        return id;
+    }
+
+    List<Long> dashboardFixture() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        when(businessClock.now()).thenReturn(memberSummaryNow);
+        Long coach = responsibleEmployee(91L), otherCoach = responsibleEmployee(92L);
+        Long own = memberSummaryMember(101L, "13800009701", memberSummaryNow),
+                other = memberSummaryMember(101L, "13800009702", memberSummaryNow),
+                third =
+                        memberSummaryMember(
+                                102L, "13800009703", memberSummaryNow.minusSeconds(40 * 86400));
+        Long template = Long.valueOf(cards.create(cardTemplate("period")).getId());
+        cards.issue(own, 101L, template, memberSummaryNow, "test", "dashboard-cross-store");
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update(
+                        "UPDATE gym_member_store SET joined_at=? WHERE member_id=?",
+                        java.sql.Timestamp.from(memberSummaryNow),
+                        own);
+        memberCoaches.replace(own, 101L, responsibility(coach));
+        var yesterday = memberSummaryNow.minusSeconds(86400);
+        var first = java.time.Instant.parse("2026-05-31T16:00:00Z");
+        mobileSalesEvent(7001L, 101L, coach, "card", "payment", "100", memberSummaryNow);
+        mobileSalesEvent(7002L, 101L, otherCoach, "private", "payment", "200", memberSummaryNow);
+        mobileSalesEvent(7003L, 101L, coach, "card", "payment", "50", yesterday);
+        mobileSalesEvent(7001L, 101L, coach, "card", "refund", "10", memberSummaryNow);
+        mobileSalesEvent(7004L, 101L, coach, "card", "payment", "70", first);
+        mobileSalesEvent(7005L, 102L, coach, "card", "payment", "300", memberSummaryNow);
+        mobileSalesEvent(7006L, 101L, null, "card", "payment", "40", memberSummaryNow);
+        mobileSalesEvent(
+                7007L, 101L, coach, "card", "payment", "999", memberSummaryNow.plusNanos(1000));
+        mobileSalesEvent(7008L, 101L, coach, "card", "payment", "1000", first.minusNanos(1000));
+        dashboardCheckin(101L, own, memberSummaryNow);
+        dashboardCheckin(101L, own, memberSummaryNow);
+        dashboardCheckin(101L, other, memberSummaryNow);
+        dashboardCheckin(102L, own, memberSummaryNow);
+        dashboardCheckin(101L, own, yesterday);
+        dashboardCheckin(101L, own, first);
+        dashboardLesson(101L, own, coach, memberSummaryNow);
+        dashboardLesson(101L, other, coach, memberSummaryNow);
+        dashboardLesson(101L, own, otherCoach, memberSummaryNow);
+        dashboardLesson(102L, own, coach, memberSummaryNow);
+        dashboardLesson(101L, own, coach, yesterday);
+        dashboardLesson(101L, own, coach, first);
+        dashboardPermissions();
+        return List.of(coach, otherCoach, own, other, third);
+    }
+
+    @Test
+    void mobileDashboardAggregatesAuthorizedStoresWithSeparateEventCountsAndCurrentPopulation() {
+        dashboardFixture();
+        var r = mobileDashboard.dashboard(dashboardQuery());
+        assertEquals("store", r.scope().type());
+        assertEquals(List.of("101", "102"), r.scope().storeIds());
+        assertNull(r.scope().employeeId());
+        assertEquals("2026-06-10", r.date());
+        assertEquals("2026-06-10T10:00+08:00", r.updatedAt());
+        assertEquals("630.00", r.performance().todayAmount());
+        assertEquals("750.00", r.performance().monthAmount());
+        assertEquals(4, r.checkins().todayCount());
+        assertEquals(1, r.checkins().yesterdayCount());
+        assertEquals(4, r.lessons().todayCount());
+        assertEquals(1, r.lessons().yesterdayCount());
+        assertEquals(6, r.lessons().monthCount());
+        assertEquals(3, r.members().storeTotalCount());
+        assertEquals(2, r.members().newTodayCount());
+        assertNull(r.members().responsibleCount());
+        assertEquals(0, r.pendingApprovalCount());
+        var q = dashboardQuery();
+        q.setStoreId(101L);
+        r = mobileDashboard.dashboard(q);
+        assertEquals("330.00", r.performance().todayAmount());
+        assertEquals(2, r.members().storeTotalCount());
+        q.setStoreId(102L);
+        r = mobileDashboard.dashboard(q);
+        assertEquals("300.00", r.performance().todayAmount());
+        assertEquals(2, r.members().storeTotalCount());
+    }
+
+    @Test
+    void mobileDashboardSelfRestrictsFinanceTeachingAndMemberResponsibilityIndependently() {
+        var ids = dashboardFixture();
+        personalScope(91L);
+        var r = mobileDashboard.dashboard(dashboardQuery());
+        assertEquals("self", r.scope().type());
+        assertEquals(ids.get(0).toString(), r.scope().employeeId());
+        assertEquals(List.of("101"), r.scope().storeIds());
+        assertEquals("90.00", r.performance().todayAmount());
+        assertEquals("210.00", r.performance().monthAmount());
+        assertEquals(2, r.checkins().todayCount());
+        assertEquals(1, r.checkins().yesterdayCount());
+        assertEquals(1, r.lessons().todayCount());
+        assertEquals(3, r.lessons().monthCount());
+        assertEquals(1, r.members().responsibleCount());
+        assertEquals(1, r.members().newTodayCount());
+        assertNull(r.members().storeTotalCount());
+        assertNull(r.pendingApprovalCount());
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_member_coach SET active=FALSE");
+        r = mobileDashboard.dashboard(dashboardQuery());
+        assertEquals("90.00", r.performance().todayAmount());
+        assertEquals(0, r.members().responsibleCount());
+        assertEquals(0, r.checkins().todayCount());
+        assertEquals(0, r.lessons().todayCount());
+        jdbc.update("UPDATE gym_employee_store SET deleted=TRUE WHERE employee_id=?", ids.get(0));
+        assertServiceException(
+                () -> mobileDashboard.dashboard(dashboardQuery()), STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void mobileDashboardMixedScopeDefaultsToWholeStoresAndRequiresExplicitSelfStoreSelection() {
+        var ids = dashboardFixture();
+        var link = new cn.iocoder.yudao.module.gym.dal.dataobject.employee.GymEmployeeStoreDO();
+        link.setEmployeeId(ids.get(0));
+        link.setStoreId(102L);
+        link.setIsPrimary(false);
+        link.setIsManager(false);
+        link.setJoinedOn(java.time.LocalDate.of(2026, 1, 1));
+        applicationContext
+                .getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeStoreMapper.class)
+                .insert(link);
+        loginAs(91L);
+        var permission = new DeptDataPermissionRespDTO();
+        permission.setSelf(true);
+        permission.setDeptIds(Set.of(101L));
+        when(permissions.getDeptDataPermission(any())).thenReturn(permission);
+        var r = mobileDashboard.dashboard(dashboardQuery());
+        assertEquals("store", r.scope().type());
+        assertEquals("330.00", r.performance().todayAmount());
+        var q = dashboardQuery();
+        q.setStoreId(102L);
+        r = mobileDashboard.dashboard(q);
+        assertEquals("self", r.scope().type());
+        assertEquals("300.00", r.performance().todayAmount());
+        assertEquals(0, r.members().responsibleCount());
+        assertEquals(0, r.lessons().todayCount());
+        permission.setSelf(false);
+        assertServiceException(() -> mobileDashboard.dashboard(q), STORE_NO_PERMISSION);
+        permission.setSelf(true);
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_store SET status='inactive' WHERE id=102");
+        assertServiceException(() -> mobileDashboard.dashboard(q), STORE_NO_PERMISSION);
+        q.setStoreId(101L);
+        assertEquals("store", mobileDashboard.dashboard(q).scope().type());
+    }
+
+    @Test
+    void mobileDashboardMissingFunctionalPermissionsAreNullRatherThanZeroOrHiddenStoreTotals() {
+        dashboardFixture();
+        for (String code :
+                List.of(
+                        "gym:reports:read",
+                        "gym:members:read",
+                        "gym:checkins:read",
+                        "gym:lessons:read",
+                        "gym:approvals:read"))
+            when(permissions.hasAnyPermissions(any(), eq(code))).thenReturn(false);
+        var r = mobileDashboard.dashboard(dashboardQuery());
+        assertNull(r.performance());
+        assertNull(r.checkins());
+        assertNull(r.lessons());
+        assertNull(r.members());
+        assertNull(r.pendingApprovalCount());
+        String json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(r);
+        assertTrue(json.contains("\"performance\":null"));
+        assertFalse(json.contains("630.00"));
+        when(permissions.hasAnyPermissions(any(), eq("gym:checkins:read"))).thenReturn(true);
+        r = mobileDashboard.dashboard(dashboardQuery());
+        assertEquals(4, r.checkins().todayCount());
+        assertNull(r.performance());
+        assertNull(r.lessons());
+        when(permissions.hasAnyPermissions(any(), eq("gym:approvals:read"))).thenReturn(true);
+        when(permissions.hasAnyPermissions(any(), eq("gym:approvals:decide"))).thenReturn(false);
+        assertNull(mobileDashboard.dashboard(dashboardQuery()).pendingApprovalCount());
+    }
+
+    @Test
+    void
+            mobileDashboardPendingApprovalsCountAllCurrentActionableStepsAndRespectCurrentAccountBinding() {
+        var ids = dashboardFixture();
+        Long template = publishedApproval("card_opening", ids.get(0), ids.get(1));
+        Long card = Long.valueOf(cards.create(cardTemplate("count")).getId());
+        var created = new java.util.ArrayList<Long>();
+        for (int i = 0; i < 12; i++)
+            created.add(
+                    Long.valueOf(
+                            approvals
+                                    .create(
+                                            opening(template, ids.get(2), card),
+                                            "dashboard-pending-" + i)
+                                    .getId()));
+        loginAs(92L);
+        assertEquals(0, mobileDashboard.dashboard(dashboardQuery()).pendingApprovalCount());
+        loginAs(91L);
+        assertEquals(12, mobileDashboard.dashboard(dashboardQuery()).pendingApprovalCount());
+        var q = dashboardQuery();
+        q.setDate(java.time.LocalDate.of(2026, 1, 1));
+        assertEquals(12, mobileDashboard.dashboard(q).pendingApprovalCount());
+        approvals.decide(created.getFirst(), decision("approve"));
+        assertEquals(11, mobileDashboard.dashboard(dashboardQuery()).pendingApprovalCount());
+        loginAs(92L);
+        assertEquals(1, mobileDashboard.dashboard(dashboardQuery()).pendingApprovalCount());
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_employee SET user_id=93 WHERE id=?", ids.get(1));
+        assertEquals(0, mobileDashboard.dashboard(dashboardQuery()).pendingApprovalCount());
+        loginAs(91L);
+        scoped(102L);
+        assertEquals(0, mobileDashboard.dashboard(dashboardQuery()).pendingApprovalCount());
+    }
+
+    @Test
+    void mobileDashboardHistoricalDayMonthBoundaryAndFutureEventsUseShanghaiDates() {
+        var ids = dashboardFixture();
+        var first = java.time.Instant.parse("2026-05-31T16:00:00Z");
+        dashboardCheckin(101L, ids.get(2), first.minusNanos(1000));
+        dashboardLesson(101L, ids.get(2), ids.get(0), first.minusNanos(1000));
+        var q = dashboardQuery();
+        q.setDate(java.time.LocalDate.of(2026, 6, 1));
+        var r = mobileDashboard.dashboard(q);
+        assertEquals("70.00", r.performance().todayAmount());
+        assertEquals("70.00", r.performance().monthAmount());
+        assertEquals(1, r.checkins().todayCount());
+        assertEquals(1, r.checkins().yesterdayCount());
+        assertEquals(1, r.lessons().monthCount());
+        assertEquals(1, r.lessons().yesterdayCount());
+        assertEquals(3, r.members().storeTotalCount());
+        assertEquals(0, r.members().newTodayCount());
+        dashboardCheckin(101L, ids.get(2), memberSummaryNow.plusNanos(1000));
+        dashboardLesson(101L, ids.get(2), ids.get(0), memberSummaryNow.plusNanos(1000));
+        assertEquals(4, mobileDashboard.dashboard(dashboardQuery()).checkins().todayCount());
+        assertEquals(4, mobileDashboard.dashboard(dashboardQuery()).lessons().todayCount());
+        q.setDate(java.time.LocalDate.of(2026, 6, 9));
+        r = mobileDashboard.dashboard(q);
+        assertEquals("50.00", r.performance().todayAmount());
+        assertEquals("120.00", r.performance().monthAmount());
+    }
+
+    @Test
+    void mobileDashboardFiltersDeletedFailedRecordsTenantDataAndCurrentMemberRelations() {
+        var ids = dashboardFixture();
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        Long failed = dashboardCheckin(101L, ids.get(2), memberSummaryNow),
+                deleted = dashboardLesson(101L, ids.get(2), ids.get(0), memberSummaryNow);
+        jdbc.update("UPDATE gym_checkin SET status='failed' WHERE id=?", failed);
+        jdbc.update("UPDATE gym_lesson_record SET deleted=TRUE WHERE id=?", deleted);
+        assertEquals(4, mobileDashboard.dashboard(dashboardQuery()).checkins().todayCount());
+        assertEquals(4, mobileDashboard.dashboard(dashboardQuery()).lessons().todayCount());
+        jdbc.update("UPDATE gym_store SET status='inactive' WHERE id=102");
+        assertEquals(
+                "630.00", mobileDashboard.dashboard(dashboardQuery()).performance().todayAmount());
+        for (String table : List.of("gym_financial_event", "gym_checkin", "gym_lesson_record"))
+            jdbc.update("UPDATE " + table + " SET tenant_id=2");
+        var r = mobileDashboard.dashboard(dashboardQuery());
+        assertEquals("0.00", r.performance().todayAmount());
+        assertEquals(0, r.checkins().todayCount());
+        assertEquals(0, r.lessons().monthCount());
+        jdbc.update("UPDATE gym_member_store SET tenant_id=2");
+        assertEquals(0, mobileDashboard.dashboard(dashboardQuery()).members().storeTotalCount());
+        jdbc.update("UPDATE gym_member_store SET tenant_id=1");
+        jdbc.update("UPDATE gym_member SET tenant_id=2");
+        assertEquals(0, mobileDashboard.dashboard(dashboardQuery()).members().storeTotalCount());
+    }
+
+    @Test
+    void mobileDashboardValidatesIdentityDatesStoresAndEmptyAuthorizedScope() {
+        when(businessClock.now()).thenReturn(memberSummaryNow);
+        dashboardPermissions();
+        var q = dashboardQuery();
+        var r = mobileDashboard.dashboard(q);
+        assertTrue(r.scope().storeIds().isEmpty());
+        assertEquals("0.00", r.performance().todayAmount());
+        assertEquals(0, r.members().storeTotalCount());
+        q.setDate(java.time.LocalDate.of(2026, 6, 11));
+        assertServiceException(() -> mobileDashboard.dashboard(q), BUSINESS_DATE_INVALID);
+        q.setDate(java.time.LocalDate.of(1000, 1, 1));
+        assertServiceException(() -> mobileDashboard.dashboard(q), BUSINESS_DATE_INVALID);
+        q.setDate(null);
+        q.setStoreId(0L);
+        assertThrows(ConstraintViolationException.class, () -> mobileDashboard.dashboard(q));
+        q.setStoreId(null);
+        scoped();
+        assertServiceException(() -> mobileDashboard.dashboard(q), STORE_NO_PERMISSION);
+        headquarters();
+        qrMemberLogin();
+        assertServiceException(() -> mobileDashboard.dashboard(q), MOBILE_IDENTITY_INVALID);
+        loginAs(1L);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> mobileDashboard.dashboard(q), MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        when(workAccounts.getUser(1L))
+                .thenReturn(
+                        new cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO()
+                                .setId(1L)
+                                .setStatus(1));
+        assertServiceException(() -> mobileDashboard.dashboard(q), MOBILE_IDENTITY_INVALID);
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        assertThrows(
+                org.springframework.security.authentication
+                        .AuthenticationCredentialsNotFoundException.class,
+                () -> mobileDashboardController.dashboard(q));
+    }
+
+    @Test
+    void mobileDashboardCountsActualCheckinAndConfirmedLessonOnceAndMatchesWorkLists() {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L);
+        var start = java.time.Instant.parse("2026-10-24T02:00:00Z");
+        Long member = memberSummaryMember(101L, "13800009709", start);
+        memberCoaches.replace(member, 101L, responsibility(coach));
+        Long booking = workCourseBooking(member, coach, 101L, start);
+        workCourseConfirm(booking, start);
+        courses.confirmLesson(booking);
+        dashboardPermissions();
+        personalScope(91L);
+        var result = mobileDashboard.dashboard(dashboardQuery());
+        assertEquals(1, result.checkins().todayCount());
+        assertEquals(1, result.lessons().todayCount());
+        assertEquals(1, result.lessons().monthCount());
+        assertEquals(1, result.members().newTodayCount());
+        assertEquals(
+                workCourses.checkins(workCourseDates(new CheckinPage())).getTotal(),
+                result.checkins().todayCount());
+        assertEquals(
+                workCourses.lessons(workCourseDates(new LessonPage())).getTotal(),
+                result.lessons().todayCount());
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_member_coach SET tenant_id=2");
+        var revoked = mobileDashboard.dashboard(dashboardQuery());
+        assertEquals(0, revoked.members().responsibleCount());
+        assertEquals(0, revoked.lessons().todayCount());
+        assertEquals(0, revoked.checkins().todayCount());
+    }
+
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileApprovalsService mobileApprovals;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileApprovalsController
+            mobileApprovalsController;
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileApprovalsVO.Query
+            mobileApprovalQuery(String view) {
+        var q =
+                new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileApprovalsVO
+                        .Query();
+        q.setView(view);
+        return q;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileApprovalsVO.Decision
+            mobileApprovalDecision(String decision, int version) {
+        var q =
+                new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileApprovalsVO
+                        .Decision();
+        q.setDecision(decision);
+        q.setExpectedVersion(version);
+        q.setComment("审核意见");
+        return q;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileApprovalsVO.OptionsQuery
+            mobileApprovalOptions(String type) {
+        var q =
+                new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileApprovalsVO
+                        .OptionsQuery();
+        q.setStoreId(101L);
+        q.setBusinessType(type);
+        return q;
+    }
+
+    List<Long> mobileApprovalFixture(boolean two) {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        Long a = responsibleEmployee(91L), b = responsibleEmployee(92L);
+        Long template = publishedApproval("card_opening", two ? new Long[] {a, b} : new Long[] {a});
+        Long member = Long.valueOf(members.create(member(101L, "13800009801")).getId()),
+                card = Long.valueOf(cards.create(cardTemplate("count")).getId());
+        Long id =
+                Long.valueOf(
+                        approvals
+                                .create(opening(template, member, card), "mobile-approval-fixture")
+                                .getId());
+        return List.of(id, a, b, member, card, template);
+    }
+
+    @Test
+    void mobileApprovalsViewsApplyOwnershipCurrentStepsAndPaginationBeforeReturningRows() {
+        var ids = mobileApprovalFixture(true);
+        Long id2 =
+                Long.valueOf(
+                        approvals
+                                .create(
+                                        opening(ids.get(5), ids.get(3), ids.get(4)),
+                                        "mobile-approval-second")
+                                .getId());
+        var mine = mobileApprovalQuery("mine");
+        mine.setPageSize(1);
+        assertEquals(2, mobileApprovals.page(mine).getTotal());
+        assertEquals(1, mobileApprovals.page(mine).getList().size());
+        mine.setPageNo(3);
+        assertTrue(mobileApprovals.page(mine).getList().isEmpty());
+        loginAs(92L);
+        assertEquals(0, mobileApprovals.page(mobileApprovalQuery("pending")).getTotal());
+        assertEquals(ids.get(0).toString(), mobileApprovals.get(ids.get(0)).id());
+        loginAs(91L);
+        assertEquals(0, mobileApprovals.page(mobileApprovalQuery("mine")).getTotal());
+        assertEquals(2, mobileApprovals.page(mobileApprovalQuery("pending")).getTotal());
+        mobileApprovals.decide(
+                ids.get(0), mobileApprovalDecision("approve", 1), "mobile-step-first");
+        assertEquals(1, mobileApprovals.page(mobileApprovalQuery("pending")).getTotal());
+        assertEquals(1, mobileApprovals.page(mobileApprovalQuery("processed")).getTotal());
+        var processed = mobileApprovalQuery("processed");
+        processed.setStatus("approved");
+        assertEquals(0, mobileApprovals.page(processed).getTotal());
+        processed.setStatus("pending");
+        assertEquals(1, mobileApprovals.page(processed).getTotal());
+        loginAs(92L);
+        assertEquals(1, mobileApprovals.page(mobileApprovalQuery("pending")).getTotal());
+        var q = mobileApprovalQuery("pending");
+        q.setStoreId(102L);
+        assertEquals(0, mobileApprovals.page(q).getTotal());
+        assertNotEquals(ids.get(0), id2);
+    }
+
+    @Test
+    void
+            mobileApprovalsDetailsUseParticipantOrManagerAccessAndReturnOnlyControlledSnapshotFields() {
+        var ids = mobileApprovalFixture(true);
+        Long id = ids.getFirst();
+        personalScope(1L);
+        var r = mobileApprovals.get(id);
+        assertEquals("1", r.applicantId());
+        assertEquals("91", r.steps().getFirst().approverId());
+        assertEquals(1, r.version());
+        assertInstanceOf(String.class, r.businessSummary().get("amount"));
+        String json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(r);
+        for (String field :
+                List.of(
+                        "13800009801",
+                        "memberPhone",
+                        "attachmentIds",
+                        "templateSnapshot",
+                        "requestHash",
+                        "requestKey",
+                        "businessResult")) assertFalse(json.contains(field));
+        personalScope(92L);
+        assertEquals(id.toString(), mobileApprovals.get(id).id());
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_employee SET user_id=93 WHERE id=?", ids.get(2));
+        assertServiceException(() -> mobileApprovals.get(id), APPROVAL_NOT_EXISTS);
+        loginAs(94L);
+        scoped(102L);
+        assertServiceException(() -> mobileApprovals.get(id), APPROVAL_NOT_EXISTS);
+        scoped(101L);
+        assertEquals(id.toString(), mobileApprovals.get(id).id());
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_approval SET tenant_id=2 WHERE id=?", id);
+        assertServiceException(() -> mobileApprovals.get(id), APPROVAL_NOT_EXISTS);
+        assertEquals(0, mobileApprovals.page(mobileApprovalQuery("mine")).getTotal());
+    }
+
+    @Test
+    void mobileApprovalsOptionsRequirePublishedActionableTemplatesAndDoNotExposeApprovers() {
+        var ids = mobileApprovalFixture(true);
+        var options = mobileApprovals.options(mobileApprovalOptions("card_opening"));
+        assertEquals(1, options.templates().size());
+        assertEquals(List.of("card_opening"), options.businessTypes());
+        assertFalse(
+                cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(options)
+                        .contains("approver"));
+        approvalTemplates.create(approvalTemplate(ids.get(1)));
+        assertEquals(
+                1,
+                mobileApprovals.options(mobileApprovalOptions("card_opening")).templates().size());
+        when(permissions.hasAnyPermissions(eq(92L), eq("gym:approvals:decide"))).thenReturn(false);
+        assertTrue(
+                mobileApprovals
+                        .options(mobileApprovalOptions("card_opening"))
+                        .templates()
+                        .isEmpty());
+        when(permissions.hasAnyPermissions(eq(92L), eq("gym:approvals:decide"))).thenReturn(true);
+        var data = new DeptDataPermissionRespDTO();
+        data.setDeptIds(Set.of(102L));
+        when(permissions.getDeptDataPermission(92L)).thenReturn(data);
+        assertTrue(
+                mobileApprovals
+                        .options(mobileApprovalOptions("card_opening"))
+                        .businessTypes()
+                        .isEmpty());
+    }
+
+    @Test
+    void mobileApprovalsSelfOptionsAllowOnlyPriceWorkflowsInCurrentResponsibleStore() {
+        var ids = mobileApprovalFixture(true);
+        Long price = publishedApproval("price_change", ids.get(2));
+        memberCoaches.replace(ids.get(3), 101L, responsibility(ids.get(1)));
+        personalScope(91L);
+        var manager = new DeptDataPermissionRespDTO();
+        manager.setAll(true);
+        when(permissions.getDeptDataPermission(92L)).thenReturn(manager);
+        var result = mobileApprovals.options(mobileApprovalOptions("price_change"));
+        assertEquals(price.toString(), result.templates().getFirst().id());
+        assertEquals(List.of("price_change"), result.businessTypes());
+        assertServiceException(
+                () -> mobileApprovals.options(mobileApprovalOptions("card_opening")),
+                STORE_NO_PERMISSION);
+        var q = mobileApprovalOptions("price_change");
+        q.setStoreId(102L);
+        assertServiceException(() -> mobileApprovals.options(q), STORE_NO_PERMISSION);
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_member_coach SET active=FALSE");
+        assertServiceException(
+                () -> mobileApprovals.options(mobileApprovalOptions("price_change")),
+                STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void
+            mobileApprovalsVersionAndFirstResponseSurviveLegacyNextStepAndReplayRechecksCurrentBinding() {
+        var ids = mobileApprovalFixture(true);
+        Long id = ids.getFirst();
+        loginAs(91L);
+        var req = mobileApprovalDecision("approve", 1);
+        var first = mobileApprovals.decide(id, req, "mobile-response-once");
+        assertEquals(2, first.version());
+        assertEquals("pending", first.status());
+        assertEquals(2, first.currentStep());
+        loginAs(92L);
+        approvals.decide(id, decision("approve"));
+        assertEquals(3, mobileApprovals.get(id).version());
+        assertEquals("approved", mobileApprovals.get(id).status());
+        loginAs(91L);
+        assertEquals(first, mobileApprovals.decide(id, req, "mobile-response-once"));
+        assertServiceException(
+                () -> mobileApprovals.decide(id, req, "mobile-new-after-done"),
+                APPROVAL_VERSION_CONFLICT);
+        var changed = mobileApprovalDecision("reject", 1);
+        assertServiceException(
+                () -> mobileApprovals.decide(id, changed, "mobile-response-once"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_employee SET user_id=93 WHERE id=?", ids.get(1));
+        assertServiceException(
+                () -> mobileApprovals.decide(id, req, "mobile-response-once"),
+                APPROVAL_DECISION_FORBIDDEN);
+    }
+
+    @Test
+    void mobileApprovalsRejectNeedsReasonCancelsWaitingStepsAndRejectsWrongStepOrVersion() {
+        var ids = mobileApprovalFixture(true);
+        Long id = ids.getFirst();
+        loginAs(92L);
+        assertServiceException(
+                () ->
+                        mobileApprovals.decide(
+                                id, mobileApprovalDecision("approve", 1), "mobile-waiting-step"),
+                APPROVAL_DECISION_INVALID);
+        loginAs(91L);
+        var bad = mobileApprovalDecision("reject", 1);
+        bad.setComment("   ");
+        assertServiceException(
+                () -> mobileApprovals.decide(id, bad, "mobile-empty-reason"),
+                APPROVAL_REQUEST_INVALID);
+        assertServiceException(
+                () ->
+                        mobileApprovals.decide(
+                                id, mobileApprovalDecision("approve", 2), "mobile-wrong-version"),
+                APPROVAL_VERSION_CONFLICT);
+        var r =
+                mobileApprovals.decide(
+                        id, mobileApprovalDecision("reject", 1), "mobile-rejection-once");
+        assertEquals("rejected", r.status());
+        assertEquals(2, r.version());
+        assertEquals("cancelled", r.steps().get(1).status());
+        assertEquals(0, cards.cards(ids.get(3), new GymBusinessPageReqVO()).getTotal());
+    }
+
+    @Test
+    void mobileApprovalsFinalDecisionIssuesOneRealCardAndDoesNotExposeBusinessResult() {
+        var ids = mobileApprovalFixture(false);
+        loginAs(91L);
+        var req = mobileApprovalDecision("approve", 1);
+        var r = mobileApprovals.decide(ids.getFirst(), req, "mobile-final-card");
+        assertEquals("approved", r.status());
+        assertEquals(2, r.version());
+        assertEquals(r, mobileApprovals.decide(ids.getFirst(), req, "mobile-final-card"));
+        assertEquals(1, cards.cards(ids.get(3), new GymBusinessPageReqVO()).getTotal());
+        assertFalse(
+                cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(r)
+                        .contains("cardNo"));
+        assertServiceException(
+                () ->
+                        mobileApprovals.decide(
+                                ids.getFirst(),
+                                mobileApprovalDecision("approve", 2),
+                                "mobile-after-final"),
+                APPROVAL_DECISION_INVALID);
+    }
+
+    @Test
+    void mobileApprovalsBusinessFailureRollsBackVersionTasksAndIdempotencyThenSameKeyCanRetry() {
+        var ids = mobileApprovalFixture(false);
+        var blocked = blacklist(ids.get(3));
+        blocked.setBlockPurchase(true);
+        blocked.setStartsAt(java.time.Instant.now().minusSeconds(30));
+        Long block = Long.valueOf(records.createBlacklist(blocked).getId());
+        loginAs(91L);
+        var req = mobileApprovalDecision("approve", 1);
+        assertServiceException(
+                () -> mobileApprovals.decide(ids.getFirst(), req, "mobile-rollback-key"),
+                MEMBER_PURCHASE_BLOCKED);
+        var after = mobileApprovals.get(ids.getFirst());
+        assertEquals(1, after.version());
+        assertEquals("pending", after.status());
+        assertNull(after.steps().getFirst().decidedAt());
+        var revoke =
+                new cn.iocoder.yudao.module.gym.controller.admin.member.vo.GymBlacklistSaveReqVO();
+        revoke.setRevoked(true);
+        records.patchBlacklist(block, revoke);
+        assertEquals(
+                "approved",
+                mobileApprovals.decide(ids.getFirst(), req, "mobile-rollback-key").status());
+        assertEquals(1, cards.cards(ids.get(3), new GymBusinessPageReqVO()).getTotal());
+    }
+
+    @Test
+    void mobileApprovalsConcurrentOpposingDecisionsHaveOneWinnerAndOneBusinessEffect()
+            throws Exception {
+        var ids = mobileApprovalFixture(false);
+        var result =
+                workCourseRace(
+                        () -> {
+                            loginAs(91L);
+                            return mobileApprovals.decide(
+                                    ids.getFirst(),
+                                    mobileApprovalDecision("approve", 1),
+                                    "mobile-race-approve");
+                        },
+                        () -> {
+                            loginAs(91L);
+                            return mobileApprovals.decide(
+                                    ids.getFirst(),
+                                    mobileApprovalDecision("reject", 1),
+                                    "mobile-race-reject");
+                        });
+        assertEquals(
+                1,
+                result.stream()
+                        .filter(
+                                x ->
+                                        x
+                                                instanceof
+                                                cn.iocoder.yudao.framework.common.exception
+                                                        .ServiceException)
+                        .count());
+        var r = mobileApprovals.get(ids.getFirst());
+        assertEquals(2, r.version());
+        assertEquals(
+                "approved".equals(r.status()) ? 1 : 0,
+                cards.cards(ids.get(3), new GymBusinessPageReqVO()).getTotal());
+    }
+
+    @Test
+    void
+            mobileApprovalsConcurrentIdenticalKeyReplaysOneSnapshotAndLegacyCompetingWriteSharesVersion()
+                    throws Exception {
+        var ids = mobileApprovalFixture(false);
+        var result =
+                workCourseRace(
+                        () -> {
+                            loginAs(91L);
+                            return mobileApprovals.decide(
+                                    ids.getFirst(),
+                                    mobileApprovalDecision("approve", 1),
+                                    "mobile-same-key-race");
+                        },
+                        () -> {
+                            loginAs(91L);
+                            return mobileApprovals.decide(
+                                    ids.getFirst(),
+                                    mobileApprovalDecision("approve", 1),
+                                    "mobile-same-key-race");
+                        });
+        assertEquals(result.get(0), result.get(1));
+        assertEquals(2, mobileApprovals.get(ids.getFirst()).version());
+        assertEquals(1, cards.cards(ids.get(3), new GymBusinessPageReqVO()).getTotal());
+        Long second =
+                Long.valueOf(
+                        approvals
+                                .create(
+                                        opening(ids.get(5), ids.get(3), ids.get(4)),
+                                        "mobile-legacy-race-create")
+                                .getId());
+        var raced =
+                workCourseRace(
+                        () -> {
+                            loginAs(91L);
+                            return mobileApprovals.decide(
+                                    second,
+                                    mobileApprovalDecision("approve", 1),
+                                    "mobile-legacy-race-new");
+                        },
+                        () -> {
+                            loginAs(91L);
+                            return approvals.decide(second, decision("reject"));
+                        });
+        assertEquals(
+                1,
+                raced.stream()
+                        .filter(
+                                x ->
+                                        x
+                                                instanceof
+                                                cn.iocoder.yudao.framework.common.exception
+                                                        .ServiceException)
+                        .count());
+        assertEquals(2, mobileApprovals.get(second).version());
+    }
+
+    @Test
+    void mobileApprovalsPermissionsAndValidIdentityAreCheckedAndPendingNeedsWholeStoreScope() {
+        var ids = mobileApprovalFixture(false);
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> mobileApprovalsController.get(ids.getFirst()));
+        when(permissions.hasAnyPermissions(any(), eq("gym:approvals:read"))).thenReturn(true);
+        assertEquals(
+                ids.getFirst().toString(),
+                mobileApprovalsController.get(ids.getFirst()).getData().id());
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> mobileApprovalsController.options(mobileApprovalOptions("card_opening")));
+        when(permissions.hasAnyPermissions(any(), eq("gym:approvals:read"))).thenReturn(false);
+        loginAs(91L);
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () ->
+                        mobileApprovalsController.decide(
+                                ids.getFirst(),
+                                mobileApprovalDecision("approve", 1),
+                                "mobile-permission-denied"));
+        personalScope(91L);
+        assertEquals(0, mobileApprovals.page(mobileApprovalQuery("pending")).getTotal());
+        assertServiceException(
+                () ->
+                        mobileApprovals.decide(
+                                ids.getFirst(),
+                                mobileApprovalDecision("approve", 1),
+                                "mobile-no-store-right"),
+                STORE_NO_PERMISSION);
+        headquarters();
+        qrMemberLogin();
+        assertServiceException(() -> mobileApprovals.get(ids.getFirst()), MOBILE_IDENTITY_INVALID);
+        loginAs(1L);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> mobileApprovals.get(ids.getFirst()), MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        when(workAccounts.getUser(1L))
+                .thenReturn(
+                        new cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO()
+                                .setId(1L)
+                                .setStatus(1));
+        assertServiceException(
+                () -> mobileApprovals.page(mobileApprovalQuery("mine")), MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void mobileApprovalsValidatePageViewsOptionsDecisionVersionAndIdempotencyKeys() {
+        var ids = mobileApprovalFixture(false);
+        var q = mobileApprovalQuery("all");
+        assertThrows(ConstraintViolationException.class, () -> mobileApprovals.page(q));
+        q.setView("mine");
+        q.setPageSize(201);
+        assertThrows(ConstraintViolationException.class, () -> mobileApprovals.page(q));
+        var opt = mobileApprovalOptions("unknown");
+        assertThrows(ConstraintViolationException.class, () -> mobileApprovals.options(opt));
+        loginAs(91L);
+        var req = mobileApprovalDecision("approve", 0);
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> mobileApprovals.decide(ids.getFirst(), req, "mobile-invalid-version"));
+        req.setExpectedVersion(1);
+        assertServiceException(
+                () -> mobileApprovals.decide(ids.getFirst(), req, "short"), MOBILE_REQUEST_INVALID);
+        assertEquals(1, mobileApprovals.get(ids.getFirst()).version());
+    }
+
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileCardIssueService mobileCardIssue;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileCardIssueController
+            mobileCardIssueController;
+
+    List<Long> cardIssueFixture() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        Long approver = responsibleEmployee(91L),
+                coach = responsibleEmployee(92L),
+                workflow = publishedApproval("card_opening", approver);
+        Long member = Long.valueOf(members.create(member(101L, "13800009901")).getId()),
+                card = Long.valueOf(cards.create(cardTemplate("count")).getId()),
+                course = Long.valueOf(courses.createProduct(courseProduct(101L, coach)).getId());
+        return List.of(workflow, member, card, course, approver, coach);
+    }
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileCardIssueVO cardIssue(
+            List<Long> ids, String type) {
+        var req = new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileCardIssueVO();
+        req.setStoreId(101L);
+        req.setMemberId(ids.get(1));
+        req.setProductType(type);
+        req.setProductId(ids.get("card".equals(type) ? 2 : 3));
+        req.setApprovalTemplateId(ids.get(0));
+        req.setReason("补发审核");
+        return req;
+    }
+
+    long cardIssuePackCount() {
+        return applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper.class)
+                .selectCount();
+    }
+
+    @Test
+    void mobileCardIssueCreatesOnlyPendingApprovalAndFinalCardPlusUnsignedContractWithoutRevenue() {
+        var ids = cardIssueFixture();
+        publishedContractPdf();
+        var req = cardIssue(ids, "card");
+        var first = mobileCardIssue.create(req, "issue-card-first");
+        assertEquals("pending", first.status());
+        assertEquals(1, first.version());
+        assertEquals("card", first.businessSummary().get("productType"));
+        assertEquals(ids.get(2).toString(), first.businessSummary().get("productId"));
+        assertEquals(0, cards.cards(ids.get(1), new GymBusinessPageReqVO()).getTotal());
+        assertEquals(0, contracts.page(new GymBusinessPageReqVO()).getTotal());
+        loginAs(91L);
+        mobileApprovals.decide(
+                Long.valueOf(first.id()),
+                mobileApprovalDecision("approve", 1),
+                "issue-card-decision");
+        assertEquals(1, cards.cards(ids.get(1), new GymBusinessPageReqVO()).getTotal());
+        var contract = contracts.page(new GymBusinessPageReqVO()).getList().getFirst();
+        assertEquals("unsigned", contract.getStatus());
+        assertEquals(0, financialEvents.selectCount());
+        loginAs(1L);
+        assertEquals(first, mobileCardIssue.create(req, "issue-card-first"));
+        assertEquals("approved", mobileApprovals.get(Long.valueOf(first.id())).status());
+        assertEquals(1, cards.cards(ids.get(1), new GymBusinessPageReqVO()).getTotal());
+    }
+
+    @Test
+    void
+            mobileCardIssueCourseFreezesVersionAndLegacyDecisionCreatesActualUnlimitedPackAndContract() {
+        var ids = cardIssueFixture();
+        publishedIssueCourseContract();
+        var first = mobileCardIssue.create(cardIssue(ids, "course"), "issue-course-first");
+        assertEquals("course", first.businessSummary().get("productType"));
+        assertEquals(1, first.businessSummary().get("productVersion"));
+        assertEquals(2, first.businessSummary().get("sessionCount"));
+        assertEquals(0, cardIssuePackCount());
+        loginAs(91L);
+        approvals.decide(Long.valueOf(first.id()), decision("approve"));
+        assertEquals(2, mobileApprovals.get(Long.valueOf(first.id())).version());
+        var pack =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper
+                                        .class)
+                        .selectList()
+                        .getFirst();
+        assertEquals(ids.get(1), pack.getMemberId());
+        assertEquals(ids.get(3), pack.getCourseProductId());
+        assertEquals(ids.get(5), pack.getAssignedCoachId());
+        assertEquals(2, pack.getRemainingSessions());
+        assertNull(pack.getExpiresAt());
+        assertEquals("approval", pack.getSourceType());
+        assertEquals(first.id(), pack.getSourceId());
+        assertEquals(1, contracts.page(new GymBusinessPageReqVO()).getTotal());
+        assertEquals(
+                "unsigned",
+                contracts.page(new GymBusinessPageReqVO()).getList().getFirst().getStatus());
+        assertEquals(0, financialEvents.selectCount());
+        approvals.decide(Long.valueOf(first.id()), decision("approve"));
+        assertEquals(1, cardIssuePackCount());
+    }
+
+    @Test
+    void mobileCardIssueChangedCourseDoesNotSilentlyIssueNewTermsAndFreshApplicationCanSucceed() {
+        var ids = cardIssueFixture();
+        var original = mobileCardIssue.create(cardIssue(ids, "course"), "issue-course-stale");
+        var patch =
+                new cn.iocoder.yudao.module.gym.controller.admin.course.vo
+                        .GymCourseProductSaveReqVO();
+        patch.setSessionCount(3);
+        courses.patchProduct(ids.get(3), patch);
+        loginAs(91L);
+        assertServiceException(
+                () ->
+                        mobileApprovals.decide(
+                                Long.valueOf(original.id()),
+                                mobileApprovalDecision("approve", 1),
+                                "issue-stale-decision"),
+                APPROVAL_SOURCE_CHANGED);
+        assertEquals("pending", mobileApprovals.get(Long.valueOf(original.id())).status());
+        assertEquals(1, mobileApprovals.get(Long.valueOf(original.id())).version());
+        assertEquals(0, cardIssuePackCount());
+        loginAs(1L);
+        var fresh = mobileCardIssue.create(cardIssue(ids, "course"), "issue-course-current");
+        assertEquals(2, fresh.businessSummary().get("productVersion"));
+        assertEquals(3, fresh.businessSummary().get("sessionCount"));
+        loginAs(91L);
+        mobileApprovals.decide(
+                Long.valueOf(fresh.id()),
+                mobileApprovalDecision("approve", 1),
+                "issue-current-decision");
+        assertEquals(
+                3,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper
+                                        .class)
+                        .selectList()
+                        .getFirst()
+                        .getRemainingSessions());
+    }
+
+    @Test
+    void mobileCardIssueFinalCourseRechecksCurrentCoachStoreAndMemberAndCanRetryAfterRestoration() {
+        var ids = cardIssueFixture();
+        var first = mobileCardIssue.create(cardIssue(ids, "course"), "issue-recheck-current");
+        Long id = Long.valueOf(first.id());
+        loginAs(91L);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_employee SET status='inactive' WHERE id=?", ids.get(5));
+        assertServiceException(
+                () ->
+                        mobileApprovals.decide(
+                                id, mobileApprovalDecision("approve", 1), "issue-recheck-decision"),
+                COURSE_COACH_INVALID);
+        jdbc.update("UPDATE gym_employee SET status='active' WHERE id=?", ids.get(5));
+        jdbc.update("UPDATE gym_store SET status='inactive' WHERE id=101");
+        assertServiceException(
+                () ->
+                        mobileApprovals.decide(
+                                id, mobileApprovalDecision("approve", 1), "issue-recheck-decision"),
+                APPROVAL_REQUEST_INVALID);
+        jdbc.update("UPDATE gym_store SET status='active' WHERE id=101");
+        jdbc.update("UPDATE gym_member SET status='inactive' WHERE id=?", ids.get(1));
+        assertServiceException(
+                () ->
+                        mobileApprovals.decide(
+                                id, mobileApprovalDecision("approve", 1), "issue-recheck-decision"),
+                APPROVAL_REQUEST_INVALID);
+        jdbc.update("UPDATE gym_member SET status='active' WHERE id=?", ids.get(1));
+        assertEquals(0, cardIssuePackCount());
+        assertEquals(1, mobileApprovals.get(id).version());
+        assertEquals(
+                "approved",
+                mobileApprovals
+                        .decide(id, mobileApprovalDecision("approve", 1), "issue-recheck-decision")
+                        .status());
+        assertEquals(1, cardIssuePackCount());
+    }
+
+    @Test
+    void mobileCardIssueKeepsSelectedImmutableCardTemplateInsteadOfLatestVersion() {
+        var ids = cardIssueFixture();
+        var original = mobileCardIssue.create(cardIssue(ids, "card"), "issue-selected-template");
+        var change =
+                new cn.iocoder.yudao.module.gym.controller.admin.card.vo.GymCardTemplateSaveReqVO();
+        change.setIncludedUses(99);
+        Long next = Long.valueOf(cards.version(ids.get(2), change).getId());
+        var publish =
+                new cn.iocoder.yudao.module.gym.controller.admin.card.vo.GymCardTemplateSaveReqVO();
+        publish.setStatus("published");
+        cards.patch(next, publish);
+        loginAs(91L);
+        mobileApprovals.decide(
+                Long.valueOf(original.id()),
+                mobileApprovalDecision("approve", 1),
+                "issue-selected-decision");
+        var card =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.card.GymMemberCardMapper
+                                        .class)
+                        .selectList()
+                        .getFirst();
+        assertEquals(ids.get(2), card.getTemplateId());
+        assertNotEquals(99, card.getTotalUses());
+        assertEquals(0, financialEvents.selectCount());
+    }
+
+    @Test
+    void
+            mobileCardIssueRequiresBothFunctionalPermissionsWholeStoreAndMatchingMemberProductTenant() {
+        var ids = cardIssueFixture();
+        var req = cardIssue(ids, "course");
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> mobileCardIssueController.create(req, "issue-permission-test"));
+        when(permissions.hasAnyPermissions(any(), eq("gym:approvals:create"))).thenReturn(true);
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> mobileCardIssueController.create(req, "issue-permission-test"));
+        when(permissions.hasAnyPermissions(any(), eq("gym:cards:issue"))).thenReturn(true);
+        assertEquals(
+                "pending",
+                mobileCardIssueController.create(req, "issue-permission-test").getData().status());
+        personalScope(91L);
+        assertServiceException(
+                () -> mobileCardIssue.create(req, "issue-self-forbidden"), STORE_NO_PERMISSION);
+        headquarters();
+        loginAs(1L);
+        req.setStoreId(102L);
+        assertServiceException(
+                () -> mobileCardIssue.create(req, "issue-wrong-membership"), STORE_NO_PERMISSION);
+        req.setStoreId(101L);
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_course_product SET store_id=102 WHERE id=?", ids.get(3));
+        assertServiceException(
+                () -> mobileCardIssue.create(req, "issue-other-store-course"),
+                APPROVAL_REQUEST_INVALID);
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_course_product SET tenant_id=2 WHERE id=?", ids.get(3));
+        assertServiceException(
+                () -> mobileCardIssue.create(req, "issue-other-tenant-course"),
+                COURSE_PRODUCT_NOT_EXISTS);
+        qrMemberLogin();
+        assertServiceException(
+                () -> mobileCardIssue.create(req, "issue-member-identity"),
+                MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void mobileCardIssueSameKeyConcurrencyCreatesOneApprovalAndChangesConflict() throws Exception {
+        var ids = cardIssueFixture();
+        var req = cardIssue(ids, "course");
+        var results =
+                workCourseRace(
+                        () -> mobileCardIssue.create(req, "issue-concurrent-key"),
+                        () -> mobileCardIssue.create(req, "issue-concurrent-key"));
+        assertEquals(results.get(0), results.get(1));
+        assertEquals(1, mobileApprovals.page(mobileApprovalQuery("mine")).getTotal());
+        assertEquals(0, cardIssuePackCount());
+        req.setReason("  补发审核  ");
+        assertEquals(results.getFirst(), mobileCardIssue.create(req, "issue-concurrent-key"));
+        req.setReason("不同原因");
+        assertServiceException(
+                () -> mobileCardIssue.create(req, "issue-concurrent-key"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        req.setReason("补发审核");
+        scoped(102L);
+        assertServiceException(
+                () -> mobileCardIssue.create(req, "issue-concurrent-key"), STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void mobileCardIssueFailedSubmissionRollsBackRequestAndCanReuseKeyAfterFixingTemplate() {
+        var ids = cardIssueFixture();
+        Long wrong = publishedApproval("other_configured", ids.get(4));
+        var req = cardIssue(ids, "card");
+        req.setApprovalTemplateId(wrong);
+        assertServiceException(
+                () -> mobileCardIssue.create(req, "issue-invalid-template"),
+                APPROVAL_REQUEST_INVALID);
+        assertEquals(0, mobileApprovals.page(mobileApprovalQuery("mine")).getTotal());
+        req.setApprovalTemplateId(ids.get(0));
+        assertEquals("pending", mobileCardIssue.create(req, "issue-invalid-template").status());
+        var invalid = cardIssue(ids, "course");
+        invalid.setReason(" ");
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> mobileCardIssue.create(invalid, "issue-invalid-reason"));
+        invalid.setReason("原因");
+        invalid.setProductType("private");
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> mobileCardIssue.create(invalid, "issue-invalid-type"));
+    }
+
+    @Test
+    void mobileCardIssueLegacyCourseSourceRejectsMixedCardAndPriceInstructions() {
+        var ids = cardIssueFixture();
+        var req = opening(ids.get(0), ids.get(1), ids.get(2));
+        req.setSourceType("course-products");
+        req.setSourceId(ids.get(3));
+        assertServiceException(
+                () -> approvals.create(req, "issue-legacy-mixed"), APPROVAL_REQUEST_INVALID);
+        req.setCardTemplateId(null);
+        req.setRequestedPrice(new BigDecimal("0.00"));
+        assertServiceException(
+                () -> approvals.create(req, "issue-legacy-price"), APPROVAL_REQUEST_INVALID);
+        assertEquals(0, cardIssuePackCount());
+    }
+
+    @Test
+    void mobileCardIssueContractFailureRollsBackIssuedPackAndDecisionBeforeSameKeyRetry() {
+        var ids = cardIssueFixture();
+        Long template = publishedIssueCourseContract();
+        Long pdf = contractTemplateMapper.selectById(template).getFileId();
+        var first = mobileCardIssue.create(cardIssue(ids, "course"), "issue-contract-rollback");
+        String url = files.selectById(pdf).getUrl();
+        byte[] original = fileApi.getFileContentByUrl(url);
+        when(fileApi.getFileContentByUrl(url)).thenReturn(null);
+        loginAs(91L);
+        assertServiceException(
+                () ->
+                        mobileApprovals.decide(
+                                Long.valueOf(first.id()),
+                                mobileApprovalDecision("approve", 1),
+                                "issue-contract-decision"),
+                FILE_CONTENT_NOT_EXISTS);
+        assertEquals(0, cardIssuePackCount());
+        assertEquals(0, contracts.page(new GymBusinessPageReqVO()).getTotal());
+        assertEquals(1, mobileApprovals.get(Long.valueOf(first.id())).version());
+        when(fileApi.getFileContentByUrl(url)).thenReturn(original);
+        assertEquals(
+                "approved",
+                mobileApprovals
+                        .decide(
+                                Long.valueOf(first.id()),
+                                mobileApprovalDecision("approve", 1),
+                                "issue-contract-decision")
+                        .status());
+        assertEquals(1, cardIssuePackCount());
+        assertEquals(1, contracts.page(new GymBusinessPageReqVO()).getTotal());
+    }
+
+    Long publishedIssueCourseContract() {
+        Long original = publishedContractPdf();
+        var patch =
+                new cn.iocoder.yudao.module.gym.controller.admin.contract.vo
+                        .GymContractTemplateSaveReqVO();
+        patch.setApplicableType("course");
+        Long id = Long.valueOf(contractTemplates.version(original, patch).getId());
+        patch.setApplicableType(null);
+        patch.setStatus("published");
+        contractTemplates.patch(id, patch);
+        return id;
+    }
+
+    @Test
+    void mobileCardIssueConcurrentProductEditNeverChangesTheApprovedPackTerms() throws Exception {
+        var ids = cardIssueFixture();
+        var first = mobileCardIssue.create(cardIssue(ids, "course"), "issue-product-race");
+        var outcomes =
+                workCourseRace(
+                        () -> {
+                            loginAs(91L);
+                            return mobileApprovals.decide(
+                                    Long.valueOf(first.id()),
+                                    mobileApprovalDecision("approve", 1),
+                                    "issue-product-race-decision");
+                        },
+                        () -> {
+                            var patch =
+                                    new cn.iocoder.yudao.module.gym.controller.admin.course.vo
+                                            .GymCourseProductSaveReqVO();
+                            patch.setSessionCount(3);
+                            return courses.patchProduct(ids.get(3), patch);
+                        });
+        assertFalse(
+                outcomes.get(1)
+                        instanceof cn.iocoder.yudao.framework.common.exception.ServiceException);
+        var result = mobileApprovals.get(Long.valueOf(first.id()));
+        if ("approved".equals(result.status())) {
+            assertEquals(2, result.version());
+            assertEquals(1, cardIssuePackCount());
+            assertEquals(
+                    2,
+                    applicationContext
+                            .getBean(
+                                    cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper
+                                            .class)
+                            .selectList()
+                            .getFirst()
+                            .getRemainingSessions());
+        } else {
+            assertEquals(1, result.version());
+            assertEquals(0, cardIssuePackCount());
+            assertInstanceOf(
+                    cn.iocoder.yudao.framework.common.exception.ServiceException.class,
+                    outcomes.get(0));
+        }
+        assertEquals(3, courses.requireProduct(ids.get(3), false).getSessionCount());
+    }
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileCoursePriceService mobileCoursePrice;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileCoursePriceController
+            mobileCoursePriceController;
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileCoursePriceVO coursePrice(
+            List<Long> ids) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileCoursePriceVO();
+        req.setStoreId(101L);
+        req.setProductId(ids.get(3));
+        req.setMemberId(ids.get(1));
+        req.setProposedAmount(new BigDecimal("150.00"));
+        req.setReason("专属优惠审核");
+        req.setApprovalTemplateId(publishedApproval("price_change", ids.get(4)));
+        return req;
+    }
+
+    @Test
+    void mobileCoursePriceApprovesFrozenQuoteOnlyWithoutChangingPublicPriceOrCreatingRights() {
+        var ids = cardIssueFixture();
+        var req = coursePrice(ids);
+        var first = mobileCoursePrice.create(req, "quote-price-first");
+        assertEquals("pending", first.status());
+        assertEquals("quote", first.businessSummary().get("priceScope"));
+        var persisted = approvals.get(Long.valueOf(first.id())).getRequestSnapshot();
+        assertFalse(persisted.containsKey("sourceId"));
+
+        assertEquals("course-quote-products", first.businessSummary().get("sourceType"));
+        assertEquals(ids.get(1).toString(), first.businessSummary().get("memberId"));
+        assertEquals(1, first.businessSummary().get("productVersion"));
+        assertEquals("200.00", first.businessSummary().get("originalPrice"));
+        assertEquals("150.00", first.businessSummary().get("requestedPrice"));
+        assertFalse(first.businessSummary().containsKey("memberPhone"));
+        loginAs(91L);
+        var decided =
+                mobileApprovals.decide(
+                        Long.valueOf(first.id()),
+                        mobileApprovalDecision("approve", 1),
+                        "quote-price-decision");
+        assertEquals("approved", decided.status());
+        assertEquals(2, decided.version());
+        assertEquals(
+                true,
+                approvals.get(Long.valueOf(first.id())).getBusinessResult().get("quoteAuthorized"));
+        var product = courses.requireProduct(ids.get(3), false);
+        assertEquals(new BigDecimal("200.00"), product.getPrice());
+        assertEquals(1, product.getVersion());
+        assertEquals(0, cardIssuePackCount());
+        assertEquals(0, financialEvents.selectCount());
+        assertEquals(0, contracts.page(new GymBusinessPageReqVO()).getTotal());
+        loginAs(1L);
+        assertEquals(first, mobileCoursePrice.create(req, "quote-price-first"));
+    }
+
+    @Test
+    void mobileCoursePriceOptionalMemberRejectsAsReviewWithoutMutatingProduct() {
+        var ids = cardIssueFixture();
+        var req = coursePrice(ids);
+        req.setMemberId(null);
+        req.setProposedAmount(BigDecimal.ZERO);
+        var first = mobileCoursePrice.create(req, "quote-price-generic");
+        assertFalse(first.businessSummary().containsKey("memberId"));
+        loginAs(91L);
+        assertEquals(
+                "rejected",
+                mobileApprovals
+                        .decide(
+                                Long.valueOf(first.id()),
+                                mobileApprovalDecision("reject", 1),
+                                "quote-reject-decision")
+                        .status());
+        assertEquals(
+                new BigDecimal("200.00"), courses.requireProduct(ids.get(3), false).getPrice());
+        assertTrue(approvals.get(Long.valueOf(first.id())).getBusinessResult().isEmpty());
+    }
+
+    @Test
+    void mobileCoursePriceProductChangesRollbackFinalDecisionAndNewApplicationUsesNewTerms() {
+        var ids = cardIssueFixture();
+        var req = coursePrice(ids);
+        var first = mobileCoursePrice.create(req, "quote-price-stale");
+        var patch =
+                new cn.iocoder.yudao.module.gym.controller.admin.course.vo
+                        .GymCourseProductSaveReqVO();
+        patch.setSessionCount(3);
+        courses.patchProduct(ids.get(3), patch);
+        loginAs(91L);
+        assertServiceException(
+                () ->
+                        mobileApprovals.decide(
+                                Long.valueOf(first.id()),
+                                mobileApprovalDecision("approve", 1),
+                                "quote-stale-decision"),
+                APPROVAL_SOURCE_CHANGED);
+        var pending = mobileApprovals.get(Long.valueOf(first.id()));
+        assertEquals("pending", pending.status());
+        assertEquals(1, pending.version());
+        assertEquals("pending", pending.steps().getFirst().status());
+        loginAs(1L);
+        var fresh = mobileCoursePrice.create(req, "quote-price-fresh");
+        assertEquals(2, fresh.businessSummary().get("productVersion"));
+        assertEquals(3, fresh.businessSummary().get("sessionCount"));
+        loginAs(91L);
+        assertEquals(
+                "approved",
+                approvals.decide(Long.valueOf(fresh.id()), decision("approve")).getStatus());
+        assertEquals(
+                new BigDecimal("200.00"), courses.requireProduct(ids.get(3), false).getPrice());
+    }
+
+    @Test
+    void mobileCoursePriceSelfRequiresOwnProductAndExactMemberResponsibilityBeforeReplay() {
+        var ids = cardIssueFixture();
+        var req = coursePrice(ids);
+        Long other = Long.valueOf(members.create(member(101L, "13800009902")).getId());
+        Long otherProduct =
+                Long.valueOf(courses.createProduct(courseProduct(101L, ids.get(4))).getId());
+        memberCoaches.replace(ids.get(1), 101L, responsibility(ids.get(5)));
+        personalScope(92L);
+        var broad = new DeptDataPermissionRespDTO();
+        broad.setAll(true);
+        when(permissions.getDeptDataPermission(91L)).thenReturn(broad);
+        var first = mobileCoursePrice.create(req, "quote-self-first");
+        assertEquals("pending", first.status());
+        req.setMemberId(other);
+        assertServiceException(
+                () -> mobileCoursePrice.create(req, "quote-self-other-member"),
+                STORE_NO_PERMISSION);
+        req.setMemberId(ids.get(1));
+        req.setProductId(otherProduct);
+        assertServiceException(
+                () -> mobileCoursePrice.create(req, "quote-self-other-product"),
+                STORE_NO_PERMISSION);
+        req.setProductId(ids.get(3));
+        headquarters();
+        loginAs(1L);
+        memberCoaches.replace(ids.get(1), 101L, responsibility());
+        personalScope(92L);
+        assertServiceException(
+                () -> mobileCoursePrice.create(req, "quote-self-first"), STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void mobileCoursePriceChecksFunctionalPermissionIdentityStoreMembershipAndTenant() {
+        var ids = cardIssueFixture();
+        var req = coursePrice(ids);
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> mobileCoursePriceController.create(req, "quote-price-permission"));
+        when(permissions.hasAnyPermissions(any(), eq("gym:approvals:create"))).thenReturn(true);
+        assertEquals(
+                "pending",
+                mobileCoursePriceController
+                        .create(req, "quote-price-permission")
+                        .getData()
+                        .status());
+        req.setStoreId(102L);
+        assertServiceException(
+                () -> mobileCoursePrice.create(req, "quote-wrong-store"), STORE_NO_PERMISSION);
+        req.setStoreId(101L);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_member_store SET deleted=1 WHERE member_id=?", ids.get(1));
+        assertServiceException(
+                () -> mobileCoursePrice.create(req, "quote-price-permission"), STORE_NO_PERMISSION);
+        req.setMemberId(null);
+        jdbc.update("UPDATE gym_course_product SET tenant_id=2 WHERE id=?", ids.get(3));
+        assertServiceException(
+                () -> mobileCoursePrice.create(req, "quote-other-tenant"),
+                COURSE_PRODUCT_NOT_EXISTS);
+        qrMemberLogin();
+        assertServiceException(
+                () -> mobileCoursePrice.create(req, "quote-member-token"), MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void mobileCoursePriceDuplicateConcurrentRequestsCreateOneAndCanonicalMoneyReplays()
+            throws Exception {
+        var ids = cardIssueFixture();
+        var req = coursePrice(ids);
+        var outcomes =
+                workCourseRace(
+                        () -> mobileCoursePrice.create(req, "quote-concurrent-key"),
+                        () -> mobileCoursePrice.create(req, "quote-concurrent-key"));
+        assertEquals(outcomes.get(0), outcomes.get(1));
+        assertEquals(1, mobileApprovals.page(mobileApprovalQuery("mine")).getTotal());
+        req.setProposedAmount(new BigDecimal("150"));
+        req.setReason("  专属优惠审核  ");
+        assertEquals(outcomes.getFirst(), mobileCoursePrice.create(req, "quote-concurrent-key"));
+        req.setProposedAmount(new BigDecimal("160"));
+        assertServiceException(
+                () -> mobileCoursePrice.create(req, "quote-concurrent-key"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+    }
+
+    @Test
+    void mobileCoursePriceInvalidWorkflowAndSamePriceRollbackKeyAndMixedLegacyPayloadRejected() {
+        var ids = cardIssueFixture();
+        var req = coursePrice(ids);
+        Long validTemplate = req.getApprovalTemplateId();
+        req.setApprovalTemplateId(ids.get(0));
+        assertServiceException(
+                () -> mobileCoursePrice.create(req, "quote-price-retry"), APPROVAL_REQUEST_INVALID);
+        req.setApprovalTemplateId(validTemplate);
+        req.setProposedAmount(new BigDecimal("200.00"));
+        assertServiceException(
+                () -> mobileCoursePrice.create(req, "quote-price-retry"), APPROVAL_REQUEST_INVALID);
+        req.setProposedAmount(new BigDecimal("150.00"));
+        assertEquals("pending", mobileCoursePrice.create(req, "quote-price-retry").status());
+        var mixed =
+                new cn.iocoder.yudao.module.gym.controller.admin.approval.vo
+                        .GymApprovalCreateReqVO();
+        mixed.setStoreId(101L);
+        mixed.setTemplateId(validTemplate);
+        mixed.setBusinessType("price_change");
+        mixed.setTitle("错误混合指令");
+        mixed.setSourceType("course-quote-products");
+        mixed.setSourceId(ids.get(3));
+        mixed.setRequestedPrice(BigDecimal.ONE);
+        mixed.setCardTemplateId(ids.get(2));
+        assertServiceException(
+                () -> approvals.create(mixed, "quote-invalid-mix"), APPROVAL_REQUEST_INVALID);
+    }
+
+    @Test
+    void mobileCoursePriceFinalApprovalRechecksActiveMemberAndRollbackCanRetrySameDecisionKey() {
+        var ids = cardIssueFixture();
+        var req = coursePrice(ids);
+        var first = mobileCoursePrice.create(req, "quote-active-member");
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_member SET status='inactive' WHERE id=?", ids.get(1));
+        loginAs(91L);
+        assertServiceException(
+                () ->
+                        mobileApprovals.decide(
+                                Long.valueOf(first.id()),
+                                mobileApprovalDecision("approve", 1),
+                                "quote-member-decision"),
+                APPROVAL_REQUEST_INVALID);
+        assertEquals(1, mobileApprovals.get(Long.valueOf(first.id())).version());
+        jdbc.update("UPDATE gym_member SET status='active' WHERE id=?", ids.get(1));
+        assertEquals(
+                "approved",
+                mobileApprovals
+                        .decide(
+                                Long.valueOf(first.id()),
+                                mobileApprovalDecision("approve", 1),
+                                "quote-member-decision")
+                        .status());
+        assertEquals(
+                new BigDecimal("200.00"), courses.requireProduct(ids.get(3), false).getPrice());
+    }
+
+    @Test
+    void mobileCoursePriceConcurrentEditAndFinalApprovalKeepPublicPriceAndSnapshotStable()
+            throws Exception {
+        var ids = cardIssueFixture();
+        var req = coursePrice(ids);
+        var first = mobileCoursePrice.create(req, "quote-product-race");
+        var outcomes =
+                workCourseRace(
+                        () -> {
+                            loginAs(91L);
+                            return mobileApprovals.decide(
+                                    Long.valueOf(first.id()),
+                                    mobileApprovalDecision("approve", 1),
+                                    "quote-race-decision");
+                        },
+                        () -> {
+                            var patch =
+                                    new cn.iocoder.yudao.module.gym.controller.admin.course.vo
+                                            .GymCourseProductSaveReqVO();
+                            patch.setSessionCount(3);
+                            return courses.patchProduct(ids.get(3), patch);
+                        });
+        assertFalse(
+                outcomes.get(1)
+                        instanceof cn.iocoder.yudao.framework.common.exception.ServiceException);
+        var current = mobileApprovals.get(Long.valueOf(first.id()));
+        assertEquals(1, current.businessSummary().get("productVersion"));
+        assertEquals(2, current.businessSummary().get("sessionCount"));
+        assertEquals("approved".equals(current.status()) ? 2 : 1, current.version());
+        assertEquals(
+                new BigDecimal("200.00"), courses.requireProduct(ids.get(3), false).getPrice());
+        assertEquals(3, courses.requireProduct(ids.get(3), false).getSessionCount());
+        assertEquals(0, cardIssuePackCount());
+    }
+
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileCourseQuoteService mobileQuotes;
+    @Resource cn.iocoder.yudao.module.gym.dal.mysql.course.GymCourseQuoteMapper courseQuotes;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileCourseQuotesController
+            mobileQuotesController;
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileCourseQuoteVO.Create quoteRequest(
+            List<Long> ids) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileCourseQuoteVO
+                        .Create();
+        req.setStoreId(101L);
+        req.setProductId(ids.get(3));
+        req.setMemberId(ids.get(1));
+        return req;
+    }
+
+    Long approvedQuoteApplication(List<Long> ids) {
+        var first =
+                mobileCoursePrice.create(
+                        coursePrice(ids), "quote-application-" + java.util.UUID.randomUUID());
+        loginAs(91L);
+        approvals.decide(Long.valueOf(first.id()), decision("approve"));
+        loginAs(1L);
+        return Long.valueOf(first.id());
+    }
+
+    @Test
+    void mobileQuoteOriginalPricePersistsAndMemberGetsOnlySafeContractAndSharePath() {
+        var ids = cardIssueFixture();
+        qrMemberIdentity(ids.get(1));
+        var first = mobileQuotes.create(quoteRequest(ids), "quote-original-price");
+        assertEquals("200.00", first.amount());
+        assertEquals("active", first.status());
+        var row = courseQuotes.selectById(Long.valueOf(first.id()));
+        assertEquals(1, row.getProductVersion());
+        assertEquals(
+                java.time.Duration.ofHours(24),
+                java.time.Duration.between(row.getIssuedAt(), row.getExpiresAt()));
+        assertNull(row.getApprovalId());
+        assertNull(row.getUsedOrderId());
+        assertEquals("/pages/course-quote/detail?quoteId=" + first.id(), first.sharePath());
+        qrMemberLogin();
+        assertEquals(first, mobileQuotes.get(Long.valueOf(first.id())));
+        String json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(first);
+        assertFalse(json.contains("approvalId"));
+        assertFalse(json.contains("issuerUserId"));
+        assertFalse(json.contains("requestSnapshot"));
+        assertFalse(json.contains("reason"));
+        assertEquals(0, cardIssuePackCount());
+        assertEquals(0, financialEvents.selectCount());
+    }
+
+    @Test
+    void mobileQuoteApprovedApplicationCanIssueOnlyOnceAndNeverRenewByChangingRequestKey() {
+        var ids = cardIssueFixture();
+        qrMemberIdentity(ids.get(1));
+        var req = quoteRequest(ids);
+        req.setApprovalId(approvedQuoteApplication(ids));
+        var first = mobileQuotes.create(req, "quote-approved-first");
+        assertEquals("150.00", first.amount());
+        var original = courseQuotes.selectById(Long.valueOf(first.id()));
+        when(businessClock.now()).thenReturn(original.getExpiresAt().minusNanos(1000));
+        assertEquals(first, mobileQuotes.create(req, "quote-approved-second"));
+        when(businessClock.now()).thenReturn(original.getExpiresAt());
+        var expired = mobileQuotes.create(req, "quote-approved-third");
+        assertEquals(first.id(), expired.id());
+        assertEquals(first.expiresAt(), expired.expiresAt());
+        assertEquals("expired", expired.status());
+        assertEquals(first, mobileQuotes.create(req, "quote-approved-first"));
+        assertEquals(1, courseQuotes.selectCount());
+        qrMemberLogin();
+        assertEquals(expired, mobileQuotes.get(Long.valueOf(first.id())));
+    }
+
+    @Test
+    void mobileQuoteRequiresApprovedSpecialSourceAndExactMemberProductStore() {
+        var ids = cardIssueFixture();
+        var application = mobileCoursePrice.create(coursePrice(ids), "quote-pending-application");
+        var req = quoteRequest(ids);
+        req.setApprovalId(Long.valueOf(application.id()));
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-pending-attempt"),
+                COURSE_QUOTE_APPROVAL_INVALID);
+        loginAs(91L);
+        approvals.decide(req.getApprovalId(), decision("reject"));
+        loginAs(1L);
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-rejected-attempt"),
+                COURSE_QUOTE_APPROVAL_INVALID);
+        req.setApprovalId(approvedQuoteApplication(ids));
+        req.setMemberId(null);
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-wrong-member"),
+                COURSE_QUOTE_APPROVAL_INVALID);
+        req.setMemberId(ids.get(1));
+        Long other = Long.valueOf(courses.createProduct(courseProduct(101L, ids.get(5))).getId());
+        req.setProductId(other);
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-wrong-product"),
+                COURSE_QUOTE_APPROVAL_INVALID);
+        req.setProductId(ids.get(3));
+        req.setStoreId(102L);
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-wrong-store"), STORE_NO_PERMISSION);
+        assertEquals(0, courseQuotes.selectCount());
+    }
+
+    @Test
+    void mobileQuoteLegacyPublicPriceApprovalCannotAuthorizeSpecialQuote() {
+        var ids = cardIssueFixture();
+        var legacy =
+                new cn.iocoder.yudao.module.gym.controller.admin.approval.vo
+                        .GymApprovalCreateReqVO();
+        legacy.setStoreId(101L);
+        legacy.setTemplateId(publishedApproval("price_change", ids.get(4)));
+        legacy.setBusinessType("price_change");
+        legacy.setTitle("公开价格变更");
+        legacy.setSourceType("course-products");
+        legacy.setSourceId(ids.get(3));
+        legacy.setRequestedPrice(new BigDecimal("150.00"));
+        var approval = approvals.create(legacy, "quote-legacy-global");
+        loginAs(91L);
+        approvals.decide(Long.valueOf(approval.getId()), decision("approve"));
+        loginAs(1L);
+        var req = quoteRequest(ids);
+        req.setApprovalId(Long.valueOf(approval.getId()));
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-global-invalid"),
+                COURSE_QUOTE_APPROVAL_INVALID);
+        req.setApprovalId(null);
+        assertEquals("150.00", mobileQuotes.create(req, "quote-current-public").amount());
+    }
+
+    @Test
+    void mobileQuoteChangedProductBlocksNewDiscountAndExpiresExistingQuote() {
+        var ids = cardIssueFixture();
+        qrMemberIdentity(ids.get(1));
+        var req = quoteRequest(ids);
+        req.setApprovalId(approvedQuoteApplication(ids));
+        var original = mobileQuotes.create(quoteRequest(ids), "quote-before-edit");
+        var patch =
+                new cn.iocoder.yudao.module.gym.controller.admin.course.vo
+                        .GymCourseProductSaveReqVO();
+        patch.setSessionCount(3);
+        courses.patchProduct(ids.get(3), patch);
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-after-edit"), APPROVAL_SOURCE_CHANGED);
+        assertEquals(1, courseQuotes.selectCount());
+        qrMemberLogin();
+        var stale = mobileQuotes.get(Long.valueOf(original.id()));
+        assertEquals("expired", stale.status());
+        assertEquals(original.amount(), stale.amount());
+        assertEquals(original.expiresAt(), stale.expiresAt());
+    }
+
+    @Test
+    void mobileQuoteSelfNeedsOwnApprovedApplicationAndCannotReuseAnotherApplicantsApproval() {
+        var ids = cardIssueFixture();
+        Long managersApproval = approvedQuoteApplication(ids);
+        var applicationReq = coursePrice(ids);
+        memberCoaches.replace(ids.get(1), 101L, responsibility(ids.get(5)));
+        personalScope(92L);
+        var broad = new DeptDataPermissionRespDTO();
+        broad.setAll(true);
+        when(permissions.getDeptDataPermission(91L)).thenReturn(broad);
+        var req = quoteRequest(ids);
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-self-original"), STORE_NO_PERMISSION);
+        req.setApprovalId(managersApproval);
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-self-not-own"),
+                COURSE_QUOTE_APPROVAL_INVALID);
+        var own = mobileCoursePrice.create(applicationReq, "quote-self-application");
+        loginAs(91L);
+        approvals.decide(Long.valueOf(own.id()), decision("approve"));
+        loginAs(92L);
+        req.setApprovalId(Long.valueOf(own.id()));
+        assertEquals("150.00", mobileQuotes.create(req, "quote-self-approved").amount());
+        headquarters();
+        loginAs(1L);
+        memberCoaches.replace(ids.get(1), 101L, responsibility());
+        personalScope(92L);
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-self-approved"), STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void mobileQuoteFunctionalPermissionAndCurrentStoreScopeProtectEvenCachedResponse() {
+        var ids = cardIssueFixture();
+        var req = quoteRequest(ids);
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> mobileQuotesController.create(req, "quote-replay-permission"));
+        when(permissions.hasAnyPermissions(any(), eq("gym:courses:quote"))).thenReturn(true);
+        var first = mobileQuotesController.create(req, "quote-replay-permission").getData();
+        assertEquals("active", first.status());
+        scoped(102L);
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-replay-permission"), STORE_NO_PERMISSION);
+        headquarters();
+        when(permissions.hasAnyPermissions(any(), eq("gym:courses:quote"))).thenReturn(false);
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> mobileQuotesController.create(req, "quote-replay-permission"));
+    }
+
+    @Test
+    void mobileQuoteMemberCannotReadOthersOrOtherTenantAndRequiresRealMembershipAndIdentity() {
+        var ids = cardIssueFixture();
+        qrMemberIdentity(ids.get(1));
+        Long other = Long.valueOf(members.create(member(101L, "13800009903")).getId());
+        var req = quoteRequest(ids);
+        req.setMemberId(other);
+        var others = mobileQuotes.create(req, "quote-other-buyer");
+        var own = mobileQuotes.create(quoteRequest(ids), "quote-own-buyer");
+        assertServiceException(
+                () -> mobileQuotes.get(Long.valueOf(own.id())), MOBILE_IDENTITY_INVALID);
+        qrMemberLogin();
+        assertServiceException(
+                () -> mobileQuotes.get(Long.valueOf(others.id())), COURSE_QUOTE_NOT_EXISTS);
+        assertEquals(own, mobileQuotes.get(Long.valueOf(own.id())));
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-member-create"), MOBILE_IDENTITY_INVALID);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_course_quote SET tenant_id=2 WHERE id=?", Long.valueOf(own.id()));
+        assertServiceException(
+                () -> mobileQuotes.get(Long.valueOf(own.id())), COURSE_QUOTE_NOT_EXISTS);
+        jdbc.update("UPDATE gym_course_quote SET tenant_id=1 WHERE id=?", Long.valueOf(own.id()));
+        jdbc.update("UPDATE gym_member_store SET deleted=1 WHERE member_id=?", ids.get(1));
+        assertServiceException(
+                () -> mobileQuotes.get(Long.valueOf(own.id())), COURSE_QUOTE_NOT_EXISTS);
+    }
+
+    @Test
+    void mobileQuoteGenericQuoteAllowsOnlyCurrentSameStoreMembers() {
+        var ids = cardIssueFixture();
+        qrMemberIdentity(ids.get(1));
+        Long otherStore = Long.valueOf(members.create(member(102L, "13800009904")).getId());
+        var req = quoteRequest(ids);
+        req.setMemberId(null);
+        var generic = mobileQuotes.create(req, "quote-generic-price");
+        assertNull(generic.memberId());
+        qrMemberLogin();
+        assertEquals(generic, mobileQuotes.get(Long.valueOf(generic.id())));
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_mobile_identity SET member_id=? WHERE user_id=50", otherStore);
+        assertServiceException(
+                () -> mobileQuotes.get(Long.valueOf(generic.id())), COURSE_QUOTE_NOT_EXISTS);
+    }
+
+    @Test
+    void mobileQuoteConcurrentDifferentKeysForOneApprovalCreateExactlyOneQuote() throws Exception {
+        var ids = cardIssueFixture();
+        var req = quoteRequest(ids);
+        req.setApprovalId(approvedQuoteApplication(ids));
+        var outcomes =
+                workCourseRace(
+                        () -> mobileQuotes.create(req, "quote-race-key-one"),
+                        () -> mobileQuotes.create(req, "quote-race-key-two"));
+        assertEquals(outcomes.get(0), outcomes.get(1));
+        assertEquals(1, courseQuotes.selectCount());
+        assertEquals(
+                new BigDecimal("200.00"), courses.requireProduct(ids.get(3), false).getPrice());
+    }
+
+    @Test
+    void mobileQuoteConcurrentSameKeyAndChangedPayloadUseDurableIdempotency() throws Exception {
+        var ids = cardIssueFixture();
+        var req = quoteRequest(ids);
+        var outcomes =
+                workCourseRace(
+                        () -> mobileQuotes.create(req, "quote-same-key-race"),
+                        () -> mobileQuotes.create(req, "quote-same-key-race"));
+        assertEquals(outcomes.get(0), outcomes.get(1));
+        assertEquals(1, courseQuotes.selectCount());
+        req.setMemberId(null);
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-same-key-race"), MOBILE_IDEMPOTENCY_CONFLICT);
+    }
+
+    @Test
+    void mobileQuoteFailedBusinessRollsBackKeyAndCanRetryWhenStoreRestored() {
+        var ids = cardIssueFixture();
+        var req = quoteRequest(ids);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_store SET status='inactive' WHERE id=101");
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-failed-retry"), APPROVAL_REQUEST_INVALID);
+        assertEquals(0, courseQuotes.selectCount());
+        jdbc.update("UPDATE gym_store SET status='active' WHERE id=101");
+        assertEquals("active", mobileQuotes.create(req, "quote-failed-retry").status());
+        assertEquals(1, courseQuotes.selectCount());
+    }
+
+    @Test
+    void mobileQuoteCurrentStoreCoachEmploymentAndMemberStateAreRecheckedOnRead() {
+        var ids = cardIssueFixture();
+        qrMemberIdentity(ids.get(1));
+        var quote = mobileQuotes.create(quoteRequest(ids), "quote-current-conditions");
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        qrMemberLogin();
+        jdbc.update("UPDATE gym_employee SET status='inactive' WHERE id=?", ids.get(5));
+        assertEquals("expired", mobileQuotes.get(Long.valueOf(quote.id())).status());
+        jdbc.update("UPDATE gym_employee SET status='active' WHERE id=?", ids.get(5));
+        jdbc.update(
+                "UPDATE gym_employee_store SET joined_on='2099-01-01' WHERE employee_id=?",
+                ids.get(5));
+        assertEquals("expired", mobileQuotes.get(Long.valueOf(quote.id())).status());
+        jdbc.update(
+                "UPDATE gym_employee_store SET joined_on='2020-01-01' WHERE employee_id=?",
+                ids.get(5));
+        assertEquals("active", mobileQuotes.get(Long.valueOf(quote.id())).status());
+        jdbc.update("UPDATE gym_store SET status='inactive' WHERE id=101");
+        assertEquals("expired", mobileQuotes.get(Long.valueOf(quote.id())).status());
+        jdbc.update("UPDATE gym_member SET status='inactive' WHERE id=?", ids.get(1));
+        assertServiceException(
+                () -> mobileQuotes.get(Long.valueOf(quote.id())), MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void mobileQuoteConcurrentProductEditCannotCreateDiscountAgainstNewTerms() throws Exception {
+        var ids = cardIssueFixture();
+        var req = quoteRequest(ids);
+        req.setApprovalId(approvedQuoteApplication(ids));
+        qrMemberIdentity(ids.get(1));
+        var outcomes =
+                workCourseRace(
+                        () -> mobileQuotes.create(req, "quote-create-edit-race"),
+                        () -> {
+                            var patch =
+                                    new cn.iocoder.yudao.module.gym.controller.admin.course.vo
+                                            .GymCourseProductSaveReqVO();
+                            patch.setSessionCount(3);
+                            return courses.patchProduct(ids.get(3), patch);
+                        });
+        assertFalse(
+                outcomes.get(1)
+                        instanceof cn.iocoder.yudao.framework.common.exception.ServiceException);
+        if (courseQuotes.selectCount() == 0) {
+            assertInstanceOf(
+                    cn.iocoder.yudao.framework.common.exception.ServiceException.class,
+                    outcomes.get(0));
+        } else {
+            assertEquals(1, courseQuotes.selectCount());
+            var quote = courseQuotes.selectList().getFirst();
+            assertEquals(1, quote.getProductVersion());
+            assertEquals(new BigDecimal("150.00"), quote.getAmount());
+            qrMemberLogin();
+            assertEquals("expired", mobileQuotes.get(quote.getId()).status());
+        }
+        assertEquals(0, cardIssuePackCount());
+    }
+
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileOrdersService mobileOrders;
+
+    List<Long> memberOrderFixture() {
+        var ids = cardIssueFixture();
+        salesSettings.saveOnline(101L, onlineSettings(ids.get(2)));
+        qrMemberIdentity(ids.get(1));
+        return ids;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileOrdersVO.Create memberOrder(
+            List<Long> ids, String type) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileOrdersVO.Create();
+        req.setStoreId(101L);
+        req.setProductType(type);
+        req.setProductId(ids.get("card".equals(type) ? 2 : 3));
+        req.setQuantity(1);
+        return req;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileOrdersVO.Query memberOrderQuery(
+            String status) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileOrdersVO.Query();
+        req.setStatus(status);
+        return req;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileOrdersVO.Cancel
+            memberOrderCancel() {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileOrdersVO.Cancel();
+        req.setReason("计划改变");
+        return req;
+    }
+
+    cn.iocoder.yudao.module.gym.dal.mysql.sales.GymBusinessOrderMapper orderRows() {
+        return applicationContext.getBean(
+                cn.iocoder.yudao.module.gym.dal.mysql.sales.GymBusinessOrderMapper.class);
+    }
+
+    @Test
+    void mobileOrderCardFreezesActualSalePricePolicyAndIdentityWithoutPaymentOrRights() {
+        var ids = memberOrderFixture();
+        var offer = onlineSettings(ids.get(2));
+        offer.getOffers().getFirst().setSalePrice(new BigDecimal("88.88"));
+        salesSettings.saveOnline(101L, offer);
+        qrMemberLogin();
+        var req = memberOrder(ids, "card");
+        var first = mobileOrders.create(req, "order-card-snapshot");
+        assertEquals("88.88", first.payableAmount());
+        assertEquals("0.00", first.paidAmount());
+        assertEquals("unpaid", first.paymentStatus());
+        assertEquals("pending", first.fulfillmentStatus());
+        assertTrue(first.memberCardIds().isEmpty());
+        var row = orderRows().selectById(Long.valueOf(first.id()));
+        assertEquals(50L, row.getBuyerUserId());
+        assertEquals(ids.get(1), row.getMemberId());
+        assertEquals(
+                java.time.Duration.ofMinutes(30),
+                java.time.Duration.between(row.getOrderedAt(), row.getExpiresAt()));
+        assertEquals(0, financialEvents.selectCount());
+        assertEquals(0, cardIssuePackCount());
+        assertEquals(first, mobileOrders.get(row.getId()));
+        loginAs(1L);
+        offer.getOffers().getFirst().setSalePrice(new BigDecimal("90.00"));
+        salesSettings.saveOnline(101L, offer);
+        qrMemberLogin();
+        assertEquals(first, mobileOrders.create(req, "order-card-snapshot"));
+        assertEquals("90.00", mobileOrders.create(req, "order-card-new-price").payableAmount());
+        assertEquals(2, orderRows().selectCount());
+    }
+
+    @Test
+    void mobileOrderCourseSupportsCurrentPriceAndZeroPriceWithoutFabricatedPayment() {
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        var first = mobileOrders.create(memberOrder(ids, "course"), "order-course-public");
+        assertEquals("200.00", first.payableAmount());
+        assertEquals("course", first.productType());
+        loginAs(1L);
+        var approvalReq = coursePrice(ids);
+        approvalReq.setProposedAmount(BigDecimal.ZERO);
+        var approval = mobileCoursePrice.create(approvalReq, "order-zero-application");
+        loginAs(91L);
+        approvals.decide(Long.valueOf(approval.id()), decision("approve"));
+        loginAs(1L);
+        var quoteReq = quoteRequest(ids);
+        quoteReq.setApprovalId(Long.valueOf(approval.id()));
+        var quote = mobileQuotes.create(quoteReq, "order-zero-quote");
+        var req = memberOrder(ids, "course");
+        req.setQuoteId(Long.valueOf(quote.id()));
+        qrMemberLogin();
+        var free = mobileOrders.create(req, "order-zero-course");
+        assertEquals("0.00", free.payableAmount());
+        assertEquals("0.00", free.paidAmount());
+        assertEquals("paid", free.paymentStatus());
+        assertEquals("pending", free.fulfillmentStatus());
+        assertEquals(
+                "pending_fulfillment", orderRows().selectById(Long.valueOf(free.id())).getStatus());
+        assertEquals(0, financialEvents.selectCount());
+        assertEquals(0, cardIssuePackCount());
+        assertServiceException(
+                () ->
+                        mobileOrders.cancel(
+                                Long.valueOf(free.id()), memberOrderCancel(), "order-free-cancel"),
+                MOBILE_ORDER_NOT_CANCELLABLE);
+    }
+
+    @Test
+    void mobileOrderBindsApprovedQuoteOnceAndCancellationDoesNotReleaseDiscount() {
+        var ids = memberOrderFixture();
+        var quoteReq = quoteRequest(ids);
+        quoteReq.setApprovalId(approvedQuoteApplication(ids));
+        var quote = mobileQuotes.create(quoteReq, "order-discount-quote");
+        var quoteRow = courseQuotes.selectById(Long.valueOf(quote.id()));
+        when(businessClock.now()).thenReturn(quoteRow.getExpiresAt().minusSeconds(60));
+        qrMemberLogin();
+        var req = memberOrder(ids, "course");
+        req.setQuoteId(Long.valueOf(quote.id()));
+        var order = mobileOrders.create(req, "order-discount-use");
+        assertEquals("150.00", order.payableAmount());
+        assertEquals(quote.expiresAt(), order.expiresAt());
+        assertEquals(
+                Long.valueOf(order.id()),
+                courseQuotes.selectById(Long.valueOf(quote.id())).getUsedOrderId());
+        assertEquals("used", mobileQuotes.get(Long.valueOf(quote.id())).status());
+        assertEquals(order, mobileOrders.create(req, "order-discount-use"));
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-discount-twice"), COURSE_QUOTE_UNAVAILABLE);
+        var closed =
+                mobileOrders.cancel(
+                        Long.valueOf(order.id()), memberOrderCancel(), "order-discount-cancel");
+        assertEquals("closed", closed.paymentStatus());
+        assertEquals("used", mobileQuotes.get(Long.valueOf(quote.id())).status());
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-discount-after-cancel"),
+                COURSE_QUOTE_UNAVAILABLE);
+        assertEquals(1, orderRows().selectCount());
+    }
+
+    @Test
+    void mobileOrderExpiredChangedOrOtherBuyersQuoteCannotCreateOrder() {
+        var ids = memberOrderFixture();
+        Long other = Long.valueOf(members.create(member(101L, "13800009905")).getId());
+        var quoteReq = quoteRequest(ids);
+        quoteReq.setMemberId(other);
+        var otherQuote = mobileQuotes.create(quoteReq, "order-foreign-quote");
+        var ownQuote = mobileQuotes.create(quoteRequest(ids), "order-expiring-quote");
+        qrMemberLogin();
+        var req = memberOrder(ids, "course");
+        req.setQuoteId(Long.valueOf(otherQuote.id()));
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-foreign-use"), COURSE_QUOTE_NOT_EXISTS);
+        req.setQuoteId(Long.valueOf(ownQuote.id()));
+        when(businessClock.now())
+                .thenReturn(courseQuotes.selectById(req.getQuoteId()).getExpiresAt());
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-expired-use"), COURSE_QUOTE_UNAVAILABLE);
+        assertEquals(0, orderRows().selectCount());
+        assertNull(courseQuotes.selectById(req.getQuoteId()).getUsedOrderId());
+    }
+
+    @Test
+    void mobileOrderConcurrentRequestsForOneQuoteCommitOnlyOneOrderAndBinding() throws Exception {
+        var ids = memberOrderFixture();
+        var quote = mobileQuotes.create(quoteRequest(ids), "order-quote-race");
+        var req = memberOrder(ids, "course");
+        req.setQuoteId(Long.valueOf(quote.id()));
+        var result =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            return mobileOrders.create(req, "order-quote-race-a");
+                        },
+                        () -> {
+                            qrMemberLogin();
+                            return mobileOrders.create(req, "order-quote-race-b");
+                        });
+        assertEquals(
+                1,
+                result.stream()
+                        .filter(
+                                x ->
+                                        x
+                                                instanceof
+                                                cn.iocoder.yudao.module.gym.controller.app.mobile.vo
+                                                        .GymMobileOrdersVO.Order)
+                        .count());
+        assertEquals(1, orderRows().selectCount());
+        assertEquals(
+                orderRows().selectList().getFirst().getId(),
+                courseQuotes.selectById(req.getQuoteId()).getUsedOrderId());
+    }
+
+    @Test
+    void mobileOrderSameKeyConcurrencyAndChangedPayloadRespectCanonicalIdentity() throws Exception {
+        var ids = memberOrderFixture();
+        var req = memberOrder(ids, "card");
+        var result =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            return mobileOrders.create(req, "order-same-key");
+                        },
+                        () -> {
+                            qrMemberLogin();
+                            return mobileOrders.create(req, "order-same-key");
+                        });
+        assertEquals(result.get(0), result.get(1));
+        assertEquals(1, orderRows().selectCount());
+        qrMemberLogin();
+        req.setProductType("course");
+        req.setProductId(ids.get(3));
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-same-key"), MOBILE_IDEMPOTENCY_CONFLICT);
+    }
+
+    @Test
+    void
+            mobileOrderQueriesAreOwnedAndStatusFilteredBeforePaginationAndKeepHistoryAfterMembershipRemoval() {
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        var first = mobileOrders.create(memberOrder(ids, "card"), "order-list-first");
+        var second = mobileOrders.create(memberOrder(ids, "course"), "order-list-second");
+        mobileOrders.cancel(Long.valueOf(first.id()), memberOrderCancel(), "order-list-cancel");
+        var q = memberOrderQuery("unpaid");
+        q.setPageSize(1);
+        var page = mobileOrders.page(q);
+        assertEquals(1, page.getTotal());
+        assertEquals(second.id(), page.getList().getFirst().id());
+        assertEquals(1, mobileOrders.page(memberOrderQuery("closed")).getTotal());
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_member_store SET deleted=1 WHERE member_id=?", ids.get(1));
+        assertEquals(second, mobileOrders.get(Long.valueOf(second.id())));
+        jdbc.update(
+                "UPDATE gym_business_order SET member_id=999 WHERE id=?",
+                Long.valueOf(second.id()));
+        assertServiceException(
+                () -> mobileOrders.get(Long.valueOf(second.id())), SALES_ORDER_NOT_EXISTS);
+        assertServiceException(
+                () ->
+                        mobileOrders.cancel(
+                                Long.valueOf(second.id()),
+                                memberOrderCancel(),
+                                "order-foreign-cancel"),
+                SALES_ORDER_NOT_EXISTS);
+        jdbc.update(
+                "UPDATE gym_business_order SET tenant_id=2 WHERE id=?", Long.valueOf(first.id()));
+        assertEquals(0, mobileOrders.page(memberOrderQuery(null)).getTotal());
+    }
+
+    @Test
+    void mobileOrderExpiryIsClosedAtDeadlineAndLateVerifiedReceiptIsRejected() {
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        var order = mobileOrders.create(memberOrder(ids, "card"), "order-expiry-deadline");
+        var row = orderRows().selectById(Long.valueOf(order.id()));
+        when(businessClock.now()).thenReturn(row.getExpiresAt().minusNanos(1000));
+        assertEquals("unpaid", mobileOrders.get(row.getId()).paymentStatus());
+        when(businessClock.now()).thenReturn(row.getExpiresAt());
+        assertEquals("closed", mobileOrders.get(row.getId()).paymentStatus());
+        assertEquals(1, mobileOrders.page(memberOrderQuery("closed")).getTotal());
+        assertEquals(0, mobileOrders.page(memberOrderQuery("unpaid")).getTotal());
+        loginAs(1L);
+        var late =
+                new cn.iocoder.yudao.module.gym.service.sales.payment.GymPaymentReceiptVerifier
+                        .Receipt(
+                        1L,
+                        "test-provider",
+                        "order-late",
+                        row.getOrderNo(),
+                        null,
+                        "CNY",
+                        row.getPayableAmount(),
+                        row.getExpiresAt());
+        when(receiptVerifier.payment("order-late")).thenReturn(late);
+        assertServiceException(
+                () -> commerce.acceptPayment(row.getId(), "order-late"), COMMERCE_RECEIPT_INVALID);
+        assertEquals(0, financialEvents.selectCount());
+    }
+
+    @Test
+    void mobileOrderCancelPersistsReasonAndOriginalTimeAndDoesNotRewriteOnNewKey() {
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        var original = mobileOrders.create(memberOrder(ids, "card"), "order-cancel-source");
+        var req = memberOrderCancel();
+        req.setReason("  计划改变  ");
+        var first = mobileOrders.cancel(Long.valueOf(original.id()), req, "order-cancel-first");
+        var stored = orderRows().selectById(Long.valueOf(original.id()));
+        assertEquals("计划改变", stored.getCancellationReason());
+        assertNotNull(stored.getCancelledAt());
+        when(businessClock.now()).thenReturn(stored.getCancelledAt().plusSeconds(60));
+        req.setReason("计划改变");
+        assertEquals(first, mobileOrders.cancel(stored.getId(), req, "order-cancel-first"));
+        req.setReason("另外原因");
+        assertServiceException(
+                () -> mobileOrders.cancel(stored.getId(), req, "order-cancel-first"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        assertEquals(first, mobileOrders.cancel(stored.getId(), req, "order-cancel-second"));
+        assertEquals(
+                stored.getCancelledAt(), orderRows().selectById(stored.getId()).getCancelledAt());
+        assertEquals("计划改变", orderRows().selectById(stored.getId()).getCancellationReason());
+        assertEquals(
+                original, mobileOrders.create(memberOrder(ids, "card"), "order-cancel-source"));
+    }
+
+    @Test
+    void mobileOrderPaymentAndCancellationRaceCannotCloseAnOrderWithAcceptedPayment()
+            throws Exception {
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        var created = mobileOrders.create(memberOrder(ids, "card"), "order-payment-race");
+        var row = orderRows().selectById(Long.valueOf(created.id()));
+        when(receiptVerifier.payment("order-race-paid"))
+                .thenReturn(
+                        receipt(
+                                row,
+                                "order-race-paid",
+                                null,
+                                row.getPayableAmount().toPlainString()));
+        var result =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            return mobileOrders.cancel(
+                                    row.getId(), memberOrderCancel(), "order-race-cancel");
+                        },
+                        () -> {
+                            loginAs(1L);
+                            return commerce.acceptPayment(row.getId(), "order-race-paid");
+                        });
+        var current = orderRows().selectById(row.getId());
+        if ("cancelled".equals(current.getStatus())) {
+            assertEquals(0, current.getPaidAmount().signum());
+            assertEquals(0, financialEvents.selectCount());
+            assertInstanceOf(
+                    cn.iocoder.yudao.framework.common.exception.ServiceException.class,
+                    result.get(1));
+        } else {
+            assertEquals("paid", current.getStatus());
+            assertEquals(current.getPayableAmount(), current.getPaidAmount());
+            assertEquals(1, financialEvents.selectCount());
+            assertInstanceOf(
+                    cn.iocoder.yudao.framework.common.exception.ServiceException.class,
+                    result.get(0));
+        }
+    }
+
+    @Test
+    void mobileOrderSaleWindowDisabledOfferAndBlacklistPreventCheckoutAndFailedKeysCanRetry() {
+        var ids = memberOrderFixture();
+        var offer = onlineSettings(ids.get(2));
+        offer.getOffers().getFirst().setEnabled(false);
+        salesSettings.saveOnline(101L, offer);
+        qrMemberLogin();
+        var req = memberOrder(ids, "card");
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-disabled-offer"), COMMERCE_REQUEST_INVALID);
+        loginAs(1L);
+        offer.getOffers().getFirst().setEnabled(true);
+        salesSettings.saveOnline(101L, offer);
+        qrMemberLogin();
+        assertEquals("unpaid", mobileOrders.create(req, "order-disabled-offer").paymentStatus());
+        loginAs(1L);
+        records.createBlacklist(blacklist(ids.get(1)));
+        qrMemberLogin();
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-purchase-blocked"), MEMBER_PURCHASE_BLOCKED);
+        assertEquals(1, orderRows().selectCount());
+    }
+
+    @Test
+    void mobileOrderRejectsAdminIdentityInvalidQuantityAndCardQuoteAndMissingMembership() {
+        var ids = memberOrderFixture();
+        var req = memberOrder(ids, "card");
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-admin-not-member"), MOBILE_IDENTITY_INVALID);
+        qrMemberLogin();
+        req.setQuantity(2);
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> mobileOrders.create(req, "order-quantity-two"));
+        req.setQuantity(1);
+        req.setQuoteId(1L);
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-card-quote"), COMMERCE_REQUEST_INVALID);
+        req.setQuoteId(null);
+        req.setStoreId(102L);
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-membership-missing"),
+                COMMERCE_REQUEST_INVALID);
+    }
+
+    @Test
+    void mobileOrderLegacyFulfilledCardRemainsReadableWithoutInventedExpiry() {
+        var old = commerceOrder();
+        qrMemberIdentity(old.getMemberId());
+        when(receiptVerifier.payment("order-legacy-paid"))
+                .thenReturn(
+                        receipt(
+                                old,
+                                "order-legacy-paid",
+                                null,
+                                old.getPayableAmount().toPlainString()));
+        commerce.acceptPayment(old.getId(), "order-legacy-paid");
+        // Existing configuration requires a contract. Publish its real local template first.
+        publishedContractPdf();
+        commerce.fulfillAutomaticOrder(old.getId());
+        qrMemberLogin();
+        var result = mobileOrders.get(old.getId());
+        assertNull(result.expiresAt());
+        assertEquals("paid", result.paymentStatus());
+        assertEquals("succeeded", result.fulfillmentStatus());
+        assertEquals(1, result.memberCardIds().size());
+        assertServiceException(
+                () -> mobileOrders.cancel(old.getId(), memberOrderCancel(), "order-paid-cancel"),
+                MOBILE_ORDER_NOT_CANCELLABLE);
+    }
+
+    @Test
+    void mobileOrderChangedProductQuoteFailureRollsBackOrderPolicyAndLeavesQuoteUnused() {
+        var ids = memberOrderFixture();
+        var quote = mobileQuotes.create(quoteRequest(ids), "order-quote-stale");
+        var patch =
+                new cn.iocoder.yudao.module.gym.controller.admin.course.vo
+                        .GymCourseProductSaveReqVO();
+        patch.setSessionCount(3);
+        courses.patchProduct(ids.get(3), patch);
+        qrMemberLogin();
+        var req = memberOrder(ids, "course");
+        req.setQuoteId(Long.valueOf(quote.id()));
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-stale-terms"), COURSE_QUOTE_UNAVAILABLE);
+        assertEquals(0, orderRows().selectCount());
+        assertNull(courseQuotes.selectById(req.getQuoteId()).getUsedOrderId());
+        assertEquals(
+                0,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.sales.GymOrderPolicyMapper
+                                        .class)
+                        .selectCount());
+    }
+
+    @Test
+    void mobileOrderPaymentStatusFiltersMatchActualPartialPaymentAndRefundLedger() {
+        var order = commerceOrder();
+        qrMemberIdentity(order.getMemberId());
+        when(receiptVerifier.payment("member-order-p1"))
+                .thenReturn(receipt(order, "member-order-p1", null, "40.00"));
+        when(receiptVerifier.payment("member-order-p2"))
+                .thenReturn(receipt(order, "member-order-p2", null, "59.99"));
+        commerce.acceptPayment(order.getId(), "member-order-p1");
+        qrMemberLogin();
+        assertEquals("40.00", mobileOrders.get(order.getId()).paidAmount());
+        assertEquals(1, mobileOrders.page(memberOrderQuery("unpaid")).getTotal());
+        loginAs(1L);
+        commerce.acceptPayment(order.getId(), "member-order-p2");
+        qrMemberLogin();
+        assertEquals(1, mobileOrders.page(memberOrderQuery("paid")).getTotal());
+        loginAs(1L);
+        when(receiptVerifier.refund("member-order-r1"))
+                .thenReturn(receipt(order, "member-order-r1", "member-order-p1", "10.00"));
+        commerce.acceptRefund(order.getId(), "member-order-r1");
+        qrMemberLogin();
+        assertEquals("partially_refunded", mobileOrders.get(order.getId()).paymentStatus());
+        assertEquals("10.00", mobileOrders.get(order.getId()).refundedAmount());
+        assertEquals(1, mobileOrders.page(memberOrderQuery("partially_refunded")).getTotal());
+        assertEquals(0, mobileOrders.page(memberOrderQuery("paid")).getTotal());
+        loginAs(1L);
+        when(receiptVerifier.refund("member-order-r2"))
+                .thenReturn(receipt(order, "member-order-r2", "member-order-p1", "30.00"));
+        when(receiptVerifier.refund("member-order-r3"))
+                .thenReturn(receipt(order, "member-order-r3", "member-order-p2", "59.99"));
+        commerce.acceptRefund(order.getId(), "member-order-r2");
+        commerce.acceptRefund(order.getId(), "member-order-r3");
+        qrMemberLogin();
+        assertEquals("refunded", mobileOrders.get(order.getId()).paymentStatus());
+        assertEquals(1, mobileOrders.page(memberOrderQuery("refunded")).getTotal());
+        assertEquals(0, mobileOrders.page(memberOrderQuery("partially_refunded")).getTotal());
+        assertEquals(5, financialEvents.selectCount());
+    }
+
+    @Test
+    void mobileOrderMalformedLegacyOfferAndExactSaleWindowFailClosedWithoutLeavingRequests() {
+        var ids = memberOrderFixture();
+        var req = memberOrder(ids, "card");
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        for (String content : List.of("{}", "invalid-json", "{\"offers\":[{}]}")) {
+            jdbc.update(
+                    "UPDATE gym_sales_setting SET content=? WHERE store_id=101 AND kind='online-sales-settings'",
+                    content);
+            qrMemberLogin();
+            assertServiceException(
+                    () -> mobileOrders.create(req, "order-legacy-offer-retry"),
+                    COMMERCE_REQUEST_INVALID);
+        }
+        var offer = onlineSettings(ids.get(2));
+        offer.setOffers(List.of(offer.getOffers().getFirst(), offer.getOffers().getFirst()));
+        jdbc.update(
+                "UPDATE gym_sales_setting SET content=? WHERE store_id=101 AND kind='online-sales-settings'",
+                cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(offer));
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-legacy-offer-retry"),
+                COMMERCE_REQUEST_INVALID);
+        offer.setOffers(List.of(offer.getOffers().getFirst()));
+        var start = businessClock.now().plusSeconds(60);
+        var end = start.plusSeconds(60);
+        offer.getOffers().getFirst().setStartsAt(start);
+        offer.getOffers().getFirst().setEndsAt(end);
+        jdbc.update(
+                "UPDATE gym_sales_setting SET content=? WHERE store_id=101 AND kind='online-sales-settings'",
+                cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(offer));
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-legacy-offer-retry"),
+                COMMERCE_REQUEST_INVALID);
+        when(businessClock.now()).thenReturn(end);
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-legacy-offer-retry"),
+                COMMERCE_REQUEST_INVALID);
+        assertEquals(0, orderRows().selectCount());
+        when(businessClock.now()).thenReturn(start);
+        assertEquals(
+                "unpaid", mobileOrders.create(req, "order-legacy-offer-retry").paymentStatus());
+        assertEquals(1, orderRows().selectCount());
+    }
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.sales.GymMemberOrderFulfillmentService memberFulfillment;
+
+    cn.iocoder.yudao.module.gym.dal.dataobject.sales.GymFulfillmentTaskDO memberTask(Long order) {
+        return applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.sales.GymFulfillmentTaskMapper.class)
+                .selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.sales.GymFulfillmentTaskDO
+                                ::getOrderId,
+                        order);
+    }
+
+    cn.iocoder.yudao.module.gym.dal.dataobject.sales.GymBusinessOrderDO freeMemberCard(
+            List<Long> ids, boolean required) {
+        var config = onlineSettings(ids.get(2));
+        config.getOffers().getFirst().setSalePrice(BigDecimal.ZERO);
+        config.getOffers().getFirst().setContractRequired(required);
+        salesSettings.saveOnline(101L, config);
+        qrMemberLogin();
+        var result = mobileOrders.create(memberOrder(ids, "card"), "fulfill-free-card");
+        return orderRows().selectById(Long.valueOf(result.id()));
+    }
+
+    void payMemberOrder(cn.iocoder.yudao.module.gym.dal.dataobject.sales.GymBusinessOrderDO order) {
+        loginAs(1L);
+        String reference = "member-paid-" + order.getId();
+        when(receiptVerifier.payment(reference))
+                .thenReturn(
+                        receipt(order, reference, null, order.getPayableAmount().toPlainString()));
+        commerce.acceptPayment(order.getId(), reference);
+    }
+
+    cn.iocoder.yudao.module.gym.dal.mysql.card.GymMemberCardMapper purchasedCards() {
+        return applicationContext.getBean(
+                cn.iocoder.yudao.module.gym.dal.mysql.card.GymMemberCardMapper.class);
+    }
+
+    cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper purchasedPacks() {
+        return applicationContext.getBean(
+                cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper.class);
+    }
+
+    @Test
+    void memberFulfillmentFreeCardUsesFrozenTemplateRealMemberAndUnsignedContractOnce() {
+        var ids = memberOrderFixture();
+        publishedContractPdf();
+        var order = freeMemberCard(ids, true);
+        var task = memberTask(order.getId());
+        assertEquals(1, task.getPrincipalUserType());
+        assertEquals(50L, task.getPrincipalUserId());
+        assertEquals("pending", task.getStatus());
+        loginAs(1L);
+        var change =
+                new cn.iocoder.yudao.module.gym.controller.admin.card.vo.GymCardTemplateSaveReqVO();
+        change.setIncludedUses(99);
+        var version = Long.valueOf(cards.version(ids.get(2), change).getId());
+        change.setIncludedUses(null);
+        change.setStatus("published");
+        cards.patch(version, change);
+        loginAs(91L);
+        var saved = org.springframework.security.core.context.SecurityContextHolder.getContext();
+        org.mockito.Mockito.clearInvocations(users, permissions);
+        assertTrue(fulfillmentWorker.process(task.getId()));
+        verify(users, never()).getUser(anyLong());
+        verify(permissions, never()).getDeptDataPermission(anyLong());
+        assertSame(
+                saved,
+                org.springframework.security.core.context.SecurityContextHolder.getContext());
+        assertEquals("succeeded", memberTask(order.getId()).getStatus());
+        assertEquals("fulfilled", orderRows().selectById(order.getId()).getStatus());
+        var right = purchasedCards().selectList().getFirst();
+        assertEquals(ids.get(2), right.getTemplateId());
+        assertNotEquals(99, right.getTotalUses());
+        assertEquals(ids.get(1), right.getMemberId());
+        assertEquals("order-item", right.getSourceType());
+        var contract = contractMapper.selectList().getFirst();
+        assertEquals("unsigned", contract.getStatus());
+        assertEquals("unconfigured", contract.getSigningStatus());
+        assertNull(files.selectById(contract.getUnsignedFileId()).getUploaderId());
+        var events =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.contract.GymContractEventMapper
+                                .class);
+        var event = events.selectList().getFirst();
+        assertEquals(1, event.getActorUserType());
+        assertEquals(50L, event.getActorUserId());
+        qrMemberLogin();
+        assertEquals(
+                List.of(right.getId().toString()), mobileOrders.get(order.getId()).memberCardIds());
+        memberFulfillment.fulfill(order.getId());
+        memberFulfillment.fulfill(order.getId());
+        assertEquals(1, purchasedCards().selectCount());
+        assertEquals(1, contractMapper.selectCount());
+        assertEquals(0, financialEvents.selectCount());
+    }
+
+    @Test
+    void memberFulfillmentRequiredContractFailuresRollbackRightsAndRetryPreservesBuyer() {
+        var ids = memberOrderFixture();
+        var order = freeMemberCard(ids, true);
+        Long task = memberTask(order.getId()).getId();
+        loginAs(91L);
+        assertTrue(fulfillmentWorker.process(task));
+        assertTrue(
+                memberTask(order.getId())
+                        .getFailureReason()
+                        .contains(CONTRACT_TEMPLATE_NOT_EXISTS.getCode().toString()));
+        assertEquals(0, purchasedCards().selectCount());
+        assertEquals(
+                "lead",
+                new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                        .queryForObject(
+                                "SELECT customer_stage FROM gym_member WHERE id=?",
+                                String.class,
+                                ids.get(1)));
+        publishedContractPdf();
+        when(fileApi.getFileContentByUrl(anyString())).thenReturn(null);
+        fulfillmentQueue.retry(order.getId());
+        assertEquals(50L, memberTask(order.getId()).getPrincipalUserId());
+        assertEquals(1, memberTask(order.getId()).getPrincipalUserType());
+        assertTrue(fulfillmentWorker.process(task));
+        assertEquals(0, purchasedCards().selectCount());
+        assertEquals(0, contractMapper.selectCount());
+        assertEquals("pending_fulfillment", orderRows().selectById(order.getId()).getStatus());
+        when(fileApi.getFileContentByUrl(anyString()))
+                .thenReturn(
+                        "%PDF-1.4\nlocal-test\n%%EOF"
+                                .getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+        var failed = memberTask(order.getId());
+        when(businessClock.now()).thenReturn(failed.getNextAttemptAt().plusSeconds(1));
+        when(tenantFrameworkService.getTenantIds()).thenReturn(List.of(1L));
+        fulfillmentScheduler.tick();
+        assertEquals("succeeded", memberTask(order.getId()).getStatus());
+        assertEquals(3, memberTask(order.getId()).getAttemptCount());
+        assertEquals(1, purchasedCards().selectCount());
+        assertEquals(1, contractMapper.selectCount());
+        assertEquals(0, financialEvents.selectCount());
+    }
+
+    @Test
+    void memberFulfillmentPaidCourseKeepsPurchasedLessonsDurationAndAmountAfterProductEdit() {
+        var ids = memberOrderFixture();
+        publishedIssueCourseContract();
+        var start = businessClock.now().plusSeconds(86400);
+        Long oldSession =
+                Long.valueOf(
+                        courses.createSession(courseSession(ids.get(3), ids.get(5), start))
+                                .getId());
+        qrMemberLogin();
+        var created = mobileOrders.create(memberOrder(ids, "course"), "fulfill-paid-course");
+        var order = orderRows().selectById(Long.valueOf(created.id()));
+        assertEquals("waiting_payment", memberTask(order.getId()).getStatus());
+        assertFalse(fulfillmentWorker.process(memberTask(order.getId()).getId()));
+        loginAs(1L);
+        when(receiptVerifier.payment("course-first"))
+                .thenReturn(receipt(order, "course-first", null, "40.00"));
+        commerce.acceptPayment(order.getId(), "course-first");
+        assertEquals("waiting_payment", memberTask(order.getId()).getStatus());
+        var patch =
+                new cn.iocoder.yudao.module.gym.controller.admin.course.vo
+                        .GymCourseProductSaveReqVO();
+        patch.setSessionCount(9);
+        patch.setDurationMinutes(30);
+        patch.setName("新版私教");
+        courses.patchProduct(ids.get(3), patch);
+        var shorter = courseSession(ids.get(3), ids.get(5), start.plusSeconds(7200));
+        shorter.setEndsAt(shorter.getStartsAt().plusSeconds(1800));
+        Long shortSession = Long.valueOf(courses.createSession(shorter).getId());
+        when(receiptVerifier.payment("course-rest"))
+                .thenReturn(receipt(order, "course-rest", null, "160.00"));
+        commerce.acceptPayment(order.getId(), "course-rest");
+        commerce.acceptPayment(order.getId(), "course-rest");
+        assertEquals("pending", memberTask(order.getId()).getStatus());
+        fulfillmentWorker.process(memberTask(order.getId()).getId());
+        assertEquals("succeeded", memberTask(order.getId()).getStatus());
+        var pack = purchasedPacks().selectList().getFirst();
+        assertEquals(2, pack.getTotalSessions());
+        assertEquals(2, pack.getRemainingSessions());
+        assertEquals(60, pack.getDurationMinutesSnapshot());
+        assertEquals("私教产品", pack.getName());
+        assertEquals(new BigDecimal("200.00"), pack.getPriceSnapshot());
+        assertNull(pack.getExpiresAt());
+        assertEquals(ids.get(5), pack.getAssignedCoachId());
+        assertEquals(2, financialEvents.selectCount());
+        assertTrue(
+                financialEvents.selectList().stream()
+                        .allMatch(e -> "private".equals(e.getProductType())));
+        assertEquals(
+                new BigDecimal("200.00"),
+                financialEvents.selectList().stream()
+                        .map(e -> e.getAmount())
+                        .reduce(BigDecimal.ZERO, BigDecimal::add));
+        assertEquals("unsigned", contractMapper.selectList().getFirst().getStatus());
+        qrMemberLogin();
+        var bookingService =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.service.mobile.GymMobileBookingsService.class);
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileBookingVO
+                        .Create();
+        req.setCoursePackId(pack.getId());
+        req.setSessionId(shortSession);
+        assertServiceException(
+                () -> bookingService.create(req, "purchased-short-reject"), COURSE_PACK_INVALID);
+        var query =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileBookingVO
+                        .Sessions();
+        query.setStoreId(101L);
+        query.setStartDate(
+                start.atZone(cn.iocoder.yudao.module.gym.service.common.GymDateRange.ZONE)
+                        .toLocalDate());
+        // The second session can fall on the next local date when this test runs at night.
+        query.setEndDate(
+                shorter.getStartsAt()
+                        .atZone(cn.iocoder.yudao.module.gym.service.common.GymDateRange.ZONE)
+                        .toLocalDate()
+                        .plusDays(1));
+        var shown = bookingService.sessions(ids.get(5), query).getList();
+        assertFalse(
+                shown.stream()
+                        .filter(x -> x.id().equals(shortSession.toString()))
+                        .findFirst()
+                        .orElseThrow()
+                        .bookable());
+        req.setSessionId(oldSession);
+        assertEquals("confirmed", bookingService.create(req, "purchased-old-duration").status());
+        assertEquals(1, purchasedPacks().selectById(pack.getId()).getReservedSessions());
+        assertEquals(2, purchasedPacks().selectById(pack.getId()).getRemainingSessions());
+        assertServiceException(
+                () -> commerce.acceptRefund(order.getId(), "course-refund-unimplemented"),
+                SALES_ORDER_NOT_EXISTS);
+    }
+
+    @Test
+    void memberFulfillmentZeroApprovedQuoteIssuesFrozenCourseWithoutInventingRevenue() {
+        var ids = memberOrderFixture();
+        var approvalReq = coursePrice(ids);
+        approvalReq.setProposedAmount(BigDecimal.ZERO);
+        var approval = mobileCoursePrice.create(approvalReq, "fulfill-zero-approval");
+        loginAs(91L);
+        approvals.decide(Long.valueOf(approval.id()), decision("approve"));
+        loginAs(1L);
+        var quoteReq = quoteRequest(ids);
+        quoteReq.setApprovalId(Long.valueOf(approval.id()));
+        var quote = mobileQuotes.create(quoteReq, "fulfill-zero-quote");
+        var req = memberOrder(ids, "course");
+        req.setQuoteId(Long.valueOf(quote.id()));
+        qrMemberLogin();
+        var result = mobileOrders.create(req, "fulfill-zero-course");
+        Long order = Long.valueOf(result.id());
+        assertEquals(order, courseQuotes.selectById(Long.valueOf(quote.id())).getUsedOrderId());
+        assertTrue(fulfillmentWorker.process(memberTask(order).getId()));
+        assertEquals("succeeded", memberTask(order).getStatus());
+        assertEquals(
+                new BigDecimal("0.00"),
+                purchasedPacks().selectList().getFirst().getPriceSnapshot());
+        assertEquals(60, purchasedPacks().selectList().getFirst().getDurationMinutesSnapshot());
+        assertEquals(0, financialEvents.selectCount());
+        assertEquals("succeeded", mobileOrders.get(order).fulfillmentStatus());
+        assertEquals(1, mobileOrders.get(order).coursePackIds().size());
+    }
+
+    @Test
+    void memberFulfillmentRejectsAdminOtherLinkedMemberAndOtherTenant() {
+        var ids = memberOrderFixture();
+        Long other = Long.valueOf(members.create(member(101L, "13800009908")).getId());
+        var order = freeMemberCard(ids, false);
+        loginAs(1L);
+        assertServiceException(
+                () -> memberFulfillment.fulfill(order.getId()), MOBILE_IDENTITY_INVALID);
+        qrMemberLogin();
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_mobile_identity SET member_id=? WHERE user_id=50", other);
+        assertServiceException(
+                () -> memberFulfillment.fulfill(order.getId()), SALES_ORDER_NOT_EXISTS);
+        jdbc.update("UPDATE gym_mobile_identity SET member_id=? WHERE user_id=50", ids.get(1));
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(
+                () -> memberFulfillment.fulfill(order.getId()), MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        assertEquals(0, purchasedCards().selectCount());
+        memberFulfillment.fulfill(order.getId());
+        assertEquals(1, purchasedCards().selectCount());
+    }
+
+    @Test
+    void memberFulfillmentDisabledAccountAndStoreBlockRightsUntilConditionsRecover() {
+        var ids = memberOrderFixture();
+        var order = freeMemberCard(ids, false);
+        Long task = memberTask(order.getId()).getId();
+        var account = memberAccounts.getUser(50L);
+        account.setStatus(1);
+        fulfillmentWorker.process(task);
+        assertEquals("failed", memberTask(order.getId()).getStatus());
+        assertEquals(0, purchasedCards().selectCount());
+        account.setStatus(0);
+        loginAs(1L);
+        fulfillmentQueue.retry(order.getId());
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_store SET status='inactive' WHERE id=101");
+        fulfillmentWorker.process(task);
+        assertEquals(0, purchasedCards().selectCount());
+        jdbc.update("UPDATE gym_store SET status='active' WHERE id=101");
+        fulfillmentQueue.retry(order.getId());
+        jdbc.update("UPDATE gym_member_store SET deleted=1 WHERE member_id=?", ids.get(1));
+        fulfillmentWorker.process(task);
+        assertEquals(0, purchasedCards().selectCount());
+        jdbc.update("UPDATE gym_member_store SET deleted=0 WHERE member_id=?", ids.get(1));
+        fulfillmentQueue.retry(order.getId());
+        fulfillmentWorker.process(task);
+        assertEquals("succeeded", memberTask(order.getId()).getStatus());
+        assertEquals(4, memberTask(order.getId()).getAttemptCount());
+    }
+
+    @Test
+    void memberFulfillmentCourseRechecksLiveCoachAndProductWhilePreservingPaidOrder() {
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        var result = mobileOrders.create(memberOrder(ids, "course"), "fulfill-eligibility-course");
+        var order = orderRows().selectById(Long.valueOf(result.id()));
+        payMemberOrder(order);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        Long task = memberTask(order.getId()).getId();
+        jdbc.update(
+                "UPDATE gym_employee_store SET joined_on='2099-01-01' WHERE employee_id=?",
+                ids.get(5));
+        fulfillmentWorker.process(task);
+        assertEquals(0, purchasedPacks().selectCount());
+        jdbc.update(
+                "UPDATE gym_employee_store SET joined_on='2020-01-01' WHERE employee_id=?",
+                ids.get(5));
+        fulfillmentQueue.retry(order.getId());
+        jdbc.update("UPDATE gym_course_product SET status='inactive' WHERE id=?", ids.get(3));
+        fulfillmentWorker.process(task);
+        assertEquals(0, purchasedPacks().selectCount());
+        assertEquals("paid", orderRows().selectById(order.getId()).getStatus());
+        assertEquals(1, financialEvents.selectCount());
+        jdbc.update("UPDATE gym_course_product SET status='active' WHERE id=?", ids.get(3));
+        var reassigned =
+                new cn.iocoder.yudao.module.gym.controller.admin.course.vo
+                        .GymCourseProductSaveReqVO();
+        reassigned.setCoachId(ids.get(4));
+        assertServiceException(
+                () -> courses.patchProduct(ids.get(3), reassigned), COURSE_PRODUCT_INVALID);
+        // Normal APIs forbid reassignment. Simulate inconsistent imported data as a defense check.
+        jdbc.update("UPDATE gym_course_product SET coach_id=? WHERE id=?", ids.get(4), ids.get(3));
+        fulfillmentQueue.retry(order.getId());
+        fulfillmentWorker.process(task);
+        assertEquals(0, purchasedPacks().selectCount());
+        jdbc.update("UPDATE gym_course_product SET coach_id=? WHERE id=?", ids.get(5), ids.get(3));
+        fulfillmentQueue.retry(order.getId());
+        fulfillmentWorker.process(task);
+        assertEquals(1, purchasedPacks().selectCount());
+        assertEquals(1, financialEvents.selectCount());
+    }
+
+    @Test
+    void memberFulfillmentRequiredApprovalAndManualHoldCannotBeBypassedByMemberWorker() {
+        var ids = memberOrderFixture();
+        var order = freeMemberCard(ids, false);
+        var claim = fulfillmentQueue.claim(memberTask(order.getId()).getId());
+        loginAs(1L);
+        commerce.openingSnapshot(order.getId(), 101L);
+        qrMemberLogin();
+        assertServiceException(
+                () -> memberFulfillment.fulfill(order.getId()), COMMERCE_FULFILLMENT_INVALID);
+        fulfillmentQueue.finish(claim.getId(), claim.getClaimToken(), "stale-worker");
+        assertEquals("waiting_approval", memberTask(order.getId()).getStatus());
+        assertEquals(0, purchasedCards().selectCount());
+        loginAs(1L);
+        var config = onlineSettings(ids.get(2));
+        config.getOffers().getFirst().setSalePrice(BigDecimal.ZERO);
+        config.getOffers().getFirst().setApprovalRequired(true);
+        salesSettings.saveOnline(101L, config);
+        qrMemberLogin();
+        Long gated =
+                Long.valueOf(
+                        mobileOrders.create(memberOrder(ids, "card"), "fulfill-gated-card").id());
+        assertNull(memberTask(gated));
+        assertServiceException(
+                () -> memberFulfillment.fulfill(gated), COMMERCE_FULFILLMENT_INVALID);
+        assertEquals(0, purchasedCards().selectCount());
+    }
+
+    @Test
+    void memberFulfillmentCancellationAndVerifiedRefundCancelTasksWithoutRights() {
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        Long cancelled =
+                Long.valueOf(
+                        mobileOrders.create(memberOrder(ids, "card"), "fulfill-cancel-card").id());
+        mobileOrders.cancel(cancelled, memberOrderCancel(), "fulfill-cancel-command");
+        assertEquals("cancelled", memberTask(cancelled).getStatus());
+        assertFalse(fulfillmentWorker.process(memberTask(cancelled).getId()));
+        assertServiceException(
+                () -> memberFulfillment.fulfill(cancelled), COMMERCE_FULFILLMENT_INVALID);
+        Long refundable =
+                Long.valueOf(
+                        mobileOrders.create(memberOrder(ids, "card"), "fulfill-refund-card").id());
+        var order = orderRows().selectById(refundable);
+        payMemberOrder(order);
+        var claim = fulfillmentQueue.claim(memberTask(refundable).getId());
+        when(receiptVerifier.refund("member-refund"))
+                .thenReturn(
+                        receipt(order, "member-refund", "member-paid-" + order.getId(), "99.99"));
+        commerce.acceptRefund(refundable, "member-refund");
+        fulfillmentQueue.finish(claim.getId(), claim.getClaimToken(), null);
+        assertEquals("cancelled", memberTask(refundable).getStatus());
+        qrMemberLogin();
+        assertServiceException(
+                () -> memberFulfillment.fulfill(refundable), COMMERCE_FULFILLMENT_INVALID);
+        assertEquals(0, purchasedCards().selectCount());
+        assertEquals(2, financialEvents.selectCount());
+    }
+
+    @Test
+    void memberFulfillmentConcurrentCallsIssueExactlyOneRightAndContract() throws Exception {
+        var ids = memberOrderFixture();
+        publishedContractPdf();
+        var order = freeMemberCard(ids, true);
+        var results =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            memberFulfillment.fulfill(order.getId());
+                            return "ok";
+                        },
+                        () -> {
+                            qrMemberLogin();
+                            memberFulfillment.fulfill(order.getId());
+                            return "ok";
+                        });
+        assertEquals(List.of("ok", "ok"), results);
+        assertEquals(1, purchasedCards().selectCount());
+        assertEquals(1, contractMapper.selectCount());
+        assertEquals("succeeded", memberTask(order.getId()).getStatus());
+        assertFalse(fulfillmentWorker.process(memberTask(order.getId()).getId()));
+        assertEquals(0, financialEvents.selectCount());
+    }
+
+    @Test
+    void memberFulfillmentTaskWriteAndOrderCreationRollbackTogetherAndSameKeyCanRetry() {
+        var ids = memberOrderFixture();
+        var quote = mobileQuotes.create(quoteRequest(ids), "fulfill-atomic-quote");
+        var request = memberOrder(ids, "course");
+        request.setQuoteId(Long.valueOf(quote.id()));
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_fulfillment_task ADD CONSTRAINT reject_member_task CHECK (principal_user_type<>1)");
+        qrMemberLogin();
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () -> mobileOrders.create(request, "fulfill-enqueue-atomic"));
+            assertEquals(0, orderRows().selectCount());
+            assertEquals(
+                    0, jdbc.queryForObject("SELECT COUNT(*) FROM gym_order_item", Integer.class));
+            assertEquals(
+                    0, jdbc.queryForObject("SELECT COUNT(*) FROM gym_order_policy", Integer.class));
+            assertNull(courseQuotes.selectById(Long.valueOf(quote.id())).getUsedOrderId());
+        } finally {
+            jdbc.execute("ALTER TABLE gym_fulfillment_task DROP CONSTRAINT reject_member_task");
+        }
+        Long order = Long.valueOf(mobileOrders.create(request, "fulfill-enqueue-atomic").id());
+        assertNotNull(memberTask(order));
+        assertEquals(order, courseQuotes.selectById(Long.valueOf(quote.id())).getUsedOrderId());
+        assertEquals(1, orderRows().selectCount());
+    }
+
+    @Test
+    void memberFulfillmentFinalTaskFailureRollsBackCardContractPolicyAndMemberStage() {
+        var ids = memberOrderFixture();
+        publishedContractPdf();
+        var order = freeMemberCard(ids, true);
+        long fileCount = files.selectCount();
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_fulfillment_task ADD CONSTRAINT reject_member_completion CHECK (status<>'succeeded')");
+        try {
+            fulfillmentWorker.process(memberTask(order.getId()).getId());
+            assertEquals("failed", memberTask(order.getId()).getStatus());
+            assertEquals(0, purchasedCards().selectCount());
+            assertEquals(0, contractMapper.selectCount());
+            assertEquals(fileCount, files.selectCount());
+            assertEquals("pending_fulfillment", orderRows().selectById(order.getId()).getStatus());
+            assertEquals(
+                    0,
+                    jdbc.queryForObject(
+                            "SELECT COUNT(*) FROM gym_order_policy WHERE fulfilled_at IS NOT NULL",
+                            Integer.class));
+            assertEquals(
+                    "lead",
+                    jdbc.queryForObject(
+                            "SELECT customer_stage FROM gym_member WHERE id=?",
+                            String.class,
+                            ids.get(1)));
+        } finally {
+            jdbc.execute(
+                    "ALTER TABLE gym_fulfillment_task DROP CONSTRAINT reject_member_completion");
+        }
+        loginAs(1L);
+        fulfillmentQueue.retry(order.getId());
+        fulfillmentWorker.process(memberTask(order.getId()).getId());
+        assertEquals(1, purchasedCards().selectCount());
+        assertEquals(1, contractMapper.selectCount());
+        assertEquals("succeeded", memberTask(order.getId()).getStatus());
+    }
+
+    @Test
+    void memberFulfillmentRejectsTamperedFrozenTenantAndDirectUnpaidGrant() {
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        Long unpaid =
+                Long.valueOf(
+                        mobileOrders.create(memberOrder(ids, "card"), "fulfill-unpaid-grant").id());
+        var itemMapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.sales.GymOrderItemMapper.class);
+        var item = itemMapper.selectList().getFirst();
+        assertServiceException(
+                () ->
+                        purchaseTransaction(
+                                () ->
+                                        cards.issuePurchasedOrderItem(
+                                                item.getId(), businessClock.now())),
+                COMMERCE_FULFILLMENT_INVALID);
+        loginAs(1L);
+        var order = freeMemberCard(ids, false);
+        var policyMapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.sales.GymOrderPolicyMapper.class);
+        var policy =
+                policyMapper.selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.sales.GymOrderPolicyDO
+                                ::getOrderId,
+                        order.getId());
+        String original = policy.getTermsSnapshot();
+        var terms =
+                cn.iocoder.yudao.framework.common.util.json.JsonUtils.parseObject(
+                        original, Map.class);
+        ((Map<String, Object>) terms.get("template")).put("tenantId", 2);
+        policy.setTermsSnapshot(
+                cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(terms));
+        policyMapper.updateById(policy);
+        assertServiceException(
+                () -> memberFulfillment.fulfill(order.getId()), COMMERCE_FULFILLMENT_INVALID);
+        assertEquals(0, purchasedCards().selectCount());
+        policy.setTermsSnapshot(original);
+        policyMapper.updateById(policy);
+        memberFulfillment.fulfill(order.getId());
+        assertEquals(1, purchasedCards().selectCount());
+        assertEquals("pending_payment", orderRows().selectById(unpaid).getStatus());
+    }
+
+    private void purchaseTransaction(Runnable action) {
+        new org.springframework.transaction.support.TransactionTemplate(
+                        applicationContext.getBean(
+                                org.springframework.transaction.PlatformTransactionManager.class))
+                .executeWithoutResult(status -> action.run());
+    }
+
+    @Test
+    void memberFulfillmentProductEditRaceCannotReplaceFrozenPurchasedCourseTerms()
+            throws Exception {
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        var result = mobileOrders.create(memberOrder(ids, "course"), "fulfill-edit-race");
+        var order = orderRows().selectById(Long.valueOf(result.id()));
+        payMemberOrder(order);
+        var outcomes =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            memberFulfillment.fulfill(order.getId());
+                            return "fulfilled";
+                        },
+                        () -> {
+                            var patch =
+                                    new cn.iocoder.yudao.module.gym.controller.admin.course.vo
+                                            .GymCourseProductSaveReqVO();
+                            patch.setSessionCount(9);
+                            patch.setDurationMinutes(30);
+                            courses.patchProduct(ids.get(3), patch);
+                            return "edited";
+                        });
+        assertEquals(List.of("fulfilled", "edited"), outcomes);
+        var pack = purchasedPacks().selectList().getFirst();
+        assertEquals(2, pack.getTotalSessions());
+        assertEquals(60, pack.getDurationMinutesSnapshot());
+        assertEquals(new BigDecimal("200.00"), pack.getPriceSnapshot());
+        assertEquals(1, financialEvents.selectCount());
+    }
+
+    @Test
+    void memberFulfillmentPurchaseHooksRequireTransactionAndContractChecksActualRightSource() {
+        var ids = memberOrderFixture();
+        var old =
+                cards.issue(
+                        ids.get(1),
+                        101L,
+                        ids.get(2),
+                        businessClock.now(),
+                        "manual-test",
+                        "unrelated-right");
+        var order = freeMemberCard(ids, false);
+        var item =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.sales.GymOrderItemMapper
+                                        .class)
+                        .selectList()
+                        .getFirst();
+        assertThrows(
+                org.springframework.transaction.IllegalTransactionStateException.class,
+                () -> cards.issuePurchasedOrderItem(item.getId(), businessClock.now()));
+        assertServiceException(
+                () ->
+                        purchaseTransaction(
+                                () ->
+                                        contracts.issueForPurchasedItem(
+                                                item.getId(), "member-cards", old.getId())),
+                CONTRACT_SOURCE_INVALID);
+        assertEquals(0, contractMapper.selectCount());
+        assertEquals(1, purchasedCards().selectCount());
+        memberFulfillment.fulfill(order.getId());
+        assertEquals(2, purchasedCards().selectCount());
+        assertEquals(0, financialEvents.selectCount());
+    }
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.sales.GymRefundApplicationService refundApplications;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.dal.mysql.sales.GymRefundApplicationMapper refundApplicationRows;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.sales.GymRefundApplicationsController
+            refundApplicationsController;
+
+    private record RefundFixture(
+            List<Long> ids,
+            cn.iocoder.yudao.module.gym.dal.dataobject.sales.GymBusinessOrderDO order) {}
+
+    private RefundFixture refundFixture(boolean fulfilled) {
+        when(businessClock.now())
+                .thenReturn(
+                        java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS));
+        var ids = memberOrderFixture();
+        if (fulfilled) publishedContractPdf();
+        qrMemberLogin();
+        Long id =
+                Long.valueOf(
+                        mobileOrders.create(memberOrder(ids, "card"), "refund-fixture-order").id());
+        var order = orderRows().selectById(id);
+        payMemberOrder(order);
+        if (fulfilled) fulfillmentWorker.process(memberTask(id).getId());
+        return new RefundFixture(ids, orderRows().selectById(id));
+    }
+
+    private cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileRefundVO.Create
+            refundRequest(String reason) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileRefundVO.Create();
+        req.setReason(reason);
+        return req;
+    }
+
+    private cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileRefundVO.Decision
+            refundDecision(String value, int version) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileRefundVO
+                        .Decision();
+        req.setDecision(value);
+        req.setExpectedVersion(version);
+        req.setNote("审核说明");
+        return req;
+    }
+
+    private Long submitRefund(Long order) {
+        qrMemberLogin();
+        return Long.valueOf(
+                refundApplications.create(order, refundRequest("申请退费"), "refund-create-key").id());
+    }
+
+    private void approveRefund(Long id) {
+        loginAs(1L);
+        refundApplications.decide(id, refundDecision("approve", 1), "refund-approve-key");
+    }
+
+    private void linkedRefund(RefundFixture fixture, Long id, String reference, String amount) {
+        loginAs(1L);
+        when(receiptVerifier.refund(reference))
+                .thenReturn(
+                        receipt(
+                                fixture.order(),
+                                reference,
+                                "member-paid-" + fixture.order().getId(),
+                                amount));
+        commerce.acceptRefundForApplication(fixture.order().getId(), id, reference);
+    }
+
+    @Test
+    void refundApplicationSubmissionFreezesServerBalanceAndDeduplicatesWithoutRefundingRights() {
+        var f = refundFixture(true);
+        long cardsBefore = purchasedCards().selectCount();
+        var originalCard = purchasedCards().selectList().getFirst();
+        clearInvocations(receiptVerifier);
+        qrMemberLogin();
+        var first =
+                refundApplications.create(
+                        f.order().getId(), refundRequest("  申请退费  "), "refund-normalized");
+        assertEquals("99.99", first.requestedAmount());
+        assertEquals("pending_review", first.status());
+        assertEquals(
+                first,
+                refundApplications.create(
+                        f.order().getId(), refundRequest("申请退费"), "refund-normalized"));
+        assertEquals(
+                first,
+                refundApplications.create(
+                        f.order().getId(), refundRequest("申请退费"), "refund-new-key-same"));
+        assertServiceException(
+                () ->
+                        refundApplications.create(
+                                f.order().getId(), refundRequest("另一原因"), "refund-normalized"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        assertServiceException(
+                () ->
+                        refundApplications.create(
+                                f.order().getId(), refundRequest("另一原因"), "refund-another-key"),
+                REFUND_APPLICATION_OPEN);
+        var row = refundApplicationRows.selectList().getFirst();
+        assertEquals(50L, row.getRequesterUserId());
+        assertEquals(f.order().getId(), row.getActiveOrderId());
+        assertEquals(1, row.getVersion());
+        assertEquals("0.00", refundApplications.get(row.getId()).refundedAmount());
+        assertEquals("active", purchasedCards().selectById(originalCard.getId()).getStatus());
+        assertEquals(cardsBefore, purchasedCards().selectCount());
+        assertEquals(1, financialEvents.selectCount());
+        assertEquals("fulfilled", orderRows().selectById(f.order().getId()).getStatus());
+        assertEquals("succeeded", memberTask(f.order().getId()).getStatus());
+        verifyNoInteractions(receiptVerifier);
+    }
+
+    @Test
+    void refundApplicationOwnershipAndCurrentIdentityAreCheckedBeforeIdempotentReplay() {
+        var f = refundFixture(false);
+        Long id = submitRefund(f.order().getId());
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_member_store SET deleted=1 WHERE member_id=?", f.ids().get(1));
+        jdbc.update("UPDATE gym_store SET status='inactive' WHERE id=101");
+        assertEquals(id.toString(), refundApplications.get(id).id());
+        assertEquals(
+                id.toString(),
+                refundApplications
+                        .create(f.order().getId(), refundRequest("申请退费"), "refund-create-key")
+                        .id());
+        memberAccounts.getUser(50L).setStatus(1);
+        assertServiceException(
+                () ->
+                        refundApplications.create(
+                                f.order().getId(), refundRequest("申请退费"), "refund-create-key"),
+                MOBILE_IDENTITY_INVALID);
+        memberAccounts.getUser(50L).setStatus(0);
+        jdbc.update("UPDATE gym_refund_application SET requester_user_id=51 WHERE id=?", id);
+        assertServiceException(() -> refundApplications.get(id), REFUND_APPLICATION_NOT_EXISTS);
+        jdbc.update("UPDATE gym_refund_application SET requester_user_id=50 WHERE id=?", id);
+        loginAs(1L);
+        assertServiceException(() -> refundApplications.get(id), MOBILE_IDENTITY_INVALID);
+        qrMemberLogin();
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> refundApplications.get(id), MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        jdbc.update("UPDATE gym_business_order SET buyer_user_id=51 WHERE id=?", f.order().getId());
+        assertServiceException(
+                () ->
+                        refundApplications.create(
+                                f.order().getId(), refundRequest("申请退费"), "refund-create-key"),
+                SALES_ORDER_NOT_EXISTS);
+        assertEquals(1, refundApplicationRows.selectCount());
+    }
+
+    @Test
+    void refundApplicationUnpaidFreeAndUnbackedMoneyCannotCreateRequest() {
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        Long unpaid =
+                Long.valueOf(
+                        mobileOrders.create(memberOrder(ids, "card"), "refund-unpaid-order").id());
+        assertServiceException(
+                () -> refundApplications.create(unpaid, refundRequest("申请退费"), "refund-unpaid-key"),
+                REFUND_APPLICATION_INVALID);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update(
+                "UPDATE gym_business_order SET paid_amount=99.99,status='paid' WHERE id=?", unpaid);
+        assertServiceException(
+                () -> refundApplications.create(unpaid, refundRequest("申请退费"), "refund-unpaid-key"),
+                REFUND_APPLICATION_INVALID);
+        jdbc.update(
+                "UPDATE gym_business_order SET paid_amount=0,status='pending_payment' WHERE id=?",
+                unpaid);
+        loginAs(1L);
+        var free = freeMemberCard(ids, false);
+        assertServiceException(
+                () ->
+                        refundApplications.create(
+                                free.getId(), refundRequest("申请退费"), "refund-free-key"),
+                REFUND_APPLICATION_INVALID);
+        assertEquals(0, refundApplicationRows.selectCount());
+        assertEquals(0, financialEvents.selectCount());
+    }
+
+    @Test
+    void refundApplicationPendingPausesClaimedRightsAndApprovalDoesNotPayOrReleaseThem() {
+        var f = refundFixture(false);
+        var claim = fulfillmentQueue.claim(memberTask(f.order().getId()).getId());
+        Long id = submitRefund(f.order().getId());
+        assertEquals("waiting_refund", memberTask(f.order().getId()).getStatus());
+        assertServiceException(
+                () -> memberFulfillment.fulfill(f.order().getId()), COMMERCE_FULFILLMENT_INVALID);
+        fulfillmentQueue.finish(claim.getId(), claim.getClaimToken(), null);
+        assertEquals("waiting_refund", memberTask(f.order().getId()).getStatus());
+        loginAs(1L);
+        assertServiceException(
+                () -> commerce.openingSnapshot(f.order().getId(), 101L),
+                COMMERCE_FULFILLMENT_INVALID);
+        clearInvocations(receiptVerifier);
+        approveRefund(id);
+        verifyNoInteractions(receiptVerifier);
+        assertEquals("approved", refundApplicationRows.selectById(id).getStatus());
+        assertEquals("waiting_refund", memberTask(f.order().getId()).getStatus());
+        assertFalse(fulfillmentWorker.process(claim.getId()));
+        assertEquals(0, purchasedCards().selectCount());
+        assertEquals(1, financialEvents.selectCount());
+        when(receiptVerifier.refund("refund-unconfigured"))
+                .thenThrow(
+                        cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil
+                                .exception(COMMERCE_PROVIDER_UNCONFIGURED));
+        assertServiceException(
+                () ->
+                        commerce.acceptRefundForApplication(
+                                f.order().getId(), id, "refund-unconfigured"),
+                COMMERCE_PROVIDER_UNCONFIGURED);
+        assertEquals("approved", refundApplicationRows.selectById(id).getStatus());
+        assertEquals(
+                new BigDecimal("0.00"),
+                orderRows().selectById(f.order().getId()).getRefundedAmount());
+    }
+
+    @Test
+    void
+            refundApplicationRejectReleasesPendingJobAndNewRequestGetsNewAuditWithoutRewritingOldKey() {
+        var f = refundFixture(false);
+        Long id = submitRefund(f.order().getId());
+        loginAs(91L);
+        var rejected =
+                refundApplications.decide(id, refundDecision("reject", 1), "refund-reject-key");
+        assertEquals("rejected", rejected.status());
+        assertEquals(2, rejected.version());
+        assertEquals(91L, refundApplicationRows.selectById(id).getReviewerUserId());
+        assertNull(refundApplicationRows.selectById(id).getActiveOrderId());
+        assertEquals("pending", memberTask(f.order().getId()).getStatus());
+        assertEquals(
+                rejected,
+                refundApplications.decide(id, refundDecision("reject", 1), "refund-reject-key"));
+        assertServiceException(
+                () ->
+                        refundApplications.decide(
+                                id, refundDecision("reject", 1), "refund-reject-new-key"),
+                MOBILE_VERSION_CONFLICT);
+        qrMemberLogin();
+        assertEquals(
+                "pending_review",
+                refundApplications
+                        .create(f.order().getId(), refundRequest("申请退费"), "refund-create-key")
+                        .status());
+        assertEquals("rejected", refundApplications.get(id).status());
+        assertEquals("审核说明", refundApplications.get(id).failureReason());
+        var next =
+                refundApplications.create(
+                        f.order().getId(), refundRequest("补充申请"), "refund-reapply-key");
+        assertNotEquals(id.toString(), next.id());
+        assertEquals("99.99", next.requestedAmount());
+        assertEquals(2, refundApplicationRows.selectCount());
+        assertEquals("waiting_refund", memberTask(f.order().getId()).getStatus());
+    }
+
+    @Test
+    void
+            refundApplicationLinkedVerifiedReceiptsTrackOnlyThisApplicationAndStopCardsOnlyOnRealRefund() {
+        var f = refundFixture(true);
+        Long id = submitRefund(f.order().getId());
+        approveRefund(id);
+        linkedRefund(f, id, "application-partial", "40.00");
+        qrMemberLogin();
+        assertEquals("partially_refunded", refundApplications.get(id).status());
+        assertEquals("40.00", refundApplications.get(id).refundedAmount());
+        assertEquals("active", purchasedCards().selectList().getFirst().getStatus());
+        loginAs(1L);
+        assertEquals(1, refundReviewService.list(f.order().getId()).size());
+        linkedRefund(f, id, "application-rest", "59.99");
+        var completed = refundApplicationRows.selectById(id);
+        assertEquals("refunded", completed.getStatus());
+        assertNull(completed.getActiveOrderId());
+        assertEquals(new BigDecimal("99.99"), completed.getRefundedAmount());
+        assertEquals("inactive", purchasedCards().selectList().getFirst().getStatus());
+        assertEquals(
+                "closed_full_refund",
+                refundReviewService.list(f.order().getId()).getFirst().getStatus());
+        linkedRefund(f, id, "application-rest", "59.99");
+        commerce.acceptRefund(f.order().getId(), "application-rest");
+        assertEquals(completed.getVersion(), refundApplicationRows.selectById(id).getVersion());
+        assertEquals(3, financialEvents.selectCount());
+        var refundRows =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.sales.GymOrderRefundMapper
+                                        .class)
+                        .selectList();
+        assertEquals(2, refundRows.size());
+        assertTrue(refundRows.stream().allMatch(x -> id.equals(x.getRefundApplicationId())));
+        qrMemberLogin();
+        assertEquals("99.99", refundApplications.get(id).refundedAmount());
+        assertServiceException(
+                () ->
+                        refundApplications.create(
+                                f.order().getId(), refundRequest("再次申请"), "refund-already-full"),
+                REFUND_APPLICATION_INVALID);
+    }
+
+    @Test
+    void refundApplicationUnrelatedRefundClosesStaleRequestWithoutClaimingItsReceipt() {
+        var f = refundFixture(false);
+        Long id = submitRefund(f.order().getId());
+        loginAs(1L);
+        when(receiptVerifier.refund("unrelated-refund"))
+                .thenReturn(
+                        receipt(
+                                f.order(),
+                                "unrelated-refund",
+                                "member-paid-" + f.order().getId(),
+                                "20.00"));
+        commerce.acceptRefund(f.order().getId(), "unrelated-refund");
+        qrMemberLogin();
+        assertEquals("closed", refundApplications.get(id).status());
+        assertEquals("0.00", refundApplications.get(id).refundedAmount());
+        var next =
+                refundApplications.create(
+                        f.order().getId(), refundRequest("剩余退费"), "refund-after-unrelated");
+        assertEquals("79.99", next.requestedAmount());
+        Long nextId = Long.valueOf(next.id());
+        approveRefund(nextId);
+        assertServiceException(
+                () ->
+                        commerce.acceptRefundForApplication(
+                                f.order().getId(), nextId, "unrelated-refund"),
+                COMMERCE_IDEMPOTENCY_CONFLICT);
+        assertEquals(
+                new BigDecimal("0.00"),
+                refundApplicationRows.selectById(nextId).getRefundedAmount());
+        assertEquals(2, financialEvents.selectCount());
+    }
+
+    @Test
+    void refundApplicationParallelDifferentKeysCreateOneActiveRequestAndPauseOnce()
+            throws Exception {
+        var f = refundFixture(false);
+        var outcomes =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            return refundApplications.create(
+                                    f.order().getId(),
+                                    refundRequest("申请退费"),
+                                    "refund-parallel-first");
+                        },
+                        () -> {
+                            qrMemberLogin();
+                            return refundApplications.create(
+                                    f.order().getId(),
+                                    refundRequest("申请退费"),
+                                    "refund-parallel-second");
+                        });
+        assertEquals(outcomes.get(0), outcomes.get(1));
+        assertEquals(1, refundApplicationRows.selectCount());
+        assertEquals("waiting_refund", memberTask(f.order().getId()).getStatus());
+    }
+
+    @Test
+    void refundApplicationConcurrentOppositeDecisionsHaveOneWinnerAndVersionPreventsOverwrite()
+            throws Exception {
+        var f = refundFixture(false);
+        Long id = submitRefund(f.order().getId());
+        var outcomes =
+                workCourseRace(
+                        () ->
+                                refundApplications.decide(
+                                        id,
+                                        refundDecision("approve", 1),
+                                        "refund-decision-approve"),
+                        () ->
+                                refundApplications.decide(
+                                        id, refundDecision("reject", 1), "refund-decision-reject"));
+        assertEquals(
+                1,
+                outcomes.stream()
+                        .filter(
+                                x ->
+                                        x
+                                                instanceof
+                                                cn.iocoder.yudao.framework.common.exception
+                                                        .ServiceException)
+                        .count());
+        var row = refundApplicationRows.selectById(id);
+        assertEquals(2, row.getVersion());
+        assertTrue(Set.of("approved", "rejected").contains(row.getStatus()));
+        assertEquals(
+                "approved".equals(row.getStatus()) ? "waiting_refund" : "pending",
+                memberTask(f.order().getId()).getStatus());
+        assertEquals(1, financialEvents.selectCount());
+        assertEquals(0, purchasedCards().selectCount());
+    }
+
+    @Test
+    void refundApplicationCreationRacesVerifiedRefundAgainstCurrentRemainingMoney()
+            throws Exception {
+        var f = refundFixture(false);
+        when(receiptVerifier.refund("refund-creation-race"))
+                .thenReturn(
+                        receipt(
+                                f.order(),
+                                "refund-creation-race",
+                                "member-paid-" + f.order().getId(),
+                                "20.00"));
+        var outcomes =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            return refundApplications.create(
+                                    f.order().getId(),
+                                    refundRequest("申请退费"),
+                                    "refund-create-race-key");
+                        },
+                        () -> commerce.acceptRefund(f.order().getId(), "refund-creation-race"));
+        assertFalse(
+                outcomes.get(0)
+                        instanceof cn.iocoder.yudao.framework.common.exception.ServiceException);
+        assertFalse(
+                outcomes.get(1)
+                        instanceof cn.iocoder.yudao.framework.common.exception.ServiceException);
+        var row = refundApplicationRows.selectList().getFirst();
+        if ("closed".equals(row.getStatus()))
+            assertEquals(new BigDecimal("99.99"), row.getRequestedAmount());
+        else {
+            assertEquals("pending_review", row.getStatus());
+            assertEquals(new BigDecimal("79.99"), row.getRequestedAmount());
+        }
+        assertEquals(new BigDecimal("0.00"), row.getRefundedAmount());
+        assertEquals(2, financialEvents.selectCount());
+    }
+
+    @Test
+    void refundApplicationStaffReadAndDecideRequirePermissionsWholeStoreAndLiveIdentity() {
+        var f = refundFixture(false);
+        Long id = submitRefund(f.order().getId());
+        loginAs(1L);
+        var query =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileRefundVO.Query();
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> refundApplicationsController.page(query));
+        when(permissions.hasAnyPermissions(1L, "gym:sales:read")).thenReturn(true);
+        assertEquals(1, refundApplicationsController.page(query).getData().getTotal());
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () ->
+                        refundApplicationsController.decide(
+                                id, refundDecision("approve", 1), "refund-permission-key"));
+        when(permissions.hasAnyPermissions(1L, "gym:approvals:decide")).thenReturn(true);
+        scoped(102L);
+        assertEquals(0, refundApplicationsController.page(query).getData().getTotal());
+        assertServiceException(() -> refundApplicationsController.get(id), STORE_NO_PERMISSION);
+        assertServiceException(
+                () ->
+                        refundApplicationsController.decide(
+                                id, refundDecision("approve", 1), "refund-permission-key"),
+                STORE_NO_PERMISSION);
+        headquarters();
+        assertEquals(
+                "approved",
+                refundApplicationsController
+                        .decide(id, refundDecision("approve", 1), "refund-permission-key")
+                        .getData()
+                        .status());
+        scoped();
+        assertServiceException(
+                () ->
+                        refundApplicationsController.decide(
+                                id, refundDecision("approve", 1), "refund-permission-key"),
+                STORE_NO_PERMISSION);
+        headquarters();
+        var disabled = workAccounts.getUser(1L);
+        disabled.setStatus(1);
+        when(workAccounts.getUser(1L)).thenReturn(disabled);
+        assertServiceException(() -> refundApplications.review(id), MOBILE_IDENTITY_INVALID);
+        qrMemberLogin();
+        assertServiceException(() -> refundApplications.page(query), MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void refundApplicationPrivateCourseCanBeReviewedButCannotUseCardRefundAdapter() {
+        when(businessClock.now()).thenReturn(java.time.Instant.now());
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        Long orderId =
+                Long.valueOf(
+                        mobileOrders
+                                .create(memberOrder(ids, "course"), "refund-course-order")
+                                .id());
+        payMemberOrder(orderRows().selectById(orderId));
+        Long id = submitRefund(orderId);
+        approveRefund(id);
+        assertEquals(
+                new BigDecimal("200.00"),
+                refundApplicationRows.selectById(id).getRequestedAmount());
+        clearInvocations(receiptVerifier);
+        assertServiceException(
+                () -> commerce.acceptRefundForApplication(orderId, id, "course-refund-unavailable"),
+                SALES_ORDER_NOT_EXISTS);
+        verifyNoInteractions(receiptVerifier);
+        assertEquals("approved", refundApplicationRows.selectById(id).getStatus());
+        assertEquals("waiting_refund", memberTask(orderId).getStatus());
+        assertEquals(0, purchasedPacks().selectCount());
+        assertEquals(1, financialEvents.selectCount());
+    }
+
+    @Test
+    void refundApplicationPauseFailureRollsBackApplicationAndKeyThenAllowsRetry() {
+        var f = refundFixture(false);
+        qrMemberLogin();
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_fulfillment_task ADD CONSTRAINT reject_refund_hold CHECK (status<>'waiting_refund')");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () ->
+                            refundApplications.create(
+                                    f.order().getId(),
+                                    refundRequest("申请退费"),
+                                    "refund-pause-atomic"));
+            assertEquals(0, refundApplicationRows.selectCount());
+            assertEquals("pending", memberTask(f.order().getId()).getStatus());
+        } finally {
+            jdbc.execute("ALTER TABLE gym_fulfillment_task DROP CONSTRAINT reject_refund_hold");
+        }
+        assertEquals(
+                "pending_review",
+                refundApplications
+                        .create(f.order().getId(), refundRequest("申请退费"), "refund-pause-atomic")
+                        .status());
+        assertEquals(1, refundApplicationRows.selectCount());
+    }
+
+    @Test
+    void refundApplicationRejectionAndResumingFulfillmentCommitOrRollbackTogether() {
+        var f = refundFixture(false);
+        Long id = submitRefund(f.order().getId());
+        loginAs(1L);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_fulfillment_task ADD CONSTRAINT reject_refund_resume CHECK (status<>'pending')");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () ->
+                            refundApplications.decide(
+                                    id, refundDecision("reject", 1), "refund-resume-atomic"));
+            var row = refundApplicationRows.selectById(id);
+            assertEquals("pending_review", row.getStatus());
+            assertEquals(1, row.getVersion());
+            assertNull(row.getReviewerUserId());
+        } finally {
+            jdbc.execute("ALTER TABLE gym_fulfillment_task DROP CONSTRAINT reject_refund_resume");
+        }
+        assertEquals(
+                "rejected",
+                refundApplications
+                        .decide(id, refundDecision("reject", 1), "refund-resume-atomic")
+                        .status());
+        assertEquals("pending", memberTask(f.order().getId()).getStatus());
+        publishedContractPdf();
+        fulfillmentWorker.process(memberTask(f.order().getId()).getId());
+        assertEquals("succeeded", memberTask(f.order().getId()).getStatus());
+    }
+
+    @Test
+    void refundApplicationReceiptUpdateFailureRollsBackRefundLedgerAndStoppedCard() {
+        var f = refundFixture(true);
+        Long id = submitRefund(f.order().getId());
+        approveRefund(id);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_refund_application ADD CONSTRAINT reject_application_refunded CHECK (status<>'refunded')");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () -> linkedRefund(f, id, "refund-final-atomic", "99.99"));
+            assertEquals("approved", refundApplicationRows.selectById(id).getStatus());
+            assertEquals(
+                    new BigDecimal("0.00"),
+                    refundApplicationRows.selectById(id).getRefundedAmount());
+            assertEquals(
+                    new BigDecimal("0.00"),
+                    orderRows().selectById(f.order().getId()).getRefundedAmount());
+            assertEquals(1, financialEvents.selectCount());
+            assertEquals("active", purchasedCards().selectList().getFirst().getStatus());
+            assertEquals(
+                    0, jdbc.queryForObject("SELECT COUNT(*) FROM gym_order_refund", Integer.class));
+        } finally {
+            jdbc.execute(
+                    "ALTER TABLE gym_refund_application DROP CONSTRAINT reject_application_refunded");
+        }
+        linkedRefund(f, id, "refund-final-atomic", "99.99");
+        assertEquals("refunded", refundApplicationRows.selectById(id).getStatus());
+        assertEquals(2, financialEvents.selectCount());
+        assertEquals("inactive", purchasedCards().selectList().getFirst().getStatus());
+    }
+
+    @Test
+    void refundApplicationReceiptMustFollowReviewAndCannotExceedItsFrozenAmount() {
+        when(businessClock.now())
+                .thenReturn(
+                        java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS));
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        Long orderId =
+                Long.valueOf(
+                        mobileOrders.create(memberOrder(ids, "card"), "refund-partial-order").id());
+        var order = orderRows().selectById(orderId);
+        loginAs(1L);
+        when(receiptVerifier.payment("partial-request-payment"))
+                .thenReturn(receipt(order, "partial-request-payment", null, "40.00"));
+        commerce.acceptPayment(orderId, "partial-request-payment");
+        Long id = submitRefund(orderId);
+        assertEquals(
+                new BigDecimal("40.00"), refundApplicationRows.selectById(id).getRequestedAmount());
+        loginAs(1L);
+        when(businessClock.now()).thenReturn(order.getOrderedAt().plusSeconds(10));
+        approveRefund(id);
+        when(receiptVerifier.refund("too-early-refund"))
+                .thenReturn(receipt(order, "too-early-refund", "partial-request-payment", "10.00"));
+        assertServiceException(
+                () -> commerce.acceptRefundForApplication(orderId, id, "too-early-refund"),
+                REFUND_APPLICATION_INVALID);
+        when(receiptVerifier.payment("remaining-request-payment"))
+                .thenReturn(receipt(order, "remaining-request-payment", null, "59.99"));
+        commerce.acceptPayment(orderId, "remaining-request-payment");
+        assertEquals("waiting_refund", memberTask(orderId).getStatus());
+        var excessive =
+                new cn.iocoder.yudao.module.gym.service.sales.payment.GymPaymentReceiptVerifier
+                        .Receipt(
+                        1L,
+                        "test-provider",
+                        "over-application",
+                        order.getOrderNo(),
+                        "remaining-request-payment",
+                        "CNY",
+                        new BigDecimal("50.00"),
+                        order.getOrderedAt().plusSeconds(11));
+        when(receiptVerifier.refund("over-application")).thenReturn(excessive);
+        assertServiceException(
+                () -> commerce.acceptRefundForApplication(orderId, id, "over-application"),
+                REFUND_APPLICATION_INVALID);
+        assertEquals(2, financialEvents.selectCount());
+        assertEquals(
+                new BigDecimal("0.00"), refundApplicationRows.selectById(id).getRefundedAmount());
+    }
+
+    @Test
+    void refundApplicationUnapprovedOrDifferentOrderCannotReachReceiptVerifier() {
+        var f = refundFixture(false);
+        Long id = submitRefund(f.order().getId());
+        loginAs(1L);
+        clearInvocations(receiptVerifier);
+        assertServiceException(
+                () ->
+                        commerce.acceptRefundForApplication(
+                                f.order().getId(), id, "unapproved-refund"),
+                REFUND_APPLICATION_INVALID);
+        verifyNoInteractions(receiptVerifier);
+        approveRefund(id);
+        qrMemberLogin();
+        Long otherOrder =
+                Long.valueOf(
+                        mobileOrders
+                                .create(memberOrder(f.ids(), "card"), "refund-different-order")
+                                .id());
+        loginAs(1L);
+        assertServiceException(
+                () -> commerce.acceptRefundForApplication(otherOrder, id, "cross-order-refund"),
+                REFUND_APPLICATION_INVALID);
+        verifyNoInteractions(receiptVerifier);
+        assertEquals(1, financialEvents.selectCount());
+    }
+
+    @Test
+    void refundApplicationPartialPaymentRejectionResumesWaitingUntilRemainderIsVerified() {
+        when(businessClock.now()).thenReturn(java.time.Instant.now());
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        Long orderId =
+                Long.valueOf(
+                        mobileOrders
+                                .create(memberOrder(ids, "card"), "refund-waiting-partial")
+                                .id());
+        var order = orderRows().selectById(orderId);
+        loginAs(1L);
+        when(receiptVerifier.payment("refund-wait-first"))
+                .thenReturn(receipt(order, "refund-wait-first", null, "40.00"));
+        commerce.acceptPayment(orderId, "refund-wait-first");
+        Long id = submitRefund(orderId);
+        loginAs(1L);
+        assertEquals(
+                new BigDecimal("40.00"), refundApplicationRows.selectById(id).getRequestedAmount());
+        refundApplications.decide(id, refundDecision("reject", 1), "refund-partial-reject");
+        assertEquals("waiting_payment", memberTask(orderId).getStatus());
+        assertNull(memberTask(orderId).getNextAttemptAt());
+        when(receiptVerifier.payment("refund-wait-rest"))
+                .thenReturn(receipt(order, "refund-wait-rest", null, "59.99"));
+        commerce.acceptPayment(orderId, "refund-wait-rest");
+        assertEquals("pending", memberTask(orderId).getStatus());
+        assertEquals(2, financialEvents.selectCount());
+        assertEquals(0, purchasedCards().selectCount());
+    }
+
+    @Test
+    void refundApplicationRejectionDoesNotReplenishExhaustedFulfillmentBudget() {
+        var f = refundFixture(false);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update(
+                "UPDATE gym_fulfillment_task SET status='failed',attempt_count=8,attempt_limit=8,next_attempt_at=NULL WHERE order_id=?",
+                f.order().getId());
+        Long id = submitRefund(f.order().getId());
+        loginAs(1L);
+        refundApplications.decide(id, refundDecision("reject", 1), "refund-exhausted-reject");
+        var task = memberTask(f.order().getId());
+        assertEquals("failed", task.getStatus());
+        assertEquals(8, task.getAttemptCount());
+        assertEquals(8, task.getAttemptLimit());
+        assertNull(task.getNextAttemptAt());
+        assertFalse(fulfillmentWorker.process(task.getId()));
+        assertEquals(16, fulfillmentQueue.retry(f.order().getId()).getAttemptLimit());
+        assertEquals(50L, memberTask(f.order().getId()).getPrincipalUserId());
+    }
+
+    @Test
+    void refundApplicationRejectionNeverBypassesAnEarlierManualOpeningApprovalHold() {
+        var f = refundFixture(false);
+        commerce.openingSnapshot(f.order().getId(), 101L);
+        assertEquals("waiting_approval", memberTask(f.order().getId()).getStatus());
+        Long id = submitRefund(f.order().getId());
+        assertEquals("waiting_approval", memberTask(f.order().getId()).getStatus());
+        loginAs(1L);
+        refundApplications.decide(id, refundDecision("reject", 1), "refund-manual-hold-reject");
+        assertEquals("waiting_approval", memberTask(f.order().getId()).getStatus());
+        qrMemberLogin();
+        assertServiceException(
+                () -> memberFulfillment.fulfill(f.order().getId()), COMMERCE_FULFILLMENT_INVALID);
+        assertEquals(0, purchasedCards().selectCount());
+    }
+
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileDevicesService mobileDevices;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileDevicesController
+            mobileDevicesController;
+
+    @Resource cn.iocoder.yudao.module.gym.dal.mysql.device.GymDeviceMapper mobileDeviceRows;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.dal.mysql.device.GymDeviceCompartmentMapper mobileCompartmentRows;
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileDevicesVO.Query
+            mobileDeviceQuery(Long storeId) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileDevicesVO
+                        .Query();
+        req.setStoreId(storeId);
+        return req;
+    }
+
+    Long mobileLocker(String uid) {
+        return Long.valueOf(deviceService.createDevice(deviceRequest(101L, "locker", uid)).getId());
+    }
+
+    @Test
+    void mobileDevicesFiltersStoreAndSupportedTypesBeforePaginationWithoutTelemetryClaims() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        var door = deviceService.createDevice(deviceRequest(101L, "door", "MOBILE-DOOR"));
+        var locker = mobileLocker("MOBILE-LOCKER");
+        deviceService.createDevice(deviceRequest(101L, "camera", "MOBILE-CAMERA"));
+        deviceService.createDevice(deviceRequest(101L, "face_reader", "MOBILE-FACE"));
+        deviceService.createDevice(deviceRequest(102L, "door", "MOBILE-OTHER-STORE"));
+        var patch = new cn.iocoder.yudao.module.gym.controller.admin.device.vo.GymDeviceSaveReqVO();
+        patch.setStatus("inactive");
+        deviceService.patchDevice(locker, patch);
+        scoped(101L);
+        var req = mobileDeviceQuery(101L);
+        req.setPageSize(1);
+        var first = mobileDevices.devices(req);
+        assertEquals(2, first.getTotal());
+        assertEquals(door.getId(), first.getList().getFirst().id());
+        assertEquals("active", first.getList().getFirst().status());
+        req.setPageNo(2);
+        assertEquals("inactive", mobileDevices.devices(req).getList().getFirst().status());
+        req.setPageNo(1);
+        req.setType("locker");
+        assertEquals(1, mobileDevices.devices(req).getTotal());
+        assertEquals(locker.toString(), mobileDevices.devices(req).getList().getFirst().id());
+        req.setPageNo(2);
+        assertEquals(1, mobileDevices.devices(req).getTotal());
+        assertTrue(mobileDevices.devices(req).getList().isEmpty());
+        var json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(first);
+        for (String hidden : List.of("deviceUid", "provider", "online", "lastSeenAt", "location"))
+            assertFalse(json.contains("\"" + hidden + "\""));
+    }
+
+    @Test
+    void mobileDevicesCompartmentsPageOnlyConfiguredRowsAndPreserveRealAdministrativeStatus() {
+        stores.create(store(101L, "A"));
+        Long a = mobileLocker("MOBILE-A"), b = mobileLocker("MOBILE-B");
+        var configured = deviceService.saveCompartments(a, compartments("A1", "A2", "A3"));
+        deviceService.saveCompartments(b, compartments("B1"));
+        deviceService.saveCompartments(a, compartments("A1", "A3"));
+        Long kept = Long.valueOf(configured.getCompartments().get(2).getId());
+        var row = mobileCompartmentRows.selectById(kept);
+        row.setStatus("inactive");
+        row.setOccupancyState("occupied");
+        mobileCompartmentRows.updateById(row);
+        var req = new cn.iocoder.yudao.framework.common.pojo.PageParam();
+        req.setPageSize(1);
+        var first = mobileDevices.compartments(a, req);
+        assertEquals(2, first.getTotal());
+        assertEquals("A1", first.getList().getFirst().number());
+        req.setPageNo(2);
+        var second = mobileDevices.compartments(a, req);
+        assertEquals(kept.toString(), second.getList().getFirst().id());
+        assertEquals("inactive", second.getList().getFirst().status());
+        var json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(second);
+        assertFalse(json.contains("occupancyState"));
+        assertFalse(json.contains("occupied"));
+        assertFalse(json.contains("configured"));
+        // Reading does not reset hardware state or create any command.
+        assertEquals("occupied", mobileCompartmentRows.selectById(kept).getOccupancyState());
+        assertEquals(0, deviceService.commands(a, new GymBusinessPageReqVO()).getTotal());
+    }
+
+    @Test
+    void mobileDevicesRequireFunctionalPermissionAndCurrentWholeStoreScopeForBothRoutes() {
+        stores.create(store(101L, "A"));
+        var locker = mobileLocker("MOBILE-SCOPE");
+        deviceService.saveCompartments(locker, compartments("01"));
+        var req = mobileDeviceQuery(101L);
+        var page = new cn.iocoder.yudao.framework.common.pojo.PageParam();
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> mobileDevicesController.devices(req));
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> mobileDevicesController.compartments(locker, page));
+        when(permissions.hasAnyPermissions(1L, "gym:devices:read")).thenReturn(true);
+        assertEquals(1, mobileDevicesController.devices(req).getData().getTotal());
+        assertEquals(1, mobileDevicesController.compartments(locker, page).getData().getTotal());
+        scoped(102L);
+        assertServiceException(() -> mobileDevicesController.devices(req), STORE_NO_PERMISSION);
+        assertServiceException(
+                () -> mobileDevicesController.compartments(locker, page), STORE_NO_PERMISSION);
+        var self = new DeptDataPermissionRespDTO();
+        self.setAll(false);
+        self.setSelf(true);
+        self.setDeptIds(Set.of());
+        when(permissions.getDeptDataPermission(any())).thenReturn(self);
+        assertServiceException(() -> mobileDevices.devices(req), STORE_NO_PERMISSION);
+        assertServiceException(() -> mobileDevices.compartments(locker, page), STORE_NO_PERMISSION);
+        headquarters();
+        when(permissions.hasAnyPermissions(1L, "gym:devices:read")).thenReturn(false);
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> mobileDevicesController.compartments(locker, page));
+    }
+
+    @Test
+    void mobileDevicesRejectMemberDisabledAndMismatchedTenantIdentities() {
+        stores.create(store(101L, "A"));
+        Long locker = mobileLocker("MOBILE-IDENTITY");
+        var req = mobileDeviceQuery(101L);
+        var page = new cn.iocoder.yudao.framework.common.pojo.PageParam();
+        qrMemberLogin();
+        assertServiceException(() -> mobileDevices.devices(req), MOBILE_IDENTITY_INVALID);
+        assertServiceException(
+                () -> mobileDevices.compartments(locker, page), MOBILE_IDENTITY_INVALID);
+        loginAs(1L);
+        var account = workAccounts.getUser(1L);
+        account.setStatus(1);
+        when(workAccounts.getUser(1L)).thenReturn(account);
+        assertServiceException(() -> mobileDevices.devices(req), MOBILE_IDENTITY_INVALID);
+        assertServiceException(
+                () -> mobileDevices.compartments(locker, page), MOBILE_IDENTITY_INVALID);
+        account.setStatus(0);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> mobileDevices.devices(req), MOBILE_IDENTITY_INVALID);
+        assertServiceException(
+                () -> mobileDevices.compartments(locker, page), MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void mobileDevicesDoNotLeakOtherTenantRowsAndRejectMissingOrWrongParent() {
+        stores.create(store(101L, "A"));
+        Long locker = mobileLocker("MOBILE-TENANT");
+        deviceService.saveCompartments(locker, compartments("01"));
+        var door =
+                Long.valueOf(
+                        deviceService
+                                .createDevice(deviceRequest(101L, "door", "MOBILE-NOT-LOCKER"))
+                                .getId());
+        var page = new cn.iocoder.yudao.framework.common.pojo.PageParam();
+        assertServiceException(
+                () -> mobileDevices.compartments(door, page), DEVICE_COMPARTMENT_INVALID);
+        assertServiceException(
+                () -> mobileDevices.compartments(Long.MAX_VALUE, page), DEVICE_NOT_EXISTS);
+        assertServiceException(
+                () -> mobileDevices.devices(mobileDeviceQuery(999L)), STORE_NOT_EXISTS);
+        // An authenticated second tenant cannot resolve the first tenant's store or device.
+        TenantContextHolder.setTenantId(2L);
+        cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser()
+                .setTenantId(2L);
+        stores.create(store(202L, "TENANT-B"));
+        assertServiceException(
+                () -> mobileDevices.devices(mobileDeviceQuery(101L)), STORE_NOT_EXISTS);
+        assertEquals(0, mobileDevices.devices(mobileDeviceQuery(202L)).getTotal());
+        assertServiceException(() -> mobileDevices.compartments(locker, page), DEVICE_NOT_EXISTS);
+        var own =
+                deviceService
+                        .createDevice(deviceRequest(202L, "locker", "MOBILE-TENANT-B"))
+                        .getId();
+        assertEquals(own, mobileDevices.devices(mobileDeviceQuery(202L)).getList().getFirst().id());
+    }
+
+    @Test
+    void mobileDevicesKeepInactiveStoreInventoryButExcludeDeletedRecords() {
+        stores.create(store(101L, "A"));
+        var locker = mobileLocker("MOBILE-DELETED");
+        var config = deviceService.saveCompartments(locker, compartments("01", "02"));
+        mobileCompartmentRows.deleteById(Long.valueOf(config.getCompartments().getFirst().getId()));
+        var store = storeMapper.selectById(101L);
+        store.setStatus("inactive");
+        storeMapper.updateById(store);
+        assertEquals(1, mobileDevices.devices(mobileDeviceQuery(101L)).getTotal());
+        assertEquals(
+                1,
+                mobileDevices
+                        .compartments(
+                                locker, new cn.iocoder.yudao.framework.common.pojo.PageParam())
+                        .getTotal());
+        mobileDeviceRows.deleteById(locker);
+        assertEquals(0, mobileDevices.devices(mobileDeviceQuery(101L)).getTotal());
+        assertServiceException(
+                () ->
+                        mobileDevices.compartments(
+                                locker, new cn.iocoder.yudao.framework.common.pojo.PageParam()),
+                DEVICE_NOT_EXISTS);
+        storeMapper.deleteById(101L);
+        assertServiceException(
+                () -> mobileDevices.devices(mobileDeviceQuery(101L)), STORE_NOT_EXISTS);
+    }
+
+    @Test
+    void mobileDevicesValidateRequiredStoreTypesAndBoundedPaginationInService() {
+        stores.create(store(101L, "A"));
+        var req = mobileDeviceQuery(null);
+        assertThrows(ConstraintViolationException.class, () -> mobileDevices.devices(req));
+        req.setStoreId(101L);
+        req.setType("camera");
+        assertThrows(ConstraintViolationException.class, () -> mobileDevices.devices(req));
+        req.setType(null);
+        req.setPageSize(-1);
+        assertThrows(ConstraintViolationException.class, () -> mobileDevices.devices(req));
+        req.setPageSize(201);
+        assertThrows(ConstraintViolationException.class, () -> mobileDevices.devices(req));
+        req.setPageSize(10);
+        req.setPageNo(0);
+        assertThrows(ConstraintViolationException.class, () -> mobileDevices.devices(req));
+        assertServiceException(
+                () ->
+                        mobileDevices.compartments(
+                                0L, new cn.iocoder.yudao.framework.common.pojo.PageParam()),
+                MOBILE_REQUEST_INVALID);
+    }
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileNotificationsService mobileNotifications;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileNotificationPublisher notificationPublisher;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileNotificationMapper notificationRows;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileNotificationPreferenceMapper
+            notificationPreferences;
+
+    record NotificationFixture(Long member, Long coach, Long booking) {}
+
+    NotificationFixture notificationFixture() {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L);
+        Long member = Long.valueOf(members.create(member(101L, "13800002401")).getId());
+        qrMemberIdentity(member);
+        memberCoaches.replace(member, 101L, responsibility(coach));
+        Long booking =
+                workCourseBooking(
+                        member, coach, 101L, java.time.Instant.parse("2026-10-24T02:00:00Z"));
+        when(permissions.hasAnyPermissions(any(), eq("gym:bookings:read"))).thenReturn(true);
+        return new NotificationFixture(member, coach, booking);
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileNotificationsVO.Query
+            notificationQuery(String type) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileNotificationsVO
+                        .Query();
+        req.setType(type);
+        return req;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileNotificationsVO.Preferences
+            notificationPreference(boolean enabled, String... keys) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileNotificationsVO
+                        .Preferences();
+        req.setTemplateKeys(Arrays.asList(keys));
+        req.setEnabled(enabled);
+        return req;
+    }
+
+    void notificationTx(Runnable action) {
+        new org.springframework.transaction.support.TransactionTemplate(
+                        applicationContext.getBean(
+                                org.springframework.transaction.PlatformTransactionManager.class))
+                .executeWithoutResult(status -> action.run());
+    }
+
+    @Test
+    void notificationsActualBookingAndCoursePackCreateSeparateMemberAndCoachInboxes() {
+        var f = notificationFixture();
+        assertEquals(3, notificationRows.selectCount());
+        qrMemberLogin();
+        var all = mobileNotifications.memberPage(notificationQuery(null));
+        assertEquals(2, all.getTotal());
+        var booking =
+                mobileNotifications.memberPage(notificationQuery("booking")).getList().getFirst();
+        assertEquals(f.booking().toString(), booking.businessId());
+        assertEquals("预约已确认", booking.title());
+        assertNull(booking.readAt());
+        assertTrue(booking.createdAt().endsWith("+08:00"));
+        var pack =
+                mobileNotifications
+                        .memberPage(notificationQuery("course_pack"))
+                        .getList()
+                        .getFirst();
+        assertNotNull(
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper
+                                        .class)
+                        .selectById(Long.valueOf(pack.businessId())));
+        personalScope(91L);
+        assertEquals(1, mobileNotifications.staffPage(notificationQuery(null)).getTotal());
+        assertServiceException(
+                () -> mobileNotifications.staffRead(Long.valueOf(booking.id())),
+                MOBILE_NOTIFICATION_NOT_EXISTS);
+        loginAs(1L);
+        headquarters();
+        assertEquals(0, mobileNotifications.staffPage(notificationQuery(null)).getTotal());
+    }
+
+    @Test
+    void notificationsBookingReplayAndSameTickCancelRebookDoNotLoseNewTransitions() {
+        var f = notificationFixture();
+        long before = notificationRows.selectCount();
+        notificationTx(() -> notificationPublisher.booking(f.booking()));
+        assertEquals(before, notificationRows.selectCount());
+        qrMemberLogin();
+        var cancel =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileBookingVO
+                        .Cancel();
+        mobileBookings.cancel(f.booking(), cancel, "notification-cancel-key");
+        mobileBookings.cancel(f.booking(), cancel, "notification-cancel-again");
+        assertEquals(2, mobileNotifications.memberPage(notificationQuery("booking")).getTotal());
+        var row =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymBookingMapper.class)
+                        .selectById(f.booking());
+        var create =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileBookingVO
+                        .Create();
+        create.setSessionId(row.getSessionId());
+        create.setCoursePackId(row.getMemberCoursePackId());
+        mobileBookings.create(create, "notification-rebook-key");
+        mobileBookings.create(create, "notification-rebook-key");
+        assertEquals(3, mobileNotifications.memberPage(notificationQuery("booking")).getTotal());
+        assertEquals(
+                "预约已确认",
+                mobileNotifications
+                        .memberPage(notificationQuery("booking"))
+                        .getList()
+                        .getFirst()
+                        .title());
+        assertEquals(before + 4, notificationRows.selectCount());
+    }
+
+    @Test
+    void notificationsMarkReadIsIdempotentAndUnreadFilterPrecedesPagination() {
+        notificationFixture();
+        qrMemberLogin();
+        var req = notificationQuery(null);
+        req.setPageSize(1);
+        req.setUnreadOnly(true);
+        assertEquals(2, mobileNotifications.memberPage(req).getTotal());
+        var id = Long.valueOf(mobileNotifications.memberPage(req).getList().getFirst().id());
+        assertTrue(mobileNotifications.memberRead(id));
+        var at = notificationRows.selectById(id).getReadAt();
+        when(businessClock.now()).thenReturn(at.plusSeconds(100));
+        assertTrue(mobileNotifications.memberRead(id));
+        assertEquals(at, notificationRows.selectById(id).getReadAt());
+        assertEquals(1, mobileNotifications.memberPage(req).getTotal());
+        assertNotEquals(
+                id.toString(), mobileNotifications.memberPage(req).getList().getFirst().id());
+        req.setPageNo(2);
+        assertEquals(1, mobileNotifications.memberPage(req).getTotal());
+        assertTrue(mobileNotifications.memberPage(req).getList().isEmpty());
+        req.setPageNo(1);
+        req.setUnreadOnly(false);
+        assertEquals(2, mobileNotifications.memberPage(req).getTotal());
+    }
+
+    @Test
+    void notificationsStaffReadsRecheckPermissionsResponsibilityAndTeachingScope() {
+        var f = notificationFixture();
+        personalScope(91L);
+        var query = notificationQuery("booking");
+        Long id = Long.valueOf(mobileNotifications.staffPage(query).getList().getFirst().id());
+        when(permissions.hasAnyPermissions(91L, "gym:bookings:read")).thenReturn(false);
+        assertEquals(0, mobileNotifications.staffPage(query).getTotal());
+        assertServiceException(
+                () -> mobileNotifications.staffRead(id), MOBILE_NOTIFICATION_NOT_EXISTS);
+        when(permissions.hasAnyPermissions(91L, "gym:bookings:read")).thenReturn(true);
+        assertTrue(mobileNotifications.staffRead(id));
+        loginAs(1L);
+        headquarters();
+        memberCoaches.replace(f.member(), 101L, responsibility());
+        personalScope(91L);
+        assertEquals(0, mobileNotifications.staffPage(query).getTotal());
+        assertServiceException(
+                () -> mobileNotifications.staffRead(id), MOBILE_NOTIFICATION_NOT_EXISTS);
+        loginAs(1L);
+        headquarters();
+        memberCoaches.replace(f.member(), 101L, responsibility(f.coach()));
+        var other = responsibleEmployee(92L);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_course_session SET coach_id=?", other);
+        personalScope(91L);
+        assertEquals(0, mobileNotifications.staffPage(query).getTotal());
+        jdbc.update("UPDATE gym_course_session SET coach_id=?", f.coach());
+        assertEquals(1, mobileNotifications.staffPage(query).getTotal());
+        jdbc.update(
+                "UPDATE gym_employee_store SET joined_on='2099-01-01' WHERE employee_id=?",
+                f.coach());
+        assertEquals(0, mobileNotifications.staffPage(query).getTotal());
+    }
+
+    @Test
+    void notificationsIdentityTenantAndDisabledAccountCannotReadOtherRecipients() {
+        notificationFixture();
+        qrMemberLogin();
+        Long id =
+                Long.valueOf(
+                        mobileNotifications
+                                .memberPage(notificationQuery(null))
+                                .getList()
+                                .getFirst()
+                                .id());
+        loginAs(50L);
+        headquarters();
+        assertEquals(0, mobileNotifications.staffPage(notificationQuery(null)).getTotal());
+        assertServiceException(
+                () -> mobileNotifications.staffRead(id), MOBILE_NOTIFICATION_NOT_EXISTS);
+        assertServiceException(() -> mobileNotifications.memberRead(id), MOBILE_IDENTITY_INVALID);
+        qrMemberLogin();
+        assertServiceException(
+                () -> mobileNotifications.staffPage(notificationQuery(null)),
+                MOBILE_IDENTITY_INVALID);
+        var user = memberAccounts.getUser(50L);
+        user.setStatus(1);
+        when(memberAccounts.getUser(50L)).thenReturn(user);
+        assertServiceException(() -> mobileNotifications.memberRead(id), MOBILE_IDENTITY_INVALID);
+        user.setStatus(0);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_mobile_notification SET tenant_id=2 WHERE id=?", id);
+        assertServiceException(
+                () -> mobileNotifications.memberRead(id), MOBILE_NOTIFICATION_NOT_EXISTS);
+        assertNull(notificationRows.selectById(id));
+        personalScope(91L);
+        var admin = workAccounts.getUser(91L);
+        admin.setStatus(1);
+        when(workAccounts.getUser(91L)).thenReturn(admin);
+        assertServiceException(
+                () -> mobileNotifications.staffPage(notificationQuery(null)),
+                MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void notificationsPreferencesOnlySaveIntentAndNeverMutePersistedBusinessRecords() {
+        notificationFixture();
+        qrMemberLogin();
+        assertTrue(
+                mobileNotifications
+                        .preferences(notificationPreference(false, "booking", "entitlement"))
+                        .saved());
+        assertEquals(2, notificationPreferences.selectCount());
+        var first = notificationPreferences.selectList().getFirst();
+        var at = first.getSavedAt();
+        when(businessClock.now()).thenReturn(at.plusSeconds(10));
+        mobileNotifications.preferences(notificationPreference(false, "entitlement", "booking"));
+        assertEquals(at, notificationPreferences.selectById(first.getId()).getSavedAt());
+        assertEquals(2, mobileNotifications.memberPage(notificationQuery(null)).getTotal());
+        mobileNotifications.preferences(notificationPreference(true, "contract"));
+        assertEquals(3, notificationPreferences.selectCount());
+        assertEquals(0, mobileNotifications.memberPage(notificationQuery("contract")).getTotal());
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> mobileNotifications.preferences(notificationPreference(true, "unknown")));
+        assertServiceException(
+                () ->
+                        mobileNotifications.preferences(
+                                notificationPreference(true, "booking", "booking")),
+                MOBILE_REQUEST_INVALID);
+        loginAs(50L);
+        assertServiceException(
+                () -> mobileNotifications.preferences(notificationPreference(true, "booking")),
+                MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void notificationsPreferencesAreAtomicWhenOneSelectedKeyFails() {
+        notificationFixture();
+        qrMemberLogin();
+        mobileNotifications.preferences(notificationPreference(false, "booking"));
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_mobile_notification_preference ADD CONSTRAINT test_notification_preference_failure CHECK(template_key <> 'contract')");
+        try {
+            assertThrows(
+                    RuntimeException.class,
+                    () ->
+                            mobileNotifications.preferences(
+                                    notificationPreference(true, "booking", "contract")));
+            assertEquals(1, notificationPreferences.selectCount());
+            assertFalse(notificationPreferences.selectList().getFirst().getEnabled());
+        } finally {
+            jdbc.execute(
+                    "ALTER TABLE gym_mobile_notification_preference DROP CONSTRAINT test_notification_preference_failure");
+        }
+        assertTrue(
+                mobileNotifications
+                        .preferences(notificationPreference(true, "booking", "contract"))
+                        .saved());
+        assertEquals(2, notificationPreferences.selectCount());
+    }
+
+    @Test
+    void notificationsFailureRollsBackBookingCancellationAndCanRetryOriginalKey() {
+        var f = notificationFixture();
+        qrMemberLogin();
+        long count = notificationRows.selectCount();
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_mobile_notification ADD CONSTRAINT test_notification_booking_failure CHECK(event_kind <> 'cancelled')");
+        var cancel =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileBookingVO
+                        .Cancel();
+        try {
+            assertThrows(
+                    RuntimeException.class,
+                    () -> mobileBookings.cancel(f.booking(), cancel, "notification-failed-cancel"));
+            assertEquals("confirmed", mobileBookings.get(f.booking()).status());
+            assertEquals(count, notificationRows.selectCount());
+        } finally {
+            jdbc.execute(
+                    "ALTER TABLE gym_mobile_notification DROP CONSTRAINT test_notification_booking_failure");
+        }
+        assertEquals(
+                "cancelled",
+                mobileBookings.cancel(f.booking(), cancel, "notification-failed-cancel").status());
+        assertEquals(count + 2, notificationRows.selectCount());
+    }
+
+    @Test
+    void notificationsCardAndUnsignedContractFollowActualFulfillmentAndDeduplicate() {
+        var f = refundFixture(true);
+        qrMemberLogin();
+        var cards = mobileNotifications.memberPage(notificationQuery("member_card"));
+        var contracts = mobileNotifications.memberPage(notificationQuery("contract"));
+        assertEquals(1, cards.getTotal());
+        assertEquals(1, contracts.getTotal());
+        assertTrue(contracts.getList().getFirst().content().contains("尚未签署"));
+        Long card = Long.valueOf(cards.getList().getFirst().businessId());
+        Long contract = Long.valueOf(contracts.getList().getFirst().businessId());
+        long count = notificationRows.selectCount();
+        notificationTx(
+                () -> {
+                    notificationPublisher.card(card);
+                    notificationPublisher.contract(contract);
+                });
+        assertEquals(count, notificationRows.selectCount());
+        assertEquals(
+                "unsigned",
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.contract.GymContractMapper
+                                        .class)
+                        .selectById(contract)
+                        .getStatus());
+    }
+
+    @Test
+    void notificationsActivityUsesActualActivityTargetAndEveryCancellationPath() {
+        mobileActivityMember();
+        Long activity =
+                Long.valueOf(
+                        mobileActivities
+                                .create(mobileActivityRequest(), "notification-activity-create")
+                                .id());
+        qrMemberLogin();
+        mobileActivities.register(activity, "notification-activity-register");
+        mobileActivities.register(activity, "notification-activity-replay");
+        assertEquals(1, mobileNotifications.memberPage(notificationQuery("activity")).getTotal());
+        assertEquals(
+                activity.toString(),
+                mobileNotifications
+                        .memberPage(notificationQuery("activity"))
+                        .getList()
+                        .getFirst()
+                        .businessId());
+        mobileActivities.cancel(activity);
+        mobileActivities.cancel(activity);
+        assertEquals(2, mobileNotifications.memberPage(notificationQuery("activity")).getTotal());
+        mobileActivities.register(activity, "notification-activity-rejoin");
+        assertEquals(3, mobileNotifications.memberPage(notificationQuery("activity")).getTotal());
+        loginAs(1L);
+        headquarters();
+        var patch =
+                new cn.iocoder.yudao.module.gym.controller.admin.marketing.vo
+                        .GymActivitySaveReqVO();
+        patch.setStatus("cancelled");
+        marketing.patchActivity(activity, patch);
+        qrMemberLogin();
+        assertEquals(4, mobileNotifications.memberPage(notificationQuery("activity")).getTotal());
+        assertEquals(
+                "活动报名已取消",
+                mobileNotifications
+                        .memberPage(notificationQuery("activity"))
+                        .getList()
+                        .getFirst()
+                        .title());
+    }
+
+    @Test
+    void notificationsDoNotBackfillOldEventsWhenMemberInitializesLater() {
+        var f = lessonFixture(false);
+        qrMemberIdentity(f.member());
+        qrMemberLogin();
+        assertEquals(0, mobileNotifications.memberPage(notificationQuery(null)).getTotal());
+        notificationTx(() -> notificationPublisher.booking(f.booking()));
+        assertEquals(0, mobileNotifications.memberPage(notificationQuery(null)).getTotal());
+    }
+
+    @Test
+    void notificationsConcurrentDuplicateSourceProjectionCreatesOneEventPerRecipient()
+            throws Exception {
+        var f = notificationFixture();
+        long count = notificationRows.selectCount();
+        var values =
+                workCourseRace(
+                        () -> {
+                            notificationTx(() -> notificationPublisher.booking(f.booking()));
+                            return true;
+                        },
+                        () -> {
+                            notificationTx(() -> notificationPublisher.booking(f.booking()));
+                            return true;
+                        });
+        assertEquals(List.of(true, true), values);
+        assertEquals(count, notificationRows.selectCount());
+    }
+
+    @Test
+    void notificationsConcurrentReadKeepsOneTimestampAndPreferenceKeysDoNotOverwriteOthers()
+            throws Exception {
+        notificationFixture();
+        qrMemberLogin();
+        Long id =
+                Long.valueOf(
+                        mobileNotifications
+                                .memberPage(notificationQuery(null))
+                                .getList()
+                                .getFirst()
+                                .id());
+        var values =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            return mobileNotifications.memberRead(id);
+                        },
+                        () -> {
+                            qrMemberLogin();
+                            return mobileNotifications.memberRead(id);
+                        });
+        assertEquals(List.of(true, true), values);
+        assertNotNull(notificationRows.selectById(id).getReadAt());
+        var prefs =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            return mobileNotifications
+                                    .preferences(notificationPreference(true, "booking"))
+                                    .saved();
+                        },
+                        () -> {
+                            qrMemberLogin();
+                            return mobileNotifications
+                                    .preferences(notificationPreference(false, "contract"))
+                                    .saved();
+                        });
+        assertEquals(List.of(true, true), prefs);
+        assertEquals(2, notificationPreferences.selectCount());
+    }
+
+    @Test
+    void notificationsHistoryRemainsOwnedAfterMembershipRemovalButNotAfterIdentityRebinding() {
+        var f = notificationFixture();
+        qrMemberLogin();
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_member_store SET deleted=1 WHERE member_id=?", f.member());
+        jdbc.update("UPDATE gym_store SET status='inactive' WHERE id=101");
+        assertEquals(2, mobileNotifications.memberPage(notificationQuery(null)).getTotal());
+        Long id =
+                Long.valueOf(
+                        mobileNotifications
+                                .memberPage(notificationQuery(null))
+                                .getList()
+                                .getFirst()
+                                .id());
+        assertTrue(mobileNotifications.memberRead(id));
+        jdbc.update("UPDATE gym_mobile_notification SET recipient_user_id=51 WHERE id=?", id);
+        assertServiceException(
+                () -> mobileNotifications.memberRead(id), MOBILE_NOTIFICATION_NOT_EXISTS);
+        jdbc.update(
+                "UPDATE gym_mobile_notification SET recipient_user_id=50,member_id=99999 WHERE id=?",
+                id);
+        assertServiceException(
+                () -> mobileNotifications.memberRead(id), MOBILE_NOTIFICATION_NOT_EXISTS);
+    }
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileConversationsService mobileConversations;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileConversationsController
+            conversationsController;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileConversationMapper conversationRows;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileMessageMapper conversationMessages;
+
+    Long conversationMember(boolean bind) {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        Long member = Long.valueOf(members.create(member(101L, "13800002401")).getId());
+        if (bind) qrMemberIdentity(member);
+        when(permissions.hasAnyPermissions(any(), eq("gym:messages:read"))).thenReturn(true);
+        when(permissions.hasAnyPermissions(any(), eq("gym:messages:send"))).thenReturn(true);
+        return member;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileConversationsVO.Create
+            conversationCreate(Long member, Long store) {
+        var r =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileConversationsVO
+                        .Create();
+        r.setMemberId(member);
+        r.setStoreId(store);
+        return r;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileConversationsVO.Send
+            conversationText(String text) {
+        var r =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileConversationsVO
+                        .Send();
+        r.setContent(text);
+        return r;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileConversationsVO.Query
+            conversationQuery() {
+        return new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileConversationsVO
+                .Query();
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileConversationsVO.Read
+            conversationRead(Long message) {
+        var r =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileConversationsVO
+                        .Read();
+        r.setLastReadMessageId(message);
+        return r;
+    }
+
+    Long createConversation(Long member) {
+        return Long.valueOf(
+                mobileConversations
+                        .create(conversationCreate(member, 101L), "conversation-create-key")
+                        .id());
+    }
+
+    @Test
+    void conversationsCreateOneStoreServiceThreadAcrossStaffAndKeysWithoutInventingMessages() {
+        Long member = conversationMember(true);
+        var req = conversationCreate(member, 101L);
+        Long id = createConversation(member);
+        assertEquals(
+                id.toString(), mobileConversations.create(req, "conversation-create-key").id());
+        loginAs(91L);
+        assertEquals(
+                id.toString(),
+                mobileConversations.create(req, "conversation-different-staff").id());
+        assertEquals(1, conversationRows.selectCount());
+        assertEquals(1L, conversationRows.selectById(id).getCreatorUserId());
+        assertEquals(0, conversationMessages.selectCount());
+        qrMemberLogin();
+        var page =
+                mobileConversations.memberConversations(
+                        new cn.iocoder.yudao.framework.common.pojo.PageParam());
+        assertEquals(1, page.getTotal());
+        assertNull(page.getList().getFirst().lastMessage());
+        assertEquals(0, page.getList().getFirst().unreadCount());
+        assertEquals(0, mobileConversations.memberMessages(id, conversationQuery()).getTotal());
+    }
+
+    @Test
+    void conversationsRealMessagesKeepActualSenderTypesAndLatestSummaryWithoutReadSideEffects() {
+        Long member = conversationMember(true), id = createConversation(member);
+        var first =
+                mobileConversations.staffSend(
+                        id, conversationText("  您好\n请确认课程安排  "), "conversation-staff-first");
+        assertEquals("employee", first.senderType());
+        assertEquals("您好\n请确认课程安排", first.content());
+        assertEquals(
+                1L, conversationMessages.selectById(Long.valueOf(first.id())).getSenderUserId());
+        qrMemberLogin();
+        assertEquals(
+                1,
+                mobileConversations
+                        .memberConversations(new cn.iocoder.yudao.framework.common.pojo.PageParam())
+                        .getList()
+                        .getFirst()
+                        .unreadCount());
+        var reply =
+                mobileConversations.memberSend(
+                        id, conversationText("<b>明天可以</b>"), "conversation-member-first");
+        assertEquals("member", reply.senderType());
+        assertEquals("<b>明天可以</b>", reply.content());
+        assertEquals(
+                50L, conversationMessages.selectById(Long.valueOf(reply.id())).getSenderUserId());
+        var summary =
+                mobileConversations
+                        .memberConversations(new cn.iocoder.yudao.framework.common.pojo.PageParam())
+                        .getList()
+                        .getFirst();
+        assertEquals(reply, summary.lastMessage());
+        assertEquals(1, summary.unreadCount());
+        assertEquals(2, mobileConversations.memberMessages(id, conversationQuery()).getTotal());
+        assertEquals(0L, conversationRows.selectById(id).getMemberReadMessageId());
+    }
+
+    @Test
+    void conversationsMessageIdempotencySeparatesChangedPayloadNewMessagesAndUserTypes() {
+        Long member = conversationMember(true), id = createConversation(member);
+        var first =
+                mobileConversations.staffSend(
+                        id, conversationText("hello"), "conversation-message-key");
+        assertEquals(
+                first,
+                mobileConversations.staffSend(
+                        id, conversationText(" hello "), "conversation-message-key"));
+        assertServiceException(
+                () ->
+                        mobileConversations.staffSend(
+                                id, conversationText("changed"), "conversation-message-key"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        var second =
+                mobileConversations.staffSend(
+                        id, conversationText("hello"), "conversation-message-new");
+        assertNotEquals(first.id(), second.id());
+        assertEquals(2, conversationRows.selectById(id).getMemberUnreadCount());
+        qrMemberLogin();
+        mobileConversations.memberSend(id, conversationText("hello"), "conversation-message-key");
+        assertEquals(3, conversationMessages.selectCount());
+        assertEquals(2, conversationRows.selectById(id).getMemberUnreadCount());
+    }
+
+    @Test
+    void conversationsRecheckFunctionPermissionsBeforeReadCreateOrCachedSend() {
+        Long member = conversationMember(true), id = createConversation(member);
+        var message =
+                mobileConversations.staffSend(
+                        id, conversationText("test"), "conversation-permission-key");
+        when(permissions.hasAnyPermissions(1L, "gym:messages:send")).thenReturn(false);
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () ->
+                        mobileConversations.staffSend(
+                                id, conversationText("test"), "conversation-permission-key"));
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () ->
+                        conversationsController.create(
+                                conversationCreate(member, 101L), "conversation-create-key"));
+        assertEquals(1, mobileConversations.staffMessages(id, conversationQuery()).getTotal());
+        when(permissions.hasAnyPermissions(1L, "gym:messages:read")).thenReturn(false);
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> conversationsController.messages(id, conversationQuery()));
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> mobileConversations.staffMessages(id, conversationQuery()));
+        assertEquals(message.id(), conversationRows.selectById(id).getLastMessageId().toString());
+    }
+
+    @Test
+    void conversationsSharedParticipantsNeedCurrentMemberResponsibilityAndRevocationBlocksReplay() {
+        Long member = conversationMember(true), id = createConversation(member);
+        Long a = responsibleEmployee(91L), b = responsibleEmployee(92L);
+        memberCoaches.replace(member, 101L, responsibility(a, b));
+        personalScope(91L);
+        mobileConversations.staffSend(id, conversationText("来自甲"), "conversation-coach-a");
+        personalScope(92L);
+        assertEquals(1, mobileConversations.staffMessages(id, conversationQuery()).getTotal());
+        mobileConversations.staffSend(id, conversationText("来自乙"), "conversation-coach-b");
+        loginAs(1L);
+        headquarters();
+        memberCoaches.replace(member, 101L, responsibility(b));
+        personalScope(91L);
+        assertServiceException(
+                () -> mobileConversations.staffMessages(id, conversationQuery()),
+                STORE_NO_PERMISSION);
+        assertServiceException(
+                () ->
+                        mobileConversations.staffSend(
+                                id, conversationText("来自甲"), "conversation-coach-a"),
+                STORE_NO_PERMISSION);
+        personalScope(92L);
+        assertEquals(2, mobileConversations.staffMessages(id, conversationQuery()).getTotal());
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_employee SET status='inactive' WHERE id=?", b);
+        assertServiceException(
+                () -> mobileConversations.staffMessages(id, conversationQuery()),
+                STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void conversationsMemberHistorySurvivesRemovedMembershipButWritingDoesNot() {
+        Long member = conversationMember(true), id = createConversation(member);
+        var first =
+                mobileConversations.staffSend(
+                        id, conversationText("历史服务消息"), "conversation-history-staff");
+        qrMemberLogin();
+        mobileConversations.memberSend(id, conversationText("回复"), "conversation-history-member");
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_store SET status='inactive' WHERE id=101");
+        assertEquals(2, mobileConversations.memberMessages(id, conversationQuery()).getTotal());
+        assertServiceException(
+                () ->
+                        mobileConversations.memberSend(
+                                id, conversationText("回复"), "conversation-history-member"),
+                MOBILE_CONVERSATION_UNAVAILABLE);
+        jdbc.update("UPDATE gym_member_store SET deleted=1 WHERE member_id=?", member);
+        assertEquals(
+                1,
+                mobileConversations
+                        .memberConversations(new cn.iocoder.yudao.framework.common.pojo.PageParam())
+                        .getTotal());
+        assertEquals(
+                0,
+                mobileConversations
+                        .memberRead(id, conversationRead(Long.valueOf(first.id())))
+                        .unreadCount());
+        loginAs(1L);
+        headquarters();
+        assertServiceException(
+                () -> mobileConversations.staffMessages(id, conversationQuery()),
+                MOBILE_CONVERSATION_UNAVAILABLE);
+    }
+
+    @Test
+    void conversationsOtherMemberOtherStoreAndOtherTenantCannotReadOrAcknowledge() {
+        Long member = conversationMember(true), own = createConversation(member);
+        Long other = Long.valueOf(members.create(member(102L, "13800009801")).getId());
+        Long foreign =
+                Long.valueOf(
+                        mobileConversations
+                                .create(conversationCreate(other, 102L), "conversation-other-key")
+                                .id());
+        var msg =
+                mobileConversations.staffSend(
+                        foreign, conversationText("private"), "conversation-other-message");
+        qrMemberLogin();
+        assertEquals(
+                1,
+                mobileConversations
+                        .memberConversations(new cn.iocoder.yudao.framework.common.pojo.PageParam())
+                        .getTotal());
+        assertServiceException(
+                () -> mobileConversations.memberMessages(foreign, conversationQuery()),
+                MOBILE_CONVERSATION_NOT_EXISTS);
+        assertServiceException(
+                () ->
+                        mobileConversations.memberSend(
+                                foreign, conversationText("test"), "conversation-forged-member"),
+                MOBILE_CONVERSATION_NOT_EXISTS);
+        assertServiceException(
+                () -> mobileConversations.memberRead(own, conversationRead(Long.valueOf(msg.id()))),
+                MOBILE_CONVERSATION_MESSAGE_INVALID);
+        loginAs(1L);
+        scoped(101L);
+        assertServiceException(
+                () -> mobileConversations.staffMessages(foreign, conversationQuery()),
+                STORE_NO_PERMISSION);
+        headquarters();
+        TenantContextHolder.setTenantId(2L);
+        cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser()
+                .setTenantId(2L);
+        assertServiceException(
+                () -> mobileConversations.staffMessages(own, conversationQuery()),
+                MOBILE_CONVERSATION_NOT_EXISTS);
+    }
+
+    @Test
+    void conversationsReadCursorIsExplicitMonotonicAndDoesNotClearNewerMessages() {
+        Long member = conversationMember(true), id = createConversation(member);
+        Long first =
+                Long.valueOf(
+                        mobileConversations
+                                .staffSend(id, conversationText("one"), "conversation-read-one")
+                                .id());
+        Long second =
+                Long.valueOf(
+                        mobileConversations
+                                .staffSend(id, conversationText("two"), "conversation-read-two")
+                                .id());
+        qrMemberLogin();
+        assertEquals(2, mobileConversations.memberMessages(id, conversationQuery()).getTotal());
+        assertEquals(2, conversationRows.selectById(id).getMemberUnreadCount());
+        assertEquals(1, mobileConversations.memberRead(id, conversationRead(first)).unreadCount());
+        var done = mobileConversations.memberRead(id, conversationRead(second));
+        assertEquals(0, done.unreadCount());
+        assertEquals(done, mobileConversations.memberRead(id, conversationRead(first)));
+        assertServiceException(
+                () -> mobileConversations.memberRead(id, conversationRead(Long.MAX_VALUE)),
+                MOBILE_CONVERSATION_MESSAGE_INVALID);
+        assertEquals(second, conversationRows.selectById(id).getMemberReadMessageId());
+    }
+
+    @Test
+    void conversationsHistoryCursorAndPaginationStayInsideConversation() {
+        Long member = conversationMember(true), id = createConversation(member);
+        var ids = new ArrayList<Long>();
+        for (int i = 0; i < 5; i++)
+            ids.add(
+                    Long.valueOf(
+                            mobileConversations
+                                    .staffSend(
+                                            id,
+                                            conversationText("msg" + i),
+                                            "conversation-page-" + i)
+                                    .id()));
+        qrMemberLogin();
+        var req = conversationQuery();
+        req.setPageSize(2);
+        var newest = mobileConversations.memberMessages(id, req);
+        assertEquals(5, newest.getTotal());
+        assertEquals(ids.get(4).toString(), newest.getList().getFirst().id());
+        req.setBeforeId(ids.get(3));
+        var older = mobileConversations.memberMessages(id, req);
+        assertEquals(3, older.getTotal());
+        assertEquals(ids.get(2).toString(), older.getList().getFirst().id());
+        req.setPageNo(2);
+        assertEquals(
+                ids.getFirst().toString(),
+                mobileConversations.memberMessages(id, req).getList().getFirst().id());
+        req.setBeforeId(ids.getFirst());
+        assertEquals(0, mobileConversations.memberMessages(id, req).getTotal());
+        assertEquals(5, conversationRows.selectById(id).getMemberUnreadCount());
+    }
+
+    @Test
+    void conversationsConcurrentCreateWithDifferentKeysProducesOneThread() throws Exception {
+        Long member = conversationMember(true);
+        var req = conversationCreate(member, 101L);
+        var values =
+                workCourseRace(
+                        () -> mobileConversations.create(req, "conversation-concurrent-a"),
+                        () -> mobileConversations.create(req, "conversation-concurrent-b"));
+        assertEquals(values.getFirst(), values.getLast());
+        assertEquals(1, conversationRows.selectCount());
+        assertEquals(0, conversationMessages.selectCount());
+    }
+
+    @Test
+    void conversationsConcurrentSendReplaysSameKeyAndPreservesDifferentMessages() throws Exception {
+        Long member = conversationMember(true), id = createConversation(member);
+        var req = conversationText("same");
+        var values =
+                workCourseRace(
+                        () -> mobileConversations.staffSend(id, req, "conversation-race-same"),
+                        () -> mobileConversations.staffSend(id, req, "conversation-race-same"));
+        assertEquals(values.getFirst(), values.getLast());
+        assertEquals(1, conversationMessages.selectCount());
+        var different =
+                workCourseRace(
+                        () -> mobileConversations.staffSend(id, req, "conversation-race-a"),
+                        () -> mobileConversations.staffSend(id, req, "conversation-race-b"));
+        assertNotEquals(different.getFirst(), different.getLast());
+        assertEquals(3, conversationMessages.selectCount());
+        assertEquals(3, conversationRows.selectById(id).getMemberUnreadCount());
+        assertEquals(
+                conversationMessages.selectList().stream()
+                        .map(x -> x.getId())
+                        .max(Long::compareTo)
+                        .orElseThrow(),
+                conversationRows.selectById(id).getLastMessageId());
+    }
+
+    @Test
+    void conversationsConcurrentReadAndSendNeverMarkUnseenMessageRead() throws Exception {
+        Long member = conversationMember(true), id = createConversation(member);
+        Long seen =
+                Long.valueOf(
+                        mobileConversations
+                                .staffSend(id, conversationText("seen"), "conversation-race-seen")
+                                .id());
+        var values =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            return mobileConversations.memberRead(id, conversationRead(seen));
+                        },
+                        () ->
+                                mobileConversations.staffSend(
+                                        id, conversationText("new"), "conversation-race-unseen"));
+        assertFalse(values.stream().anyMatch(x -> x instanceof Throwable));
+        var row = conversationRows.selectById(id);
+        assertEquals(seen, row.getMemberReadMessageId());
+        assertEquals(1, row.getMemberUnreadCount());
+        assertTrue(row.getLastMessageId() > seen);
+    }
+
+    @Test
+    void conversationsSummaryFailureRollsBackMessageAndIdempotencyForRetry() {
+        Long member = conversationMember(true), id = createConversation(member);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_mobile_conversation ADD CONSTRAINT test_conversation_send_failure CHECK(member_unread_count=0)");
+        try {
+            assertThrows(
+                    RuntimeException.class,
+                    () ->
+                            mobileConversations.staffSend(
+                                    id, conversationText("retry"), "conversation-failed-send"));
+            assertEquals(0, conversationMessages.selectCount());
+            assertNull(conversationRows.selectById(id).getLastMessageId());
+        } finally {
+            jdbc.execute(
+                    "ALTER TABLE gym_mobile_conversation DROP CONSTRAINT test_conversation_send_failure");
+        }
+        assertEquals(
+                "retry",
+                mobileConversations
+                        .staffSend(id, conversationText("retry"), "conversation-failed-send")
+                        .content());
+        assertEquals(1, conversationMessages.selectCount());
+        assertEquals(1, conversationRows.selectById(id).getMemberUnreadCount());
+    }
+
+    @Test
+    void conversationsReadFailureRollsBackCursorAndCountTogether() {
+        Long member = conversationMember(true), id = createConversation(member);
+        Long message =
+                Long.valueOf(
+                        mobileConversations
+                                .staffSend(
+                                        id,
+                                        conversationText("unread"),
+                                        "conversation-read-rollback")
+                                .id());
+        qrMemberLogin();
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_mobile_conversation ADD CONSTRAINT test_conversation_read_failure CHECK(member_unread_count>0)");
+        try {
+            assertThrows(
+                    RuntimeException.class,
+                    () -> mobileConversations.memberRead(id, conversationRead(message)));
+            assertEquals(0L, conversationRows.selectById(id).getMemberReadMessageId());
+            assertEquals(1, conversationRows.selectById(id).getMemberUnreadCount());
+        } finally {
+            jdbc.execute(
+                    "ALTER TABLE gym_mobile_conversation DROP CONSTRAINT test_conversation_read_failure");
+        }
+        assertEquals(
+                0, mobileConversations.memberRead(id, conversationRead(message)).unreadCount());
+    }
+
+    @Test
+    void conversationsCreateFailureLeavesNoThreadOrSuccessfulKey() {
+        Long member = conversationMember(true);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_mobile_conversation ADD CONSTRAINT test_conversation_create_failure CHECK(store_id<>101)");
+        try {
+            assertThrows(RuntimeException.class, () -> createConversation(member));
+            assertEquals(0, conversationRows.selectCount());
+        } finally {
+            jdbc.execute(
+                    "ALTER TABLE gym_mobile_conversation DROP CONSTRAINT test_conversation_create_failure");
+        }
+        assertNotNull(createConversation(member));
+        assertEquals(1, conversationRows.selectCount());
+    }
+
+    @Test
+    void conversationsProspectWithoutLoginCanReceiveStoredServiceHistoryAfterBinding() {
+        Long member = conversationMember(false), id = createConversation(member);
+        mobileConversations.staffSend(
+                id, conversationText("欢迎咨询"), "conversation-prospect-message");
+        var registeredAccount = new cn.iocoder.yudao.module.member.api.user.dto.MemberUserRespDTO();
+        registeredAccount.setId(50L);
+        registeredAccount.setStatus(0);
+        registeredAccount.setMobile("13800002401");
+        when(memberAccounts.getUser(50L)).thenReturn(registeredAccount);
+        qrMemberLogin();
+        assertServiceException(
+                () -> mobileConversations.memberMessages(id, conversationQuery()),
+                MOBILE_IDENTITY_REQUIRED);
+        loginAs(1L);
+        qrMemberIdentity(member);
+        qrMemberLogin();
+        assertEquals(
+                "欢迎咨询",
+                mobileConversations
+                        .memberMessages(id, conversationQuery())
+                        .getList()
+                        .getFirst()
+                        .content());
+        assertEquals(
+                1,
+                mobileConversations
+                        .memberConversations(new cn.iocoder.yudao.framework.common.pojo.PageParam())
+                        .getList()
+                        .getFirst()
+                        .unreadCount());
+    }
+
+    @Test
+    void conversationsDisabledAccountsWrongTypesAndInvalidParametersFailBeforeWrites() {
+        Long member = conversationMember(true), id = createConversation(member);
+        qrMemberLogin();
+        assertServiceException(
+                () ->
+                        mobileConversations.staffSend(
+                                id, conversationText("forged"), "conversation-forged-staff"),
+                MOBILE_IDENTITY_INVALID);
+        var account = memberAccounts.getUser(50L);
+        account.setStatus(1);
+        when(memberAccounts.getUser(50L)).thenReturn(account);
+        assertServiceException(
+                () -> mobileConversations.memberMessages(id, conversationQuery()),
+                MOBILE_IDENTITY_INVALID);
+        loginAs(1L);
+        var admin = workAccounts.getUser(1L);
+        admin.setStatus(1);
+        when(workAccounts.getUser(1L)).thenReturn(admin);
+        assertServiceException(
+                () -> mobileConversations.staffMessages(id, conversationQuery()),
+                MOBILE_IDENTITY_INVALID);
+        admin.setStatus(0);
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () ->
+                        mobileConversations.staffSend(
+                                id, conversationText(" "), "conversation-empty-message"));
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () ->
+                        mobileConversations.staffSend(
+                                id,
+                                conversationText("x".repeat(2001)),
+                                "conversation-long-message"));
+        var q = conversationQuery();
+        q.setPageSize(-1);
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> mobileConversations.staffMessages(id, q));
+        assertEquals(0, conversationMessages.selectCount());
+    }
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.points.GymPointProductsController
+            pointProductController;
+
+    @Test
+    void pointProductManagementRequiresDedicatedFunctionPermissionForEveryOperation() {
+        var query =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobilePointProductsVO
+                        .Query();
+        query.setStoreId(101L);
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.admin.points.vo.GymPointProductVO.Save();
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> pointProductController.page(query));
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> pointProductController.create(req));
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> pointProductController.update(1L, req));
+    }
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobilePointRedemptionsService pointRedemptions;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.points.GymPointRedemptionTransactions pointRedemptionTx;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.points.GymPointRedemptionWorker pointRedemptionWorker;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.points.GymPointRedemptionScheduler pointRedemptionScheduler;
+
+    @Resource cn.iocoder.yudao.module.gym.service.points.GymPointLedgerService redemptionLedger;
+    @Resource cn.iocoder.yudao.module.gym.service.points.GymPointProductsService redemptionProducts;
+    @Resource cn.iocoder.yudao.module.gym.dal.mysql.points.GymPointRedemptionMapper redemptionRows;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.dal.mysql.points.GymPointProductMapper redemptionProductRows;
+
+    @Resource cn.iocoder.yudao.module.gym.dal.mysql.points.GymPointAccountMapper redemptionAccounts;
+    @Resource cn.iocoder.yudao.module.gym.dal.mysql.points.GymPointRecordMapper redemptionRecords;
+
+    record PointFixture(Long member, Long template, Long product) {}
+
+    PointFixture pointFixture(int stock, long balance) {
+        stores.create(store(101L, "A"));
+        Long member = Long.valueOf(members.create(member(101L, "13800002401")).getId());
+        Long template = Long.valueOf(cards.create(cardTemplate("count")).getId());
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.admin.points.vo.GymPointProductVO.Save();
+        req.setStoreId(101L);
+        req.setCardProductId(template);
+        req.setName("兑换次卡");
+        req.setRequiredPoints(100L);
+        req.setStock(stock);
+        req.setEnabled(true);
+        Long product = Long.valueOf(redemptionProducts.save(null, req).id());
+        qrMemberIdentity(member);
+        qrMemberLogin();
+        if (balance > 0) redemptionCredit(member, balance, "test:initial");
+        return new PointFixture(member, template, product);
+    }
+
+    void redemptionCredit(Long member, long amount, String key) {
+        var tx =
+                new org.springframework.transaction.support.TransactionTemplate(
+                        applicationContext.getBean(
+                                org.springframework.transaction.PlatformTransactionManager.class));
+        tx.execute(
+                status ->
+                        redemptionLedger.append(
+                                new cn.iocoder.yudao.module.gym.service.points.GymPointLedgerService
+                                        .Posting(member, key, "earn", amount, "测试真实账本来源", null)));
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobilePointRedemptionVO.Create redeem(
+            PointFixture f) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobilePointRedemptionVO
+                        .Create();
+        req.setStoreId(101L);
+        req.setProductId(f.product());
+        return req;
+    }
+
+    org.springframework.jdbc.core.JdbcTemplate redemptionJdbc() {
+        return new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+    }
+
+    long pointBalance(PointFixture f) {
+        return redemptionAccounts
+                .selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.points.GymPointAccountDO
+                                ::getMemberId,
+                        f.member())
+                .getBalance();
+    }
+
+    @Test
+    void pointRedemptionSuccessCreatesRealCardWithNoCashOrderAndOneDebit() {
+        var f = pointFixture(5, 500);
+        var result = pointRedemptions.create(redeem(f), "point-success-01");
+        assertEquals("succeeded", result.status());
+        assertEquals(100, result.spentPoints());
+        assertNotNull(result.memberCardId());
+        var card = purchasedCards().selectById(Long.valueOf(result.memberCardId()));
+        assertEquals(f.member(), card.getMemberId());
+        assertEquals(f.template(), card.getTemplateId());
+        assertEquals(10, card.getRemainingUses());
+        assertEquals("point-redemption", card.getSourceType());
+        assertEquals(result.id(), card.getSourceId());
+        assertEquals(400, pointBalance(f));
+        assertEquals(4, redemptionProductRows.selectById(f.product()).getStock());
+        assertEquals(0, redemptionProductRows.selectById(f.product()).getReservedStock());
+        assertEquals(
+                0L,
+                redemptionAccounts
+                        .selectOne(
+                                cn.iocoder.yudao.module.gym.dal.dataobject.points.GymPointAccountDO
+                                        ::getMemberId,
+                                f.member())
+                        .getRefundReserve());
+        assertEquals(2, redemptionRecords.selectCount());
+        assertEquals(0, orderRows().selectCount());
+        assertEquals(0, financialEvents.selectCount());
+    }
+
+    @Test
+    void pointRedemptionSameKeyReturnsLatestResultEvenAfterCatalogAndStoreClosure() {
+        var f = pointFixture(5, 500);
+        var result = pointRedemptions.create(redeem(f), "point-replay-01");
+        redemptionJdbc()
+                .update(
+                        "UPDATE gym_point_product SET enabled=FALSE,required_points=200 WHERE id=?",
+                        f.product());
+        redemptionJdbc().update("UPDATE gym_store SET status='inactive' WHERE id=101");
+        assertEquals(result, pointRedemptions.create(redeem(f), "point-replay-01"));
+        assertEquals(result, pointRedemptions.get(Long.valueOf(result.id())));
+        var changed = redeem(f);
+        changed.setProductId(9999L);
+        assertServiceException(
+                () -> pointRedemptions.create(changed, "point-replay-01"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        assertEquals(1, purchasedCards().selectCount());
+        assertEquals(2, redemptionRecords.selectCount());
+        assertEquals(400, pointBalance(f));
+    }
+
+    @Test
+    void pointRedemptionProcessingIsDurableAndReadOnlyUntilWorkerProcesses() {
+        var f = pointFixture(2, 500);
+        Long id = pointRedemptionTx.prepare(redeem(f), "point-pending-01");
+        var result = pointRedemptions.get(id);
+        assertEquals("processing", result.status());
+        assertEquals(100, result.spentPoints());
+        assertNull(result.memberCardId());
+        assertEquals(1, redemptionProductRows.selectById(f.product()).getStock());
+        assertEquals(1, redemptionProductRows.selectById(f.product()).getReservedStock());
+        assertEquals(400, pointBalance(f));
+        assertEquals(result, pointRedemptions.get(id));
+        assertEquals(0, purchasedCards().selectCount());
+        assertEquals(id, pointRedemptionTx.prepare(redeem(f), "point-pending-01"));
+        assertEquals(400, pointBalance(f));
+        pointRedemptionWorker.process(id);
+        assertEquals("succeeded", pointRedemptions.get(id).status());
+    }
+
+    @Test
+    void pointRedemptionInsufficientBalanceAndSoldOutLeaveNoIntentOrSuccessfulKey() {
+        var f = pointFixture(1, 50);
+        assertServiceException(
+                () -> pointRedemptions.create(redeem(f), "point-low-balance"),
+                POINT_BALANCE_INSUFFICIENT);
+        assertEquals(0, redemptionRows.selectCount());
+        assertEquals(1, redemptionRecords.selectCount());
+        assertEquals(1, redemptionProductRows.selectById(f.product()).getStock());
+        redemptionCredit(f.member(), 50, "test:additional");
+        assertEquals("succeeded", pointRedemptions.create(redeem(f), "point-low-balance").status());
+        assertServiceException(
+                () -> pointRedemptions.create(redeem(f), "point-sold-out-01"),
+                POINT_PRODUCT_INVALID);
+        assertEquals(1, redemptionRows.selectCount());
+    }
+
+    @Test
+    void pointRedemptionWrongIdentityTenantOwnerAndInvalidBodyCannotAccessOrSpend() {
+        var f = pointFixture(3, 500);
+        Long id = pointRedemptionTx.prepare(redeem(f), "point-auth-01");
+        loginAs(1L);
+        assertServiceException(() -> pointRedemptions.get(id), MOBILE_IDENTITY_INVALID);
+        assertServiceException(
+                () -> pointRedemptions.create(redeem(f), "point-auth-admin"),
+                MOBILE_IDENTITY_INVALID);
+        qrMemberLogin();
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> pointRedemptions.get(id), MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        assertServiceException(() -> pointRedemptions.get(999999L), POINT_REDEMPTION_NOT_EXISTS);
+        var bad = redeem(f);
+        bad.setStoreId(null);
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> pointRedemptions.create(bad, "point-invalid-01"));
+        assertServiceException(
+                () -> pointRedemptions.create(redeem(f), "short"), MOBILE_REQUEST_INVALID);
+        assertEquals(400, pointBalance(f));
+    }
+
+    @Test
+    void pointRedemptionCardFailureRefundsExactlyOnceAndNewKeyMayRetry() {
+        var f = pointFixture(2, 500);
+        redemptionJdbc()
+                .execute(
+                        "ALTER TABLE gym_member_card ADD CONSTRAINT test_point_card_failure CHECK (source_type<>'point-redemption')");
+        cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobilePointRedemptionVO.Result
+                failed;
+        try {
+            failed = pointRedemptions.create(redeem(f), "point-card-fail");
+        } finally {
+            redemptionJdbc()
+                    .execute("ALTER TABLE gym_member_card DROP CONSTRAINT test_point_card_failure");
+        }
+        assertEquals("failed", failed.status());
+        assertEquals(0, failed.spentPoints());
+        assertNull(failed.memberCardId());
+        assertEquals(500, pointBalance(f));
+        assertEquals(2, redemptionProductRows.selectById(f.product()).getStock());
+        assertEquals(0, purchasedCards().selectCount());
+        var row = redemptionRows.selectById(Long.valueOf(failed.id()));
+        var refund = redemptionRecords.selectById(row.getRefundRecordId());
+        assertEquals(row.getDebitRecordId(), refund.getOriginalRecordId());
+        assertEquals(100L, refund.getDelta());
+        assertEquals(3, redemptionRecords.selectCount());
+        assertEquals(failed, pointRedemptions.create(redeem(f), "point-card-fail"));
+        assertEquals(3, redemptionRecords.selectCount());
+        assertEquals(
+                "succeeded", pointRedemptions.create(redeem(f), "point-card-new-key").status());
+        assertEquals(1, purchasedCards().selectCount());
+    }
+
+    @Test
+    void pointRedemptionLateNotificationFailureRollsBackCardAndUnsignedContractBeforeRefund() {
+        var f = pointFixture(2, 500);
+        loginAs(1L);
+        publishedContractPdf();
+        qrMemberLogin();
+        redemptionJdbc()
+                .execute(
+                        "ALTER TABLE gym_mobile_notification ADD CONSTRAINT test_point_notify_failure CHECK (1=0)");
+        try {
+            assertEquals(
+                    "failed", pointRedemptions.create(redeem(f), "point-notify-fail").status());
+        } finally {
+            redemptionJdbc()
+                    .execute(
+                            "ALTER TABLE gym_mobile_notification DROP CONSTRAINT test_point_notify_failure");
+        }
+        assertEquals(0, purchasedCards().selectCount());
+        assertEquals(0, contractMapper.selectCount());
+        assertEquals(
+                0,
+                redemptionJdbc()
+                        .queryForObject(
+                                "SELECT COUNT(*) FROM gym_member_card_store", Integer.class));
+        assertEquals(500, pointBalance(f));
+        assertEquals(2, redemptionProductRows.selectById(f.product()).getStock());
+    }
+
+    @Test
+    void pointRedemptionCompensationFailureStaysProcessingAndLaterRecoveryReturnsBothResources() {
+        var f = pointFixture(2, 500);
+        Long id = pointRedemptionTx.prepare(redeem(f), "point-refund-retry");
+        redemptionJdbc()
+                .execute(
+                        "ALTER TABLE gym_member_card ADD CONSTRAINT test_point_card_retry CHECK (source_type<>'point-redemption')");
+        redemptionJdbc()
+                .execute(
+                        "ALTER TABLE gym_point_record ADD CONSTRAINT test_point_refund_retry CHECK (type<>'refund')");
+        try {
+            assertThrows(RuntimeException.class, () -> pointRedemptionWorker.process(id));
+            assertEquals("processing", pointRedemptions.get(id).status());
+            assertEquals(400, pointBalance(f));
+            assertEquals(1, redemptionProductRows.selectById(f.product()).getStock());
+            assertEquals(
+                    100L,
+                    redemptionAccounts
+                            .selectOne(
+                                    cn.iocoder.yudao.module.gym.dal.dataobject.points
+                                                    .GymPointAccountDO
+                                            ::getMemberId,
+                                    f.member())
+                            .getRefundReserve());
+        } finally {
+            redemptionJdbc()
+                    .execute(
+                            "ALTER TABLE gym_point_record DROP CONSTRAINT test_point_refund_retry");
+        }
+        try {
+            pointRedemptionWorker.process(id);
+            pointRedemptionWorker.process(id);
+        } finally {
+            redemptionJdbc()
+                    .execute("ALTER TABLE gym_member_card DROP CONSTRAINT test_point_card_retry");
+        }
+        assertEquals("failed", pointRedemptions.get(id).status());
+        assertEquals(500, pointBalance(f));
+        assertEquals(2, redemptionProductRows.selectById(f.product()).getStock());
+        assertEquals(3, redemptionRecords.selectCount());
+    }
+
+    List<Object> redeemRace(PointFixture f, boolean sameKey) throws Exception {
+        try (var executor = java.util.concurrent.Executors.newFixedThreadPool(4)) {
+            var jobs = new ArrayList<java.util.concurrent.Callable<Object>>();
+            for (int i = 0; i < 4; i++) {
+                final int n = i;
+                jobs.add(
+                        () -> {
+                            qrMemberLogin();
+                            try {
+                                return pointRedemptions.create(
+                                        redeem(f), sameKey ? "point-race-same" : "point-race-" + n);
+                            } catch (
+                                    cn.iocoder.yudao.framework.common.exception.ServiceException
+                                            e) {
+                                return e;
+                            } finally {
+                                cleanupContext();
+                            }
+                        });
+            }
+            var result = new ArrayList<Object>();
+            for (var job : executor.invokeAll(jobs))
+                result.add(job.get(15, java.util.concurrent.TimeUnit.SECONDS));
+            return result;
+        }
+    }
+
+    @Test
+    void pointRedemptionConcurrentSameKeyConsumesOnlyOnce() throws Exception {
+        var f = pointFixture(5, 500);
+        var results = redeemRace(f, true);
+        for (var result : results) assertEquals(results.getFirst(), result);
+        assertInstanceOf(
+                cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobilePointRedemptionVO
+                        .Result.class,
+                results.getFirst());
+        assertEquals(1, purchasedCards().selectCount());
+        assertEquals(400, pointBalance(f));
+        assertEquals(1, redemptionRows.selectCount());
+    }
+
+    @Test
+    void pointRedemptionConcurrentDifferentKeysCannotOversellLastItem() throws Exception {
+        var f = pointFixture(1, 500);
+        var results = redeemRace(f, false);
+        assertEquals(
+                1,
+                results.stream()
+                        .filter(
+                                x ->
+                                        x
+                                                instanceof
+                                                cn.iocoder.yudao.module.gym.controller.app.mobile.vo
+                                                        .GymMobilePointRedemptionVO.Result)
+                        .count());
+        assertEquals(1, purchasedCards().selectCount());
+        assertEquals(0, redemptionProductRows.selectById(f.product()).getStock());
+        assertEquals(400, pointBalance(f));
+    }
+
+    @Test
+    void pointRedemptionConcurrentDifferentKeysCannotOverdrawBalance() throws Exception {
+        var f = pointFixture(5, 150);
+        var results = redeemRace(f, false);
+        assertEquals(
+                1,
+                results.stream()
+                        .filter(
+                                x ->
+                                        x
+                                                instanceof
+                                                cn.iocoder.yudao.module.gym.controller.app.mobile.vo
+                                                        .GymMobilePointRedemptionVO.Result)
+                        .count());
+        assertEquals(50, pointBalance(f));
+        assertEquals(4, redemptionProductRows.selectById(f.product()).getStock());
+        assertEquals(1, redemptionRows.selectCount());
+    }
+
+    @Test
+    void pointRedemptionFrozenCostAndCardSurviveLaterCatalogEdit() {
+        var f = pointFixture(5, 500);
+        Long id = pointRedemptionTx.prepare(redeem(f), "point-frozen-01");
+        redemptionJdbc()
+                .update(
+                        "UPDATE gym_point_product SET required_points=300,name='new',enabled=FALSE WHERE id=?",
+                        f.product());
+        redemptionJdbc()
+                .update(
+                        "UPDATE gym_card_template SET included_uses=99,status='archived' WHERE id=?",
+                        f.template());
+        pointRedemptionWorker.process(id);
+        var result = pointRedemptions.get(id);
+        assertEquals("succeeded", result.status());
+        assertEquals(100, result.spentPoints());
+        assertEquals(
+                10,
+                purchasedCards()
+                        .selectById(Long.valueOf(result.memberCardId()))
+                        .getRemainingUses());
+        assertEquals(400, pointBalance(f));
+    }
+
+    @Test
+    void pointRedemptionRevokedMembershipFailsAndRefundDoesNotRequireOldStoreAccess() {
+        var f = pointFixture(2, 500);
+        Long id = pointRedemptionTx.prepare(redeem(f), "point-lost-store");
+        redemptionJdbc()
+                .update("UPDATE gym_member_store SET deleted=TRUE WHERE member_id=?", f.member());
+        pointRedemptionWorker.process(id);
+        assertEquals("failed", pointRedemptions.get(id).status());
+        assertEquals(500, pointBalance(f));
+        assertEquals(2, redemptionProductRows.selectById(f.product()).getStock());
+    }
+
+    @Test
+    void pointRedemptionDisabledMemberAccountIsRefundedWithoutAdminImpersonation() {
+        var f = pointFixture(2, 500);
+        Long id = pointRedemptionTx.prepare(redeem(f), "point-disabled-user");
+        memberAccounts.getUser(50L).setStatus(1);
+        loginAs(1L);
+        var original = org.springframework.security.core.context.SecurityContextHolder.getContext();
+        pointRedemptionWorker.process(id);
+        assertSame(
+                original,
+                org.springframework.security.core.context.SecurityContextHolder.getContext());
+        assertEquals("failed", redemptionRows.selectById(id).getStatus());
+        assertEquals(500, pointBalance(f));
+        assertEquals(0, purchasedCards().selectCount());
+    }
+
+    @Test
+    void pointRedemptionSchedulerRecoversCommittedPendingAndRestoresTenantAndPrincipal() {
+        var f = pointFixture(2, 500);
+        var now = java.time.Instant.now();
+        when(businessClock.now()).thenReturn(now);
+        Long id = pointRedemptionTx.prepare(redeem(f), "point-crash-recovery");
+        when(tenantFrameworkService.getTenantIds()).thenReturn(List.of(1L, 2L));
+        loginAs(1L);
+        pointRedemptionScheduler.tick();
+        assertEquals("processing", redemptionRows.selectById(id).getStatus());
+        when(businessClock.now()).thenReturn(now.plusSeconds(31));
+        pointRedemptionScheduler.tick();
+        pointRedemptionScheduler.tick();
+        assertEquals(1L, TenantContextHolder.getRequiredTenantId());
+        assertEquals(
+                2,
+                cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser()
+                        .getUserType());
+        assertEquals("succeeded", redemptionRows.selectById(id).getStatus());
+        assertEquals(1, purchasedCards().selectCount());
+    }
+
+    @Test
+    void pointRedemptionRefundCapacityIsReservedAndReleasedWithoutChangingPublicBalance() {
+        long max = cn.iocoder.yudao.module.gym.service.points.GymPointLedgerService.MAX_POINTS;
+        var f = pointFixture(2, max - 100);
+        Long id = pointRedemptionTx.prepare(redeem(f), "point-capacity-01");
+        assertServiceException(
+                () -> redemptionCredit(f.member(), 1, "test:blocked-credit"), POINT_ENTRY_INVALID);
+        pointRedemptionTx.fail(id, 500);
+        assertEquals(max - 100, pointBalance(f));
+        assertEquals(
+                max,
+                redemptionAccounts
+                        .selectOne(
+                                cn.iocoder.yudao.module.gym.dal.dataobject.points.GymPointAccountDO
+                                        ::getMemberId,
+                                f.member())
+                        .getTotalEarned());
+        assertEquals("failed", pointRedemptions.get(id).status());
+        assertEquals(2, redemptionProductRows.selectById(f.product()).getStock());
+    }
+
+    @Test
+    void pointRedemptionCannotChargeWhenRefundWouldExceedNumericCapacity() {
+        var f =
+                pointFixture(
+                        2,
+                        cn.iocoder.yudao.module.gym.service.points.GymPointLedgerService
+                                .MAX_POINTS);
+        assertServiceException(
+                () -> pointRedemptions.create(redeem(f), "point-no-capacity"), POINT_ENTRY_INVALID);
+        assertEquals(0, redemptionRows.selectCount());
+        assertEquals(1, redemptionRecords.selectCount());
+        assertEquals(2, redemptionProductRows.selectById(f.product()).getStock());
+    }
+
+    @Test
+    void pointRedemptionPendingInventoryCannotBeOverwrittenBeyondRestorableStockLimit() {
+        var f = pointFixture(2, 500);
+        Long id = pointRedemptionTx.prepare(redeem(f), "point-stock-cap");
+        loginAs(1L);
+        var product = redemptionProductRows.selectById(f.product());
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.admin.points.vo.GymPointProductVO.Save();
+        req.setStoreId(101L);
+        req.setCardProductId(f.template());
+        req.setName(product.getName());
+        req.setRequiredPoints(product.getRequiredPoints());
+        req.setEnabled(true);
+        req.setRevision(product.getRevision());
+        req.setStock(Integer.MAX_VALUE);
+        assertServiceException(
+                () -> redemptionProducts.save(f.product(), req), POINT_PRODUCT_CONFLICT);
+        req.setStock(Integer.MAX_VALUE - 1);
+        redemptionProducts.save(f.product(), req);
+        pointRedemptionTx.fail(id, 500);
+        assertEquals(Integer.MAX_VALUE, redemptionProductRows.selectById(f.product()).getStock());
+        assertEquals(0, redemptionProductRows.selectById(f.product()).getReservedStock());
+    }
+
+    @Test
+    void pointRedemptionContractUsesMemberActorAndSuccessfulResultCannotBeCompensated() {
+        var f = pointFixture(2, 500);
+        loginAs(1L);
+        publishedContractPdf();
+        qrMemberLogin();
+        var result = pointRedemptions.create(redeem(f), "point-real-contract");
+        assertEquals("succeeded", result.status());
+        var contract = contractMapper.selectList().getFirst();
+        assertEquals("unsigned", contract.getStatus());
+        assertEquals("unconfigured", contract.getSigningStatus());
+        assertNull(files.selectById(contract.getUnsignedFileId()).getUploaderId());
+        var event =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.contract
+                                        .GymContractEventMapper.class)
+                        .selectList()
+                        .getFirst();
+        assertEquals(1, event.getActorUserType());
+        assertEquals(50L, event.getActorUserId());
+        pointRedemptionTx.fail(Long.valueOf(result.id()), 500);
+        pointRedemptionWorker.process(Long.valueOf(result.id()));
+        assertEquals(result, pointRedemptions.get(Long.valueOf(result.id())));
+        assertEquals(400, pointBalance(f));
+        assertEquals(2, redemptionRecords.selectCount());
+        assertEquals(1, contractMapper.selectCount());
+    }
+
+    @Test
+    void pointRedemptionBusinessKeySurvivesGenericIdempotencyRecordCleanup() {
+        var f = pointFixture(2, 500);
+        var result = pointRedemptions.create(redeem(f), "point-business-key");
+        redemptionJdbc()
+                .update("DELETE FROM gym_mobile_request WHERE operation='point-redemption'");
+        redemptionJdbc()
+                .update("UPDATE gym_point_product SET enabled=FALSE WHERE id=?", f.product());
+        assertEquals(result, pointRedemptions.create(redeem(f), "point-business-key"));
+        assertEquals(1, redemptionRows.selectCount());
+        assertEquals(400, pointBalance(f));
+        redemptionJdbc()
+                .update("DELETE FROM gym_mobile_request WHERE operation='point-redemption'");
+        var changed = redeem(f);
+        changed.setProductId(9999L);
+        assertServiceException(
+                () -> pointRedemptions.create(changed, "point-business-key"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+    }
+
+    @Test
+    void pointRedemptionAnotherValidMemberCannotReadOrReuseOthersId() {
+        var f = pointFixture(2, 500);
+        Long id = pointRedemptionTx.prepare(redeem(f), "point-owner-private");
+        loginAs(1L);
+        Long other = Long.valueOf(members.create(member(101L, "13800002402")).getId());
+        var identity = new cn.iocoder.yudao.module.gym.dal.dataobject.mobile.GymMobileIdentityDO();
+        identity.setUserId(51L);
+        identity.setMemberId(other);
+        identity.setDefaultStoreId(101L);
+        identity.setSource("test");
+        identity.setFaceStatus("unregistered");
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileIdentityMapper.class)
+                .insert(identity);
+        var account = new cn.iocoder.yudao.module.member.api.user.dto.MemberUserRespDTO();
+        account.setId(51L);
+        account.setStatus(0);
+        account.setMobile("13800002402");
+        when(memberAccounts.getUser(51L)).thenReturn(account);
+        qrMemberLogin();
+        cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser()
+                .setId(51L);
+        assertServiceException(() -> pointRedemptions.get(id), POINT_REDEMPTION_NOT_EXISTS);
+        var tx =
+                new org.springframework.transaction.support.TransactionTemplate(
+                        applicationContext.getBean(
+                                org.springframework.transaction.PlatformTransactionManager.class));
+        assertServiceException(
+                () -> tx.execute(status -> cards.issuePointRedemption(id, java.time.Instant.now())),
+                POINT_REDEMPTION_INVALID);
+        assertEquals(0, purchasedCards().selectCount());
+        assertEquals(400, pointBalance(f));
+    }
+
+    @Test
+    void pointRedemptionPeriodCardAndUnlimitedInventoryUseRealSnapshotDuration() {
+        var f = pointFixture(1, 500);
+        loginAs(1L);
+        Long period = Long.valueOf(cards.create(cardTemplate("period")).getId());
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.admin.points.vo.GymPointProductVO.Save();
+        req.setStoreId(101L);
+        req.setCardProductId(period);
+        req.setName("周期卡");
+        req.setRequiredPoints(100L);
+        req.setEnabled(true);
+        req.setStock(null);
+        Long product = Long.valueOf(redemptionProducts.save(null, req).id());
+        qrMemberLogin();
+        var result =
+                pointRedemptions.create(
+                        redeem(new PointFixture(f.member(), period, product)), "point-period-card");
+        var card = purchasedCards().selectById(Long.valueOf(result.memberCardId()));
+        assertEquals("period", card.getKind());
+        assertEquals(card.getStartsAt().plusSeconds(30L * 86400), card.getExpiresAt());
+        assertNull(card.getRemainingUses());
+        assertNull(redemptionProductRows.selectById(product).getStock());
+        assertEquals(0, redemptionProductRows.selectById(product).getReservedStock());
+    }
+
+    @Test
+    void pointRedemptionSnapshotCannotBypassMissingDebitAndSchedulerSkipsDisabledTenant() {
+        var f = pointFixture(2, 500);
+        Long id = pointRedemptionTx.prepare(redeem(f), "point-proof-required");
+        var now = redemptionRows.selectById(id).getRequestedAt().plusSeconds(31);
+        when(businessClock.now()).thenReturn(now);
+        when(tenantFrameworkService.getTenantIds()).thenReturn(List.of(1L));
+        doThrow(
+                        new cn.iocoder.yudao.framework.common.exception.ServiceException(
+                                cn.iocoder.yudao.module.system.enums.ErrorCodeConstants
+                                        .TENANT_DISABLE))
+                .when(tenantFrameworkService)
+                .validTenant(1L);
+        pointRedemptionScheduler.tick();
+        assertEquals("processing", redemptionRows.selectById(id).getStatus());
+        assertEquals(0, purchasedCards().selectCount());
+        redemptionJdbc()
+                .update("UPDATE gym_point_redemption SET debit_record_id=NULL WHERE id=?", id);
+        var tx =
+                new org.springframework.transaction.support.TransactionTemplate(
+                        applicationContext.getBean(
+                                org.springframework.transaction.PlatformTransactionManager.class));
+        assertServiceException(
+                () -> tx.execute(status -> cards.issuePointRedemption(id, now)),
+                POINT_REDEMPTION_INVALID);
+        assertEquals(0, purchasedCards().selectCount());
+    }
+
+    @Resource cn.iocoder.yudao.module.gym.service.risk.GymRiskAlertPublisher riskPublisher;
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileRiskService mobileRisk;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileRiskController riskController;
+
+    @Resource cn.iocoder.yudao.module.gym.dal.mysql.risk.GymRiskAlertMapper riskRows;
+    @Resource cn.iocoder.yudao.module.gym.dal.mysql.risk.GymRiskResolutionMapper riskResolutions;
+    static final java.time.Instant RISK_TIME =
+            java.time.Instant.parse("2026-10-26T01:02:03.123456Z");
+
+    void riskPermission() {
+        when(permissions.hasAnyPermissions(anyLong(), eq("gym:risk:read"))).thenReturn(true);
+        when(permissions.hasAnyPermissions(anyLong(), eq("gym:risk:resolve"))).thenReturn(true);
+    }
+
+    Long riskDevice() {
+        stores.create(store(101L, "A"));
+        riskPermission();
+        return Long.valueOf(
+                deviceService.createDevice(deviceRequest(101L, "door", "RISK-DOOR")).getId());
+    }
+
+    cn.iocoder.yudao.module.gym.service.risk.GymRiskAlertPublisher.Event riskEvent(
+            Long device, String key, List<Long> evidence) {
+        return new cn.iocoder.yudao.module.gym.service.risk.GymRiskAlertPublisher.Event(
+                device, null, "multiple_entry", key, RISK_TIME, evidence);
+    }
+
+    Long publishRisk(cn.iocoder.yudao.module.gym.service.risk.GymRiskAlertPublisher.Event event) {
+        var tx =
+                new org.springframework.transaction.support.TransactionTemplate(
+                        applicationContext.getBean(
+                                org.springframework.transaction.PlatformTransactionManager.class));
+        return tx.execute(status -> riskPublisher.publish(event));
+    }
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileRiskVO.Query riskQuery(
+            Long store) {
+        var q = new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileRiskVO.Query();
+        q.setStoreId(store);
+        return q;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileRiskVO.Resolve riskResolve(
+            String result) {
+        var r =
+                new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileRiskVO
+                        .Resolve();
+        r.setResult(result);
+        r.setNote(" 核对来源事件及现场记录 ");
+        r.setExpectedVersion(1);
+        return r;
+    }
+
+    Long riskFile(Long store) {
+        var file =
+                GymFileDO.builder()
+                        .storeId(store)
+                        .category("risk_evidence")
+                        .name("private-capture.png")
+                        .mimeType("image/png")
+                        .size(8L)
+                        .url("private-risk-file")
+                        .build();
+        files.insert(file);
+        return file.getId();
+    }
+
+    @Test
+    void riskPublisherUsesRealDeviceStoreAndCanonicalBusinessEventWithoutGeneratingCheckins() {
+        Long device = riskDevice();
+        Long a = riskFile(101L), b = riskFile(101L);
+        var event = riskEvent(device, "source-01", List.of(b, a));
+        Long id = publishRisk(event);
+        assertEquals(id, publishRisk(riskEvent(device, "source-01", List.of(a, b))));
+        assertEquals(1, riskRows.selectCount());
+        var result = mobileRisk.page(riskQuery(101L)).getList().getFirst();
+        assertEquals(id.toString(), result.id());
+        assertEquals(device.toString(), result.deviceId());
+        assertNull(result.memberId());
+        assertEquals(1, result.version());
+        assertEquals("open", result.status());
+        assertNull(result.resolution());
+        assertEquals(List.of(a.toString(), b.toString()), result.evidenceFileIds());
+        assertEquals("2026-10-26T09:02:03.123456+08:00", result.occurredAt());
+        assertEquals(
+                0,
+                redemptionJdbc().queryForObject("SELECT COUNT(*) FROM gym_checkin", Integer.class));
+        assertEquals(0, purchasedCards().selectCount());
+    }
+
+    @Test
+    void riskPublisherRejectsChangedEventAndDoesNotResetResolvedHistory() {
+        Long device = riskDevice();
+        Long id = publishRisk(riskEvent(device, "source-01", List.of()));
+        var resolved =
+                mobileRisk.resolve(id, riskResolve("false_positive"), "risk-resolve-same-source");
+        assertEquals(id, publishRisk(riskEvent(device, "source-01", List.of())));
+        assertEquals(resolved, mobileRisk.page(riskQuery(101L)).getList().getFirst());
+        var changed =
+                new cn.iocoder.yudao.module.gym.service.risk.GymRiskAlertPublisher.Event(
+                        device,
+                        null,
+                        "multiple_entry",
+                        "source-01",
+                        RISK_TIME.plusSeconds(1),
+                        List.of());
+        assertServiceException(() -> publishRisk(changed), RISK_SOURCE_CONFLICT);
+        assertEquals(1, riskResolutions.selectCount());
+    }
+
+    @Test
+    void riskPublisherRequiresOuterTransactionValidSourceAndPrivateEvidence() {
+        Long device = riskDevice();
+        assertThrows(
+                org.springframework.transaction.IllegalTransactionStateException.class,
+                () -> riskPublisher.publish(riskEvent(device, "source-01", List.of())));
+        assertServiceException(
+                () -> publishRisk(riskEvent(99999L, "source-02", List.of())), RISK_SOURCE_INVALID);
+        Long camera =
+                Long.valueOf(
+                        deviceService
+                                .createDevice(deviceRequest(101L, "camera", "RISK-CAMERA"))
+                                .getId());
+        assertServiceException(
+                () -> publishRisk(riskEvent(camera, "source-03", List.of())), RISK_SOURCE_INVALID);
+        Long file = riskFile(102L);
+        assertServiceException(
+                () -> publishRisk(riskEvent(device, "source-04", List.of(file))),
+                RISK_SOURCE_INVALID);
+        final Long ordinary = publicImage(101L).getId();
+        assertServiceException(
+                () -> publishRisk(riskEvent(device, "source-05", List.of(ordinary))),
+                RISK_SOURCE_INVALID);
+        Long own = riskFile(101L);
+        assertServiceException(
+                () -> publishRisk(riskEvent(device, "source-06", List.of(own, own))),
+                RISK_SOURCE_INVALID);
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> publishRisk(riskEvent(device, "bad key", List.of())));
+        assertEquals(0, riskRows.selectCount());
+    }
+
+    @Test
+    void riskListFiltersStatusStoreTenantBeforePaginationAndKeepsHistoricalDeviceIds() {
+        Long device = riskDevice();
+        Long first = publishRisk(riskEvent(device, "source-01", List.of()));
+        Long second = publishRisk(riskEvent(device, "source-02", List.of()));
+        Long third = publishRisk(riskEvent(device, "source-03", List.of()));
+        mobileRisk.resolve(first, riskResolve("false_positive"), "risk-page-resolve");
+        stores.create(store(102L, "B"));
+        Long other =
+                Long.valueOf(
+                        deviceService.createDevice(deviceRequest(102L, "door", "OTHER")).getId());
+        publishRisk(riskEvent(other, "source-04", List.of()));
+        var q = riskQuery(101L);
+        q.setStatus("open");
+        q.setPageSize(1);
+        assertEquals(2L, mobileRisk.page(q).getTotal());
+        assertEquals(third.toString(), mobileRisk.page(q).getList().getFirst().id());
+        q.setPageNo(2);
+        assertEquals(second.toString(), mobileRisk.page(q).getList().getFirst().id());
+        q.setPageNo(3);
+        assertTrue(mobileRisk.page(q).getList().isEmpty());
+        redemptionJdbc().update("UPDATE gym_device SET deleted=TRUE WHERE id=?", device);
+        q.setStatus("resolved");
+        q.setPageNo(1);
+        assertEquals(device.toString(), mobileRisk.page(q).getList().getFirst().deviceId());
+        TenantContextHolder.setTenantId(2L);
+        loginAs(1L);
+        cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser()
+                .setTenantId(2L);
+        assertServiceException(
+                () -> mobileRisk.resolve(first, riskResolve("confirmed"), "risk-foreign-id"),
+                RISK_ALERT_NOT_EXISTS);
+    }
+
+    @Test
+    void riskResolutionStoresRealOperatorTimeAndNeverFreezesCardsAutomatically() {
+        Long device = riskDevice();
+        Long member = Long.valueOf(members.create(member(101L, "13800003101")).getId());
+        Long template = Long.valueOf(cards.create(cardTemplate("count")).getId());
+        var card =
+                cards.issue(
+                        member,
+                        101L,
+                        template,
+                        java.time.Instant.now(),
+                        "test",
+                        "risk-original-card");
+        Long id =
+                publishRisk(
+                        new cn.iocoder.yudao.module.gym.service.risk.GymRiskAlertPublisher.Event(
+                                device,
+                                member,
+                                "tailgating",
+                                "source-confirm",
+                                RISK_TIME,
+                                List.of()));
+        when(businessClock.now()).thenReturn(RISK_TIME.plusSeconds(60));
+        var result = mobileRisk.resolve(id, riskResolve("confirmed"), "risk-confirmed-01");
+        assertEquals("resolved", result.status());
+        assertEquals(2, result.version());
+        assertEquals("confirmed", result.resolution().result());
+        assertEquals("1", result.resolution().operatorUserId());
+        assertEquals("核对来源事件及现场记录", result.resolution().note());
+        assertEquals(1, riskResolutions.selectList().getFirst().getPreviousVersion());
+        assertEquals("active", purchasedCards().selectById(card.getId()).getStatus());
+        assertEquals(10, purchasedCards().selectById(card.getId()).getRemainingUses());
+    }
+
+    @Test
+    void riskIdempotencyRechecksCurrentPermissionWholeStoreScopeAndAccount() {
+        Long device = riskDevice();
+        Long id = publishRisk(riskEvent(device, "source-01", List.of()));
+        var result = mobileRisk.resolve(id, riskResolve("confirmed"), "risk-permission-key");
+        assertEquals(
+                result, mobileRisk.resolve(id, riskResolve("confirmed"), "risk-permission-key"));
+        when(permissions.hasAnyPermissions(anyLong(), eq("gym:risk:resolve"))).thenReturn(false);
+        assertServiceException(
+                () -> mobileRisk.resolve(id, riskResolve("confirmed"), "risk-permission-key"),
+                cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants
+                        .FORBIDDEN);
+        riskPermission();
+        scoped(102L);
+        assertServiceException(
+                () -> mobileRisk.resolve(id, riskResolve("confirmed"), "risk-permission-key"),
+                STORE_NO_PERMISSION);
+        assertServiceException(() -> mobileRisk.page(riskQuery(101L)), STORE_NO_PERMISSION);
+        personalScope(1L);
+        assertServiceException(() -> mobileRisk.page(riskQuery(101L)), STORE_NO_PERMISSION);
+        headquarters();
+        var user = new cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO();
+        user.setId(1L);
+        user.setStatus(1);
+        when(workAccounts.getUser(1L)).thenReturn(user);
+        assertServiceException(
+                () -> mobileRisk.resolve(id, riskResolve("confirmed"), "risk-permission-key"),
+                MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void riskStaleVersionChangedPayloadAndSecondResolutionCannotOverwriteFirst() {
+        Long device = riskDevice();
+        Long id = publishRisk(riskEvent(device, "source-01", List.of()));
+        var stale = riskResolve("confirmed");
+        stale.setExpectedVersion(2);
+        assertServiceException(
+                () -> mobileRisk.resolve(id, stale, "risk-stale-key"), RISK_RESOLUTION_CONFLICT);
+        assertEquals(0, riskResolutions.selectCount());
+        var result = mobileRisk.resolve(id, riskResolve("confirmed"), "risk-success-key");
+        assertServiceException(
+                () -> mobileRisk.resolve(id, riskResolve("false_positive"), "risk-success-key"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        assertServiceException(
+                () -> mobileRisk.resolve(id, riskResolve("false_positive"), "risk-second-key"),
+                RISK_RESOLUTION_CONFLICT);
+        assertEquals(result, mobileRisk.page(riskQuery(101L)).getList().getFirst());
+    }
+
+    @Test
+    void riskResolutionWriteFailuresRollbackAlertAuditAndIdempotencyTogether() {
+        Long device = riskDevice();
+        Long id = publishRisk(riskEvent(device, "source-01", List.of()));
+        redemptionJdbc()
+                .execute(
+                        "ALTER TABLE gym_risk_alert ADD CONSTRAINT test_risk_resolution_failure CHECK (status='open')");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () -> mobileRisk.resolve(id, riskResolve("confirmed"), "risk-failure-retry"));
+            assertEquals(0, riskResolutions.selectCount());
+            assertEquals("open", riskRows.selectById(id).getStatus());
+        } finally {
+            redemptionJdbc()
+                    .execute(
+                            "ALTER TABLE gym_risk_alert DROP CONSTRAINT test_risk_resolution_failure");
+        }
+        assertEquals(
+                "resolved",
+                mobileRisk.resolve(id, riskResolve("confirmed"), "risk-failure-retry").status());
+        assertEquals(1, riskResolutions.selectCount());
+    }
+
+    List<Object> riskRace(Long id, boolean same) throws Exception {
+        try (var executor = java.util.concurrent.Executors.newFixedThreadPool(4)) {
+            var tasks = new ArrayList<java.util.concurrent.Callable<Object>>();
+            for (int i = 0; i < 4; i++) {
+                final int n = i;
+                tasks.add(
+                        () -> {
+                            setupThreadContext();
+                            try {
+                                return mobileRisk.resolve(
+                                        id,
+                                        riskResolve(
+                                                n % 2 == 0 || same
+                                                        ? "confirmed"
+                                                        : "false_positive"),
+                                        same ? "risk-race-same" : "risk-race-" + n);
+                            } catch (
+                                    cn.iocoder.yudao.framework.common.exception.ServiceException
+                                            e) {
+                                return e;
+                            } finally {
+                                cleanupContext();
+                            }
+                        });
+            }
+            var results = new ArrayList<Object>();
+            for (var f : executor.invokeAll(tasks))
+                results.add(f.get(10, java.util.concurrent.TimeUnit.SECONDS));
+            return results;
+        }
+    }
+
+    @Test
+    void riskConcurrentSameKeyReturnsOneIdenticalDisposition() throws Exception {
+        Long device = riskDevice();
+        Long id = publishRisk(riskEvent(device, "source-01", List.of()));
+        var results = riskRace(id, true);
+        for (var result : results) assertEquals(results.getFirst(), result);
+        assertEquals(1, riskResolutions.selectCount());
+        assertEquals(2, riskRows.selectById(id).getVersion());
+    }
+
+    @Test
+    void riskConcurrentConflictingDispositionsProduceOneWinner() throws Exception {
+        Long device = riskDevice();
+        Long id = publishRisk(riskEvent(device, "source-01", List.of()));
+        var results = riskRace(id, false);
+        assertEquals(
+                1,
+                results.stream()
+                        .filter(
+                                x ->
+                                        x
+                                                instanceof
+                                                cn.iocoder.yudao.module.gym.controller.admin.mobile
+                                                        .vo.GymMobileRiskVO.Alert)
+                        .count());
+        assertEquals(1, riskResolutions.selectCount());
+        assertEquals(2, riskRows.selectById(id).getVersion());
+    }
+
+    @Test
+    void riskEvidenceRequiresCurrentAlertScopeAndNeverReturnsUnlinkedOrWrongTypeFiles() {
+        Long device = riskDevice();
+        Long file = riskFile(101L);
+        Long id = publishRisk(riskEvent(device, "source-01", List.of(file)));
+        byte[] png = new byte[] {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
+        when(fileApi.getFileContentByUrl("private-risk-file")).thenReturn(png);
+        var content = mobileRisk.attachment(id, file);
+        assertArrayEquals(png, content.getContent());
+        assertEquals("risk-evidence-" + file + ".png", content.getName());
+        Long unlinked = riskFile(101L);
+        assertServiceException(() -> mobileRisk.attachment(id, unlinked), FILE_NOT_EXISTS);
+        scoped(102L);
+        assertServiceException(() -> mobileRisk.attachment(id, file), STORE_NO_PERMISSION);
+        headquarters();
+        when(fileApi.getFileContentByUrl("private-risk-file"))
+                .thenReturn("<html>bad</html>".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        assertServiceException(() -> mobileRisk.attachment(id, file), RISK_SOURCE_INVALID);
+        redemptionJdbc().update("UPDATE gym_file SET deleted=TRUE WHERE id=?", file);
+        assertServiceException(() -> mobileRisk.attachment(id, file), FILE_NOT_EXISTS);
+    }
+
+    @Test
+    void riskControllersRequireDedicatedReadAndResolvePermissions() {
+        Long device = riskDevice();
+        Long id = publishRisk(riskEvent(device, "source-01", List.of()));
+        when(permissions.hasAnyPermissions(anyLong(), eq("gym:risk:read"))).thenReturn(false);
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> riskController.page(riskQuery(101L)));
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> riskController.resolve(id, riskResolve("confirmed"), "risk-controller-key"));
+        riskPermission();
+        when(permissions.hasAnyPermissions(anyLong(), eq("gym:risk:resolve"))).thenReturn(false);
+        assertEquals(1L, riskController.page(riskQuery(101L)).getData().getTotal());
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> riskController.resolve(id, riskResolve("confirmed"), "risk-controller-key"));
+        qrMemberLogin();
+        assertServiceException(() -> mobileRisk.page(riskQuery(101L)), MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void riskQueryAndResolutionRejectInvalidParametersWithoutMutations() {
+        Long device = riskDevice();
+        Long id = publishRisk(riskEvent(device, "source-01", List.of()));
+        var q = riskQuery(101L);
+        q.setStatus("all");
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class, () -> mobileRisk.page(q));
+        q.setStatus(null);
+        q.setPageSize(-1);
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class, () -> mobileRisk.page(q));
+        var r = riskResolve("confirmed");
+        r.setNote(" ");
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> mobileRisk.resolve(id, r, "risk-invalid-note"));
+        r.setNote("ok");
+        r.setResult("freeze");
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> mobileRisk.resolve(id, r, "risk-invalid-result"));
+        assertEquals(0, riskResolutions.selectCount());
+    }
+
+    @Test
+    void riskPublisherConcurrentDuplicatesAndCallerRollbackKeepSingleSource() throws Exception {
+        Long device = riskDevice();
+        var event = riskEvent(device, "source-concurrent", List.of());
+        var tx =
+                new org.springframework.transaction.support.TransactionTemplate(
+                        applicationContext.getBean(
+                                org.springframework.transaction.PlatformTransactionManager.class));
+        assertThrows(
+                IllegalStateException.class,
+                () ->
+                        tx.execute(
+                                status -> {
+                                    riskPublisher.publish(event);
+                                    throw new IllegalStateException("source ingest rollback");
+                                }));
+        assertEquals(0, riskRows.selectCount());
+        try (var executor = java.util.concurrent.Executors.newFixedThreadPool(4)) {
+            var tasks = new ArrayList<java.util.concurrent.Callable<Long>>();
+            for (int i = 0; i < 4; i++)
+                tasks.add(
+                        () -> {
+                            setupThreadContext();
+                            try {
+                                return publishRisk(event);
+                            } finally {
+                                cleanupContext();
+                            }
+                        });
+            var ids = new HashSet<Long>();
+            for (var future : executor.invokeAll(tasks))
+                ids.add(future.get(10, java.util.concurrent.TimeUnit.SECONDS));
+            assertEquals(1, ids.size());
+        }
+        assertEquals(1, riskRows.selectCount());
+    }
+
+    @Resource
+    private cn.iocoder.yudao.module.gym.service.mobile.GymMobileDeviceCommandsService
+            mobileCommandResults;
+
+    @Resource
+    private cn.iocoder.yudao.module.gym.dal.mysql.device.GymDeviceCommandMapper commandResults;
+
+    cn.iocoder.yudao.module.gym.dal.dataobject.device.GymDeviceCommandDO commandResult(
+            Long device,
+            Long requester,
+            String status,
+            boolean simulated,
+            java.time.Instant completed) {
+        var row = new cn.iocoder.yudao.module.gym.dal.dataobject.device.GymDeviceCommandDO();
+        row.setDeviceId(device);
+        row.setCommand("open_door");
+        row.setReason("PRIVATE-REASON");
+        row.setRequesterId(requester);
+        row.setRequesterName("PRIVATE-ACTOR");
+        row.setRequestedAt(RISK_TIME);
+        row.setCompletedAt(completed);
+        row.setStatus(status);
+        row.setSimulated(simulated);
+        row.setFailureReason("PRIVATE-VENDOR-TOKEN");
+        row.setRequestKey("RESULT-" + java.util.UUID.randomUUID());
+        row.setRequestHash("PRIVATE-HASH");
+        commandResults.insert(row);
+        return row;
+    }
+
+    @Test
+    void commandResultReadsRealBackendRejectionAndExactCompletionWithoutSendingAgain() {
+        Long device = riskDevice();
+        when(businessClock.now()).thenReturn(RISK_TIME);
+        var rejected =
+                deviceService.command(device, deviceCommand("open_door", null), "command-read-01");
+        var row = commandResults.selectById(rejected.getId());
+        assertEquals(RISK_TIME, row.getCompletedAt());
+        var result = mobileCommandResults.get(row.getId());
+        assertEquals("failed", result.status());
+        assertEquals(result.requestedAt(), result.completedAt());
+        assertEquals("2026-10-26T09:02:03.123456+08:00", result.completedAt());
+        assertEquals("设备厂商接口未配置，未发送远程指令", result.failureReason());
+        assertEquals(result, mobileCommandResults.get(row.getId()));
+        assertEquals(1, commandResults.selectCount());
+        assertFalse(mobileDeviceRows.selectById(device).getOnline());
+    }
+
+    @Test
+    void commandResultOwnerKeepsHistoryAfterScopeRevocationAndDeviceDeletion() {
+        Long device = riskDevice();
+        var row = commandResult(device, 1L, "failed", false, null);
+        personalScope(1L);
+        when(permissions.hasAnyPermissions(anyLong(), eq("gym:devices:read"))).thenReturn(false);
+        mobileDeviceRows.deleteById(device);
+        assertEquals("failed", mobileCommandResults.get(row.getId()).status());
+        assertNull(mobileCommandResults.get(row.getId()).completedAt());
+        assertEquals(1, commandResults.selectCount());
+    }
+
+    @Test
+    void commandResultOtherManagerRequiresCurrentPermissionAndWholeStoreScope() {
+        Long device = riskDevice();
+        var row = commandResult(device, 50L, "queued", false, null);
+        scoped(101L);
+        assertServiceException(
+                () -> mobileCommandResults.get(row.getId()), DEVICE_COMMAND_NOT_EXISTS);
+        when(permissions.hasAnyPermissions(anyLong(), eq("gym:devices:read"))).thenReturn(true);
+        assertEquals("queued", mobileCommandResults.get(row.getId()).status());
+        personalScope(1L);
+        assertServiceException(
+                () -> mobileCommandResults.get(row.getId()), DEVICE_COMMAND_NOT_EXISTS);
+        scoped(102L);
+        assertServiceException(
+                () -> mobileCommandResults.get(row.getId()), DEVICE_COMMAND_NOT_EXISTS);
+        headquarters();
+        assertNotNull(mobileCommandResults.get(row.getId()));
+        when(permissions.hasAnyPermissions(anyLong(), eq("gym:devices:read"))).thenReturn(false);
+        assertServiceException(
+                () -> mobileCommandResults.get(row.getId()), DEVICE_COMMAND_NOT_EXISTS);
+        when(permissions.hasAnyPermissions(anyLong(), eq("gym:devices:read"))).thenReturn(true);
+        mobileDeviceRows.deleteById(device);
+        assertServiceException(
+                () -> mobileCommandResults.get(row.getId()), DEVICE_COMMAND_NOT_EXISTS);
+    }
+
+    @Test
+    void commandResultRejectsMemberDisabledAccountForeignTenantAndDeletedRecords() {
+        var row = commandResult(riskDevice(), 1L, "failed", false, null);
+        var login =
+                cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser();
+        login.setUserType(1);
+        assertServiceException(
+                () -> mobileCommandResults.get(row.getId()), MOBILE_IDENTITY_INVALID);
+        login.setUserType(2);
+        var account = new cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO();
+        account.setId(1L);
+        account.setStatus(1);
+        when(workAccounts.getUser(1L)).thenReturn(account);
+        assertServiceException(
+                () -> mobileCommandResults.get(row.getId()), MOBILE_IDENTITY_INVALID);
+        account.setStatus(0);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(
+                () -> mobileCommandResults.get(row.getId()), MOBILE_IDENTITY_INVALID);
+        login.setTenantId(2L);
+        assertServiceException(
+                () -> mobileCommandResults.get(row.getId()), DEVICE_COMMAND_NOT_EXISTS);
+        TenantContextHolder.setTenantId(1L);
+        login.setTenantId(1L);
+        commandResults.deleteById(row.getId());
+        assertServiceException(
+                () -> mobileCommandResults.get(row.getId()), DEVICE_COMMAND_NOT_EXISTS);
+    }
+
+    @Test
+    void commandResultNeverTreatsSimulatedOrUnfinishedSuccessAsRealExecution() {
+        Long device = riskDevice();
+        for (var state : List.of("succeeded", "unexpected", "unknown")) {
+            var row = commandResult(device, 1L, state, false, null);
+            var result = mobileCommandResults.get(row.getId());
+            assertEquals("unknown", result.status());
+            assertNull(result.completedAt());
+            assertTrue(result.failureReason().contains("不要自动重发"));
+        }
+        for (var state : List.of("queued", "sent", "succeeded")) {
+            var row = commandResult(device, 1L, state, true, null);
+            assertEquals("unknown", mobileCommandResults.get(row.getId()).status());
+        }
+        var pending = commandResult(device, 1L, "sent", false, null);
+        assertEquals("sent", mobileCommandResults.get(pending.getId()).status());
+        assertNull(mobileCommandResults.get(pending.getId()).failureReason());
+        var complete = commandResult(device, 1L, "succeeded", false, RISK_TIME.plusSeconds(1));
+        assertEquals("succeeded", mobileCommandResults.get(complete.getId()).status());
+        assertEquals(
+                "2026-10-26T09:02:04.123456+08:00",
+                mobileCommandResults.get(complete.getId()).completedAt());
+    }
+
+    @Test
+    void commandResultOnlyExposesSevenFieldsAndSafeFailureMessages() {
+        var row = commandResult(riskDevice(), 1L, "failed", false, RISK_TIME);
+        var result = mobileCommandResults.get(row.getId());
+        var json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(result);
+        assertFalse(json.contains("PRIVATE"));
+        assertEquals("设备指令未完成，请联系门店核实", result.failureReason());
+        assertEquals(
+                Set.of(
+                        "id",
+                        "deviceId",
+                        "command",
+                        "status",
+                        "requestedAt",
+                        "completedAt",
+                        "failureReason"),
+                cn.iocoder.yudao.framework.common.util.json.JsonUtils.parseObject(json, Map.class)
+                        .keySet());
+        row.setFailureReason("柜格已停用，未发送指令");
+        commandResults.updateById(row);
+        assertEquals(row.getFailureReason(), mobileCommandResults.get(row.getId()).failureReason());
+    }
+
+    @Test
+    void commandResultCompletionConstraintRejectsInventedTimesAndSimulatedSuccess() {
+        Long device = riskDevice();
+        assertThrows(
+                org.springframework.dao.DataIntegrityViolationException.class,
+                () -> commandResult(device, 1L, "sent", false, RISK_TIME));
+        assertThrows(
+                org.springframework.dao.DataIntegrityViolationException.class,
+                () -> commandResult(device, 1L, "succeeded", true, RISK_TIME));
+        assertThrows(
+                org.springframework.dao.DataIntegrityViolationException.class,
+                () -> commandResult(device, 1L, "failed", false, RISK_TIME.minusSeconds(1)));
+        assertEquals(0, commandResults.selectCount());
+    }
+
+    @Test
+    void commandResultControllerUsesOwnerOrManagerPolicyAndValidatesIds() {
+        var row = commandResult(riskDevice(), 1L, "failed", false, null);
+        var controller =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.controller.admin.mobile
+                                .GymMobileDeviceCommandsController.class);
+        personalScope(1L);
+        assertEquals(row.getId().toString(), controller.get(row.getId()).getCheckedData().id());
+        assertServiceException(() -> mobileCommandResults.get(null), MOBILE_REQUEST_INVALID);
+        assertServiceException(() -> mobileCommandResults.get(0L), MOBILE_REQUEST_INVALID);
+        assertServiceException(() -> controller.get(-1L), MOBILE_REQUEST_INVALID);
+    }
+
+    @Resource GymMobileCouponProperties cvProperties;
+    @Resource GymMeituanProperties cvProviderProperties;
+    @Resource GymCouponVerificationTransactions cvTransactions;
+    @Resource GymCouponVerificationWorker cvWorker;
+    @Resource GymCouponVerificationScheduler cvScheduler;
+    @Resource GymMobileCouponPreviewsService cvPreviews;
+    @Resource GymMobileCouponVerificationsService cvService;
+    @Resource GymCouponVerificationMapper cvRows;
+    @Resource GymMemberCouponConsumption cvConsumption;
+    static final String CV_CODE = "0012345678901";
+
+    record CouponFixture(
+            Long member,
+            Long template,
+            Long preview,
+            java.time.Instant now,
+            MeituanRetailResponses.Prepare prepared) {}
+
+    <T> MeituanResponse<T> cvResponse(T data) {
+        var r = new MeituanResponse<T>();
+        r.setCode("OP_SUCCESS");
+        r.setData(data);
+        return r;
+    }
+
+    GymMobileCouponPreviewVO.Request cvPreviewRequest() {
+        var req = new GymMobileCouponPreviewVO.Request();
+        req.setStoreId(101L);
+        req.setPlatform("meituan");
+        req.setCouponCode(CV_CODE);
+        return req;
+    }
+
+    GymMobileCouponVerificationVO.Create cvRequest(Long preview) {
+        var req = new GymMobileCouponVerificationVO.Create();
+        req.setPreviewId(preview);
+        return req;
+    }
+
+    CouponFixture couponWorkflowFixture() {
+        var now = java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS);
+        when(businessClock.now()).thenReturn(now);
+        stores.create(store(101L, "A"));
+        Long member = Long.valueOf(members.create(member(101L, "13800002401")).getId());
+        Long template = Long.valueOf(cards.create(cardTemplate("count")).getId());
+        var config = verificationSettings();
+        config.setRequireCheckin(false);
+        salesSettings.saveVerification(101L, config);
+        cvProperties.setEnabled(true);
+        cvProperties.setConsumptionEnabled(true);
+        cvProperties.setEncryptionKey(java.util.Base64.getEncoder().encodeToString(new byte[32]));
+        var mapping = new GymMobileCouponProperties.Mapping();
+        mapping.setEnabled(true);
+        mapping.setDealGroupId(8L);
+        mapping.setCardTemplateId(template);
+        cvProperties.setMappings(
+                new HashMap<>(
+                        Map.of(
+                                1L,
+                                new HashMap<>(Map.of(101L, new HashMap<>(Map.of(7L, mapping)))))));
+        var merchant = new GymMobileCouponProperties.MerchantAccount();
+        merchant.setAccount("merchant-101");
+        merchant.setName("自助核销");
+        cvProperties.setMerchantAccounts(
+                new HashMap<>(Map.of(1L, new HashMap<>(Map.of(101L, merchant)))));
+        cvProviderProperties.setEnabled(true);
+        cvProviderProperties.setMutationsEnabled(true);
+        cvProviderProperties.setDeveloperId(10L);
+        cvProviderProperties.setSignKey("test-only");
+        var authorization = new GymMeituanProperties.StoreAuthorization();
+        authorization.setAppAuthToken("test-token");
+        var tenant = new GymMeituanProperties.TenantAuthorization();
+        tenant.getStores().put(101L, authorization);
+        cvProviderProperties.setTenants(new HashMap<>(Map.of(1L, tenant)));
+        qrMemberIdentity(member);
+        qrMemberLogin();
+        var prepared = new MeituanRetailResponses.Prepare();
+        prepared.setReceiptCode(CV_CODE);
+        prepared.setDealId(7L);
+        prepared.setDealGroupId(8L);
+        prepared.setDealTitle("团购次卡");
+        prepared.setMobile("13800002401");
+        prepared.setBizType(0);
+        prepared.setDealType(0);
+        prepared.setTgTimesCardFlag(false);
+        prepared.setCount(1);
+        prepared.setVerificationType(1);
+        prepared.setReceiptEndDate(now.plusSeconds(600).toEpochMilli());
+        when(couponClient.prepare(eq(1L), eq(101L), any()))
+                .thenAnswer(
+                        i -> {
+                            assertFalse(
+                                    org.springframework.transaction.support
+                                            .TransactionSynchronizationManager
+                                            .isActualTransactionActive());
+                            return cvResponse(prepared);
+                        });
+        when(couponClient.consume(eq(1L), eq(101L), any()))
+                .thenAnswer(
+                        i -> {
+                            assertFalse(
+                                    org.springframework.transaction.support
+                                            .TransactionSynchronizationManager
+                                            .isActualTransactionActive());
+                            var request =
+                                    i.getArgument(
+                                            2,
+                                            cn.iocoder.yudao.module.gym.framework.groupbuy.meituan
+                                                    .dto.retail.MeituanConsumeRequest.class);
+                            var pending =
+                                    cvRows.selectOne(
+                                            cn.iocoder.yudao.module.gym.dal.dataobject.groupbuy
+                                                            .GymCouponVerificationDO
+                                                    ::getProviderRequestId,
+                                            request.getRequestId());
+                            assertTrue(Set.of("sending", "unknown").contains(pending.getStage()));
+                            assertEquals(1, request.getCount());
+                            assertEquals("merchant-101", request.getAppShopAccount());
+                            var detail = new MeituanRetailResponses.ConsumeDetail();
+                            detail.setReceiptCode(CV_CODE);
+                            detail.setDealId(7L);
+                            detail.setDealGroupId(8L);
+                            detail.setBizType(0);
+                            detail.setTgTimesCardFlag(false);
+                            detail.setFlowId("cv-flow-1");
+                            detail.setOrderId("cv-order-1");
+                            var data = new MeituanRetailResponses.Consume();
+                            data.setResult(List.of(detail));
+                            return cvResponse(data);
+                        });
+        Long preview = Long.valueOf(cvPreviews.preview(cvPreviewRequest()).previewId());
+        clearInvocations(couponClient);
+        return new CouponFixture(member, template, preview, now, prepared);
+    }
+
+    Long cvPrepare(CouponFixture f) {
+        return cvTransactions.prepare(cvRequest(f.preview()), "coupon-request-1");
+    }
+
+    void cvUnknown() {
+        doThrow(
+                        cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil
+                                .exception(GROUP_BUY_PROVIDER_RESULT_UNKNOWN))
+                .when(couponClient)
+                .consume(anyLong(), anyLong(), any());
+    }
+
+    void cvObserveResponse() {
+        var data = new MeituanRetailResponses.Consumed();
+        data.setReceiptCode(CV_CODE);
+        data.setDealId(7L);
+        data.setDealGroupId(8L);
+        data.setBizType(0);
+        data.setOrderId("already-used-by-someone");
+        when(couponClient.getConsumed(anyLong(), anyLong(), any())).thenReturn(cvResponse(data));
+    }
+
+    @Test
+    void couponWorkflowSuccessIssuesOneRealCardWithProofAndNoCashOrPoints() {
+        var f = couponWorkflowFixture();
+        var result = cvService.create(cvRequest(f.preview()), "coupon-request-1");
+        assertEquals("succeeded", result.status());
+        assertNull(result.failureReason());
+        assertEquals(1, result.memberCardIds().size());
+        var row = cvRows.selectById(Long.valueOf(result.id()));
+        var card = purchasedCards().selectById(Long.valueOf(result.memberCardIds().getFirst()));
+        assertEquals(f.member(), card.getMemberId());
+        assertEquals("coupon-verification", card.getSourceType());
+        assertEquals(result.id(), card.getSourceId());
+        assertEquals(f.now(), card.getStartsAt());
+        assertEquals(f.now(), row.getConfirmedAt());
+        assertEquals(f.template(), card.getTemplateId());
+        assertEquals("fulfilled", row.getStage());
+        assertEquals(row.getCouponHash(), row.getClaimedCouponHash());
+        assertNotNull(row.getVerificationId());
+        assertFalse(row.getConfirmationSnapshot().contains(CV_CODE));
+        assertEquals(
+                0,
+                redemptionJdbc()
+                        .queryForObject("SELECT COUNT(*) FROM gym_business_order", Integer.class));
+        assertEquals(0, redemptionRecords.selectCount());
+        assertEquals(
+                1,
+                redemptionJdbc()
+                        .queryForObject(
+                                "SELECT COUNT(*) FROM gym_verification WHERE member_card_id="
+                                        + card.getId(),
+                                Integer.class));
+        assertEquals(result, cvService.create(cvRequest(f.preview()), "coupon-request-1"));
+        assertEquals(result, cvService.create(cvRequest(f.preview()), "coupon-request-other"));
+        cvWorker.process(row.getId());
+        assertEquals(1, purchasedCards().selectCount());
+        verify(couponClient, times(1)).consume(eq(1L), eq(101L), any());
+    }
+
+    @Test
+    void couponWorkflowUnknownKeepsClaimAndGetNeverCallsProviderOrIssuesCard() {
+        var f = couponWorkflowFixture();
+        cvUnknown();
+        var result = cvService.create(cvRequest(f.preview()), "coupon-unknown-1");
+        assertEquals("processing", result.status());
+        assertTrue(result.memberCardIds().isEmpty());
+        assertEquals("unknown", cvRows.selectById(Long.valueOf(result.id())).getStage());
+        clearInvocations(couponClient);
+        for (int n = 0; n < 3; n++) assertEquals(result, cvService.get(Long.valueOf(result.id())));
+        verifyNoInteractions(couponClient);
+        assertEquals(0, purchasedCards().selectCount());
+        Long otherPreview = Long.valueOf(cvPreviews.preview(cvPreviewRequest()).previewId());
+        assertServiceException(
+                () -> cvService.create(cvRequest(otherPreview), "coupon-another-preview"),
+                COUPON_ALREADY_CLAIMED);
+        assertEquals(1, cvRows.selectCount());
+    }
+
+    @Test
+    void couponWorkflowReadOnlyObservationNeverConvertsUnknownToSuccessfulConsumption() {
+        var f = couponWorkflowFixture();
+        cvUnknown();
+        Long id = Long.valueOf(cvService.create(cvRequest(f.preview()), "coupon-query-1").id());
+        cvObserveResponse();
+        cvProperties.setEnabled(false);
+        cvProperties.setConsumptionEnabled(false);
+        cvProviderProperties.setMutationsEnabled(false);
+        for (int n = 1; n <= 8; n++) {
+            when(businessClock.now()).thenReturn(f.now().plusSeconds(n * 61));
+            cvWorker.process(id);
+        }
+        var row = cvRows.selectById(id);
+        assertEquals(6, row.getQueryCount());
+        assertEquals("unknown", row.getStage());
+        assertNotNull(row.getObservationSnapshot());
+        assertNull(row.getConfirmationSnapshot());
+        assertEquals(0, purchasedCards().selectCount());
+        assertTrue(cvTransactions.due().isEmpty());
+        verify(couponClient, times(1)).consume(anyLong(), anyLong(), any());
+        verify(couponClient, times(6)).getConsumed(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void couponWorkflowDefinitiveRefusalReleasesClaimButDoesNotResubmitSamePreview() {
+        var f = couponWorkflowFixture();
+        doThrow(
+                        cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil
+                                .exception(GROUP_BUY_PROVIDER_REJECTED))
+                .when(couponClient)
+                .consume(anyLong(), anyLong(), any());
+        var result = cvService.create(cvRequest(f.preview()), "coupon-rejected-1");
+        assertEquals("failed", result.status());
+        assertNull(cvRows.selectById(Long.valueOf(result.id())).getClaimedCouponHash());
+        assertEquals(result, cvService.create(cvRequest(f.preview()), "coupon-rejected-2"));
+        verify(couponClient, times(1)).consume(anyLong(), anyLong(), any());
+        Long fresh = Long.valueOf(cvPreviews.preview(cvPreviewRequest()).previewId());
+        assertNotEquals(
+                Long.valueOf(result.id()),
+                cvTransactions.prepare(cvRequest(fresh), "coupon-fresh-1"));
+    }
+
+    @Test
+    void couponWorkflowExpiredPreviewAndConfigurationChangeCannotDispatch() {
+        var f = couponWorkflowFixture();
+        when(businessClock.now()).thenReturn(f.now().plusSeconds(301));
+        assertServiceException(() -> cvPrepare(f), COUPON_PREVIEW_INVALID);
+        assertEquals(0, cvRows.selectCount());
+        when(businessClock.now()).thenReturn(f.now());
+        Long id = cvPrepare(f);
+        cvProperties.store(1L, 101L).get(7L).setEnabled(false);
+        cvWorker.process(id);
+        assertEquals("failed", cvRows.selectById(id).getStatus());
+        verify(couponClient, never()).consume(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void couponWorkflowRevokedOwnershipAtFinalReadFailsWithoutConsume() {
+        var f = couponWorkflowFixture();
+        Long id = cvPrepare(f);
+        f.prepared().setMobile("13800002499");
+        cvWorker.process(id);
+        assertEquals("failed", cvRows.selectById(id).getStatus());
+        verify(couponClient, never()).consume(anyLong(), anyLong(), any());
+        assertEquals(0, purchasedCards().selectCount());
+    }
+
+    @Test
+    void couponWorkflowChangedPhoneDuringProviderReadCannotDispatch() {
+        var f = couponWorkflowFixture();
+        Long id = cvPrepare(f);
+        doAnswer(
+                        i -> {
+                            memberAccounts.getUser(50L).setMobile("13800002499");
+                            return cvResponse(f.prepared());
+                        })
+                .when(couponClient)
+                .prepare(anyLong(), anyLong(), any());
+        cvWorker.process(id);
+        assertEquals("failed", cvRows.selectById(id).getStatus());
+        verify(couponClient, never()).consume(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void couponWorkflowSameRequestKeySurvivesGenericCacheCleanupAndRejectsChangedPreview() {
+        var f = couponWorkflowFixture();
+        var result = cvService.create(cvRequest(f.preview()), "coupon-durable-key");
+        redemptionJdbc().update("DELETE FROM gym_mobile_request");
+        assertEquals(result, cvService.create(cvRequest(f.preview()), "coupon-durable-key"));
+        Long other = Long.valueOf(cvPreviews.preview(cvPreviewRequest()).previewId());
+        redemptionJdbc().update("DELETE FROM gym_mobile_request");
+        assertServiceException(
+                () -> cvService.create(cvRequest(other), "coupon-durable-key"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        verify(couponClient, times(1)).consume(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void couponWorkflowCardFailureKeepsConfirmedProofAndRecoversAfterPreviewExpiry() {
+        var f = couponWorkflowFixture();
+        redemptionJdbc()
+                .execute(
+                        "ALTER TABLE gym_member_card ADD CONSTRAINT test_coupon_card_failure CHECK(source_type<>'coupon-verification')");
+        Long id;
+        try {
+            id = Long.valueOf(cvService.create(cvRequest(f.preview()), "coupon-card-failure").id());
+            assertEquals("confirmed", cvRows.selectById(id).getStage());
+            assertEquals(0, purchasedCards().selectCount());
+            assertEquals(
+                    0,
+                    redemptionJdbc()
+                            .queryForObject(
+                                    "SELECT COUNT(*) FROM gym_verification", Integer.class));
+        } finally {
+            redemptionJdbc()
+                    .execute(
+                            "ALTER TABLE gym_member_card DROP CONSTRAINT test_coupon_card_failure");
+        }
+        when(businessClock.now()).thenReturn(f.now().plusSeconds(3600));
+        cvProperties.setEnabled(false);
+        cvProperties.setConsumptionEnabled(false);
+        loginAs(1L);
+        var original = org.springframework.security.core.context.SecurityContextHolder.getContext();
+        cvWorker.process(id);
+        assertSame(
+                original,
+                org.springframework.security.core.context.SecurityContextHolder.getContext());
+        qrMemberLogin();
+        assertEquals("succeeded", cvService.get(id).status());
+        assertEquals(1, purchasedCards().selectCount());
+        verify(couponClient, times(1)).consume(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void couponWorkflowLegacyWriteFailureRollsBackCardContractNotificationAndThenRecovers() {
+        var f = couponWorkflowFixture();
+        loginAs(1L);
+        publishedContractPdf();
+        qrMemberLogin();
+        long notifications =
+                redemptionJdbc()
+                        .queryForObject("SELECT COUNT(*) FROM gym_mobile_notification", Long.class);
+        redemptionJdbc()
+                .execute(
+                        "ALTER TABLE gym_verification ADD CONSTRAINT test_coupon_legacy_failure CHECK(channel<>'meituan')");
+        Long id;
+        try {
+            id =
+                    Long.valueOf(
+                            cvService.create(cvRequest(f.preview()), "coupon-legacy-failure").id());
+            assertEquals("confirmed", cvRows.selectById(id).getStage());
+            assertEquals(0, purchasedCards().selectCount());
+            assertEquals(0, contractMapper.selectCount());
+            assertEquals(
+                    notifications,
+                    redemptionJdbc()
+                            .queryForObject(
+                                    "SELECT COUNT(*) FROM gym_mobile_notification", Long.class));
+        } finally {
+            redemptionJdbc()
+                    .execute(
+                            "ALTER TABLE gym_verification DROP CONSTRAINT test_coupon_legacy_failure");
+        }
+        cvWorker.process(id);
+        assertEquals("succeeded", cvService.get(id).status());
+        assertEquals(1, purchasedCards().selectCount());
+        assertEquals(1, contractMapper.selectCount());
+        var contract = contractMapper.selectList().getFirst();
+        assertEquals("unsigned", contract.getStatus());
+        assertEquals("unconfigured", contract.getSigningStatus());
+        assertNull(files.selectById(contract.getUnsignedFileId()).getUploaderId());
+        var event =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.contract
+                                        .GymContractEventMapper.class)
+                        .selectList()
+                        .getFirst();
+        assertEquals(1, event.getActorUserType());
+        assertEquals(50L, event.getActorUserId());
+        verify(couponClient, times(1)).consume(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void couponWorkflowMissingOrMismatchedProofNeverIssuesCard() {
+        var f = couponWorkflowFixture();
+        Long id = cvPrepare(f);
+        var tx =
+                new org.springframework.transaction.support.TransactionTemplate(
+                        applicationContext.getBean(
+                                org.springframework.transaction.PlatformTransactionManager.class));
+        assertServiceException(
+                () -> tx.execute(status -> cards.issueCouponVerification(id)),
+                COUPON_VERIFICATION_INVALID);
+        var ticket = cvTransactions.inspect(id);
+        assertTrue(cvTransactions.start(ticket, f.prepared()));
+        var proof =
+                new GymMemberCouponConsumption.Confirmation(
+                        cvRows.selectById(id).getCouponHash(),
+                        7L,
+                        8L,
+                        "wrong-request",
+                        ticket.scope().fingerprint(),
+                        "flow",
+                        "order",
+                        null);
+        assertServiceException(
+                () -> cvTransactions.confirm(id, proof), COUPON_VERIFICATION_INVALID);
+        assertEquals("sending", cvRows.selectById(id).getStage());
+        assertEquals(0, purchasedCards().selectCount());
+    }
+
+    @Test
+    void couponWorkflowPersistedSendingAfterCrashOnlyQueriesAndNeverResends() {
+        var f = couponWorkflowFixture();
+        Long id = cvPrepare(f);
+        var ticket = cvTransactions.inspect(id);
+        assertTrue(cvTransactions.start(ticket, f.prepared()));
+        cvObserveResponse();
+        when(businessClock.now()).thenReturn(f.now().plusSeconds(31));
+        cvWorker.process(id);
+        assertEquals("unknown", cvRows.selectById(id).getStage());
+        verify(couponClient, never()).consume(anyLong(), anyLong(), any());
+        verify(couponClient).getConsumed(anyLong(), anyLong(), any());
+        assertEquals(0, purchasedCards().selectCount());
+    }
+
+    @Test
+    void couponWorkflowLateProofCanFinishUnknownButLaterQueryCannotOverwriteSuccess() {
+        var f = couponWorkflowFixture();
+        Long id = cvPrepare(f);
+        var ticket = cvTransactions.inspect(id);
+        assertTrue(cvTransactions.start(ticket, f.prepared()));
+        cvTransactions.defer(id, 500);
+        var proof =
+                cvConsumption.consume(
+                        1L, 101L, CV_CODE, 7L, 8L, ticket.requestId(), ticket.scope());
+        cvTransactions.confirm(id, proof);
+        cvTransactions.confirm(id, proof);
+        cvWorker.process(id);
+        cvTransactions.observed(
+                id, new GymMemberCouponConsumption.Observation("bad", 9L, 9L, "bad", null));
+        cvTransactions.reject(id, 500, false);
+        cvTransactions.defer(id, 500);
+        assertEquals("succeeded", cvService.get(id).status());
+        assertEquals(1, purchasedCards().selectCount());
+    }
+
+    @Test
+    void couponWorkflowProviderProofPersistenceFailureNeverResendsOrInventsSuccess() {
+        var f = couponWorkflowFixture();
+        redemptionJdbc()
+                .execute(
+                        "ALTER TABLE gym_coupon_verification ADD CONSTRAINT test_coupon_proof_failure CHECK(confirmation_snapshot IS NULL)");
+        Long id;
+        try {
+            id =
+                    Long.valueOf(
+                            cvService.create(cvRequest(f.preview()), "coupon-proof-failure").id());
+            assertEquals("unknown", cvRows.selectById(id).getStage());
+            assertEquals(0, purchasedCards().selectCount());
+        } finally {
+            redemptionJdbc()
+                    .execute(
+                            "ALTER TABLE gym_coupon_verification DROP CONSTRAINT test_coupon_proof_failure");
+        }
+        cvObserveResponse();
+        when(businessClock.now()).thenReturn(f.now().plusSeconds(61));
+        cvWorker.process(id);
+        assertEquals("processing", cvService.get(id).status());
+        verify(couponClient, times(1)).consume(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void couponWorkflowRecheckDisabledMemberBeforeDispatchAndBeforeFulfillment() {
+        var f = couponWorkflowFixture();
+        Long id = cvPrepare(f);
+        memberAccounts.getUser(50L).setStatus(1);
+        cvWorker.process(id);
+        assertEquals("failed", cvRows.selectById(id).getStatus());
+        verify(couponClient, never()).consume(anyLong(), anyLong(), any());
+        memberAccounts.getUser(50L).setStatus(0);
+        Long fresh = Long.valueOf(cvPreviews.preview(cvPreviewRequest()).previewId());
+        Long next = cvTransactions.prepare(cvRequest(fresh), "coupon-disabled-after");
+        var ticket = cvTransactions.inspect(next);
+        assertTrue(cvTransactions.start(ticket, f.prepared()));
+        var proof =
+                cvConsumption.consume(
+                        1L, 101L, CV_CODE, 7L, 8L, ticket.requestId(), ticket.scope());
+        cvTransactions.confirm(next, proof);
+        memberAccounts.getUser(50L).setStatus(1);
+        cvWorker.process(next);
+        assertEquals("confirmed", cvRows.selectById(next).getStage());
+        assertEquals(0, purchasedCards().selectCount());
+        memberAccounts.getUser(50L).setStatus(0);
+        cvWorker.process(next);
+        assertEquals("succeeded", cvService.get(next).status());
+    }
+
+    @Test
+    void couponWorkflowOtherMemberAndTenantCannotReadOrSubmitPreview() {
+        var f = couponWorkflowFixture();
+        Long id = cvPrepare(f);
+        loginAs(1L);
+        Long other = Long.valueOf(members.create(member(101L, "13800002402")).getId());
+        var identity = new cn.iocoder.yudao.module.gym.dal.dataobject.mobile.GymMobileIdentityDO();
+        identity.setUserId(51L);
+        identity.setMemberId(other);
+        identity.setDefaultStoreId(101L);
+        identity.setSource("test");
+        identity.setFaceStatus("unregistered");
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileIdentityMapper.class)
+                .insert(identity);
+        var account = new cn.iocoder.yudao.module.member.api.user.dto.MemberUserRespDTO();
+        account.setId(51L);
+        account.setStatus(0);
+        account.setMobile("13800002402");
+        when(memberAccounts.getUser(51L)).thenReturn(account);
+        qrMemberLogin();
+        cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser()
+                .setId(51L);
+        assertServiceException(() -> cvService.get(id), COUPON_VERIFICATION_NOT_EXISTS);
+        assertServiceException(
+                () -> cvTransactions.prepare(cvRequest(f.preview()), "coupon-foreign-preview"),
+                COUPON_PREVIEW_INVALID);
+        TenantContextHolder.setTenantId(2L);
+        assertThrows(
+                cn.iocoder.yudao.framework.common.exception.ServiceException.class,
+                () -> cvService.get(id));
+        qrMemberLogin();
+        assertEquals("processing", cvService.get(id).status());
+        verify(couponClient, never()).consume(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void couponWorkflowPreparationFailureRollsBackClaimAndIdempotencyRecord() {
+        var f = couponWorkflowFixture();
+        redemptionJdbc()
+                .execute(
+                        "ALTER TABLE gym_coupon_verification ADD CONSTRAINT test_coupon_prepare_failure CHECK(store_id<>101)");
+        try {
+            assertThrows(RuntimeException.class, () -> cvPrepare(f));
+            assertEquals(0, cvRows.selectCount());
+            assertEquals(
+                    0,
+                    redemptionJdbc()
+                            .queryForObject(
+                                    "SELECT COUNT(*) FROM gym_mobile_request WHERE operation='coupon-verification'",
+                                    Integer.class));
+        } finally {
+            redemptionJdbc()
+                    .execute(
+                            "ALTER TABLE gym_coupon_verification DROP CONSTRAINT test_coupon_prepare_failure");
+        }
+        assertNotNull(cvPrepare(f));
+    }
+
+    @Test
+    void couponWorkflowParallelKeysForSamePreviewShareOneDispatchAndCard() throws Exception {
+        var f = couponWorkflowFixture();
+        try (var pool = java.util.concurrent.Executors.newFixedThreadPool(4)) {
+            var jobs = new ArrayList<java.util.concurrent.Callable<String>>();
+            for (int n = 0; n < 4; n++) {
+                final int index = n;
+                jobs.add(
+                        () -> {
+                            qrMemberLogin();
+                            try {
+                                return cvService
+                                        .create(cvRequest(f.preview()), "coupon-race-" + index)
+                                        .id();
+                            } finally {
+                                cleanupContext();
+                            }
+                        });
+            }
+            var ids = new java.util.HashSet<String>();
+            for (var task : pool.invokeAll(jobs))
+                ids.add(task.get(20, java.util.concurrent.TimeUnit.SECONDS));
+            assertEquals(1, ids.size());
+        }
+        qrMemberLogin();
+        assertEquals(1, cvRows.selectCount());
+        assertEquals("succeeded", cvRows.selectList().getFirst().getStatus());
+        assertEquals(1, purchasedCards().selectCount());
+        verify(couponClient, times(1)).consume(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void couponWorkflowDifferentPreviewsRaceForOnlyOneCouponClaim() throws Exception {
+        var f = couponWorkflowFixture();
+        var second = Long.valueOf(cvPreviews.preview(cvPreviewRequest()).previewId());
+        try (var pool = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            var jobs = new ArrayList<java.util.concurrent.Callable<Object>>();
+            for (Long preview : List.of(f.preview(), second))
+                jobs.add(
+                        () -> {
+                            qrMemberLogin();
+                            try {
+                                return cvTransactions.prepare(
+                                        cvRequest(preview), "coupon-preview-" + preview);
+                            } catch (
+                                    cn.iocoder.yudao.framework.common.exception.ServiceException
+                                            e) {
+                                return e.getCode();
+                            } finally {
+                                cleanupContext();
+                            }
+                        });
+            var results = new ArrayList<Object>();
+            for (var task : pool.invokeAll(jobs))
+                results.add(task.get(20, java.util.concurrent.TimeUnit.SECONDS));
+            assertEquals(1, results.stream().filter(Long.class::isInstance).count());
+            assertTrue(results.contains(COUPON_ALREADY_CLAIMED.getCode()));
+        }
+        assertEquals(1, cvRows.selectCount());
+        verify(couponClient, never()).consume(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void couponWorkflowSchedulerRecoversPreparedAndSkipsDisabledTenantWithContextRestored() {
+        var f = couponWorkflowFixture();
+        Long id = cvPrepare(f);
+        when(tenantFrameworkService.getTenantIds()).thenReturn(List.of(1L));
+        loginAs(1L);
+        var original = org.springframework.security.core.context.SecurityContextHolder.getContext();
+        cvScheduler.tick();
+        assertEquals("prepared", cvRows.selectById(id).getStage());
+        when(businessClock.now()).thenReturn(f.now().plusSeconds(31));
+        doThrow(
+                        cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil
+                                .exception(
+                                        cn.iocoder.yudao.module.system.enums.ErrorCodeConstants
+                                                .TENANT_DISABLE))
+                .when(tenantFrameworkService)
+                .validTenant(1L);
+        cvScheduler.tick();
+        assertEquals("prepared", cvRows.selectById(id).getStage());
+        doNothing().when(tenantFrameworkService).validTenant(1L);
+        cvScheduler.tick();
+        assertEquals("succeeded", cvRows.selectById(id).getStatus());
+        assertSame(
+                original,
+                org.springframework.security.core.context.SecurityContextHolder.getContext());
+        assertEquals(1L, TenantContextHolder.getRequiredTenantId());
+    }
+
+    @Test
+    void couponWorkflowConcurrentSameKeyAndConfirmedRecoveryRemainSingleIssue() throws Exception {
+        var f = couponWorkflowFixture();
+        redemptionJdbc()
+                .execute(
+                        "ALTER TABLE gym_member_card ADD CONSTRAINT test_coupon_parallel_card CHECK(source_type<>'coupon-verification')");
+        Long id;
+        try (var pool = java.util.concurrent.Executors.newFixedThreadPool(3)) {
+            try {
+                var jobs = new ArrayList<java.util.concurrent.Callable<String>>();
+                for (int n = 0; n < 3; n++)
+                    jobs.add(
+                            () -> {
+                                qrMemberLogin();
+                                try {
+                                    return cvService
+                                            .create(cvRequest(f.preview()), "coupon-same-key")
+                                            .id();
+                                } finally {
+                                    cleanupContext();
+                                }
+                            });
+                var ids = new java.util.HashSet<String>();
+                for (var task : pool.invokeAll(jobs))
+                    ids.add(task.get(20, java.util.concurrent.TimeUnit.SECONDS));
+                assertEquals(1, ids.size());
+                id = Long.valueOf(ids.iterator().next());
+                assertEquals("confirmed", cvRows.selectById(id).getStage());
+            } finally {
+                redemptionJdbc()
+                        .execute(
+                                "ALTER TABLE gym_member_card DROP CONSTRAINT test_coupon_parallel_card");
+            }
+            var jobs = new ArrayList<java.util.concurrent.Callable<Boolean>>();
+            for (int n = 0; n < 3; n++)
+                jobs.add(
+                        () -> {
+                            qrMemberLogin();
+                            try {
+                                cvWorker.process(id);
+                                return true;
+                            } finally {
+                                cleanupContext();
+                            }
+                        });
+            for (var task : pool.invokeAll(jobs))
+                assertTrue(task.get(20, java.util.concurrent.TimeUnit.SECONDS));
+        }
+        qrMemberLogin();
+        assertEquals("succeeded", cvService.get(id).status());
+        assertEquals(1, purchasedCards().selectCount());
+        assertEquals(
+                1,
+                redemptionJdbc()
+                        .queryForObject("SELECT COUNT(*) FROM gym_verification", Integer.class));
+        verify(couponClient, times(1)).consume(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void couponWorkflowPeriodCardUsesFrozenDurationDespiteLaterCatalogEdit() {
+        var f = couponWorkflowFixture();
+        loginAs(1L);
+        Long period = Long.valueOf(cards.create(cardTemplate("period")).getId());
+        cvProperties.store(1L, 101L).get(7L).setCardTemplateId(period);
+        qrMemberLogin();
+        Long preview = Long.valueOf(cvPreviews.preview(cvPreviewRequest()).previewId());
+        Long id = cvTransactions.prepare(cvRequest(preview), "coupon-period-card");
+        var ticket = cvTransactions.inspect(id);
+        assertTrue(cvTransactions.start(ticket, f.prepared()));
+        var proof =
+                cvConsumption.consume(
+                        1L, 101L, CV_CODE, 7L, 8L, ticket.requestId(), ticket.scope());
+        cvTransactions.confirm(id, proof);
+        var frozen =
+                JsonUtils.parseObject(
+                        cvRows.selectById(id).getTemplateSnapshot(),
+                        cn.iocoder.yudao.module.gym.dal.dataobject.card.GymCardTemplateDO.class);
+        redemptionJdbc()
+                .update(
+                        "UPDATE gym_card_template SET duration_days=999,status='archived' WHERE id=?",
+                        period);
+        cvWorker.process(id);
+        var card = purchasedCards().selectById(cvRows.selectById(id).getMemberCardId());
+        assertEquals("period", card.getKind());
+        assertEquals(f.now().plusSeconds(frozen.getDurationDays() * 86400L), card.getExpiresAt());
+        assertEquals("succeeded", cvService.get(id).status());
+    }
+
+    @Test
+    void couponWorkflowQueryLeaseCapsFailuresAfterKeyRotationWithoutLeakingOrResending() {
+        var f = couponWorkflowFixture();
+        cvUnknown();
+        Long id =
+                Long.valueOf(cvService.create(cvRequest(f.preview()), "coupon-key-rotation").id());
+        cvProperties.setEncryptionKey(
+                java.util.Base64.getEncoder()
+                        .encodeToString(
+                                "12345678901234567890123456789012"
+                                        .getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        for (int n = 1; n <= 8; n++) {
+            when(businessClock.now()).thenReturn(f.now().plusSeconds(n * 61));
+            cvWorker.process(id);
+        }
+        assertEquals(6, cvRows.selectById(id).getQueryCount());
+        assertEquals("unknown", cvRows.selectById(id).getStage());
+        assertTrue(cvTransactions.due().isEmpty());
+        verify(couponClient, never()).getConsumed(anyLong(), anyLong(), any());
+        verify(couponClient, times(1)).consume(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void couponWorkflowOuterTransactionIsRejectedBeforeClaimOrNetwork() {
+        var f = couponWorkflowFixture();
+        var tx =
+                new org.springframework.transaction.support.TransactionTemplate(
+                        applicationContext.getBean(
+                                org.springframework.transaction.PlatformTransactionManager.class));
+        tx.executeWithoutResult(
+                status ->
+                        assertThrows(
+                                org.springframework.transaction.IllegalTransactionStateException
+                                        .class,
+                                () ->
+                                        cvService.create(
+                                                cvRequest(f.preview()), "coupon-no-outer-tx")));
+        assertEquals(0, cvRows.selectCount());
+        verifyNoInteractions(couponClient);
+    }
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileActionConfirmationsService
+            actionConfirmations;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.framework.mobile.GymActionConfirmationProperties actionProperties;
+
+    @Resource cn.iocoder.yudao.module.gym.dal.mysql.device.GymActionConfirmationMapper actionRows;
+    @Resource cn.iocoder.yudao.module.gym.dal.mysql.device.GymDeviceCommandMapper actionCommands;
+    static final String ACTION_TEST_SECRET = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ";
+
+    Long actionFixture() {
+        stores.create(store(101L, "A"));
+        when(permissions.hasAnyPermissions(1L, "gym:devices:command")).thenReturn(true);
+        actionProperties.setEnabled(true);
+        actionProperties.setSecrets(Map.of(1L, Map.of(1L, ACTION_TEST_SECRET)));
+        when(businessClock.now()).thenReturn(java.time.Instant.ofEpochSecond(59));
+        return Long.valueOf(
+                deviceService
+                        .createDevice(deviceRequest(101L, "door", "totp-test-device"))
+                        .getId());
+    }
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymActionConfirmationVO.Request
+            actionRequest(Long device, String code) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymActionConfirmationVO
+                        .Request();
+        req.setResourceId(device);
+        req.setAction("open_door");
+        req.setVerificationCode(code);
+        return req;
+    }
+
+    org.springframework.transaction.support.TransactionTemplate actionTransaction() {
+        return new org.springframework.transaction.support.TransactionTemplate(
+                applicationContext.getBean(
+                        org.springframework.transaction.PlatformTransactionManager.class));
+    }
+
+    Long actionCommand(Long device, Long slot) {
+        var row = new cn.iocoder.yudao.module.gym.dal.dataobject.device.GymDeviceCommandDO();
+        row.setDeviceId(device);
+        row.setCompartmentId(slot);
+        row.setCommand(slot == null ? "open_door" : "open_locker");
+        row.setReason("isolated test only");
+        row.setRequesterId(1L);
+        row.setRequesterName("isolated tester");
+        row.setRequestedAt(businessClock.now());
+        row.setStatus("queued");
+        row.setSimulated(false);
+        row.setRequestKey(java.util.UUID.randomUUID().toString());
+        row.setRequestHash("test-only");
+        actionCommands.insert(row);
+        return row.getId();
+    }
+
+    void consumeAction(String token, Long command) {
+        actionTransaction().executeWithoutResult(s -> actionConfirmations.consume(token, command));
+    }
+
+    @Test
+    void actionConfirmationIssuesMinimalRandomTokenAndNoCommandOrPlaintext() {
+        Long d = actionFixture();
+        var result = actionConfirmations.create(actionRequest(d, "287082"));
+        assertTrue(result.confirmationToken().matches("[A-Za-z0-9_-]{43}"));
+        assertEquals(
+                java.time.Instant.ofEpochSecond(179),
+                java.time.OffsetDateTime.parse(result.expiresAt()).toInstant());
+        assertEquals(0, actionCommands.selectCount());
+        assertEquals(1, actionRows.selectCount());
+        var row = actionRows.selectList().getFirst();
+        assertNotEquals(result.confirmationToken(), row.getTokenHash());
+        assertEquals(64, row.getTokenHash().length());
+        assertEquals(1L, row.getVerificationCounter());
+        assertEquals(d, row.getDeviceId());
+        assertEquals(101L, row.getStoreId());
+        assertFalse(result.toString().contains(result.confirmationToken()));
+    }
+
+    @Test
+    void actionConfirmationDisabledMissingAndMalformedCredentialFailClosed() {
+        Long d = actionFixture();
+        actionProperties.setEnabled(false);
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "287082")),
+                ACTION_CONFIRMATION_UNAVAILABLE);
+        actionProperties.setEnabled(true);
+        actionProperties.setSecrets(Map.of());
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "287082")),
+                ACTION_CONFIRMATION_UNAVAILABLE);
+        actionProperties.setSecrets(Map.of(1L, Map.of(1L, "bad-secret")));
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "287082")),
+                ACTION_CONFIRMATION_UNAVAILABLE);
+        assertEquals(0, actionRows.selectCount());
+    }
+
+    @Test
+    void actionConfirmationRequiresPermissionActiveAdminAndFullStoreScope() {
+        Long d = actionFixture();
+        when(permissions.hasAnyPermissions(1L, "gym:devices:command")).thenReturn(false);
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "287082")),
+                cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants
+                        .FORBIDDEN);
+        when(permissions.hasAnyPermissions(1L, "gym:devices:command")).thenReturn(true);
+        personalScope(1L);
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "287082")), STORE_NO_PERMISSION);
+        headquarters();
+        var account = workAccounts.getUser(1L);
+        account.setStatus(1);
+        when(workAccounts.getUser(1L)).thenReturn(account);
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "287082")),
+                MOBILE_IDENTITY_INVALID);
+        assertEquals(0, actionRows.selectCount());
+    }
+
+    @Test
+    void actionConfirmationTenantAndMemberTokensCannotIssue() {
+        Long d = actionFixture();
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "287082")),
+                MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        qrMemberLogin();
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "287082")),
+                MOBILE_IDENTITY_INVALID);
+        assertEquals(0, actionRows.selectCount());
+    }
+
+    @Test
+    void actionConfirmationWrongDeviceTypeInactiveStoreAndDoorSlotReject() {
+        Long d = actionFixture();
+        var req = actionRequest(d, "287082");
+        req.setCompartmentId(1L);
+        assertServiceException(() -> actionConfirmations.create(req), MOBILE_REQUEST_INVALID);
+        req.setAction("open_locker");
+        assertServiceException(() -> actionConfirmations.create(req), ACTION_RESOURCE_UNAVAILABLE);
+        redemptionJdbc().update("UPDATE gym_store SET status='inactive' WHERE id=101");
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "287082")),
+                ACTION_RESOURCE_UNAVAILABLE);
+        assertEquals(0, actionRows.selectCount());
+    }
+
+    @Test
+    void actionConfirmationWrongAttemptsCommitAndFifthLocksWithoutExtendingDeadline() {
+        Long d = actionFixture();
+        for (int i = 0; i < 4; i++)
+            assertServiceException(
+                    () -> actionConfirmations.create(actionRequest(d, "000000")),
+                    ACTION_VERIFICATION_INVALID);
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "000000")),
+                ACTION_VERIFICATION_LOCKED);
+        when(businessClock.now()).thenReturn(java.time.Instant.ofEpochSecond(60));
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "359152")),
+                ACTION_VERIFICATION_LOCKED);
+        assertEquals(
+                5,
+                redemptionJdbc()
+                        .queryForObject(
+                                "SELECT failure_count FROM gym_action_verification_state",
+                                Integer.class));
+        assertEquals(
+                java.time.Instant.ofEpochSecond(359),
+                redemptionJdbc()
+                        .queryForObject(
+                                "SELECT locked_until FROM gym_action_verification_state",
+                                java.sql.Timestamp.class)
+                        .toInstant());
+        assertEquals(0, actionRows.selectCount());
+    }
+
+    @Test
+    void actionConfirmationLockExpiryStartsFreshFailureBudgetAndSuccessResets() {
+        Long d = actionFixture();
+        for (int i = 0; i < 5; i++)
+            assertThrows(
+                    cn.iocoder.yudao.framework.common.exception.ServiceException.class,
+                    () -> actionConfirmations.create(actionRequest(d, "000000")));
+        when(businessClock.now()).thenReturn(java.time.Instant.ofEpochSecond(359));
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "000000")),
+                ACTION_VERIFICATION_INVALID);
+        assertEquals(
+                1,
+                redemptionJdbc()
+                        .queryForObject(
+                                "SELECT failure_count FROM gym_action_verification_state",
+                                Integer.class));
+        when(businessClock.now()).thenReturn(java.time.Instant.ofEpochSecond(1234567890));
+        actionConfirmations.create(actionRequest(d, "005924"));
+        assertEquals(
+                0,
+                redemptionJdbc()
+                        .queryForObject(
+                                "SELECT failure_count FROM gym_action_verification_state",
+                                Integer.class));
+        assertNull(
+                redemptionJdbc()
+                        .queryForObject(
+                                "SELECT locked_until FROM gym_action_verification_state",
+                                java.sql.Timestamp.class));
+    }
+
+    @Test
+    void actionConfirmationAcceptedCodeCannotReplayEvenAfterLogicalDeletion() {
+        Long d = actionFixture();
+        actionConfirmations.create(actionRequest(d, "287082"));
+        redemptionJdbc().update("UPDATE gym_action_confirmation SET deleted=TRUE");
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "287082")),
+                ACTION_VERIFICATION_INVALID);
+        assertEquals(
+                1,
+                redemptionJdbc()
+                        .queryForObject(
+                                "SELECT COUNT(*) FROM gym_action_confirmation", Integer.class));
+    }
+
+    @Test
+    void actionConfirmationNextStepIssuesDifferentTokenAndBackwardClockRejects() {
+        Long d = actionFixture();
+        var a = actionConfirmations.create(actionRequest(d, "287082"));
+        when(businessClock.now()).thenReturn(java.time.Instant.ofEpochSecond(60));
+        var b = actionConfirmations.create(actionRequest(d, "359152"));
+        assertNotEquals(a.confirmationToken(), b.confirmationToken());
+        when(businessClock.now()).thenReturn(java.time.Instant.ofEpochSecond(59));
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "755224")),
+                ACTION_CONFIRMATION_UNAVAILABLE);
+        assertEquals(2, actionRows.selectCount());
+    }
+
+    @Test
+    void actionConfirmationOneTokenConsumesOnceInActualCommandTransaction() {
+        Long d = actionFixture();
+        var result = actionConfirmations.create(actionRequest(d, "287082"));
+        Long command =
+                actionTransaction()
+                        .execute(
+                                status -> {
+                                    Long id = actionCommand(d, null);
+                                    actionConfirmations.consume(result.confirmationToken(), id);
+                                    return id;
+                                });
+        assertEquals(command, actionRows.selectList().getFirst().getConsumedCommandId());
+        assertServiceException(
+                () -> consumeAction(result.confirmationToken(), command),
+                ACTION_CONFIRMATION_INVALID);
+        assertServiceException(
+                () -> consumeAction(result.confirmationToken(), actionCommand(d, null)),
+                ACTION_CONFIRMATION_INVALID);
+    }
+
+    @Test
+    void actionConfirmationCommandRollbackRestoresUnusedToken() {
+        Long d = actionFixture();
+        var token = actionConfirmations.create(actionRequest(d, "287082")).confirmationToken();
+        assertThrows(
+                IllegalStateException.class,
+                () ->
+                        actionTransaction()
+                                .executeWithoutResult(
+                                        status -> {
+                                            Long id = actionCommand(d, null);
+                                            actionConfirmations.consume(token, id);
+                                            throw new IllegalStateException("test rollback");
+                                        }));
+        assertEquals(0, actionCommands.selectCount());
+        assertNull(actionRows.selectList().getFirst().getConsumedAt());
+        consumeAction(token, actionCommand(d, null));
+        assertNotNull(actionRows.selectList().getFirst().getConsumedAt());
+    }
+
+    @Test
+    void actionConfirmationExpiryIsExclusiveAndCannotConsumeBeforeIssuance() {
+        Long d = actionFixture();
+        var token = actionConfirmations.create(actionRequest(d, "287082")).confirmationToken();
+        Long command = actionCommand(d, null);
+        when(businessClock.now()).thenReturn(java.time.Instant.ofEpochSecond(58));
+        assertServiceException(() -> consumeAction(token, command), ACTION_CONFIRMATION_INVALID);
+        when(businessClock.now()).thenReturn(java.time.Instant.ofEpochSecond(179));
+        assertServiceException(() -> consumeAction(token, command), ACTION_CONFIRMATION_INVALID);
+        assertNull(actionRows.selectList().getFirst().getConsumedAt());
+    }
+
+    @Test
+    void actionConfirmationCredentialRotationAndDisableRevokePendingToken() {
+        Long d = actionFixture();
+        var token = actionConfirmations.create(actionRequest(d, "287082")).confirmationToken();
+        Long command = actionCommand(d, null);
+        actionProperties.setSecrets(Map.of(1L, Map.of(1L, "A".repeat(32))));
+        assertServiceException(() -> consumeAction(token, command), ACTION_CONFIRMATION_INVALID);
+        actionProperties.setEnabled(false);
+        assertServiceException(
+                () -> consumeAction(token, command), ACTION_CONFIRMATION_UNAVAILABLE);
+        assertNull(actionRows.selectList().getFirst().getConsumedAt());
+    }
+
+    @Test
+    void actionConfirmationPermissionRevocationBlocksConsumption() {
+        Long d = actionFixture();
+        var token = actionConfirmations.create(actionRequest(d, "287082")).confirmationToken();
+        Long command = actionCommand(d, null);
+        when(permissions.hasAnyPermissions(1L, "gym:devices:command")).thenReturn(false);
+        assertServiceException(
+                () -> consumeAction(token, command),
+                cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants
+                        .FORBIDDEN);
+        assertNull(actionRows.selectList().getFirst().getConsumedAt());
+    }
+
+    @Test
+    void actionConfirmationCannotAuthorizeAnotherDeviceUserOrSimulatedCommand() {
+        Long d = actionFixture();
+        var token = actionConfirmations.create(actionRequest(d, "287082")).confirmationToken();
+        Long other =
+                Long.valueOf(
+                        deviceService
+                                .createDevice(deviceRequest(101L, "door", "other-device"))
+                                .getId());
+        assertServiceException(
+                () -> consumeAction(token, actionCommand(other, null)),
+                ACTION_CONFIRMATION_INVALID);
+        Long command = actionCommand(d, null);
+        redemptionJdbc().update("UPDATE gym_device_command SET requester_id=2 WHERE id=?", command);
+        assertServiceException(() -> consumeAction(token, command), ACTION_CONFIRMATION_INVALID);
+        redemptionJdbc()
+                .update(
+                        "UPDATE gym_device_command SET requester_id=1,simulated=TRUE WHERE id=?",
+                        command);
+        assertServiceException(() -> consumeAction(token, command), ACTION_CONFIRMATION_INVALID);
+        redemptionJdbc()
+                .update(
+                        "UPDATE gym_device_command SET simulated=FALSE,status='failed' WHERE id=?",
+                        command);
+        assertServiceException(() -> consumeAction(token, command), ACTION_CONFIRMATION_INVALID);
+        assertNull(actionRows.selectList().getFirst().getConsumedAt());
+    }
+
+    @Test
+    void actionConfirmationLockerTokenBindsExactConfiguredCompartment() {
+        actionFixture();
+        Long locker =
+                Long.valueOf(
+                        deviceService
+                                .createDevice(deviceRequest(101L, "locker", "locker-action"))
+                                .getId());
+        deviceService.saveCompartments(locker, compartments("1", "2"));
+        var slots = deviceService.device(locker).getCompartments();
+        Long first = Long.valueOf(slots.get(0).getId()),
+                second = Long.valueOf(slots.get(1).getId());
+        var req = actionRequest(locker, "287082");
+        req.setAction("open_locker");
+        req.setCompartmentId(first);
+        var token = actionConfirmations.create(req).confirmationToken();
+        assertServiceException(
+                () -> consumeAction(token, actionCommand(locker, second)),
+                ACTION_CONFIRMATION_INVALID);
+        consumeAction(token, actionCommand(locker, first));
+        assertNotNull(actionRows.selectList().getFirst().getConsumedAt());
+    }
+
+    @Test
+    void actionConfirmationTransactionBoundariesAreEnforced() {
+        Long d = actionFixture();
+        actionTransaction()
+                .executeWithoutResult(
+                        status ->
+                                assertThrows(
+                                        org.springframework.transaction
+                                                .IllegalTransactionStateException.class,
+                                        () ->
+                                                actionConfirmations.create(
+                                                        actionRequest(d, "287082"))));
+        assertThrows(
+                org.springframework.transaction.IllegalTransactionStateException.class,
+                () -> actionConfirmations.consume("a".repeat(43), 1L));
+        assertEquals(0, actionRows.selectCount());
+    }
+
+    @Test
+    void actionConfirmationConcurrentSameCodeAcrossDevicesIssuesOneToken() throws Exception {
+        Long d = actionFixture();
+        stores.create(store(102L, "B"));
+        Long other =
+                Long.valueOf(
+                        deviceService
+                                .createDevice(deviceRequest(102L, "door", "parallel-action"))
+                                .getId());
+        try (var pool = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            var start = new java.util.concurrent.CountDownLatch(1);
+            var futures = new ArrayList<java.util.concurrent.Future<Boolean>>();
+            for (Long id : List.of(d, other))
+                futures.add(
+                        pool.submit(
+                                () -> {
+                                    TenantContextHolder.setTenantId(1L);
+                                    loginAs(1L);
+                                    try {
+                                        start.await();
+                                        actionConfirmations.create(actionRequest(id, "287082"));
+                                        return true;
+                                    } catch (
+                                            cn.iocoder.yudao.framework.common.exception
+                                                            .ServiceException
+                                                    e) {
+                                        assertEquals(
+                                                ACTION_VERIFICATION_INVALID.getCode(), e.getCode());
+                                        return false;
+                                    } finally {
+                                        cleanupContext();
+                                    }
+                                }));
+            start.countDown();
+            int successes = 0;
+            for (var f : futures) if (f.get(20, java.util.concurrent.TimeUnit.SECONDS)) successes++;
+            assertEquals(1, successes);
+        }
+        assertEquals(1, actionRows.selectCount());
+    }
+
+    @Test
+    void actionConfirmationConcurrentConsumersCannotReuseToken() throws Exception {
+        Long d = actionFixture();
+        var token = actionConfirmations.create(actionRequest(d, "287082")).confirmationToken();
+        var ids = List.of(actionCommand(d, null), actionCommand(d, null));
+        try (var pool = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            var start = new java.util.concurrent.CountDownLatch(1);
+            var futures = new ArrayList<java.util.concurrent.Future<Boolean>>();
+            for (Long id : ids)
+                futures.add(
+                        pool.submit(
+                                () -> {
+                                    TenantContextHolder.setTenantId(1L);
+                                    loginAs(1L);
+                                    try {
+                                        start.await();
+                                        consumeAction(token, id);
+                                        return true;
+                                    } catch (
+                                            cn.iocoder.yudao.framework.common.exception
+                                                            .ServiceException
+                                                    e) {
+                                        assertEquals(
+                                                ACTION_CONFIRMATION_INVALID.getCode(), e.getCode());
+                                        return false;
+                                    } finally {
+                                        cleanupContext();
+                                    }
+                                }));
+            start.countDown();
+            int successes = 0;
+            for (var f : futures) if (f.get(20, java.util.concurrent.TimeUnit.SECONDS)) successes++;
+            assertEquals(1, successes);
+        }
+        assertNotNull(actionRows.selectList().getFirst().getConsumedAt());
+    }
+
+    @Test
+    void actionConfirmationIndependentAdministratorNeedsOwnCredential() {
+        Long d = actionFixture();
+        actionConfirmations.create(actionRequest(d, "287082"));
+        loginAs(2L);
+        when(permissions.hasAnyPermissions(2L, "gym:devices:command")).thenReturn(true);
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "287082")),
+                ACTION_CONFIRMATION_UNAVAILABLE);
+        actionProperties.setSecrets(
+                Map.of(1L, Map.of(1L, ACTION_TEST_SECRET, 2L, ACTION_TEST_SECRET)));
+        actionConfirmations.create(actionRequest(d, "287082"));
+        assertEquals(2, actionRows.selectCount());
+        assertEquals(
+                2,
+                redemptionJdbc()
+                        .queryForObject(
+                                "SELECT COUNT(*) FROM gym_action_verification_state",
+                                Integer.class));
+    }
+
+    @Test
+    void actionConfirmationLogicalDeletionCannotResetLockout() {
+        Long d = actionFixture();
+        for (int i = 0; i < 5; i++)
+            assertThrows(
+                    cn.iocoder.yudao.framework.common.exception.ServiceException.class,
+                    () -> actionConfirmations.create(actionRequest(d, "000000")));
+        redemptionJdbc().update("UPDATE gym_action_verification_state SET deleted=TRUE");
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "287082")),
+                ACTION_VERIFICATION_LOCKED);
+        assertEquals(0, actionRows.selectCount());
+    }
+
+    @Test
+    void actionConfirmationInactiveDeviceRejectsExistingToken() {
+        Long d = actionFixture();
+        var token = actionConfirmations.create(actionRequest(d, "287082")).confirmationToken();
+        Long command = actionCommand(d, null);
+        redemptionJdbc().update("UPDATE gym_device SET status='inactive' WHERE id=?", d);
+        assertServiceException(() -> consumeAction(token, command), ACTION_RESOURCE_UNAVAILABLE);
+        assertNull(actionRows.selectList().getFirst().getConsumedAt());
+    }
+
+    @Test
+    void actionConfirmationMalformedInputDoesNotConsumeFailureBudget() {
+        Long d = actionFixture();
+        for (String code : List.of("", "123", "1234567", "abcdef"))
+            assertServiceException(
+                    () -> actionConfirmations.create(actionRequest(d, code)),
+                    MOBILE_REQUEST_INVALID);
+        assertEquals(
+                0,
+                redemptionJdbc()
+                        .queryForObject(
+                                "SELECT COUNT(*) FROM gym_action_verification_state",
+                                Integer.class));
+    }
+
+    @Test
+    void actionConfirmationTenantCannotReadOtherTenantsTokenOrCommand() {
+        Long d = actionFixture();
+        var token = actionConfirmations.create(actionRequest(d, "287082")).confirmationToken();
+        Long command = actionCommand(d, null);
+        actionProperties.setSecrets(
+                Map.of(1L, Map.of(1L, ACTION_TEST_SECRET), 2L, Map.of(1L, ACTION_TEST_SECRET)));
+        var login =
+                cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser();
+        login.setTenantId(2L);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> consumeAction(token, command), ACTION_CONFIRMATION_INVALID);
+        assertServiceException(
+                () -> actionConfirmations.create(actionRequest(d, "287082")), DEVICE_NOT_EXISTS);
+        assertEquals(0, actionRows.selectCount());
+    }
+
+    @Test
+    void actionConfirmationConsumesCurrentCommandStateNotEarlierTransactionSnapshot() {
+        Long d = actionFixture();
+        var token = actionConfirmations.create(actionRequest(d, "287082")).confirmationToken();
+        Long command = actionCommand(d, null);
+        var tx = actionTransaction();
+        tx.setIsolationLevel(
+                org.springframework.transaction.TransactionDefinition.ISOLATION_REPEATABLE_READ);
+        var failure =
+                assertThrows(
+                        org.apache.ibatis.exceptions.PersistenceException.class,
+                        () ->
+                                tx.executeWithoutResult(
+                                        status -> {
+                                            assertEquals(
+                                                    "queued",
+                                                    actionCommands.selectById(command).getStatus());
+                                            try (var pool =
+                                                    java.util.concurrent.Executors
+                                                            .newSingleThreadExecutor()) {
+                                                pool.submit(
+                                                                () ->
+                                                                        redemptionJdbc()
+                                                                                .update(
+                                                                                        "UPDATE gym_device_command SET status='sent' WHERE id=?",
+                                                                                        command))
+                                                        .get(
+                                                                10,
+                                                                java.util.concurrent.TimeUnit
+                                                                        .SECONDS);
+                                            } catch (Exception e) {
+                                                throw new AssertionError(e);
+                                            }
+                                            actionConfirmations.consume(token, command);
+                                        }));
+        Throwable cause = failure;
+        while (!(cause instanceof java.sql.SQLException) && cause.getCause() != null)
+            cause = cause.getCause();
+        assertInstanceOf(java.sql.SQLException.class, cause);
+        assertEquals("40001", ((java.sql.SQLException) cause).getSQLState());
+        assertServiceException(() -> consumeAction(token, command), ACTION_CONFIRMATION_INVALID);
+        assertNull(actionRows.selectList().getFirst().getConsumedAt());
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"course", "private"})
+    void mobileSalesReportCourseNamesUseFrozenSnapshotAcrossItemTypeVersions(String itemType) {
+        when(businessClock.now()).thenReturn(java.time.Instant.parse("2026-06-10T02:00:00Z"));
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        var created = mobileOrders.create(memberOrder(ids, "course"), "report-course-snapshot");
+        Long orderId = Long.valueOf(created.id());
+        var order = orderRows().selectById(orderId);
+        loginAs(1L);
+        when(receiptVerifier.payment("report-course-receipt"))
+                .thenReturn(receipt(order, "REPORT-COURSE-PAYMENT", null, "40.00"));
+        commerce.acceptPayment(orderId, "report-course-receipt");
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.sales.GymOrderItemMapper.class);
+        var item =
+                mapper.selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.sales.GymOrderItemDO::getOrderId,
+                        orderId);
+        String frozenName = item.getProductNameSnapshot();
+        assertNotNull(frozenName);
+        assertEquals("course", item.getProductType());
+        item.setProductType(itemType);
+        mapper.updateById(item);
+        var patch =
+                new cn.iocoder.yudao.module.gym.controller.admin.course.vo
+                        .GymCourseProductSaveReqVO();
+        patch.setName("更名后的课程不能覆盖成交快照");
+        courses.patchProduct(ids.get(3), patch);
+        var query = mobileSalesQuery();
+        for (boolean filtered : List.of(false, true)) {
+            query.setProductType(filtered ? "course" : null);
+            var result = mobileSalesReports.sales(query);
+            assertEquals(1, result.total());
+            var row = result.list().getFirst();
+            assertEquals(frozenName, row.productName());
+            assertEquals("course", row.productType());
+            assertEquals(order.getOrderNo(), row.orderNo());
+            assertEquals("40.00", row.paidAmount());
+            assertEquals("40.00", result.summary().courseAmount());
+            assertEquals(1, result.summary().courseOrderCount());
+        }
+    }
+
+    cn.iocoder.yudao.module.gym.dal.dataobject.mobile.GymMobileRequestDO riskRequestRow(
+            String key) {
+        return applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileRequestMapper.class)
+                .selectOne(
+                        new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<
+                                        cn.iocoder.yudao.module.gym.dal.dataobject.mobile
+                                                .GymMobileRequestDO>()
+                                .eq("operation", "risk-resolution")
+                                .eq("request_key", key));
+    }
+
+    String riskResolutionPayloadJson(
+            Long id,
+            cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileRiskVO.Resolve request,
+            boolean reversed) {
+        String body = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(request);
+        return reversed
+                ? "{\"request\":" + body + ",\"id\":" + id + "}"
+                : "{\"id\":" + id + ",\"request\":" + body + "}";
+    }
+
+    @Test
+    void riskResolutionNewHashesUseFixedOuterFieldOrder() {
+        Long device = riskDevice();
+        Long id = publishRisk(riskEvent(device, "risk-stable-hash-event", List.of()));
+        var request = riskResolve("confirmed");
+        var result = mobileRisk.resolve(id, request, "risk-stable-hash-key");
+        var row = riskRequestRow("risk-stable-hash-key");
+        assertEquals(
+                cn.hutool.crypto.digest.DigestUtil.sha256Hex(
+                        riskResolutionPayloadJson(id, request, false)),
+                row.getRequestHash());
+        assertEquals(result, mobileRisk.resolve(id, request, "risk-stable-hash-key"));
+        assertEquals(1, riskResolutions.selectCount());
+    }
+
+    @Test
+    void riskResolutionLegacyFieldOrdersReplayWithoutChangingAuditOrSavedHash() {
+        Long device = riskDevice();
+        Long id = publishRisk(riskEvent(device, "risk-legacy-hash-event", List.of()));
+        var request = riskResolve("confirmed");
+        var first = mobileRisk.resolve(id, request, "risk-legacy-hash-key");
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileRequestMapper.class);
+        var row = riskRequestRow("risk-legacy-hash-key");
+        String response = row.getResponseJson();
+        when(businessClock.now()).thenReturn(RISK_TIME.plusSeconds(600));
+        for (boolean reversed : List.of(false, true)) {
+            String hash =
+                    cn.hutool.crypto.digest.DigestUtil.sha256Hex(
+                            riskResolutionPayloadJson(id, request, reversed));
+            row.setRequestHash(hash);
+            mapper.updateById(row);
+            assertEquals(first, mobileRisk.resolve(id, request, "risk-legacy-hash-key"));
+            var saved = riskRequestRow("risk-legacy-hash-key");
+            assertEquals(hash, saved.getRequestHash());
+            assertEquals(response, saved.getResponseJson());
+            assertEquals(1, riskResolutions.selectCount());
+            assertEquals(2, mobileRisk.page(riskQuery(101L)).getList().getFirst().version());
+        }
+    }
+
+    @Test
+    void riskResolutionLegacyCompatibilityRejectsEveryChangedRequestField() {
+        Long device = riskDevice();
+        Long id = publishRisk(riskEvent(device, "risk-legacy-conflict-event", List.of()));
+        var original = riskResolve("confirmed");
+        var first = mobileRisk.resolve(id, original, "risk-legacy-conflict-key");
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileRequestMapper.class);
+        var row = riskRequestRow("risk-legacy-conflict-key");
+        String hash =
+                cn.hutool.crypto.digest.DigestUtil.sha256Hex(
+                        riskResolutionPayloadJson(id, original, true));
+        row.setRequestHash(hash);
+        mapper.updateById(row);
+        assertEquals(first, mobileRisk.resolve(id, original, "risk-legacy-conflict-key"));
+        var note = riskResolve("confirmed");
+        note.setNote("不同的备注");
+        var version = riskResolve("confirmed");
+        version.setExpectedVersion(2);
+        for (var changed : List.of(note, version, riskResolve("false_positive")))
+            assertServiceException(
+                    () -> mobileRisk.resolve(id, changed, "risk-legacy-conflict-key"),
+                    MOBILE_IDEMPOTENCY_CONFLICT);
+        Long other = publishRisk(riskEvent(device, "risk-other-alert-conflict", List.of()));
+        assertServiceException(
+                () -> mobileRisk.resolve(other, original, "risk-legacy-conflict-key"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        assertEquals(hash, riskRequestRow("risk-legacy-conflict-key").getRequestHash());
+        assertEquals(1, riskResolutions.selectCount());
     }
 }

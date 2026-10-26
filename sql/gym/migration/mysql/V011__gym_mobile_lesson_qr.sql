@@ -1,0 +1,27 @@
+-- Short-lived, signed QR grants bound to an exact booking and session revision.
+CREATE TABLE gym_mobile_lesson_qr (
+ id bigint NOT NULL AUTO_INCREMENT,
+ token_hash varchar(64) NOT NULL,
+ issuer_user_id bigint NOT NULL,
+ store_id bigint NOT NULL,
+ coach_id bigint NOT NULL,
+ session_id bigint NOT NULL,
+ booking_id bigint NOT NULL,
+ member_id bigint NOT NULL,
+ booking_booked_at datetime(6) NOT NULL,
+ session_starts_at datetime(6) NOT NULL,
+ session_ends_at datetime(6) NOT NULL,
+ expires_at datetime(6) NOT NULL,
+ used_at datetime(6) DEFAULT NULL,
+ lesson_record_id bigint DEFAULT NULL,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted bit(1) NOT NULL DEFAULT b'0',
+ tenant_id bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY (id),
+ UNIQUE KEY uk_mobile_lesson_qr_token (tenant_id,token_hash),
+ KEY idx_mobile_lesson_qr_booking (tenant_id,booking_id),
+ KEY idx_mobile_lesson_qr_expiry (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

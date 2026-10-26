@@ -285,6 +285,7 @@ public class GymDeviceService {
                         : account.getNickname());
         row.setRequestedAt(clock.now().truncatedTo(ChronoUnit.MICROS));
         row.setStatus("failed");
+        row.setCompletedAt(row.getRequestedAt());
         row.setFailureReason(failure);
         row.setSimulated("mock".equals(device.getProvider()));
         row.setRequestKey(key);

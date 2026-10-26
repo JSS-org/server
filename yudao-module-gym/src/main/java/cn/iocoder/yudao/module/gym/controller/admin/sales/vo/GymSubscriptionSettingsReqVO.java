@@ -41,5 +41,11 @@ public class GymSubscriptionSettingsReqVO {
         @NotNull private Boolean enabled;
         @NotNull private Boolean contractRequired;
         @NotNull private Boolean approvalRequired;
+
+        @Size(min = 1, max = 5000)
+        private String renewalTerms;
+
+        @Pattern(regexp = "[A-Za-z0-9_.-]{1,64}")
+        private String agreementVersion;
     }
 }

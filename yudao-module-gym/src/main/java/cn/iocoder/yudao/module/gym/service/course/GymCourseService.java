@@ -35,6 +35,9 @@ import java.util.*;
 
 @Service
 public class GymCourseService {
+    @Resource
+    private cn.iocoder.yudao.module.gym.service.mobile.GymMobileNotificationPublisher notifications;
+
     @Resource private GymCourseProductMapper gymCourseProductMapper;
     @Resource private GymCourseSessionMapper gymCourseSessionMapper;
     @Resource private GymCoursePackMapper gymCoursePackMapper;
@@ -55,7 +58,13 @@ public class GymCourseService {
     @Resource private GymDataScope scope;
     @Resource private GymBusinessClock gymBusinessClock;
     @Resource private cn.iocoder.yudao.module.gym.service.contract.GymContractService contracts;
+
+    @Resource
+    private cn.iocoder.yudao.module.gym.service.sales.GymOrderEntitlementAccess purchaseAccess;
+
     @Resource private Validator validator;
+    @Resource private GymBookingRules bookingRules;
+    @Resource private GymLessonConfirmationService lessonConfirmations;
 
     private void coursePageScope(GymBusinessPageReqVO req) {
         if (req.getStoreId() != null) memberCoaches.checkListStore(req.getStoreId());
@@ -99,23 +108,7 @@ public class GymCourseService {
     }
 
     private GymEmployeeDO requireCoach(Long id, Long storeId) {
-        var employee = gymEmployeeMapper.selectForUpdate(id);
-        var relation =
-                gymEmployeeStoreMapper.selectList(
-                        new LambdaQueryWrapper<GymEmployeeStoreDO>()
-                                .eq(GymEmployeeStoreDO::getEmployeeId, id)
-                                .eq(GymEmployeeStoreDO::getStoreId, storeId)
-                                .last("FOR UPDATE"));
-        if (employee == null
-                || !"active".equals(employee.getStatus())
-                || relation.isEmpty()
-                || employee.getHiredOn()
-                        .isAfter(gymBusinessClock.now().atZone(GymDateRange.ZONE).toLocalDate())
-                || relation.getFirst()
-                        .getJoinedOn()
-                        .isAfter(gymBusinessClock.now().atZone(GymDateRange.ZONE).toLocalDate()))
-            throw exception(COURSE_COACH_INVALID);
-        return employee;
+        return bookingRules.requireCoach(id, storeId);
     }
 
     public PageResult<Map<String, Object>> coaches(GymBusinessPageReqVO req) {
@@ -206,6 +199,80 @@ public class GymCourseService {
         return row;
     }
 
+    /** Current staff scope, also checked before replaying a mobile request. */
+    public void checkQuoteApplicationAccess(Long memberId, Long productId, Long storeId) {
+        var product = readableProductForPriceRequest(productId, false);
+        if (!storeId.equals(product.getStoreId())) throw exception(STORE_NO_PERMISSION);
+        if (memberId != null) {
+            members.requireMember(memberId, false);
+            members.checkMemberStore(memberId, storeId);
+            if (gymMemberStoreMapper.selectCount(
+                            new LambdaQueryWrapper<GymMemberStoreDO>()
+                                    .eq(GymMemberStoreDO::getMemberId, memberId)
+                                    .eq(GymMemberStoreDO::getStoreId, storeId))
+                    == 0) throw exception(STORE_NO_PERMISSION);
+        }
+    }
+
+    /** Freeze terms for quote authorization only; this method never changes the public price. */
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.MANDATORY)
+    public Map<String, Object> quoteApprovalSnapshot(Long memberId, Long productId, Long storeId) {
+        checkQuoteApplicationAccess(memberId, productId, storeId);
+        var initial = readableProductForPriceRequest(productId, false);
+        requireCoach(initial.getCoachId(), storeId);
+        if (memberId != null) {
+            var member = members.requireMember(memberId, true);
+            if (!"active".equals(member.getStatus())) throw exception(APPROVAL_REQUEST_INVALID);
+            records.checkPurchase(memberId);
+        }
+        var product = readableProductForPriceRequest(productId, true);
+        checkQuoteApplicationAccess(memberId, productId, storeId);
+        if (!activeMemberStore(storeId)
+                || !"active".equals(product.getStatus())
+                || !"private".equals(product.getKind())) throw exception(APPROVAL_REQUEST_INVALID);
+        var snapshot = new LinkedHashMap<String, Object>();
+        snapshot.put("priceScope", "quote");
+        snapshot.put("sourceType", "course-quote-products");
+        // Intentionally omit sourceId: older approval binaries require it to change a public
+        // price. They must fail and roll back instead of applying this quote to all buyers.
+        snapshot.put("productId", productId.toString());
+        snapshot.put("productVersion", product.getVersion());
+        snapshot.put("memberId", memberId == null ? null : memberId.toString());
+        snapshot.put("courseName", product.getName());
+        snapshot.put("coachId", product.getCoachId().toString());
+        snapshot.put("sessionCount", product.getSessionCount());
+        snapshot.put("durationMinutes", product.getDurationMinutes());
+        snapshot.put("originalPrice", product.getPrice());
+        return snapshot;
+    }
+
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.MANDATORY)
+    public void validateQuoteApproval(Map<String, Object> snapshot, Long storeId) {
+        Long memberId =
+                snapshot.get("memberId") == null
+                        ? null
+                        : Long.valueOf(snapshot.get("memberId").toString());
+        var current =
+                quoteApprovalSnapshot(
+                        memberId, Long.valueOf(snapshot.get("productId").toString()), storeId);
+        for (String field :
+                List.of(
+                        "priceScope",
+                        "sourceType",
+                        "productId",
+                        "productVersion",
+                        "memberId",
+                        "courseName",
+                        "coachId",
+                        "sessionCount",
+                        "durationMinutes"))
+            if (!Objects.toString(current.get(field)).equals(Objects.toString(snapshot.get(field))))
+                throw exception(APPROVAL_SOURCE_CHANGED);
+        if (new BigDecimal(current.get("originalPrice").toString())
+                        .compareTo(new BigDecimal(snapshot.get("originalPrice").toString()))
+                != 0) throw exception(APPROVAL_SOURCE_CHANGED);
+    }
+
     public GymCourseProductRespVO product(Long id) {
         return productResponse(readableProductForPriceRequest(id, false));
     }
@@ -217,6 +284,7 @@ public class GymCourseService {
         validateProduct(req);
         if (!"active".equals(req.getStatus())) requireCoach(req.getCoachId(), req.getStoreId());
         var row = BeanUtils.toBean(req, GymCourseProductDO.class);
+        row.setVersion(1);
         gymCourseProductMapper.insert(row);
         return productResponse(row);
     }
@@ -236,6 +304,14 @@ public class GymCourseService {
         validateProduct(req);
         var update = BeanUtils.toBean(req, GymCourseProductDO.class);
         update.setId(id);
+        boolean changed =
+                !Objects.equals(row.getName(), update.getName())
+                        || !Objects.equals(row.getDescription(), update.getDescription())
+                        || !Objects.equals(row.getKind(), update.getKind())
+                        || !Objects.equals(row.getSessionCount(), update.getSessionCount())
+                        || !Objects.equals(row.getDurationMinutes(), update.getDurationMinutes())
+                        || !Objects.equals(row.getStatus(), update.getStatus());
+        update.setVersion(changed ? Math.incrementExact(row.getVersion()) : row.getVersion());
         gymCourseProductMapper.updateById(update);
         return product(id);
     }
@@ -252,6 +328,8 @@ public class GymCourseService {
                 || original == null
                 || row.getPrice().compareTo(original) != 0)
             throw exception(COURSE_PRICE_APPROVAL_REQUIRED);
+        if (row.getPrice().compareTo(requested) != 0)
+            row.setVersion(Math.incrementExact(row.getVersion()));
         row.setPrice(requested);
         gymCourseProductMapper.updateById(row);
     }
@@ -402,16 +480,8 @@ public class GymCourseService {
             throw exception(COURSE_SESSION_INVALID);
         stores.requireStore(req.getStoreId(), false);
         requireCoach(req.getCoachId(), req.getStoreId());
-        var overlapping =
-                gymCourseSessionMapper.selectList(
-                        new LambdaQueryWrapper<GymCourseSessionDO>()
-                                .eq(GymCourseSessionDO::getCoachId, req.getCoachId())
-                                .ne(GymCourseSessionDO::getStatus, "cancelled")
-                                .ne(excluding != null, GymCourseSessionDO::getId, excluding)
-                                .lt(GymCourseSessionDO::getStartsAt, req.getEndsAt())
-                                .gt(GymCourseSessionDO::getEndsAt, req.getStartsAt())
-                                .last("FOR UPDATE"));
-        if (!overlapping.isEmpty()) throw exception(COURSE_SESSION_CONFLICT);
+        bookingRules.rejectOverlappingSession(
+                req.getCoachId(), req.getStartsAt(), req.getEndsAt(), excluding);
     }
 
     private GymCourseSessionRespVO sessionResponse(GymCourseSessionDO row) {
@@ -434,6 +504,34 @@ public class GymCourseService {
         var member = members.requireMember(memberId, true);
         records.checkPurchase(memberId);
         var product = requireProduct(productId, true);
+        return issuePackInternal(member, product, startsAt, expiresAt, sourceType, sourceId, null);
+    }
+
+    @Transactional(
+            propagation = org.springframework.transaction.annotation.Propagation.MANDATORY,
+            rollbackFor = Exception.class)
+    public GymCoursePackDO issuePurchasedOrderItem(Long itemId, Instant startsAt) {
+        var purchase = purchaseAccess.requireItem(itemId);
+        if (purchase.course() == null) throw exception(COURSE_PACK_INVALID);
+        return issuePackInternal(
+                purchase.member(),
+                purchase.course(),
+                startsAt,
+                null,
+                "order-item",
+                itemId + ":0",
+                purchase);
+    }
+
+    private GymCoursePackDO issuePackInternal(
+            cn.iocoder.yudao.module.gym.dal.dataobject.member.GymMemberDO member,
+            GymCourseProductDO product,
+            Instant startsAt,
+            Instant expiresAt,
+            String sourceType,
+            String sourceId,
+            cn.iocoder.yudao.module.gym.service.sales.GymOrderEntitlementAccess.Purchase purchase) {
+        Long memberId = member.getId(), productId = product.getId();
         startsAt = normalized(startsAt);
         expiresAt = normalized(expiresAt);
         if (!"active".equals(member.getStatus())
@@ -472,7 +570,9 @@ public class GymCourseService {
         row.setRemainingSessions(product.getSessionCount());
         row.setReservedSessions(0);
         row.setStatus("active");
-        row.setPriceSnapshot(product.getPrice());
+        row.setPriceSnapshot(
+                purchase == null ? product.getPrice() : purchase.item().getUnitPrice());
+        row.setDurationMinutesSnapshot(purchase == null ? null : product.getDurationMinutes());
         row.setSourceType(sourceType);
         row.setSourceId(sourceId);
         gymCoursePackMapper.insert(row);
@@ -493,8 +593,72 @@ public class GymCourseService {
         update.setId(memberId);
         update.setCustomerStage("member");
         gymMemberMapper.updateById(update);
-        contracts.issueForEntitlement("course-packs", row.getId());
+        if (purchase == null) contracts.issueForEntitlement("course-packs", row.getId());
+        else contracts.issueForPurchasedItem(purchase.item().getId(), "course-packs", row.getId());
+        notifications.coursePack(row.getId());
         return row;
+    }
+
+    /** Server-owned approval snapshot; locking order matches course edits and bookings. */
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.MANDATORY)
+    public Map<String, Object> approvalIssueSnapshot(Long memberId, Long productId, Long storeId) {
+        var initial = requireProduct(productId, false);
+        if (!storeId.equals(initial.getStoreId())) throw exception(APPROVAL_REQUEST_INVALID);
+        requireCoach(initial.getCoachId(), storeId);
+        var member = members.requireMember(memberId, true);
+        members.checkMemberStore(memberId, storeId);
+        records.checkPurchase(memberId);
+        var product = requireProduct(productId, true);
+        if (!"active".equals(stores.requireStore(storeId, false).getStatus())
+                || !"active".equals(member.getStatus())
+                || !"active".equals(product.getStatus())
+                || !"private".equals(product.getKind())) throw exception(APPROVAL_REQUEST_INVALID);
+        var snapshot = new LinkedHashMap<String, Object>();
+        snapshot.put("productType", "course");
+        snapshot.put("productId", productId.toString());
+        snapshot.put("productVersion", product.getVersion());
+        snapshot.put("sourceType", "course-products");
+        snapshot.put("sourceId", productId.toString());
+        snapshot.put("memberId", memberId.toString());
+        snapshot.put("memberName", member.getName());
+        snapshot.put("courseName", product.getName());
+        snapshot.put("coachId", product.getCoachId().toString());
+        snapshot.put("sessionCount", product.getSessionCount());
+        snapshot.put("durationMinutes", product.getDurationMinutes());
+        snapshot.put("amount", product.getPrice());
+        snapshot.put("expiresAt", null);
+        return snapshot;
+    }
+
+    /** Only the persisted approval snapshot can enter this internal final-effect path. */
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.MANDATORY)
+    public GymCoursePackDO issueApprovedPack(
+            Map<String, Object> snapshot, Long storeId, Long approvalId) {
+        Long memberId = Long.valueOf(snapshot.get("memberId").toString()),
+                productId = Long.valueOf(snapshot.get("productId").toString());
+        var current = approvalIssueSnapshot(memberId, productId, storeId);
+        for (String field :
+                List.of(
+                        "productType",
+                        "productId",
+                        "productVersion",
+                        "coachId",
+                        "courseName",
+                        "sessionCount",
+                        "durationMinutes"))
+            if (!Objects.toString(current.get(field)).equals(Objects.toString(snapshot.get(field))))
+                throw exception(APPROVAL_SOURCE_CHANGED);
+        if (new BigDecimal(current.get("amount").toString())
+                                .compareTo(new BigDecimal(snapshot.get("amount").toString()))
+                        != 0
+                || snapshot.get("expiresAt") != null) throw exception(APPROVAL_SOURCE_CHANGED);
+        return issuePack(
+                memberId,
+                productId,
+                gymBusinessClock.now(),
+                null,
+                "approval",
+                approvalId.toString());
     }
 
     public List<GymCoursePackRespVO> allPacks(Long memberId, GymBusinessPageReqVO req) {
@@ -542,14 +706,7 @@ public class GymCourseService {
                 lock ? gymCoursePackMapper.selectForUpdate(id) : gymCoursePackMapper.selectById(id);
         if (row == null) throw exception(COURSE_PACK_NOT_EXISTS);
         members.checkMemberScope(memberId, row.getStoreId());
-        if (!memberId.equals(row.getMemberId())
-                || !session.getStoreId().equals(row.getStoreId())
-                || !session.getCourseProductId().equals(row.getCourseProductId())
-                || !session.getCoachId().equals(row.getAssignedCoachId())
-                || !"active".equals(row.getStatus())
-                || row.getStartsAt().isAfter(session.getStartsAt())
-                || (row.getExpiresAt() != null && !row.getExpiresAt().isAfter(session.getEndsAt())))
-            throw exception(COURSE_PACK_INVALID);
+        bookingRules.validatePack(row, memberId, session);
         return row;
     }
 
@@ -589,14 +746,12 @@ public class GymCourseService {
         if ("attended".equals(booking.getStatus())
                 || !session.getStartsAt().isAfter(gymBusinessClock.now()))
             throw exception(BOOKING_INVALID);
+        bookingRules.rejectOverlappingBooking(member.getId(), session);
         if (session.getReservedCount() >= session.getCapacity())
             throw exception(BOOKING_CAPACITY_FULL);
         if (req.getMemberCoursePackId() != null) {
             var pack = requirePack(req.getMemberCoursePackId(), member.getId(), session, true);
-            if (pack.getRemainingSessions() - pack.getReservedSessions() < 1)
-                throw exception(COURSE_PACK_INSUFFICIENT);
-            pack.setReservedSessions(pack.getReservedSessions() + 1);
-            gymCoursePackMapper.updateById(pack);
+            bookingRules.reservePack(pack);
         } else {
             var card =
                     cards.requireCard(
@@ -621,11 +776,13 @@ public class GymCourseService {
         booking.setStatus("confirmed");
         booking.setBookedAt(normalized(gymBusinessClock.now()));
         booking.setCancelledAt(null);
+        booking.setCancellationReason(null);
         booking.setCheckinId(null);
         if (booking.getId() == null) gymBookingMapper.insert(booking);
         else gymBookingMapper.updateById(booking);
         session.setReservedCount(session.getReservedCount() + 1);
         gymCourseSessionMapper.updateById(session);
+        notifications.booking(booking.getId());
         return bookingResponse(booking);
     }
 
@@ -667,24 +824,7 @@ public class GymCourseService {
     }
 
     private void cancelBookingLocked(GymBookingDO booking, GymCourseSessionDO session) {
-        if (booking.getMemberCoursePackId() != null) {
-            var pack = gymCoursePackMapper.selectForUpdate(booking.getMemberCoursePackId());
-            if (pack == null || pack.getReservedSessions() < 1)
-                throw exception(COURSE_PACK_INVALID);
-            pack.setReservedSessions(pack.getReservedSessions() - 1);
-            gymCoursePackMapper.updateById(pack);
-        } else {
-            var card = gymMemberCardMapper.selectForUpdate(booking.getMemberCardId());
-            if (card == null || card.getReservedUses() < 1) throw exception(CARD_RIGHT_INVALID);
-            card.setReservedUses(card.getReservedUses() - 1);
-            gymMemberCardMapper.updateById(card);
-        }
-        if (session.getReservedCount() < 1) throw exception(COURSE_SESSION_INVALID);
-        booking.setStatus("cancelled");
-        booking.setCancelledAt(normalized(gymBusinessClock.now()));
-        gymBookingMapper.updateById(booking);
-        session.setReservedCount(session.getReservedCount() - 1);
-        gymCourseSessionMapper.updateById(session);
+        bookingRules.cancel(booking, session);
     }
 
     public PageResult<GymBookingRespVO> bookings(GymBusinessPageReqVO req) {
@@ -792,72 +932,7 @@ public class GymCourseService {
         var first = requireBooking(bookingId, false);
         var session = memberSession(first.getSessionId(), first.getMemberId(), true);
         var booking = requireBooking(bookingId, true);
-        var previous =
-                gymLessonRecordMapper.selectList(
-                        new LambdaQueryWrapper<GymLessonRecordDO>()
-                                .eq(GymLessonRecordDO::getBookingId, bookingId)
-                                .last("FOR UPDATE"));
-        if (!previous.isEmpty()) return lessonResponse(previous.getFirst());
-        if (!"confirmed".equals(booking.getStatus())) throw exception(BOOKING_INVALID);
-        if (booking.getCheckinId() == null) throw exception(LESSON_CHECKIN_REQUIRED);
-        var checkin = gymCheckinMapper.selectById(booking.getCheckinId());
-        if (checkin == null
-                || !booking.getMemberId().equals(checkin.getMemberId())
-                || !booking.getStoreId().equals(checkin.getStoreId())
-                || !"succeeded".equals(checkin.getStatus()))
-            throw exception(LESSON_CHECKIN_REQUIRED);
-        Instant now = normalized(gymBusinessClock.now());
-        if (now.isBefore(session.getStartsAt())
-                || checkin.getEnteredAt().isAfter(now)
-                || !checkin.getEnteredAt()
-                        .atZone(GymDateRange.ZONE)
-                        .toLocalDate()
-                        .equals(session.getStartsAt().atZone(GymDateRange.ZONE).toLocalDate()))
-            throw exception(LESSON_TIME_INVALID);
-        records.checkEntry(booking.getMemberId());
-        if (booking.getMemberCoursePackId() != null) {
-            var pack =
-                    requirePack(
-                            booking.getMemberCoursePackId(), booking.getMemberId(), session, true);
-            if (pack.getRemainingSessions() < 1 || pack.getReservedSessions() < 1)
-                throw exception(COURSE_PACK_INSUFFICIENT);
-            pack.setRemainingSessions(pack.getRemainingSessions() - 1);
-            pack.setReservedSessions(pack.getReservedSessions() - 1);
-            gymCoursePackMapper.updateById(pack);
-        } else {
-            var card =
-                    cards.requireCard(
-                            booking.getMemberCardId(),
-                            booking.getMemberId(),
-                            booking.getStoreId(),
-                            session.getStartsAt(),
-                            session.getEndsAt(),
-                            true);
-            if (card.getReservedUses() < 1
-                    || (card.getRemainingUses() != null && card.getRemainingUses() < 1))
-                throw exception(CARD_RIGHT_INSUFFICIENT);
-            card.setReservedUses(card.getReservedUses() - 1);
-            if (card.getRemainingUses() != null) card.setRemainingUses(card.getRemainingUses() - 1);
-            gymMemberCardMapper.updateById(card);
-        }
-        var lesson = new GymLessonRecordDO();
-        lesson.setStoreId(booking.getStoreId());
-        lesson.setMemberId(booking.getMemberId());
-        lesson.setCoachId(session.getCoachId());
-        lesson.setBookingId(bookingId);
-        lesson.setCheckinId(checkin.getId());
-        lesson.setMemberCardId(booking.getMemberCardId());
-        lesson.setMemberCoursePackId(booking.getMemberCoursePackId());
-        lesson.setSessionUnits(1);
-        lesson.setConfirmedAt(now);
-        lesson.setMethod("manual");
-        lesson.setStatus("confirmed");
-        gymLessonRecordMapper.insert(lesson);
-        booking.setStatus("attended");
-        gymBookingMapper.updateById(booking);
-        session.setStatus("completed");
-        gymCourseSessionMapper.updateById(session);
-        return lessonResponse(lesson);
+        return lessonResponse(lessonConfirmations.confirm(booking, session, "manual"));
     }
 
     public PageResult<GymCheckinRespVO> checkins(GymBusinessPageReqVO req) {

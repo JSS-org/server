@@ -39,12 +39,7 @@
             <version>${revision}</version>
         </dependency>
 
-        <!-- 会员中心。默认注释，保证编译速度 -->
-<!--        <dependency>-->
-<!--            <groupId>cn.iocoder.boot</groupId>-->
-<!--            <artifactId>yudao-module-member</artifactId>-->
-<!--            <version>${revision}</version>-->
-<!--        </dependency>-->
+        <!-- 会员认证随 gym 模块装配；gym 仅通过 member API 访问会员身份。 -->
 
         <!-- 数据报表。默认注释，保证编译速度 -->
 <!--        <dependency>-->

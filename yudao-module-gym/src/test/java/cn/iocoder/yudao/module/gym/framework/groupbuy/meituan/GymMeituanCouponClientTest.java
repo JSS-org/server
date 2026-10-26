@@ -39,6 +39,7 @@ class GymMeituanCouponClientTest {
         properties.setDeveloperId(10010L);
         properties.setSignKey("test-key");
         var auth = new GymMeituanProperties.StoreAuthorization();
+        auth.setBusinessId(1); // 旧餐饮接口须显式使用餐饮授权。
         auth.setAppAuthToken("test-token+&=中文");
         var tenant = new GymMeituanProperties.TenantAuthorization();
         tenant.getStores().put(12L, auth);

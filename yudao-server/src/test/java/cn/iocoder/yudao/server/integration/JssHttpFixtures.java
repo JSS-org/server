@@ -67,7 +67,7 @@ public class JssHttpFixtures
                         INSERT INTO system_role_menu (role_id,menu_id,tenant_id) SELECT 23001,id,1 FROM system_menu WHERE permission IN ('jss:workspace:access','system:user:query') AND deleted=b'0';
                         INSERT INTO system_role_menu (role_id,menu_id,tenant_id) SELECT 23002,id,1 FROM system_menu WHERE permission='jss:workspace:access' AND deleted=b'0';
                         INSERT INTO system_role_menu (role_id,menu_id,tenant_id) SELECT 23004,id,1 FROM system_menu WHERE permission IN ('jss:workspace:access','system:user:query') AND deleted=b'0';
-                        INSERT INTO system_user_role (user_id,role_id,tenant_id) VALUES (23001,23001,1),(23002,23002,1),(23004,23004,1),(23005,23001,1),(23007,23001,1);
+                        INSERT INTO system_user_role (user_id,role_id,tenant_id) VALUES (23001,23001,1),(23002,23002,1),(23004,23004,1),(23005,23001,1),(23007,23001,1),(23008,23001,1);
                         """;
                 for (String sql : seed.split(";")) if (!sql.isBlank()) statement.executeUpdate(sql);
             }
@@ -108,6 +108,7 @@ public class JssHttpFixtures
                 "INSERT INTO system_users (id,username,nickname,password,status,tenant_id,mobile) VALUES (23004,'jssitmutable','HTTP mutable',?,0,1,'13800009004')",
                 "INSERT INTO system_users (id,username,nickname,password,status,tenant_id,mobile) VALUES (23005,'jssitstatus','HTTP status',?,0,1,'13800009005')",
                 "INSERT INTO system_users (id,username,nickname,password,status,tenant_id,mobile) VALUES (23007,'jssitbrowser','HTTP browser employee',?,0,1,'13800009007')",
+                "INSERT INTO system_users (id,username,nickname,password,status,tenant_id,mobile) VALUES (23008,'jssitmenu','HTTP menu employee',?,0,1,'13800009008')",
                 "INSERT INTO system_users (id,username,nickname,password,status,tenant_id,mobile) VALUES (33001,'jssitforeign','HTTP foreign',?,0,91001,'13800009001')"
             };
             for (String sql : adminSeeds) {
@@ -116,7 +117,7 @@ public class JssHttpFixtures
                     statement.executeUpdate();
                 }
             }
-            for (int id : new int[] {23001, 23002, 23003, 23004, 23005, 23006, 23007}) {
+            for (int id : new int[] {23001, 23002, 23003, 23004, 23005, 23006, 23007, 23008}) {
                 try (var statement =
                         connection.prepareStatement(
                                 "INSERT INTO member_user (id,tenant_id,mobile,password,nickname,status,register_ip,group_id) VALUES (?,1,?,?,?,0,'127.0.0.1',23099)")) {

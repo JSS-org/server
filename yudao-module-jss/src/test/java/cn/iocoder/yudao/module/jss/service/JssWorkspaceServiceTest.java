@@ -28,6 +28,7 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -74,6 +75,8 @@ class JssWorkspaceServiceTest {
         when(identities.findByMember(10L)).thenReturn(binding);
         when(permissions.hasAnyPermissions(20L, JssWorkspaceService.ACCESS_PERMISSION))
                 .thenReturn(true);
+        when(permissions.getEnabledMenuPermissions(20L))
+                .thenReturn(Set.of(JssWorkspaceService.ACCESS_PERMISSION, "system:user:query"));
         when(sessions.isCurrent(any())).thenReturn(true);
         doAnswer(
                         call -> {
@@ -124,6 +127,9 @@ class JssWorkspaceServiceTest {
         assertTrue(issued.expiresTime() <= System.currentTimeMillis() + 300_000);
         var checked = service.checkAccessToken(issued.accessToken());
         assertEquals(20L, checked.getUserId());
+        assertEquals(
+                Set.of(JssWorkspaceService.ACCESS_PERMISSION, "system:user:query"),
+                checked.getPermissionLimits());
         assertEquals(UserTypeEnum.ADMIN.getValue(), checked.getUserType());
         assertEquals(1L, checked.getTenantId());
         assertFalse(service.supports("ordinary-admin-token"));

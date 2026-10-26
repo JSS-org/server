@@ -33,9 +33,11 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 @Service
 public class JssWorkspaceService implements OAuth2TokenExtension {
@@ -54,7 +56,8 @@ public class JssWorkspaceService implements OAuth2TokenExtension {
 
     public JssAuthContextRespVO context(String memberToken) {
         var member = validateMember(memberToken);
-        var identity = allowedIdentity(member.getUserId());
+        var authorization = allowedIdentity(member.getUserId());
+        var identity = authorization == null ? null : authorization.identity();
         return new JssAuthContextRespVO(
                 String.valueOf(member.getTenantId()),
                 String.valueOf(member.getUserId()),
@@ -66,8 +69,9 @@ public class JssWorkspaceService implements OAuth2TokenExtension {
 
     public JssWorkspaceSessionRespVO createSession(String memberToken) {
         var member = validateMember(memberToken);
-        var identity = allowedIdentity(member.getUserId());
-        if (identity == null) throw exception0(FORBIDDEN.getCode(), "没有工作台权限");
+        var authorization = allowedIdentity(member.getUserId());
+        if (authorization == null) throw exception0(FORBIDDEN.getCode(), "没有工作台权限");
+        var identity = authorization.identity();
         byte[] random = new byte[32];
         RANDOM.nextBytes(random);
         String token =
@@ -109,7 +113,8 @@ public class JssWorkspaceService implements OAuth2TokenExtension {
                     session.getTenantId(),
                     () -> {
                         var member = validateMember(session.getMemberAccessToken());
-                        var identity = allowedIdentity(member.getUserId());
+                        var authorization = allowedIdentity(member.getUserId());
+                        var identity = authorization == null ? null : authorization.identity();
                         if (!sessions.isCurrent(session)
                                 || !Objects.equals(member.getUserId(), session.getMemberUserId())
                                 || identity == null
@@ -134,6 +139,7 @@ public class JssWorkspaceService implements OAuth2TokenExtension {
                             info.put("deptId", String.valueOf(admin.getDeptId()));
                         dto.setUserInfo(info);
                         dto.setScopes(List.of());
+                        dto.setPermissionLimits(authorization.permissions());
                         dto.setExpiresTime(
                                 LocalDateTime.ofInstant(
                                         Instant.ofEpochMilli(session.getExpiresAt()),
@@ -184,7 +190,9 @@ public class JssWorkspaceService implements OAuth2TokenExtension {
         return member;
     }
 
-    private JssUserIdentityDO allowedIdentity(Long memberId) {
+    private record Authorization(JssUserIdentityDO identity, Set<String> permissions) {}
+
+    private Authorization allowedIdentity(Long memberId) {
         if (!properties.isEnabled()) return null;
         var identity = identities.findByMember(memberId);
         if (identity == null || !CommonStatusEnum.isEnable(identity.getStatus())) return null;
@@ -192,6 +200,12 @@ public class JssWorkspaceService implements OAuth2TokenExtension {
         if (admin == null
                 || !CommonStatusEnum.isEnable(admin.getStatus())
                 || !permissions.hasAnyPermissions(admin.getId(), ACCESS_PERMISSION)) return null;
-        return identity;
+        var enabled = permissions.getEnabledMenuPermissions(admin.getId());
+        if (enabled == null || !enabled.contains(ACCESS_PERMISSION)) return null;
+        var bounded = new HashSet<>(enabled);
+        // This credential is bound to one tenant even when the underlying administrator can visit
+        // others.
+        bounded.remove("system:tenant:visit");
+        return new Authorization(identity, Set.copyOf(bounded));
     }
 }

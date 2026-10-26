@@ -12,6 +12,9 @@ import java.util.Set;
  */
 public interface PermissionApi extends PermissionCommonApi {
 
+    /** Current enabled roles and menu branches, using the same rules as permission-info. */
+    Set<String> getEnabledMenuPermissions(Long userId);
+
     /**
      * 获得拥有多个角色的用户编号集合
      *

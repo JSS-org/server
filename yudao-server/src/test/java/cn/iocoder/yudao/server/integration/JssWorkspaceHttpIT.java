@@ -31,6 +31,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -671,5 +672,100 @@ class JssWorkspaceHttpIT {
                         issueWorkspace(member),
                         1),
                 0);
+    }
+
+    private Map<String, Object> menuConfiguration(String reviewer, long menu) throws Exception {
+        var configuration =
+                new HashMap<>(
+                        data(
+                                api(
+                                        "GET",
+                                        "/admin-api/system/menu/get?id=" + menu,
+                                        null,
+                                        reviewer,
+                                        1)));
+        configuration
+                .keySet()
+                .retainAll(
+                        List.of(
+                                "id",
+                                "name",
+                                "permission",
+                                "type",
+                                "sort",
+                                "parentId",
+                                "path",
+                                "icon",
+                                "component",
+                                "componentName",
+                                "status",
+                                "visible",
+                                "keepAlive",
+                                "alwaysShow"));
+        return configuration;
+    }
+
+    private void saveMenu(String reviewer, Map<String, Object> configuration, int status)
+            throws Exception {
+        var update = new HashMap<>(configuration);
+        update.put("status", status);
+        expectCode(api("PUT", "/admin-api/system/menu/update", update, reviewer, 1), 0);
+    }
+
+    @Test
+    void disabledButtonsParentsAndWorkspaceEntryRestrictOnlyTheApplicationScopedToken()
+            throws Exception {
+        String reviewer = login("admin", "jssitreviewer");
+        String nativeStaff = login("admin", "jssitmenu");
+        String member = login("member", "13800009008");
+        expectCode(
+                api(
+                        "POST",
+                        "/admin-api/jss/identity/bind",
+                        Map.of(
+                                "memberUserId",
+                                23008,
+                                "adminUserId",
+                                23008,
+                                "reason",
+                                "Review menu suspension fixture"),
+                        reviewer,
+                        1),
+                0);
+        String token = issueWorkspace(member);
+        String page = "/admin-api/system/user/page?pageNo=1&pageSize=10";
+        expectCode(api("GET", page, null, token, 1), 0);
+        var query = menuConfiguration(reviewer, menuId("system:user:query"));
+        try {
+            saveMenu(reviewer, query, 1);
+            expectCode(api("GET", page, null, token, 1), 403);
+            assertCapability(member, true);
+            // Preserve the pre-existing native OAuth/RBAC semantics.
+            expectCode(api("GET", page, null, nativeStaff, 1), 0);
+        } finally {
+            saveMenu(reviewer, query, 0);
+        }
+        expectCode(api("GET", page, null, token, 1), 0);
+        var parent = menuConfiguration(reviewer, Long.parseLong(query.get("parentId").toString()));
+        try {
+            saveMenu(reviewer, parent, 1);
+            expectCode(api("GET", page, null, token, 1), 403);
+            assertCapability(member, true);
+        } finally {
+            saveMenu(reviewer, parent, 0);
+        }
+        expectCode(api("GET", page, null, token, 1), 0);
+        var entry = menuConfiguration(reviewer, menuId("jss:workspace:access"));
+        try {
+            saveMenu(reviewer, entry, 1);
+            assertCapability(member, false);
+            expectCode(api("POST", "/app-api/jss/auth/workspace-session", null, member, 1), 403);
+            expectCode(api("GET", page, null, token, 1), 401);
+            expectCode(api("GET", page, null, nativeStaff, 1), 0);
+        } finally {
+            saveMenu(reviewer, entry, 0);
+        }
+        expectCode(api("GET", page, null, token, 1), 401);
+        expectCode(api("GET", page, null, issueWorkspace(member), 1), 0);
     }
 }

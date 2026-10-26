@@ -1828,3 +1828,23 @@ python script/jss/verify_audit_services.py
 常规日志专项九项中五项 H2 通过、四项实际 MySQL 条件跳过，零失败/错误；`.runtime/audit-regression-valid.log`，实际结果以独立脚本为准。服务器30模块依赖和测试编译成功（`.runtime/audit-compile.log`），两个 Java 定向 Spotless、Python 编译与差异检查通过。首次专项命令的 PowerShell 未引用带点 Maven 参数错误已修正，未计作执行通过。
 
 Redis 安装程序读取仍 WinError 5，本批不包含实际 HTTP/RBAC/日志异步生成、详情名称翻译、导出或前端验收。没有新完整 verify、开发库/运行服务、部署或真机变更；前端新增审计查询四页及实际 H5 用例另行记录，整合验收版本未前移。
+
+## 2026-10-27 共享字典实际 MySQL 与批删原子性
+
+新增 `script/jss/verify_dict_services.py` 与 `JssDictMySqlServiceIT`。在已确认归属的 MySQL 8.4.9:13316 上创建 `jss_dict_service_verify_<12位随机值>`，仅载入原始 system_dict_type/system_dict_data DDL；装配两个生产 Service/Mapper、租户与分页插件、字段填充和真实 Spring 事务代理，无业务替身/Redis/HTTP。两个 DO 的 `@TenantIgnore` 原样保留，测试明确验证字典跨租户共享，不把它误称为租户私有数据。
+
+首个有效运行七项中四通过/三失败，零错误/跳过，`.runtime/dict-services-before-valid.log`。缺失类型或数据 ID 混入批次时，既没有业务拒绝又已删除已有记录；隔离库中的专用触发器令第二条类型删除 SQL 失败时，第一条删除仍已提交。最初新测试的类闭合位置编译错误已纠正，不计业务证据。
+
+现在两个批删先去重并检查整批存在，缺失时返回已有 DICT_TYPE_NOT_EXISTS/DICT_DATA_NOT_EXISTS；使用 REQUIRED 事务，类型逐行更新、数据批量逻辑删除均核对影响行数。类型 Mapper 仅更新未删除记录并返回行数，防止检查后目标变化被忽略。含子数据拒绝逻辑继续保留。
+
+```powershell
+$env:JSS_MAVEN_COMMAND='D:/Project/JSS/JSS-server/.runtime/maven-integration.cmd'
+python script/jss/verify_dict_services.py
+.runtime/maven-integration.cmd -B -ntp -Pjss-mall -pl yudao-server -am test '-Dtest=DictTypeServiceImplTest,DictDataServiceImplTest,JssDictMySqlServiceIT' '-Dsurefire.failIfNoSpecifiedTests=false' '-Dspotless.skip=true'
+```
+
+最终实际 MySQL 七项全过、零失败/错误/跳过，15.208秒；`.runtime/dict-services-after.log` 与保存的实际报告 `.runtime/dict-services-after.xml`。覆盖类型/数据完整 CRUD、备注/颜色/CSS清空、键值0及原字符串、类型名称/标识/状态/日期分页、数据类型精确/标签/状态和排序、全局共享与跨租户同标识唯一性、停用类型新增/修改拒绝、含子数据拒删、删除名称可复用、缺失批次整体拒绝、后续SQL失败整批回滚、重复ID和调用方外层回滚。触发器只创建于已校验的随机库并在 finally 删除；随机 schema 残留核对为0。
+
+常规专项43项中36项H2执行通过（类型16、数据20），七项实际MySQL条件跳过，零失败/错误；服务器30模块依赖与测试编译成功，`.runtime/dict-regression.log`。四个变更Java定向Spotless、Python编译和差异检查通过。没有新完整verify、并发类型删除/数据新增竞争、HTTP/RBAC/缓存或前端实际验收。
+
+Redis安装程序读取仍拒绝；真实商城/工作台需恢复后串行执行。字典仍是平台共享资源，未改变权限、表结构、共享边界或开发数据/运行服务；三端导出与其他管理模块继续待完成。

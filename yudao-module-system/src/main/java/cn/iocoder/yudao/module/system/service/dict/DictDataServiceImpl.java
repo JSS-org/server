@@ -21,6 +21,7 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -101,8 +102,18 @@ public class DictDataServiceImpl implements DictDataService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteDictDataList(List<Long> ids) {
-        dictDataMapper.deleteByIds(ids);
+        if (CollUtil.isEmpty(ids)) {
+            return;
+        }
+        List<Long> targets = ids.stream().distinct().toList();
+        if (dictDataMapper.selectByIds(targets).size() != targets.size()) {
+            throw exception(DICT_DATA_NOT_EXISTS);
+        }
+        if (dictDataMapper.deleteByIds(targets) != targets.size()) {
+            throw exception(DICT_DATA_NOT_EXISTS);
+        }
     }
 
     @Override

@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.system.service.dict;
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils;
@@ -17,6 +18,7 @@ import com.google.common.annotations.VisibleForTesting;
 import jakarta.annotation.Resource;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -89,9 +91,17 @@ public class DictTypeServiceImpl implements DictTypeService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteDictTypeList(List<Long> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return;
+        }
+        List<Long> targets = ids.stream().distinct().toList();
         // 1. 校验是否有字典数据
-        List<DictTypeDO> dictTypes = dictTypeMapper.selectByIds(ids);
+        List<DictTypeDO> dictTypes = dictTypeMapper.selectByIds(targets);
+        if (dictTypes.size() != targets.size()) {
+            throw exception(DICT_TYPE_NOT_EXISTS);
+        }
         dictTypes.forEach(
                 dictType -> {
                     if (dictDataService.getDictDataCountByDictType(dictType.getType()) > 0) {
@@ -101,7 +111,11 @@ public class DictTypeServiceImpl implements DictTypeService {
 
         // 2. 批量删除字典类型
         LocalDateTime now = LocalDateTime.now();
-        ids.forEach(id -> dictTypeMapper.updateToDelete(id, now));
+        for (Long id : targets) {
+            if (dictTypeMapper.updateToDelete(id, now) != 1) {
+                throw exception(DICT_TYPE_NOT_EXISTS);
+            }
+        }
     }
 
     @Override

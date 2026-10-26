@@ -35,6 +35,6 @@ public interface DictTypeMapper extends BaseMapperX<DictTypeDO> {
     }
 
     @Update(
-            "UPDATE system_dict_type SET deleted = 1, deleted_time = #{deletedTime} WHERE id = #{id}")
-    void updateToDelete(@Param("id") Long id, @Param("deletedTime") LocalDateTime deletedTime);
+            "UPDATE system_dict_type SET deleted = 1, deleted_time = #{deletedTime} WHERE id = #{id} AND deleted = 0")
+    int updateToDelete(@Param("id") Long id, @Param("deletedTime") LocalDateTime deletedTime);
 }

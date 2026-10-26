@@ -4422,3 +4422,38 @@ Redis 程序读取仍 WinError 5，恢复后须实际运行菜单授权、套餐
 ### 未做 / 后续
 
 Redis 程序读取仍 WinError 5，恢复后需串行执行商城/工作台真实 HTTP/H5，包含新增审计页面及无权限/跨租户拒绝。详情名称翻译、统一导出、更多管理模块和真机未完成；整合验收版本不前移，完整目标继续进行中。
+
+## [2026-10-27 01:16 ~ 01:29] 字典批量删除整批校验与实际事务回滚
+
+### 意图
+
+为P5字典管理补齐生产Service/DDL证据，修复混合缺失编号被静默忽略、类型批删后续SQL失败仍保留前面删除结果的问题，避免移动批量操作出现部分成功。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `.../system/service/dict/DictTypeServiceImpl.java` | 修改 | 第94行起批删去重、整批存在与子数据检查、REQUIRED事务和逐行影响数校验 |
+| `.../system/service/dict/DictDataServiceImpl.java` | 修改 | 批删整批存在、REQUIRED事务和影响数校验 |
+| `.../system/dal/mysql/dict/DictTypeMapper.java` | 修改 | 仅更新未删除类型并返回实际行数 |
+| `.../system/integration/JssDictMySqlServiceIT.java` | 新增 | 七项实际MySQL服务/共享范围/筛选/事务回归，含隔离触发器故障 |
+| `script/jss/verify_dict_services.py` | 新增 | 原始双表DDL、随机库归属/清理、报告时效计数与凭证遮盖 |
+| `docs/testing.md`、`docs/CHANGELOG.md` | 修改 | 复现、结果、边界与后续项 |
+
+### 结构关系
+
+沿用 DictType/DictDataController → 两个既有Service → 生产Mapper；只为批删补齐Spring事务和影响数核对。两个DO仍使用原 @TenantIgnore，字典是平台共享配置，RBAC接口权限不变，无新表、迁移或依赖。实际测试直接装配双Service与MySQL，不经过HTTP或替身。
+
+### 验证证据
+
+有效修复前七项中四通过/三失败、零错误/跳过；缺失批次无拒绝且已有行已删除，第二条类型SQL失败后第一条也已消失，`.runtime/dict-services-before-valid.log`。初始测试类闭合错误已更正，不计业务复现。修复后 `python script/jss/verify_dict_services.py` 七项全过、零失败/错误/跳过，15.208秒，保存的实际XML及覆盖见testing。随机库残留0，触发器已清理。
+
+专项43项中36项H2通过、七项MySQL条件跳过，零失败/错误；30模块依赖与服务器测试编译成功，`.runtime/dict-regression.log`。四个Java定向Spotless、Python编译和差异检查通过；实际结果未用条件跳过替代。
+
+### 影响面 / 风险
+
+混合缺失编号现在整体返回既有错误，合法重复编号按一个目标处理；类型逐行SQL异常或影响行数不符会回滚整批，正常批删仍服从调用方外层事务。原共享字典及含子数据保护未改变，客户端应提示平台共享影响。本次未验证类型删除与数据新增的并发竞争，未扩大为完整配置并发验收。无开发库/运行服务或部署变更。
+
+### 未做 / 后续
+
+Redis程序读取仍拒绝，真实HTTP/H5/RBAC、更多授权边界与统一导出待实际验收。移动字典页面单独提交，不把其模拟API回归算作实际业务；整合验收版本保持原值，无新全量verify、真机或发布结论，完整目标继续进行中。

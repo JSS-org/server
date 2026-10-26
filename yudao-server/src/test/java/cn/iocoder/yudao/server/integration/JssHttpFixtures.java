@@ -4,7 +4,10 @@ import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import java.sql.Connection;
 import java.sql.DriverManager;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /** Controlled identities only in the wrapper-owned schema, before any application cache starts. */
 public class JssHttpFixtures
@@ -64,9 +67,33 @@ public class JssHttpFixtures
                         INSERT INTO system_role_menu (role_id,menu_id,tenant_id) SELECT 23001,id,1 FROM system_menu WHERE permission IN ('jss:workspace:access','system:user:query') AND deleted=b'0';
                         INSERT INTO system_role_menu (role_id,menu_id,tenant_id) SELECT 23002,id,1 FROM system_menu WHERE permission='jss:workspace:access' AND deleted=b'0';
                         INSERT INTO system_role_menu (role_id,menu_id,tenant_id) SELECT 23004,id,1 FROM system_menu WHERE permission IN ('jss:workspace:access','system:user:query') AND deleted=b'0';
-                        INSERT INTO system_user_role (user_id,role_id,tenant_id) VALUES (23001,23001,1),(23002,23002,1),(23004,23004,1),(23005,23001,1);
+                        INSERT INTO system_user_role (user_id,role_id,tenant_id) VALUES (23001,23001,1),(23002,23002,1),(23004,23004,1),(23005,23001,1),(23007,23001,1);
                         """;
                 for (String sql : seed.split(";")) if (!sql.isBlank()) statement.executeUpdate(sql);
+            }
+            // Normal role configuration includes each granted button's menu ancestors. The
+            // permission-info endpoint intentionally filters orphaned or disabled branches.
+            long queryMenu;
+            try (var statement = connection.createStatement();
+                    var rows =
+                            statement.executeQuery(
+                                    "SELECT id FROM system_menu WHERE permission='system:user:query' AND deleted=b'0'")) {
+                if (!rows.next())
+                    throw new IllegalStateException("User query permission fixture is missing");
+                queryMenu = rows.getLong(1);
+            }
+            var ancestors = menuBranch(connection, queryMenu);
+            ancestors.remove(queryMenu);
+            for (long role : new long[] {23001, 23004}) {
+                for (long menu : ancestors) {
+                    try (var statement =
+                            connection.prepareStatement(
+                                    "INSERT INTO system_role_menu (role_id,menu_id,tenant_id) VALUES (?,?,1)")) {
+                        statement.setLong(1, role);
+                        statement.setLong(2, menu);
+                        statement.executeUpdate();
+                    }
+                }
             }
             try (var statement =
                     connection.prepareStatement(
@@ -80,6 +107,7 @@ public class JssHttpFixtures
                 "INSERT INTO system_users (id,username,nickname,password,status,tenant_id,mobile) VALUES (23002,'jssitentry','HTTP entry',?,0,1,'13800009002')",
                 "INSERT INTO system_users (id,username,nickname,password,status,tenant_id,mobile) VALUES (23004,'jssitmutable','HTTP mutable',?,0,1,'13800009004')",
                 "INSERT INTO system_users (id,username,nickname,password,status,tenant_id,mobile) VALUES (23005,'jssitstatus','HTTP status',?,0,1,'13800009005')",
+                "INSERT INTO system_users (id,username,nickname,password,status,tenant_id,mobile) VALUES (23007,'jssitbrowser','HTTP browser employee',?,0,1,'13800009007')",
                 "INSERT INTO system_users (id,username,nickname,password,status,tenant_id,mobile) VALUES (33001,'jssitforeign','HTTP foreign',?,0,91001,'13800009001')"
             };
             for (String sql : adminSeeds) {
@@ -88,18 +116,38 @@ public class JssHttpFixtures
                     statement.executeUpdate();
                 }
             }
-            for (int id : new int[] {23001, 23002, 23003, 23004, 23005}) {
+            for (int id : new int[] {23001, 23002, 23003, 23004, 23005, 23006, 23007}) {
                 try (var statement =
                         connection.prepareStatement(
-                                "INSERT INTO member_user (id,tenant_id,mobile,password,status,register_ip,group_id) VALUES (?,1,?,?,0,'127.0.0.1',23099)")) {
+                                "INSERT INTO member_user (id,tenant_id,mobile,password,nickname,status,register_ip,group_id) VALUES (?,1,?,?,?,0,'127.0.0.1',23099)")) {
                     statement.setInt(1, id);
                     statement.setString(2, "1380000900" + (id - 23000));
                     statement.setString(3, hash);
+                    statement.setString(4, "HTTP member " + id);
                     statement.executeUpdate();
                 }
             }
         } catch (Exception exception) {
             throw new IllegalStateException("Could not prepare the owned HTTP fixtures", exception);
         }
+    }
+
+    static Set<Long> menuBranch(Connection connection, long menu) throws Exception {
+        Set<Long> branch = new LinkedHashSet<>();
+        while (menu != 0) {
+            if (!branch.add(menu)) throw new IllegalStateException("Cyclic menu fixture");
+            try (var statement =
+                    connection.prepareStatement(
+                            "SELECT parent_id,status FROM system_menu WHERE id=? AND deleted=b'0'")) {
+                statement.setLong(1, menu);
+                try (var rows = statement.executeQuery()) {
+                    if (!rows.next() || rows.getInt(2) != 0)
+                        throw new IllegalStateException(
+                                "Menu fixture has a missing or disabled ancestor");
+                    menu = rows.getLong(1);
+                }
+            }
+        }
+        return branch;
     }
 }

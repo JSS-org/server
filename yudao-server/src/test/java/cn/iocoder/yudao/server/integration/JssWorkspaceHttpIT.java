@@ -9,7 +9,9 @@ import cn.iocoder.yudao.server.YudaoServerApplication;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,10 +27,15 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import javax.sql.DataSource;
 
@@ -66,6 +73,75 @@ class JssWorkspaceHttpIT {
     private final HttpClient http =
             HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
     private final List<Map.Entry<String, String>> tokens = new ArrayList<>();
+
+    @TestFactory
+    Stream<DynamicTest> actualBrowserAcceptance() {
+        if (!"1".equals(System.getenv("JSS_TEST_BROWSER"))) return Stream.empty();
+        return Stream.of(
+                DynamicTest.dynamicTest(
+                        "memberEmployeeNavigationAndRevocationInRealBrowser",
+                        () -> {
+                            var frontend =
+                                    Path.of(System.getenv("JSS_TEST_FRONTEND_DIR")).toRealPath();
+                            assertTrue(
+                                    Files.isRegularFile(
+                                            frontend.resolve(
+                                                    "playwright.authenticated.config.ts")));
+                            var log =
+                                    Path.of(
+                                            System.getenv("JSS_TEST_RUNTIME_DIR"),
+                                            "authenticated-browser.log");
+                            boolean windows =
+                                    System.getProperty("os.name").toLowerCase().contains("win");
+                            var builder =
+                                    windows
+                                            ? new ProcessBuilder(
+                                                    "cmd.exe",
+                                                    "/d",
+                                                    "/c",
+                                                    "corepack.cmd",
+                                                    "pnpm",
+                                                    "test:authenticated")
+                                            : new ProcessBuilder(
+                                                    "corepack", "pnpm", "test:authenticated");
+                            int port =
+                                    environment.getRequiredProperty(
+                                            "local.server.port", Integer.class);
+                            builder.environment()
+                                    .put("JSS_TEST_HTTP_API_URL", "http://127.0.0.1:" + port);
+                            builder.directory(frontend.toFile())
+                                    .redirectErrorStream(true)
+                                    .redirectOutput(log.toFile());
+                            var process = builder.start();
+                            try {
+                                assertTrue(
+                                        process.waitFor(240, TimeUnit.SECONDS),
+                                        "Real browser acceptance timed out");
+                                assertEquals(
+                                        0,
+                                        process.exitValue(),
+                                        "Real browser acceptance failed; inspect the ignored authenticated-browser.log");
+                            } finally {
+                                if (process.isAlive()) {
+                                    process.descendants().forEach(child -> child.destroyForcibly());
+                                    process.destroyForcibly().waitFor();
+                                }
+                                if (Files.exists(log)) {
+                                    String output = Files.readString(log);
+                                    for (String key :
+                                            List.of(
+                                                    "JSS_TEST_HTTP_PASSWORD",
+                                                    "JSS_TEST_MYSQL_PASSWORD",
+                                                    "JSS_TEST_REDIS_PASSWORD")) {
+                                        String secret = System.getenv(key);
+                                        if (secret != null && !secret.isEmpty())
+                                            output = output.replace(secret, "<redacted>");
+                                    }
+                                    Files.writeString(log, output);
+                                }
+                            }
+                        }));
+    }
 
     @DynamicPropertySource
     static void ownedConnections(DynamicPropertyRegistry registry) {
@@ -406,11 +482,15 @@ class JssWorkspaceHttpIT {
     }
 
     private void assignMenus(String reviewer, List<Long> menus) throws Exception {
+        var expanded = new LinkedHashSet<>(menus);
+        try (var connection = datasource.getConnection()) {
+            for (long menu : menus) expanded.addAll(JssHttpFixtures.menuBranch(connection, menu));
+        }
         expectCode(
                 api(
                         "POST",
                         "/admin-api/system/permission/assign-role-menu",
-                        Map.of("roleId", 23004, "menuIds", menus),
+                        Map.of("roleId", 23004, "menuIds", expanded),
                         reviewer,
                         1),
                 0);

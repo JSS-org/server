@@ -14,6 +14,16 @@ python script/jss/verify_workspace_http.py
 
 该命令会经运行 ID 核对后重启任务专用 Redis，以隔离框架缓存；请在其他隔离 Redis 测试结束后串行运行。凭证仅经子进程环境传递，脱敏日志位于忽略目录 `.runtime/jss-http/workspace-http-test.log`。结束后删除自己的随机库并停止本次 Redis；现有 3306、6379、48080 服务不受影响。默认单元测试不会运行这一环境门控的集成测试。菜单本身停用、租户停用、前后端联合登录和商城完整业务仍待继续验收。
 
+加上 `--browser` 可在同一完整后端中执行相邻 `JSS-uniapp` 的真实浏览器闭环：
+
+```powershell
+python script/jss/verify_workspace_http.py --browser
+```
+
+要求相邻工程已安装锁定的 pnpm 依赖，并有本机 Edge。测试另启 9102 H5 服务，实际从登录弹窗输入临时会员密码，验证普通会员四项导航、审核绑定员工五项导航、真实用户查询、撤销绑定后的旧请求拒绝及换号/深链保护；不拦截 API 或注入登录 Token。该模式额外生成四位临时密码以验证后端既有密码契约。不会使用开发库账号，也不会改动 9000 预览；H5 输出在相邻工程忽略目录 `test-results/authenticated-h5`。
+
+每次完整 HTTP 运行的服务及浏览器日志位于 `.runtime/jss-http/<随机测试库名>/`，最近位置见 `last-run.json`；包装脚本还检查本次服务日志不含测试密码。默认运行检查五项，浏览器模式检查六项且均不得跳过。凭证日志修复另有六项 `ApiAccessLogSanitizationTest`，捕获控制台、持久化和底层 JSON 解析日志，覆盖嵌套凭证、查询刷新凭证、自定义脱敏键、禁用参数日志及损坏 JSON；不改变请求传给业务控制器的参数。
+
 ## 隔离 Redis
 
 `redis_sandbox.py` 管理本仓库 `.runtime/jss-redis` 下的独立 Redis，默认仅监听 `127.0.0.1:16379`，拒绝默认业务端口 6379。要求先安装可运行的 Redis；不在 PATH 时用 `--redis-server` 或 `JSS_REDIS_SERVER` 指定可执行文件。首次使用示例：

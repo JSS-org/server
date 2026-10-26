@@ -23,12 +23,12 @@ def binary(home, name):
     return str(result)
 
 
-def sql(statement, state=None):
+def sql(statement, state=None, timeout=10):
     state = state or json.loads(STATE.read_text(encoding='utf8'))
     command = [binary(state['mysqlHome'], 'mysql'), '--defaults-extra-file=' + str(CLIENT),
                '--connect-timeout=2', '--default-character-set=utf8mb4', '-N', '-B']
     result = subprocess.run(command, input=statement, text=True, encoding='utf8',
-                            capture_output=True, timeout=10)
+                            capture_output=True, timeout=timeout)
     if result.returncode:
         raise RuntimeError(result.stderr.strip())
     return result.stdout.strip()

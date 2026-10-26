@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Run the full server's HTTP security chain on disposable MySQL and owned Redis."""
+import argparse
 import configparser
 import json
 import os
@@ -22,6 +23,9 @@ RUNTIME = ROOT / '.runtime/jss-http'
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--browser', action='store_true', help='Also run the sibling uni-app real-login browser acceptance')
+    args = parser.parse_args()
     sys.stdout.reconfigure(encoding='utf8', errors='replace')
     live = mysql.status()
     assert live['port'] == 13316
@@ -39,12 +43,16 @@ def main():
     config.read(mysql.CLIENT, encoding='utf8')
     password = config['client']['password']
     redis_password = redis.credential()
-    http_password = secrets.token_hex(8)
+    # Exercise the backend's existing four-character password contract in the browser.
+    http_password = 'A' + secrets.token_hex(1) + '7' if args.browser else secrets.token_hex(8)
     schema = 'jss_http_verify_' + secrets.token_hex(6)
     assert re.fullmatch(r'jss_http_verify_[0-9a-f]{12}', schema)
     saved_environment = dict(os.environ)
     created = False
     RUNTIME.mkdir(parents=True, exist_ok=True)
+    run_directory = RUNTIME / schema
+    run_directory.mkdir()
+    (RUNTIME / 'last-run.json').write_text(json.dumps({'schema': schema, 'logDirectory': str(run_directory)}), encoding='utf8')
     try:
         mysql.sql(f'CREATE DATABASE `{schema}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;')
         created = True
@@ -71,7 +79,12 @@ def main():
                            JSS_TEST_MYSQL_USER='root', JSS_TEST_MYSQL_PASSWORD=password,
                            JSS_TEST_HTTP_PASSWORD=http_password,
                            JSS_TEST_REDIS_PASSWORD=redis_password, JSS_TEST_REDIS_RUN_ID=owned['runId'],
-                           JSS_TEST_RUNTIME_DIR=RUNTIME.as_posix())
+                           JSS_TEST_RUNTIME_DIR=run_directory.as_posix())
+        if args.browser:
+            frontend = ROOT.parent / 'JSS-uniapp'
+            if not (frontend / 'playwright.authenticated.config.ts').is_file():
+                raise ValueError('Real browser acceptance requires the sibling JSS-uniapp integration harness')
+            environment.update(JSS_TEST_BROWSER='1', JSS_TEST_FRONTEND_DIR=str(frontend.resolve()))
         maven = os.environ.get('JSS_MAVEN_COMMAND') or shutil.which('mvn')
         if not maven:
             maven = str(ROOT.parent / '.tools/apache-maven-3.9.11/bin' / ('mvn.cmd' if os.name == 'nt' else 'mvn'))
@@ -85,12 +98,16 @@ def main():
             output = output.replace(secret, '<redacted>')
         (RUNTIME / 'workspace-http-test.log').write_text(output, encoding='utf8')
         if result.returncode:
+            print('Run logs: ' + str(run_directory))
             print('\n'.join(output.splitlines()[-65:]))
             raise RuntimeError('Full server HTTP tests failed; inspect the ignored runtime log')
+        server_log = (run_directory / 'server.log').read_text(encoding='utf8')
+        assert all(secret not in server_log for secret in [password, redis_password, http_password]), 'Server log exposed a test credential'
         report = ROOT / 'yudao-server/target/surefire-reports/TEST-cn.iocoder.yudao.server.integration.JssWorkspaceHttpIT.xml'
         assert report.stat().st_mtime >= started
         suite = ET.parse(report).getroot()
-        assert suite.attrib['tests'] == '5' and all(suite.attrib[k] == '0' for k in ['errors', 'failures', 'skipped']), suite.attrib
+        expected = '6' if args.browser else '5'
+        assert suite.attrib['tests'] == expected and all(suite.attrib[k] == '0' for k in ['errors', 'failures', 'skipped']), suite.attrib
         for case in suite.findall('testcase'):
             print('PASS ' + case.attrib['name'])
         print('Full server HTTP login/domain isolation verified with real MySQL and Redis')
@@ -100,7 +117,7 @@ def main():
         try:
             if created:
                 mysql.status()
-                mysql.sql(f'DROP DATABASE `{schema}`;')
+                mysql.sql(f'DROP DATABASE `{schema}`;', timeout=30)
         finally:
             current = json.loads(redis.STATE.read_text(encoding='utf8'))
             if current['runId'] == owned['runId']:

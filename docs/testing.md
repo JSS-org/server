@@ -1680,3 +1680,21 @@ python script/jss/verify_workspace_http.py --suite mall --browser
 `python script/jss/verify_workspace_http.py --suite mall --browser` 最终退出 0，预期改为九项 JUnit（八项真实 HTTP + 一项浏览器启动），全过且无跳过；两项真实 H5 全过，23.1 秒。日志 `.runtime/mall-cart-concurrent-final.log`，子日志 `.runtime/jss-mall-http/jss_http_verify_0c629312f09c/mall-browser.log`。新真实请求核对三阶段：已有项 1 + 六次并发 = 7；余量 1 时六请求恰好一成功、五受控库存拒绝，最终 8；删除后六次首次并发加购全部成功且返回同一行，最终 6。商品库存始终 8，加购不预扣库存。
 
 复现/修复两轮随机库均已只读确认删除，专用 Redis 已停止，报告时效及日志密码扫描通过。最近完整 30 模块 verify 仍属于上一节 `1fdf0a0f82`，本次为交易专项及真实联合回归，未重新替换独立 jar/开发服务。订单抢库存、支付并发及其余完整整合范围继续验证。
+
+## 2026-10-26 订单库存接续：重复 SKU 校验与待运行的真实竞争用例
+
+`TradePriceServiceImplTest.rejectsDuplicateSkuBeforePricingEvenWhenEachLineFitsStock` 先复现：库存 8，同一 SKU 两行各 5 件仍通过价格计算，预期业务拒绝但没有异常；价格校验的 `convertMap` 覆盖了重复 SKU 的数量。两项单测中一项失败，零错误/跳过，日志 `.runtime/mall-duplicate-sku-unit-before.log`。这证明价格校验缺口，不是实际超卖证据。
+
+价格服务现对解析后的 SKU 集合检查重复，返回 `1011000040`（同一商品规格不能重复提交，请合并购买数量）；直接购买、购物车重复项、购物车与直接购买混合项共用该入口，结算和创建均适用。无迁移、无锁服务改动。新增单测覆盖 5+5、2+3、1+Integer.MAX_VALUE，拒绝发生在商品查询及营销计算之前。
+
+专项命令通过，49 项执行通过，零失败/错误/跳过；日志 `.runtime/mall-order-stock-unit-after.log`：
+
+```powershell
+.runtime/maven-integration.cmd -B -ntp -Pjss-mall -pl yudao-module-mall/yudao-module-trade -am test '-Dtest=TradePriceServiceImplTest,AppTradeOrderSettlementReqVOTest,*PriceCalculatorTest,*CalculatorTest,CartServiceImplTest' '-Dsurefire.failIfNoSpecifiedTests=false' '-Dspotless.skip=true'
+```
+
+`JssMallHttpIT` 新增两个待运行场景：两个会员各从购物车购买 5 件、竞争库存 8；只允许一个成功，核对 SKU/SPU 库存 3、6495 分订单与支付单关联、订单/项/支付单/日志各仅增一条、失败购物车保留、他人/重复取消不增库存，以及胜者取消后败者重试和取消。重复 SKU 场景覆盖超库存/库存内直接项、重复购物车项、混合项及 GET 结算，并核对拒绝后库存、购物车和四张交易表数量。并发请求助手与既有加购用例共用屏障；脚本预期为十项 HTTP，带浏览器十一项 JUnit。
+
+**新真实 HTTP/H5 未运行。** `python script/jss/verify_workspace_http.py --suite mall` 在创建随机库前因读取本机 WinGet 安装的 `redis-server.exe` 返回 `PermissionError: [WinError 5]` 退出，日志 `.runtime/mall-order-stock-before.log`；未启动新 Redis/后端、未创建本轮随机库。无环境变量的编译检查中 HTTP 类十一项全部条件跳过，不能计为通过；最终源码另执行全依赖 `test-compile -DskipTests`。四个变更 Java 的三组定向 Spotless 检查通过，Python 编译和差异检查通过。
+
+恢复该已安装程序的读取/运行权限后，仍需先执行 `python script/jss/verify_workspace_http.py --suite mall --browser` 并检查实际报告、清理和截图。最近真实商城证据仍属于 `a0a583c44a`，完整 verify/独立 jar 仍属于 `1fdf0a0f82`；本轮没有新全量构建、没有更新开发库或替换运行 jar，不前移整合验收版本。支付并发及其余完整范围继续保留。

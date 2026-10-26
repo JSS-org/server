@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -556,23 +557,35 @@ class JssMallHttpIT {
     }
 
     private List<Map<String, Object>> parallelCartAdds(int requests) throws Exception {
+        List<Callable<Map<String, Object>>> calls = new ArrayList<>();
+        for (int i = 0; i < requests; i++) {
+            calls.add(
+                    () ->
+                            api(
+                                    "POST",
+                                    "/app-api/trade/cart/add",
+                                    Map.of("skuId", sku, "count", 1),
+                                    buyer,
+                                    1));
+        }
+        return parallelRequests(calls);
+    }
+
+    private List<Map<String, Object>> parallelRequests(List<Callable<Map<String, Object>>> calls)
+            throws Exception {
+        int requests = calls.size();
         var ready = new CountDownLatch(requests);
         var start = new CountDownLatch(1);
         var pool = Executors.newFixedThreadPool(requests);
         List<Future<Map<String, Object>>> futures = new ArrayList<>();
         try {
-            for (int i = 0; i < requests; i++) {
+            for (var call : calls) {
                 futures.add(
                         pool.submit(
                                 () -> {
                                     ready.countDown();
                                     assertTrue(start.await(10, TimeUnit.SECONDS));
-                                    return api(
-                                            "POST",
-                                            "/app-api/trade/cart/add",
-                                            Map.of("skuId", sku, "count", 1),
-                                            buyer,
-                                            1);
+                                    return call.call();
                                 }));
             }
             assertTrue(ready.await(10, TimeUnit.SECONDS));
@@ -628,6 +641,152 @@ class JssMallHttpIT {
         body.put("deliveryType", 1);
         body.put("addressId", address);
         return body;
+    }
+
+    private long scalar(String sql) throws Exception {
+        try (var connection = datasource.getConnection();
+                var statement = connection.createStatement();
+                var rows = statement.executeQuery(sql)) {
+            assertTrue(rows.next());
+            return rows.getLong(1);
+        }
+    }
+
+    private List<Long> orderFootprint() throws Exception {
+        List<Long> counts = new ArrayList<>();
+        for (String table :
+                List.of("trade_order", "trade_order_item", "pay_order", "trade_order_log")) {
+            counts.add(scalar("SELECT COUNT(*) FROM " + table));
+        }
+        return counts;
+    }
+
+    private void assertInventory(int expected) throws Exception {
+        var detail = get("/admin-api/product/spu/get-detail?id=" + spu, admin);
+        assertEquals(expected, number(detail.get("stock")), "SPU stock mismatch");
+        assertEquals(expected, stock(), "SKU stock mismatch");
+    }
+
+    @Test
+    void concurrentOrdersReserveStockOnceAndLoserCanRetryAfterCancellation() throws Exception {
+        List<String> tokens = List.of(buyer, other);
+        List<Long> carts = List.of(addCart(buyer, 5), addCart(other, 5));
+        List<Callable<Map<String, Object>>> calls = new ArrayList<>();
+        for (int i = 0; i < tokens.size(); i++) {
+            String token = tokens.get(i);
+            var body = orderBody(List.of(Map.of("cartId", carts.get(i))));
+            body.put("addressId", i == 0 ? address : otherAddress);
+            calls.add(() -> api("POST", "/app-api/trade/order/create", body, token, 1));
+        }
+        var before = orderFootprint();
+        var results = parallelRequests(calls);
+        assertEquals(1, results.stream().filter(r -> number(r.get("code")) == 0).count());
+        int winner = number(results.get(0).get("code")) == 0 ? 0 : 1;
+        int loser = 1 - winner;
+        rejected(results.get(loser));
+        var created = object(ok(results.get(winner)));
+        long order = number(created.get("id"));
+        long payOrder = number(created.get("payOrderId"));
+        var detail = get("/app-api/trade/order/get-detail?id=" + order, tokens.get(winner));
+        assertEquals(6495, number(detail.get("payPrice")));
+        assertEquals(5, number(detail.get("productCount")));
+        assertEquals(0, number(detail.get("status")));
+        assertEquals(1, list(detail.get("items")).size());
+        var payment = get("/app-api/pay/order/get?id=" + payOrder, tokens.get(winner));
+        assertEquals(6495, number(payment.get("price")));
+        assertEquals(String.valueOf(order), payment.get("merchantOrderId"));
+        assertEquals(0, number(payment.get("status")));
+        var after = orderFootprint();
+        for (int i = 0; i < before.size(); i++) assertEquals(before.get(i) + 1, after.get(i));
+        assertInventory(3);
+        assertEquals(
+                0,
+                number(
+                        ok(
+                                api(
+                                        "GET",
+                                        "/app-api/trade/cart/get-count",
+                                        null,
+                                        tokens.get(winner),
+                                        1))));
+        assertEquals(
+                5,
+                number(
+                        ok(
+                                api(
+                                        "GET",
+                                        "/app-api/trade/cart/get-count",
+                                        null,
+                                        tokens.get(loser),
+                                        1))));
+        rejected(
+                api(
+                        "DELETE",
+                        "/app-api/trade/order/cancel?id=" + order,
+                        null,
+                        tokens.get(loser),
+                        1));
+        assertInventory(3);
+        ok(api("DELETE", "/app-api/trade/order/cancel?id=" + order, null, tokens.get(winner), 1));
+        assertInventory(8);
+        rejected(
+                api(
+                        "DELETE",
+                        "/app-api/trade/order/cancel?id=" + order,
+                        null,
+                        tokens.get(winner),
+                        1));
+        assertInventory(8);
+
+        var retried = object(ok(calls.get(loser).call()));
+        assertInventory(3);
+        ok(
+                api(
+                        "DELETE",
+                        "/app-api/trade/order/cancel?id=" + retried.get("id"),
+                        null,
+                        tokens.get(loser),
+                        1));
+        assertInventory(8);
+    }
+
+    @Test
+    void duplicateSkuItemsAreRejectedWithoutPartialOrdersOrInventoryChanges() throws Exception {
+        long cart = addCart(buyer, 2);
+        var before = orderFootprint();
+        for (var items :
+                List.of(
+                        List.of(Map.of("skuId", sku, "count", 5), Map.of("skuId", sku, "count", 5)),
+                        List.of(Map.of("skuId", sku, "count", 2), Map.of("skuId", sku, "count", 3)),
+                        List.of(Map.of("cartId", cart), Map.of("cartId", cart)),
+                        List.of(Map.of("cartId", cart), Map.of("skuId", sku, "count", 1)))) {
+            assertEquals(
+                    1_011_000_040,
+                    number(
+                            api("POST", "/app-api/trade/order/create", orderBody(items), buyer, 1)
+                                    .get("code")));
+            assertInventory(8);
+            assertEquals(before, orderFootprint(), "Rejected order left persistent side effects");
+            assertEquals(
+                    2, number(ok(api("GET", "/app-api/trade/cart/get-count", null, buyer, 1))));
+        }
+        assertEquals(
+                1_011_000_040,
+                number(
+                        api(
+                                        "GET",
+                                        "/app-api/trade/order/settlement?items%5B0%5D.skuId="
+                                                + sku
+                                                + "&items%5B0%5D.count=2&items%5B1%5D.skuId="
+                                                + sku
+                                                + "&items%5B1%5D.count=3&pointStatus=false&deliveryType=1&addressId="
+                                                + address,
+                                        null,
+                                        buyer,
+                                        1)
+                                .get("code")));
+        assertInventory(8);
+        assertEquals(before, orderFootprint());
     }
 
     @Test

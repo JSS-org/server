@@ -4125,3 +4125,38 @@ H5 尚只有未支付取消，接下来补会员 UI 钱包付款及售后退款�
 ### 未做 / 后续
 
 最近完整 30 模块构建仍归属 `1fdf0a0f82`；本次只重跑交易专项及真实商城联合回归。继续订单库存竞争、并发支付、营销、统计、其余管理模块、第三方及真机发布，整体目标保持进行中。
+
+## [2026-10-26 21:30 ~ 21:43] 拒绝重复 SKU 并补订单库存竞争验收
+
+### 意图
+
+按整合交接的下一项推进 P4/A15 订单库存一致性，先补实际竞争与失败回滚断言；修复已由单测复现的重复 SKU 数量覆盖问题。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `.../trade-api/.../trade/enums/ErrorCodeConstants.java` | 修改 | 新增重复 SKU 业务错误 `1011000040` |
+| `.../trade/service/price/TradePriceServiceImpl.java` | 修改 | 在商品查询、价格计算之前拒绝已解析的重复 SKU |
+| `.../trade/service/price/TradePriceServiceImplTest.java` | 修改 | 先复现库存 8、两行各 5 仍通过；覆盖库存内重复及极端数量 |
+| `yudao-server/src/test/java/cn/iocoder/yudao/server/integration/JssMallHttpIT.java` | 修改 | 增加双会员抢库存、取消/重试及重复 SKU 无副作用的真实 HTTP 用例 |
+| `script/jss/verify_workspace_http.py` | 修改 | 商城预期十项 HTTP，带浏览器十一项 JUnit |
+| `docs/testing.md`、`docs/CHANGELOG.md` | 修改 | 区分单测、测试编译与尚未执行的真实验收 |
+
+### 结构关系
+
+交易结算/创建 → 购物车解析 → 价格服务：按解析后的 SKU 拒绝重复，防止请求中数量被映射覆盖。原商品库存事务、订单处理器、支付单创建、租户与归属校验不变；没有新增服务、依赖或数据库迁移。HTTP 测试沿用隔离 MySQL/Redis、实际登录与 API；只读 SQL 计数辅助检查失败请求是否残留交易记录。
+
+### 验证证据
+
+新增价格单测先失败：期望 ServiceException 但未抛出，两项中一失败、零错误/跳过；`.runtime/mall-duplicate-sku-unit-before.log`。修复后的价格、购物车、请求 VO 和营销计算专项 49 项全过、零失败/错误/跳过；`.runtime/mall-order-stock-unit-after.log`，完整命令见 testing。四个变更 Java 定向格式检查、最终源码全依赖测试编译、Python 编译和差异检查通过。
+
+真实 HTTP 脚本在读取已安装 Redis 程序时遇到 `WinError 5`，尚未创建随机库或执行测试；`.runtime/mall-order-stock-before.log`。无真实环境变量的 HTTP 类十一项条件跳过仅证明编译/发现，不登记为通过。新场景预期结果与复现入口见 testing，尚无新的真实 HTTP/H5 或全量构建结论。
+
+### 影响面 / 风险
+
+同一 SKU 拆行提交现返回业务错误，调用方需先合并数量；商城正常购物车每个 SKU 一行和单 SKU 直接购买不变。单测证明价格层拒绝行为，实际事务回滚与并发一致性仍待真实环境复核。没有更新开发数据库、服务、独立 jar、远端或部署。
+
+### 未做 / 后续
+
+恢复本机 Redis 程序读取/运行权限后先跑新增商城 HTTP/H5，再继续钱包支付并发、营销、统计、管理迁移、第三方与真机发布。整合版本暂保留最近实际验收的 `a0a583c44a`，整体目标继续进行中。

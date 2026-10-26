@@ -66,6 +66,7 @@ public interface ErrorCodeConstants {
             new ErrorCode(1_011_000_038, "交易订单创建失败，原因：用户积分不足");
     ErrorCode ORDER_PICK_UP_FAIL_STATUS_NOT_UNDELIVERED =
             new ErrorCode(1_011_000_039, "交易订单自提失败，订单不是【待核销】状态");
+    ErrorCode ORDER_SKU_DUPLICATE = new ErrorCode(1_011_000_040, "同一商品规格不能重复提交，请合并购买数量");
 
     // ========== After Sale 模块 1-011-000-100 ==========
     ErrorCode AFTER_SALE_NOT_FOUND = new ErrorCode(1_011_000_100, "售后单不存在");

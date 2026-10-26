@@ -4,6 +4,7 @@ import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionU
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
 import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.SKU_NOT_EXISTS;
 import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.SKU_STOCK_NOT_ENOUGH;
+import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.ORDER_SKU_DUPLICATE;
 import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.PRICE_CALCULATE_PAY_PRICE_ILLEGAL;
 
 import cn.hutool.core.collection.CollUtil;
@@ -32,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -80,11 +82,13 @@ public class TradePriceServiceImpl implements TradePriceService {
 
     private List<ProductSkuRespDTO> checkSkuList(TradePriceCalculateReqBO reqBO) {
         // 获得商品 SKU 数组
-        Map<Long, Integer> skuIdCountMap =
-                convertMap(
-                        reqBO.getItems(),
-                        TradePriceCalculateReqBO.Item::getSkuId,
-                        TradePriceCalculateReqBO.Item::getCount);
+        // 购物车项已解析为 SKU。禁止重复项覆盖数量，保证结算与库存扣减使用相同商品集合。
+        Map<Long, Integer> skuIdCountMap = new LinkedHashMap<>();
+        for (var item : reqBO.getItems()) {
+            if (skuIdCountMap.putIfAbsent(item.getSkuId(), item.getCount()) != null) {
+                throw exception(ORDER_SKU_DUPLICATE);
+            }
+        }
         List<ProductSkuRespDTO> skus = productSkuApi.getSkuList(skuIdCountMap.keySet());
 
         // 校验商品 SKU

@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import static java.util.Collections.singletonList;
 
+import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
 import cn.iocoder.yudao.module.product.api.property.dto.ProductPropertyValueDetailRespDTO;
 import cn.iocoder.yudao.module.product.api.sku.ProductSkuApi;
@@ -38,6 +39,42 @@ public class TradePriceServiceImplTest extends BaseMockitoUnitTest {
     @Mock private ProductSkuApi productSkuApi;
     @Mock private ProductSpuApi productSpuApi;
     @Mock private List<TradePriceCalculator> priceCalculators;
+
+    @Test
+    void rejectsDuplicateSkuBeforePricingEvenWhenEachLineFitsStock() {
+        Mockito.lenient()
+                .when(productSkuApi.getSkuList(asSet(100L)))
+                .thenReturn(
+                        List.of(
+                                new ProductSkuRespDTO()
+                                        .setId(100L)
+                                        .setSpuId(1001L)
+                                        .setStock(8)
+                                        .setPrice(1299)));
+        Mockito.lenient()
+                .when(productSpuApi.validateSpuList(asSet(1001L)))
+                .thenReturn(List.of(new ProductSpuRespDTO().setId(1001L).setName("商品")));
+        for (var counts : List.of(List.of(5, 5), List.of(2, 3), List.of(1, Integer.MAX_VALUE))) {
+            var request =
+                    new TradePriceCalculateReqBO()
+                            .setItems(
+                                    List.of(
+                                            new TradePriceCalculateReqBO.Item()
+                                                    .setSkuId(100L)
+                                                    .setCount(counts.get(0))
+                                                    .setSelected(true),
+                                            new TradePriceCalculateReqBO.Item()
+                                                    .setSkuId(100L)
+                                                    .setCount(counts.get(1))
+                                                    .setSelected(true)));
+            var error =
+                    assertThrows(
+                            ServiceException.class,
+                            () -> tradePriceService.calculateOrderPrice(request));
+            assertEquals(1_011_000_040, error.getCode());
+        }
+        Mockito.verifyNoInteractions(productSkuApi, productSpuApi, priceCalculators);
+    }
 
     @Test
     public void testCalculatePrice() {

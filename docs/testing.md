@@ -2007,3 +2007,11 @@ Redis程序仍读取拒绝，真实公告CRUD/备注/权限/租户与完整商�
 正常件数/重量/体积、向上取整、零续费固定运费、包邮门槛及零重量分摊守恒继续通过。请求层拒绝空计费行、非法模式、负数及零步长正续费；运行层对历史规则再次校验并在long中计算运费、项应付及跨模板总额边界。未扩大为所有SKU原价/折扣/营销链的整数安全保证；包邮早返回、区域匹配层级、历史脏数据、真实Service/HTTP/RBAC和运费前端仍待验。没有迁移、开发库或运行jar变化，整合验收版本不前移。
 
 后续地区缺失修复：TradeDeliveryPriceBoundaryTest增加三项，修复前13项11通过、两失败、零错误/跳过9.286秒，`.runtime/freight-region-before.log/XML`。原多模板循环跳过缺失模板、未达包邮门槛且无计费规则直接返回，两者均静默漏算；现统一抛原找不到模板业务错误。包邮区域单独匹配且达到两门槛仍成功。相同服务器依赖测试命令最终36项全过（13边界、18原计算、三Validator、两MapStruct）、零失败/错误/跳过，53.653秒，`.runtime/freight-region-after.log`。Mockito输入边界保持，不冒充数据库报价/HTTP结果。
+
+## 2026-10-27 运费模板实际MySQL事务
+
+设置交接Maven wrapper后运行`python script/jss/verify_freight_template_services.py`，仅在已归属MySQL8.4.9:13316建立jss_freight_verify随机三表库，表取自原V008。八项实际生产Service/Mapper、租户SQL、生产MapStruct和事务advice全部通过，零失败/错误/跳过13.936秒，`.runtime/freight-service-first.log`及`.runtime/jss-mysql/freight-template-service-test.log/XML`；finally核对归属并删除随机库，残留0。无业务替身，未实例化HTTP/Redis或方法校验切面。
+
+覆盖超过JS安全整数根/子行编号、列表往返、保留/新增/删除计费行及更新冗余模式、null/空包邮清除、同租户重名拒绝/外租户同名成功、外租户详情/列表/匹配与删除拒绝、名称/模式/日期/排序分页、最后包邮INSERT真实触发器失败时创建/更新全回滚、外层回滚和三表逻辑删除、精确地区/仅包邮匹配、不将父地区自动扩成下级，以及伪造另一模板子行主键被数据库拒绝且全事务无变化。最后一项验证主键约束与回滚，未声称已提供业务友好的子行ID错误或并发修改互斥。
+
+常规服务器依赖测试`-Dtest=TradeDeliveryPriceBoundaryTest,TradeDeliveryPriceCalculatorTest,DeliveryExpressTemplateValidationTest,DeliveryExpressTemplateConvertTest,JssFreightTemplateMySqlServiceIT`（其余参数同前wrapper命令）：44项中36执行通过、八MySQL条件跳过，零失败/错误；服务器依赖及测试编译成功27.682秒，`.runtime/freight-service-regression.log`。与前述实际八项分开登记。新Java定向Spotless检查、Python编译及差异检查通过。没有新Flyway、HTTP/RBAC、Redis、完整verify或开发库/运行jar变化；并发模板更新/重名创建、商品引用删除策略、完整报价/下单/退款链和H5仍待验。

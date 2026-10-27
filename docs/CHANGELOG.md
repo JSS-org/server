@@ -4975,3 +4975,33 @@ Long显式主键会提升该临时库后续会员自增编号，预期用于发�
 ### 未做 / 后续
 
 继续实际模板Service事务/区域读取及完整HTTP/H5报价下单链。无新增Redis、全量verify或部署验收；开发库/运行jar及整合验收版本不变。
+
+## [2026-10-27 19:59 ~ 20:02] 验证实际运费模板三表事务和地区匹配
+
+### 意图
+
+为已迁入的完整运费页面补实际持久化证据，检查根/计费/包邮三表、租户和失败回滚，不以模拟输入替代真实SQL。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| JssFreightTemplateMySqlServiceIT.java | 新增 | 八项实际生产Service/Mapper/租户SQL/事务advice |
+| verify_freight_template_services.py | 新增 | 归属随机三表库、报告时效/计数/脱敏和finally清理 |
+| docs/testing.md / CHANGELOG.md | 更新/追加 | 覆盖范围、复现与未验边界 |
+
+### 结构关系
+
+原MySQL归属工具→从V008提取三表→原生产Service/Mapper/转换器及事务代理。无生产服务或迁移变更，不启动Redis/完整应用，不装配HTTP权限或方法校验切面。
+
+### 验证证据
+
+`python script/jss/verify_freight_template_services.py`八项实际执行通过13.936秒、零失败/错误/跳过，MySQL8.4.9:13316，日志/XML见testing。Long往返、CRUD/精确地区/三表回滚、外层事务/租户隔离、日期分页及伪造另一模板子行的主键拒绝均通过，随机库残留0。常规44项中36执行通过/八条件跳过，服务器依赖测试编译成功27.682秒，`.runtime/freight-service-regression.log`；新Java定向Spotless、Python编译与差异检查通过。
+
+### 影响面 / 风险
+
+专项仅操作随机库，无开发数据修改。伪造子行的拒绝当前来自数据库主键异常，未声称业务错误友好；模板并发更新和重名创建竞争不在八项范围。
+
+### 未做 / 后续
+
+继续真实HTTP/RBAC/完整报价下单退款及H5，另核对商品引用删除策略和并发修改。无新Flyway/Redis/全量verify或部署，V012前置与整合验收版本保留。

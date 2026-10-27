@@ -4909,3 +4909,5 @@ Long显式主键会提升该临时库后续会员自增编号，预期用于发�
 ### 未做 / 后续
 
 由hh普通终端运行前端scripts/test-integration-host.mjs，串行执行原workspace/mall完整验收并核对新鲜JUnit/浏览器报告。当前尚未执行，不登记新HTTP/H5通过；开发库、运行jar及V012部署前置未改。
+
+准备复核补充（18:46）：专用昵称前缀缩为HTTP Long，使完整昵称26字、符合原nickname长度30限制；最终测试编译再通过10.190秒，`.runtime/member-browser-fixture-final-compile.log`。这仍不是SQL/HTTP执行证据。

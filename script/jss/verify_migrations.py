@@ -70,6 +70,8 @@ def main():
         assert managed.sql("SELECT COUNT(*) FROM system_menu WHERE permission LIKE 'pay:demo-%' AND type=3 AND status=0 AND visible=b'0' AND deleted=b'0'") == '6'
         assert managed.sql('SELECT COUNT(*) FROM system_tenant_package') == '0'
         checks.append('fresh V013 registers six hidden demo capabilities without role or tenant-package grants')
+        assert managed.sql("SELECT COUNT(*) FROM system_menu WHERE permission='pay:order:submit' AND type=3 AND status=0 AND visible=b'0' AND deleted=b'0'") == '1'
+        checks.append('fresh V014 registers a hidden cashier submit capability without grants')
         managed.sql("INSERT INTO member_user (tenant_id,mobile,status,register_ip) VALUES (1,'13800000002',0,'127.0.0.1')")
         managed.execute('migrate')
         managed.execute('validate')
@@ -169,8 +171,7 @@ def main():
                     "INSERT INTO system_tenant_package (id,name,status,menu_ids) VALUES (27,'existing package',0,'[9007199254740881]');")
         retained = {table: upgrade.sql(f'SELECT * FROM {table} ORDER BY id') for table in ['system_role_menu', 'system_tenant_package']}
         existing_node = upgrade.sql('SELECT * FROM system_menu WHERE id=9007199254740881')
-        upgrade.execute('migrate')
-        upgrade.execute('validate')
+        migrate_through(13)
         assert upgrade.sql(f'SELECT MAX(CAST(version AS UNSIGNED)) FROM {HISTORY} WHERE success=1') == '13'
         assert upgrade.sql("SELECT COUNT(*) FROM system_menu WHERE permission LIKE 'pay:demo-%' AND deleted=b'0'") == '6'
         assert upgrade.sql('SELECT * FROM system_menu WHERE id=9007199254740881') == existing_node
@@ -178,12 +179,21 @@ def main():
         assert upgrade.sql(snapshot_sql) == old_events
         assert upgrade.sql('SELECT COUNT(*) FROM member_experience_event') == '7'
         checks.append('managed V012 upgrades to V013 preserving disabled custom permissions, Long menu IDs, existing grants/packages and experience history')
+        upgrade.sql("INSERT INTO system_menu (id,name,permission,type,sort,status,visible) VALUES (9007199254740900,'existing disabled cashier submit','pay:order:submit',3,81,1,b'1');")
+        submit_node = upgrade.sql('SELECT * FROM system_menu WHERE id=9007199254740900')
+        upgrade.execute('migrate')
+        upgrade.execute('validate')
+        assert upgrade.sql(f'SELECT MAX(CAST(version AS UNSIGNED)) FROM {HISTORY} WHERE success=1') == '14'
+        assert upgrade.sql("SELECT COUNT(*) FROM system_menu WHERE permission='pay:order:submit' AND deleted=b'0'") == '1'
+        assert upgrade.sql('SELECT * FROM system_menu WHERE id=9007199254740900') == submit_node
+        assert all(upgrade.sql(f'SELECT * FROM {table} ORDER BY id') == value for table, value in retained.items())
+        checks.append('managed V013 upgrades to V014 without changing disabled custom cashier permissions or grants')
         menus = upgrade.sql('SELECT * FROM system_menu ORDER BY id')
         upgrade.execute('migrate')
         upgrade.execute('validate')
         assert upgrade.sql('SELECT * FROM system_menu ORDER BY id') == menus
         assert all(upgrade.sql(f'SELECT * FROM {table} ORDER BY id') == value for table, value in retained.items())
-        checks.append('repeated V013 migrate/validate preserve menu metadata and existing grants without duplication')
+        checks.append('repeated V014 migrate/validate preserve menu metadata and existing grants without duplication')
         os.environ['JSS_DB_NAME'] = database
         try:
             managed.execute('init')

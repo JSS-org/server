@@ -2041,3 +2041,9 @@ Redis程序仍读取拒绝，真实公告CRUD/备注/权限/租户与完整商�
 `python script/jss/verify_pay_demo_permissions.py`在已归属MySQL8.4.9:13316随机三表库实际执行六项：精确六权限/隐藏按钮、重复应用不重写、原菜单/角色授权/套餐逐字保持、停用自定义节点不重启用、软删除历史保留且只生成一个有效替代；最后随机库残留0，`.runtime/jss-mysql/pay-demo-permissions-schema.json`。原生DDL来自框架基座，未触碰开发库或执行角色授权。
 
 设置JSS_MAVEN_COMMAND为本机忽略目录的maven-flyway-v013-offline.cmd（封装原wrapper并追加-o）后，`python -u script/jss/verify_migrations.py`完整二十项真实Flyway生命周期全过，`.runtime/pay-demo-flyway-lifecycle.log`。新增fresh V013六定义无grant、受管V012升级V013保留停用自定义权限/Long菜单/原角色及套餐与经验历史、重复V013 migrate/validate保持全部元数据；原V010–V012升级、校验和拒绝及初始化守卫继续执行。三随机库最后均已删除并核对无匹配schema。没有开发迁移/发布或真实示例HTTP/H5结果。
+
+## 2026-10-28 支付收银台提交权限与V014
+
+管理端 `/pay/order/submit` 新增独立 `pay:order:submit`，原钱包归属与业务提交链保留。真实方法鉴权代理/生产权限服务、业务与RBAC存储替身回归16项全部执行通过，零失败/错误/跳过，`.runtime/pay-cashier-permissions-final.log`。覆盖匿名、query-only、native/工作台上限任一缺失均不能触达支付或钱包Service，授权交集满足后才委托原Service。不代表认证HTTP或真实渠道付款。
+
+V014只新增隐藏按钮元数据，不给角色/套餐授权，不重启用现有节点。使用既有本机Maven offline wrapper运行 `python -u script/jss/verify_migrations.py`，真实MySQL8.4.9:13316上22项Flyway生命周期全部通过，`.runtime/pay-cashier-flyway-final.log`；含fresh V014、真实V013→V014保留停用自定义节点及原grant、重复migrate/validate，原V010–V013回归与初始化/校验和守卫仍执行。首轮新增夹具编号与V013自增编号相撞，改用独立Long编号后复验通过；未修改迁移以绕过冲突。脚本finally已清理三个随机库；未操作开发库或运行jar。两个Java定向Spotless apply/check通过，`.runtime/pay-cashier-format-check.log`。

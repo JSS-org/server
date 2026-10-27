@@ -2047,3 +2047,13 @@ Redis程序仍读取拒绝，真实公告CRUD/备注/权限/租户与完整商�
 管理端 `/pay/order/submit` 新增独立 `pay:order:submit`，原钱包归属与业务提交链保留。真实方法鉴权代理/生产权限服务、业务与RBAC存储替身回归16项全部执行通过，零失败/错误/跳过，`.runtime/pay-cashier-permissions-final.log`。覆盖匿名、query-only、native/工作台上限任一缺失均不能触达支付或钱包Service，授权交集满足后才委托原Service。不代表认证HTTP或真实渠道付款。
 
 V014只新增隐藏按钮元数据，不给角色/套餐授权，不重启用现有节点。使用既有本机Maven offline wrapper运行 `python -u script/jss/verify_migrations.py`，真实MySQL8.4.9:13316上22项Flyway生命周期全部通过，`.runtime/pay-cashier-flyway-final.log`；含fresh V014、真实V013→V014保留停用自定义节点及原grant、重复migrate/validate，原V010–V013回归与初始化/校验和守卫仍执行。首轮新增夹具编号与V013自增编号相撞，改用独立Long编号后复验通过；未修改迁移以绕过冲突。脚本finally已清理三个随机库；未操作开发库或运行jar。两个Java定向Spotless apply/check通过，`.runtime/pay-cashier-format-check.log`。
+
+## 2026-10-28 真实HTTP/H5重跑中的夹具和菜单断言
+
+通过前端宿主入口 `node scripts/test-integration-host.mjs all` 串行执行原verifier。baefec05f9将两个Long会员的邮箱设为各自ID构造的唯一值，保留既有唯一索引；真实Spring已实际启动。07aeed2593只在测试profile启用访问日志，并将扩展后的21项浏览器进程限时改为1080秒，单场景仍90秒。
+
+0d8860fab0修正旧菜单测试：已有e5169f14c2会让停用按钮/父菜单同时限制native与workspace；测试现在要求两种Token均403、恢复均0。停用workspace入口仍仅拒绝本应用会话，native用户查询保持成功。生产鉴权代码未修改。
+
+实际随机库 `jss_http_verify_7c4848851c10` 的新鲜JUnit为10项、1失败、0错误/跳过，445.35秒；九个真实HTTP场景全过，失败是H5动态项。该轮H5为19过/2失败：会员等级选择层被调级对话框挡住，导致90秒超时并使其后清理未完成，下一发券场景读取了上一场景昵称。截图和报告由前端保留，正在修实际UI；不能将九个HTTP通过登记为整套组合成功。前端上一轮曾20过/1失败。
+
+本轮没有部署、修改开发库/角色授权或更新整合版本。最新细节见 `.runtime/jss-http/last-run.json` 所指logDirectory；根目录同名浏览器日志是历史文件。Maven与verifier严格串行，随机库由finally清理。

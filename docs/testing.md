@@ -1974,3 +1974,11 @@ Redis程序仍读取拒绝，真实公告CRUD/备注/权限/租户与完整商�
 最终复验前发现原验证句柄已不存在、无最终报告且隔离MySQL停止；归属工具重启实例后清理一个已守卫前缀的中断随机库，再执行最终专项。原首轮十项通过证据保留，不把中断轮次当结果。Redis程序重新读取仍被拒绝，真实商城/工作台HTTP/H5待恢复后串行执行。
 
 最终常规命令按交接wrapper运行 `-o -Pjss-mall -pl yudao-server -am test -Dtest=MemberPointRecordServiceImplTest,MemberLevelServiceImplTest,MemberGroupServiceImplTest,MemberTagServiceImplTest,MemberUserServiceImplTest,MemberUserServiceImplStatusTest,JssMemberPointMySqlServiceIT,JssMemberProfileMySqlServiceIT,JssMemberLevelMySqlServiceIT,JssMemberSegmentMySqlServiceIT -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true`。84项中36项执行通过（34项H2含原九项积分实际Service/spy、两项状态Mockito），48项既有/条件跳过（47MySQL、一禁用User测试），零失败/错误；服务器30模块依赖及测试编译成功，`.runtime/member-point-regression.log`。三变更Java定向Spotless、新Python编译和差异检查通过，随机库残留0。未运行新全量verify、Flyway或真实HTTP/H5；当前专项不前移整合验收版本。
+
+## 2026-10-27 管理积分流水日期筛选
+
+继续使用 `python script/jss/verify_member_point_services.py`，实际专项由十增至十一。管理PointPage VO增加带原日期格式的createTime范围，原Point Mapper管理查询增加between；会员App原有日期/增减筛选不改。没有新表或迁移。
+
+新增用例在同一归属随机库内用实际Service创建流水，固定首日00:00:00/末日23:59:59及范围外一秒、不同标题/会员/租户夹具，实际Service组合会员昵称/编号、标题、业务类型、日期并翻到第二页，再检查昵称无匹配时空结果。有效SQL修复前十一项十通过/一失败12.046秒，日期范围应返回2却返回3，`.runtime/member-point-date-before-valid.log/XML`。最初测试夹具误把继承BaseDO链式setter结果当子类插入，编译错误已修正，不计业务证据；旧条件跳过XML未作为有效复现。
+
+最终十一项实际MySQL全过13.419秒、零失败/错误/跳过，`.runtime/member-point-date-final-verified.log`、`.runtime/member-point-date-final.xml`，随机库残留0。服务器30模块依赖常规20项中九项积分H2/spy执行通过、十一项实际MySQL条件跳过，零失败/错误，`.runtime/member-point-date-regression.log`；测试编译成功。三变更Java定向Spotless（另匹配App同后缀VO仅换行，无内容差异）、Python编译与差异检查通过，无新增HTTP/RBAC/全量verify或Flyway结果。会员页面仍待迁入，Redis读取权限与V012部署前置不变。

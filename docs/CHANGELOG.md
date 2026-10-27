@@ -4785,3 +4785,35 @@ Redis程序仍不可读，真实HTTP/H5/RBAC、订单/签到完整奖励链、�
 ### 未做 / 后续
 
 会员管理源页面及详情十一标签、实际HTTP/RBAC/Redis、自动积分完整策略/幂等、真机和发布继续待办。本轮无新迁移、Flyway、完整verify、运行jar或开发库升级；Redis二进制重新读取仍被拒绝，商城/工作台真实回归待恢复后串行实跑，V012部署前置及整合验收版本不变。
+
+## [2026-10-27 10:01 ~ 10:09] 使会员管理积分记录日期筛选实际生效
+
+### 意图
+
+迁入会员详情记录前核对原前端与后端契约，修复原管理积分筛选发送createTime却被后端忽略，避免界面条件与实际返回结果不一致。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| MemberPointRecordPageReqVO.java | 修改 | 增加原格式的LocalDateTime[]创建时间条件 |
+| MemberPointRecordMapper.java | 修改 | 管理查询加入between条件，原App查询不变 |
+| JssMemberPointMySqlServiceIT.java | 修改 | 第十一项组合日期边界、标题/会员/类型/租户及分页专项 |
+| verify_member_point_services.py | 修改 | 报告数量与摘要同步十一项 |
+| docs/testing.md / CHANGELOG.md | 更新/追加 | 有效前后证据、编译错误与未验范围 |
+
+### 结构关系
+
+原管理积分Controller绑定新增范围 → 原Point Service/Mapper的分页条件；与会员昵称/编号、业务类型及标题同时生效，租户SQL仍在原链执行。无新增Service/表/迁移或结构依赖。
+
+### 验证证据
+
+有效修复前十一项十通过/一失败12.046秒，范围内应2却返回3，`.runtime/member-point-date-before-valid.log/XML`。最终十一项实际MySQL全过13.419秒，零失败/错误/跳过，`.runtime/member-point-date-final-verified.log`、`member-point-date-final.xml`。首末秒边界、范围外一秒及其他标题/会员/租户隔离、第一页/第二页与昵称无匹配均通过，旧十项积分专项保留，随机库残留0。初始夹具继承setter返回类型编译错误已修正、旧跳过报告不计复现。常规20项中九项积分H2/spy执行通过、十一条件跳过，服务器30模块依赖测试编译成功，`.runtime/member-point-date-regression.log`。三Java定向Spotless、Python编译及差异检查通过。
+
+### 影响面 / 风险
+
+旧客户端不传日期时保持原查询；传入范围现在限制实际结果。只改管理日期查询，不改变积分变动、余额、事件或App筛选。实际SQL专项不证明HTTP日期绑定、权限/RBAC或页面已验，仍需真实链路覆盖。
+
+### 未做 / 后续
+
+无新HTTP/H5/Redis、全量verify或Flyway结果，会员完整页面及十一分类/独立操作继续迁入。开发库/运行jar不改，V012部署前置、Redis读取阻塞及原整合验收版本保持。

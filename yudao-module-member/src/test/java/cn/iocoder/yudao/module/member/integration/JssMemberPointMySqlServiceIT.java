@@ -58,6 +58,65 @@ import javax.sql.DataSource;
         named = "JSS_TEST_MYSQL_URL",
         matches = "jdbc:mysql://127[.]0[.]0[.]1:13316/jss_member_point_verify_[0-9a-f]{12}.*")
 class JssMemberPointMySqlServiceIT {
+    @Test
+    void adminHistoryFiltersDatesAlongWithMemberTitleTypeAndTenant() {
+        var user = member(10);
+        users.updateById(new MemberUserDO().setId(user.getId()).setNickname("HistoryTarget"));
+        for (int index = 0; index < 4; index++) change(user.getId(), 1);
+        var rows = records(user.getId());
+        for (var row : rows)
+            jdbc.update(
+                    "UPDATE member_point_record SET title='dated', create_time='2026-10-01 00:00:00' WHERE id=?",
+                    row.getId());
+        jdbc.update(
+                "UPDATE member_point_record SET create_time='2026-10-02 23:59:59' WHERE id=?",
+                rows.get(1).getId());
+        jdbc.update(
+                "UPDATE member_point_record SET create_time='2026-09-30 23:59:59' WHERE id=?",
+                rows.get(2).getId());
+        jdbc.update(
+                "UPDATE member_point_record SET title='different' WHERE id=?", rows.get(3).getId());
+        var other = member(10);
+        change(other.getId(), 1);
+        jdbc.update(
+                "UPDATE member_point_record SET title='dated', create_time='2026-10-01 00:00:00' WHERE user_id=?",
+                other.getId());
+        TenantContextHolder.setTenantId(2L);
+        var foreign =
+                new MemberPointRecordDO()
+                        .setUserId(user.getId())
+                        .setBizId("foreign")
+                        .setBizType(ADMIN.getType())
+                        .setTitle("dated")
+                        .setPoint(1)
+                        .setTotalPoint(1);
+        foreign.setCreateTime(java.time.LocalDateTime.of(2026, 10, 1, 0, 0));
+        points.insert(foreign);
+        TenantContextHolder.setTenantId(1L);
+        var query =
+                new cn.iocoder.yudao.module.member.controller.admin.point.vo.recrod
+                        .MemberPointRecordPageReqVO();
+        query.setUserId(user.getId())
+                .setNickname("HistoryTarget")
+                .setTitle("dated")
+                .setBizType(ADMIN.getType())
+                .setCreateTime(
+                        new java.time.LocalDateTime[] {
+                            java.time.LocalDateTime.of(2026, 10, 1, 0, 0),
+                            java.time.LocalDateTime.of(2026, 10, 2, 23, 59, 59)
+                        });
+        query.setPageSize(1);
+        var page = service.getPointRecordPage(query);
+        assertEquals(2L, page.getTotal());
+        assertEquals(rows.get(1).getId(), page.getList().getFirst().getId());
+        query.setPageNo(2);
+        assertEquals(
+                rows.get(0).getId(),
+                service.getPointRecordPage(query).getList().getFirst().getId());
+        query.setNickname("not-a-real-member");
+        assertEquals(0L, service.getPointRecordPage(query).getTotal());
+    }
+
     private static AnnotationConfigApplicationContext context;
     private static MemberPointRecordService service;
     private static MemberUserMapper users;

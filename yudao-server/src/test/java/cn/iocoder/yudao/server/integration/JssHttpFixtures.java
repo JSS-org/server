@@ -167,11 +167,12 @@ public class JssHttpFixtures
             for (long id : new long[] {9007199254740993L, 9007199254740995L}) {
                 try (var statement =
                         connection.prepareStatement(
-                                "INSERT INTO member_user (id,tenant_id,mobile,password,nickname,status,register_ip,group_id,email,name,sex,area_id,birthday,mark) VALUES (?,1,?,?,?,0,'127.0.0.1',23099,'before@example.com','Before',0,110101,'2000-01-02 00:00:00','Before')")) {
+                                "INSERT INTO member_user (id,tenant_id,mobile,password,nickname,status,register_ip,group_id,email,name,sex,area_id,birthday,mark) VALUES (?,1,?,?,?,0,'127.0.0.1',23099,?,'Before',0,110101,'2000-01-02 00:00:00','Before')")) {
                     statement.setLong(1, id);
                     statement.setString(2, id == 9007199254740993L ? "13800009991" : "13800009992");
                     statement.setString(3, hash);
                     statement.setString(4, "HTTP Long " + id);
+                    statement.setString(5, "before-" + id + "@example.com");
                     statement.executeUpdate();
                 }
             }

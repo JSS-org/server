@@ -14,6 +14,14 @@ import java.util.List;
 public interface DeliveryExpressTemplateFreeMapper
         extends BaseMapperX<DeliveryExpressTemplateFreeDO> {
 
+    default List<DeliveryExpressTemplateFreeDO> selectListByTemplateIdForUpdate(Long templateId) {
+        return selectList(
+                new LambdaQueryWrapper<DeliveryExpressTemplateFreeDO>()
+                        .eq(DeliveryExpressTemplateFreeDO::getTemplateId, templateId)
+                        .orderByAsc(DeliveryExpressTemplateFreeDO::getId)
+                        .last("FOR UPDATE"));
+    }
+
     default List<DeliveryExpressTemplateFreeDO> selectListByTemplateId(Long templateId) {
         return selectList(
                 new LambdaQueryWrapper<DeliveryExpressTemplateFreeDO>()

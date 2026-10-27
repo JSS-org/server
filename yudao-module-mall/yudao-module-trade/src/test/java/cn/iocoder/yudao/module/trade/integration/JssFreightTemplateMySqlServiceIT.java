@@ -43,6 +43,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.*;
 
 import javax.sql.DataSource;
 
@@ -410,5 +411,153 @@ class JssFreightTemplateMySqlServiceIT {
         req.setCharges(service.getDeliveryExpressTemplate(second).getCharges());
         assertThrows(Exception.class, () -> service.updateDeliveryExpressTemplate(req));
         assertEquals(before, snapshot());
+    }
+
+    @Test
+    void concurrentFullReplacementsReadCurrentRulesAfterAnOldSnapshot() throws Exception {
+        concurrentUpdates(false);
+    }
+
+    @Test
+    void concurrentEditsRetainTheExistingChargeIdAndOneCompleteFinalRuleSet() throws Exception {
+        concurrentUpdates(true);
+    }
+
+    private void concurrentUpdates(boolean retainChargeId) throws Exception {
+        var id = service.createDeliveryExpressTemplate(request("Concurrent initial"));
+        var originalChargeId =
+                service.getDeliveryExpressTemplate(id).getCharges().getFirst().getId();
+        var barrier = new CyclicBarrier(6);
+        var pool = Executors.newFixedThreadPool(6);
+        try {
+            var futures = new ArrayList<Future<?>>();
+            for (int index = 1; index <= 6; index++) {
+                int marker = index;
+                futures.add(
+                        pool.submit(
+                                () -> {
+                                    TenantContextHolder.setTenantId(1L);
+                                    try {
+                                        new TransactionTemplate(transactions)
+                                                .executeWithoutResult(
+                                                        status -> {
+                                                            // Establish RR and the MyBatis session
+                                                            // cache before any contender writes.
+                                                            assertEquals(
+                                                                    1,
+                                                                    service.getDeliveryExpressTemplate(
+                                                                                    id)
+                                                                            .getCharges()
+                                                                            .size());
+                                                            try {
+                                                                barrier.await(15, TimeUnit.SECONDS);
+                                                            } catch (Exception error) {
+                                                                throw new RuntimeException(error);
+                                                            }
+                                                            var req =
+                                                                    new DeliveryExpressTemplateUpdateReqVO();
+                                                            req.setId(id);
+                                                            req.setName("Concurrent " + marker);
+                                                            req.setSort(marker);
+                                                            req.setChargeMode(marker % 3 + 1);
+                                                            req.setCharges(
+                                                                    List.of(
+                                                                            charge(
+                                                                                            110100
+                                                                                                    + marker,
+                                                                                            100
+                                                                                                    + marker)
+                                                                                    .setId(
+                                                                                            retainChargeId
+                                                                                                    ? originalChargeId
+                                                                                                    : null)));
+                                                            req.setFrees(
+                                                                    List.of(
+                                                                            new DeliveryExpressTemplateFreeBaseVO()
+                                                                                    .setAreaIds(
+                                                                                            List.of(
+                                                                                                    210100
+                                                                                                            + marker))
+                                                                                    .setFreeCount(
+                                                                                            marker)
+                                                                                    .setFreePrice(
+                                                                                            200
+                                                                                                    + marker)));
+                                                            service.updateDeliveryExpressTemplate(
+                                                                    req);
+                                                        });
+                                    } finally {
+                                        TenantContextHolder.clear();
+                                    }
+                                }));
+            }
+            for (var future : futures) assertDoesNotThrow(() -> future.get(30, TimeUnit.SECONDS));
+        } finally {
+            pool.shutdownNow();
+            assertTrue(pool.awaitTermination(15, TimeUnit.SECONDS));
+        }
+        var result = service.getDeliveryExpressTemplate(id);
+        int marker = result.getSort();
+        assertTrue(marker >= 1 && marker <= 6);
+        assertEquals("Concurrent " + marker, result.getName());
+        assertEquals(marker % 3 + 1, result.getChargeMode());
+        assertEquals(1, result.getCharges().size());
+        if (retainChargeId) assertEquals(originalChargeId, result.getCharges().getFirst().getId());
+        assertEquals(1, result.getFrees().size());
+        assertEquals(List.of(110100 + marker), result.getCharges().getFirst().getAreaIds());
+        assertEquals(100 + marker, result.getCharges().getFirst().getStartPrice());
+        assertEquals(List.of(210100 + marker), result.getFrees().getFirst().getAreaIds());
+        assertEquals(200 + marker, result.getFrees().getFirst().getFreePrice());
+        assertEquals(
+                marker % 3 + 1,
+                jdbc.queryForObject(
+                        "SELECT charge_mode FROM trade_delivery_express_template_charge WHERE template_id=? AND deleted=0",
+                        Integer.class,
+                        id));
+    }
+
+    @Test
+    void anOldSnapshotCannotRestoreRulesAfterAnotherTransactionDeletesTheTemplate()
+            throws Exception {
+        var id = service.createDeliveryExpressTemplate(request("Delete race"));
+        var req = update(id);
+        req.setCharges(List.of(charge(110102, 229)));
+        var pool = Executors.newSingleThreadExecutor();
+        try {
+            business(
+                    EXPRESS_TEMPLATE_NOT_EXISTS.getCode(),
+                    () ->
+                            new TransactionTemplate(transactions)
+                                    .executeWithoutResult(
+                                            status -> {
+                                                assertNotNull(
+                                                        service.getDeliveryExpressTemplate(id));
+                                                var deleted =
+                                                        pool.submit(
+                                                                () -> {
+                                                                    TenantContextHolder.setTenantId(
+                                                                            1L);
+                                                                    try {
+                                                                        service
+                                                                                .deleteDeliveryExpressTemplate(
+                                                                                        id);
+                                                                    } finally {
+                                                                        TenantContextHolder.clear();
+                                                                    }
+                                                                });
+                                                assertDoesNotThrow(
+                                                        () -> deleted.get(15, TimeUnit.SECONDS));
+                                                service.updateDeliveryExpressTemplate(req);
+                                            }));
+        } finally {
+            pool.shutdownNow();
+            assertTrue(pool.awaitTermination(15, TimeUnit.SECONDS));
+        }
+        assertNull(service.getDeliveryExpressTemplate(id));
+        for (String table : TABLES)
+            assertEquals(
+                    0,
+                    jdbc.queryForObject(
+                            "SELECT COUNT(*) FROM " + table + " WHERE deleted=0", Integer.class));
     }
 }

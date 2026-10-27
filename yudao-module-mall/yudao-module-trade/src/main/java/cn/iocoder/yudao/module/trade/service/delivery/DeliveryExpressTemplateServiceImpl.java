@@ -88,7 +88,7 @@ public class DeliveryExpressTemplateServiceImpl implements DeliveryExpressTempla
             Long templateId, List<DeliveryExpressTemplateFreeBaseVO> frees) {
         // 第一步，对比新老数据，获得添加、修改、删除的列表
         List<DeliveryExpressTemplateFreeDO> oldList =
-                expressTemplateFreeMapper.selectListByTemplateId(templateId);
+                expressTemplateFreeMapper.selectListByTemplateIdForUpdate(templateId);
         List<DeliveryExpressTemplateFreeDO> newList =
                 INSTANCE.convertTemplateFreeList(templateId, frees);
         List<List<DeliveryExpressTemplateFreeDO>> diffList =
@@ -116,7 +116,7 @@ public class DeliveryExpressTemplateServiceImpl implements DeliveryExpressTempla
             List<DeliveryExpressTemplateChargeBaseVO> charges) {
         // 第一步，对比新老数据，获得添加、修改、删除的列表
         List<DeliveryExpressTemplateChargeDO> oldList =
-                expressTemplateChargeMapper.selectListByTemplateId(templateId);
+                expressTemplateChargeMapper.selectListByTemplateIdForUpdate(templateId);
         List<DeliveryExpressTemplateChargeDO> newList =
                 INSTANCE.convertTemplateChargeList(templateId, chargeMode, charges);
         List<List<DeliveryExpressTemplateChargeDO>> diffList =
@@ -179,7 +179,9 @@ public class DeliveryExpressTemplateServiceImpl implements DeliveryExpressTempla
     }
 
     private void validateDeliveryExpressTemplateExists(Long id) {
-        if (expressTemplateMapper.selectById(id) == null) {
+        // Both callers hold a transaction: serialize update/delete on the root first.
+        // Current reads also bypass an older RR snapshot and cached detail queries.
+        if (expressTemplateMapper.selectByIdForUpdate(id) == null) {
             throw exception(EXPRESS_TEMPLATE_NOT_EXISTS);
         }
     }

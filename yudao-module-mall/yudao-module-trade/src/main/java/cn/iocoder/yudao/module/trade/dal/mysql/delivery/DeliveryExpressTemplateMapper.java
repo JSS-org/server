@@ -11,6 +11,13 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface DeliveryExpressTemplateMapper extends BaseMapperX<DeliveryExpressTemplateDO> {
 
+    default DeliveryExpressTemplateDO selectByIdForUpdate(Long id) {
+        return selectOne(
+                new LambdaQueryWrapperX<DeliveryExpressTemplateDO>()
+                        .eq(DeliveryExpressTemplateDO::getId, id)
+                        .last("FOR UPDATE"));
+    }
+
     default PageResult<DeliveryExpressTemplateDO> selectPage(
             DeliveryExpressTemplatePageReqVO reqVO) {
         return selectPage(

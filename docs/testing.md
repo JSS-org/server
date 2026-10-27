@@ -2015,3 +2015,11 @@ Redis程序仍读取拒绝，真实公告CRUD/备注/权限/租户与完整商�
 覆盖超过JS安全整数根/子行编号、列表往返、保留/新增/删除计费行及更新冗余模式、null/空包邮清除、同租户重名拒绝/外租户同名成功、外租户详情/列表/匹配与删除拒绝、名称/模式/日期/排序分页、最后包邮INSERT真实触发器失败时创建/更新全回滚、外层回滚和三表逻辑删除、精确地区/仅包邮匹配、不将父地区自动扩成下级，以及伪造另一模板子行主键被数据库拒绝且全事务无变化。最后一项验证主键约束与回滚，未声称已提供业务友好的子行ID错误或并发修改互斥。
 
 常规服务器依赖测试`-Dtest=TradeDeliveryPriceBoundaryTest,TradeDeliveryPriceCalculatorTest,DeliveryExpressTemplateValidationTest,DeliveryExpressTemplateConvertTest,JssFreightTemplateMySqlServiceIT`（其余参数同前wrapper命令）：44项中36执行通过、八MySQL条件跳过，零失败/错误；服务器依赖及测试编译成功27.682秒，`.runtime/freight-service-regression.log`。与前述实际八项分开登记。新Java定向Spotless检查、Python编译及差异检查通过。没有新Flyway、HTTP/RBAC、Redis、完整verify或开发库/运行jar变化；并发模板更新/重名创建、商品引用删除策略、完整报价/下单/退款链和H5仍待验。
+
+## 2026-10-27 运费模板旧快照并发修改/删除
+
+同一`verify_freight_template_services.py`扩为十一项。有效修复前十项八通过、两失败，零错误/跳过12.612秒，`.runtime/freight-concurrent-before.log/XML`：六事务在RR快照与MyBatis缓存中预读旧详情后同步保存全替换规则，最终有效计费行应一条却为六条；另一连接删除根/子行后，旧事务保存未拒绝。修复前的XML已另存，不以新条件跳过报告覆盖。
+
+模板update/delete先锁根当前读，修改再按编号当前读锁两类旧子行做diff。首次十项全过12.889秒；最终新增保留计费ID的六并发编辑，十一项全过13.079秒、零失败/错误/跳过，`.runtime/freight-concurrent-final.log/XML`与`.runtime/jss-mysql/freight-template-service-test.xml`。全替换和保留ID两种竞争均要求六次保存都成功，最终只有一套有效计费/包邮行，根名称/排序/模式与该套区域/金额一致；不要求固定线程获胜。删除后旧事务返回原不存在错误且无有效孤立子行。原八项事务/租户/Long/查询继续实际执行，随机库残留0。
+
+常规服务器依赖专项同上：47项中36执行通过、十一条件MySQL跳过，零失败/错误，测试编译成功27.447秒，`.runtime/freight-concurrent-regression.log`。五Java逐类Spotless apply/check、Python编译及差异检查通过，无新Flyway/完整verify/HTTP/Redis证据。最后完整保存生效的语义保留，没有版本号或字段合并；重名创建/更名竞争、普通读多查询快照、旧子行ID友好拒绝、商品引用与全局死锁/吞吐仍待验。

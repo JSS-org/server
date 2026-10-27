@@ -1962,3 +1962,15 @@ Redis程序仍读取拒绝，真实公告CRUD/备注/权限/租户与完整商�
 串行回归 `verify_member_level_services.py` 二十二项全过23.921秒、`verify_member_segment_services.py` 七项全过17.104秒，零失败/错误/跳过。服务器30模块依赖常规专项65项中27项执行通过（12等级H2、7分组H2、6标签H2、2状态Mockito），38项既有/条件跳过（37项MySQL和1项禁用User测试），零失败/错误，`.runtime/member-profile-regression.log`。两状态Mockito仅核对锁查询及撤权调用约定，不是Redis证据。六个变更Java定向Spotless通过（VO匹配同时规范化同后缀App VO换行，无内容差异）、新Python编译及差异检查通过；无新全量verify、迁移或真实HTTP/H5结果。
 
 会员管理源页面及详情十一标签尚未迁入，不登记为页面完成。真实CRUD/RBAC/Redis撤权、分类变更竞争、关联会员UI、积分调整和完整订单/签到链继续待验；V012部署前置与整合验收版本保持不变。
+
+## 2026-10-27 手工积分不足、上限与并发调账
+
+使用同一Maven wrapper环境运行 `python script/jss/verify_member_point_services.py`。脚本只在已归属MySQL8.4.9:13316创建 `jss_member_point_verify_<12位随机值>`，从不可变V001提取会员/积分流水两表，装配生产Point/User Service、两个Mapper、租户SQL与实际事务advice，没有业务替身或未调用的OAuth/短信/社交/MQ客户端；它不是HTTP/RBAC/Redis验收。报告时效/十项计数/零跳过检查、口令脱敏和finally归属清理沿用专项约定。
+
+有效修复前十项六通过/四失败、零错误/跳过，17.023秒，`.runtime/member-point-before.log/XML`：手工扣减不足与正数溢出静默成功，null参数空指针，并发逼近int上限的失败是数据库异常。首次修复后十项全过17.678秒；最终格式化后的十项全过11.379秒，零失败/错误/跳过，`.runtime/member-point-final.log`、`.runtime/jss-mysql/member-point-service-test.xml`。覆盖ADMIN不足/MIN扣减、MAX及自动奖励预检溢出、空增量/缺失/外租户会员、同管理员两次独立操作、六并发加10由90到150且六流水余额连续、六并发扣30从90仅三笔成功、临近上限仅三笔成功及其余业务错误、后置流水SQL失败/外层回滚/重试、零操作和流水租户隔离。三个竞争用例先以六个独立事务预读旧RR快照/MyBatis缓存，再同时调用实际Service。
+
+保留原自动业务预检扣减不足时跳过的规则，新增实际用例核对SIGN及退款赠分撤销类型无写入；不据此认定完整退款策略或订单抵扣正确。ADMIN用会员行锁覆盖校验/余额/流水；自动类型保留原查询/条件更新方式，自动奖励并发上限、积分事件幂等、完整订单/签到链与HTTP手工调账仍待验。V012只保证经验事件，不覆盖积分事件；没有新增迁移、改开发库或替换运行jar。
+
+最终复验前发现原验证句柄已不存在、无最终报告且隔离MySQL停止；归属工具重启实例后清理一个已守卫前缀的中断随机库，再执行最终专项。原首轮十项通过证据保留，不把中断轮次当结果。Redis程序重新读取仍被拒绝，真实商城/工作台HTTP/H5待恢复后串行执行。
+
+最终常规命令按交接wrapper运行 `-o -Pjss-mall -pl yudao-server -am test -Dtest=MemberPointRecordServiceImplTest,MemberLevelServiceImplTest,MemberGroupServiceImplTest,MemberTagServiceImplTest,MemberUserServiceImplTest,MemberUserServiceImplStatusTest,JssMemberPointMySqlServiceIT,JssMemberProfileMySqlServiceIT,JssMemberLevelMySqlServiceIT,JssMemberSegmentMySqlServiceIT -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true`。84项中36项执行通过（34项H2含原九项积分实际Service/spy、两项状态Mockito），48项既有/条件跳过（47MySQL、一禁用User测试），零失败/错误；服务器30模块依赖及测试编译成功，`.runtime/member-point-regression.log`。三变更Java定向Spotless、新Python编译和差异检查通过，随机库残留0。未运行新全量verify、Flyway或真实HTTP/H5；当前专项不前移整合验收版本。

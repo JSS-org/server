@@ -18,6 +18,8 @@ public interface ErrorCodeConstants {
     ErrorCode USER_GROUP_INVALID = new ErrorCode(1_004_001_005, "新分配的会员分组不存在或未启用");
     ErrorCode USER_TAG_INVALID = new ErrorCode(1_004_001_006, "会员标签无效、不属于当前租户或编号列表超长");
     ErrorCode USER_AREA_INVALID = new ErrorCode(1_004_001_007, "会员地区编号须为有效的非负int");
+    ErrorCode USER_POINT_OUT_OF_RANGE = new ErrorCode(1_004_001_008, "用户积分超过整数范围");
+    ErrorCode USER_POINT_INVALID = new ErrorCode(1_004_001_009, "变动积分不能为空");
 
     // ========== AUTH 模块 1-004-003-000 ==========
     ErrorCode AUTH_LOGIN_BAD_CREDENTIALS = new ErrorCode(1_004_003_000, "登录失败，账号密码不正确");

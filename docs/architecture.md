@@ -826,3 +826,9 @@ V012只新建事件表并按原经验历史封存外部事件，包含已逻辑�
 原管理会员更新Controller → MemberUserServiceImpl的REQUIRED事务 → 当前租户会员FOR UPDATE → 原会员Mapper写入。资料转换忽略levelId，旧客户端回传等级仍可兼容，实际调级必须走独立权限及等级记录Service；积分和经验没有加入资料写入。标签/分组通过同模块Mapper校验，避免User与Tag/Group的Service循环依赖：新增关联只允许本租户有效标签及启用分组，原失效关联可保留或移除，标签去重且限制实际逗号字段255字。
 
 更新VO内部记录birthday/areaId/groupId/tagIds是否出现，标志不接受JSON赋值也不输出。省略保持原值，显式null清空；地区及分组0也清空，标签空值归一为空列表。地区在Long转int前校验非负及上限；可空数据库列通过显式UPDATE SET NULL清除。原禁用撤权分支保留，但本批实际数据库测试没有实例化或调用OAuth/Redis客户端，不能视作登录、RBAC或撤权验收。没有新增表或迁移。
+
+## 手工会员积分调整（2026-10-27）
+
+原MemberUserController的update-point权限入口 → MemberPointRecordService的REQUIRED事务 → ADMIN类型先对当前租户会员FOR UPDATE → 原积分条件更新与积分流水插入。同管理员的独立手工调整仍分别执行，不把后台账号bizId当去重键；余额和流水共用事务。人工扣减不足明确抛USER_POINT_NOT_ENOUGH，积分加法用long中间值、超过int上限返回业务错误，null增量及不可见会员也返回业务错误。零增量保持原无操作行为。
+
+其他业务类型保留原查询/条件更新方式及预检扣减不足时记录错误后跳过的策略，本批没有把自动退款不足改成异常，也没有验收完整订单/退款或签到链。自动加分预检同样识别整数上溢，但并发自动奖励的锁顺序/上限竞争及业务事件幂等仍待独立处理。无需新增迁移，原V012经验事件表不覆盖积分事件。

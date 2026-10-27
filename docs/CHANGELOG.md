@@ -4753,3 +4753,35 @@ Redis程序仍不可读，真实HTTP/H5/RBAC、订单/签到完整奖励链、�
 ### 未做 / 后续
 
 会员管理源页面和详情十一标签尚未迁入，积分调整、真实CRUD/分类/RBAC/Redis撤权、完整订单/签到链、真机发布继续待验。Redis程序仍不可读，无新HTTP/H5、完整verify或部署；开发库/运行jar未改，先备份+migrate/validate V012再部署及原整合验收版本保持不变。
+
+## [2026-10-27 05:48 ~ 09:52] 明确手工积分失败并校验整数上限与竞争
+
+### 意图
+
+继续P5会员详情独立积分调整的业务前置，避免后台扣减不足/正数溢出静默成功，并使并发手工调账在旧事务快照下有明确余额和流水结果；保留既有自动业务不足处理规则。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| MemberPointRecordServiceImpl.java | 修改 | ADMIN先当前读锁会员、不足抛业务错误；long加法预检上限、空增量/不可见会员业务错误 |
+| member/enums/ErrorCodeConstants.java | 修改 | 积分超上限及空变动业务错误 |
+| JssMemberPointMySqlServiceIT.java | 新增 | 十项实际Point/User Service、Mapper/租户/并发/回滚专项 |
+| script/jss/verify_member_point_services.py | 新增 | 原始V001两表、归属随机库、十项报告验证和finally清理 |
+| docs/architecture.md / testing.md / CHANGELOG.md | 更新/追加 | 人工/自动边界、证据及未验范围 |
+
+### 结构关系
+
+原管理update-point权限入口 → Point Service原REQUIRED事务 → ADMIN经User Service当前读锁 → 原积分条件更新与流水Mapper。同管理员两次手工请求仍独立执行，后台员工编号不是幂等键；余额/流水共享事务。非ADMIN保留原读/条件更新路径及预检不足时记录错误并跳过的行为，没有改变自动退款不足规则；V012经验事件不参与积分。
+
+### 验证证据
+
+有效修复前十项六通过/四失败17.023秒，首次修复后十项全过17.678秒；最终十项实际MySQL全过11.379秒，零失败/错误/跳过，`.runtime/member-point-before.log/XML`、`member-point-after.log`、`member-point-final.log/XML`。覆盖ADMIN不足/MIN、MAX与自动奖励上限预检、空量/缺失/外租户、同管理员两独立操作，六旧RR快照事务加分精确90→150/连续流水、六扣分仅三成功、近上限六请求三成功三业务拒绝、后置SQL失败与外层回滚/重试、自动不足兼容和租户流水。原最终进程句柄消失、无报告且隔离MySQL停止后，经归属工具重启并清理一个中断随机库，再实际重跑，不把中断当通过；最终随机库残留0。常规84项中36执行通过、48既有/条件跳过，服务器30模块依赖测试编译成功，`.runtime/member-point-regression.log`。三Java定向Spotless、新Python编译及差异检查通过。
+
+### 影响面 / 风险
+
+手工扣减不足现在明确返回原积分不足业务错误，加分预检超int上限返回新业务错误。人工调整持会员锁至外层事务结束；自动类型仍需验证上限竞争、锁顺序和完整订单/退款/签到链。新专项无业务替身但不启动HTTP/OAuth/Redis等完整安全链，不代表真实调账权限已验；积分事件重投幂等仍未实现，旧数据不重写。
+
+### 未做 / 后续
+
+会员管理源页面及详情十一标签、实际HTTP/RBAC/Redis、自动积分完整策略/幂等、真机和发布继续待办。本轮无新迁移、Flyway、完整verify、运行jar或开发库升级；Redis二进制重新读取仍被拒绝，商城/工作台真实回归待恢复后串行实跑，V012部署前置及整合验收版本不变。

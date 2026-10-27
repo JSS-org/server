@@ -2,7 +2,10 @@ package cn.iocoder.yudao.module.member.service.point;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.USER_NOT_EXISTS;
+import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.USER_POINT_INVALID;
 import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.USER_POINT_NOT_ENOUGH;
+import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.USER_POINT_OUT_OF_RANGE;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -70,14 +73,25 @@ public class MemberPointRecordServiceImpl implements MemberPointRecordService {
     @Transactional(rollbackFor = Exception.class)
     public void createPointRecord(
             Long userId, Integer point, MemberPointBizTypeEnum bizType, String bizId) {
+        if (point == null) throw exception(USER_POINT_INVALID);
         if (point == 0) {
             return;
         }
         // 1. 校验用户积分余额
-        MemberUserDO user = memberUserService.getUser(userId);
+        boolean manual = bizType == MemberPointBizTypeEnum.ADMIN;
+        MemberUserDO user =
+                userId == null
+                        ? null
+                        : manual
+                                ? memberUserService.getUserForUpdate(userId)
+                                : memberUserService.getUser(userId);
+        if (user == null) throw exception(USER_NOT_EXISTS);
         Integer userPoint = ObjectUtil.defaultIfNull(user.getPoint(), 0);
-        int totalPoint = userPoint + point; // 用户变动后的积分
-        if (totalPoint < 0) {
+        long expectedPoint = (long) userPoint + point;
+        if (expectedPoint > Integer.MAX_VALUE) throw exception(USER_POINT_OUT_OF_RANGE);
+        if (expectedPoint < 0) {
+            // Interactive adjustments must report failure; retain the automatic deduction policy.
+            if (manual) throw exception(USER_POINT_NOT_ENOUGH);
             log.error(
                     "[createPointRecord][userId({}) point({}) bizType({}) bizId({}) {}]",
                     userId,
@@ -93,7 +107,7 @@ public class MemberPointRecordServiceImpl implements MemberPointRecordService {
         if (!success) {
             throw exception(USER_POINT_NOT_ENOUGH);
         }
-        totalPoint = memberUserService.getUser(userId).getPoint(); // 重新读取变动后的积分，避免并发时使用旧积分
+        int totalPoint = memberUserService.getUser(userId).getPoint(); // 重新读取变动后的积分，避免并发时使用旧积分
 
         // 3. 增加积分记录
         MemberPointRecordDO record =

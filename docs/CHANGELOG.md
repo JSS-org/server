@@ -4880,3 +4880,32 @@ Redis程序仍不可读，真实HTTP/H5/RBAC、订单/签到完整奖励链、�
 ### 未做 / 后续
 
 继续完成五页交易前端和真实HTTP/H5/RBAC核销验收；没有升级开发库/运行jar。V012前置、Redis读取权限问题和整合验收版本不变。
+
+## [2026-10-27 18:30 ~ 18:44] 准备会员主页面真实验收的Long夹具
+
+### 意图
+
+为已迁入的会员列表/资料/独立操作及发券准备真实H5目标，实际检查超JS安全整数编号传递，复用现有完整HTTP隔离验收入口。
+
+### 改了什么
+
+| 文件 | 变更 | 内容 |
+| --- | --- | --- |
+| JssHttpFixtures.java | 扩充 | 在原有随机库守卫内增加两个专用Long会员及非空资料，不替换登录身份 |
+| docs/testing.md / CHANGELOG.md | 更新/追加 | 编译证据、实际未执行状态及宿主入口 |
+
+### 结构关系
+
+原verify_workspace_http.py建立归属随机库/迁移 → 原JssHttpFixtures初始化实际SQL → 原完整应用HTTP/Playwright。新增两个目标只存在于jss_http_verify随机库；外层finally仍负责删除整个随机库。未修改生产服务、迁移或开发数据。
+
+### 验证证据
+
+定向Spotless通过；`-o -Pjss-mall -pl yudao-server -am test-compile -DskipTests=true -Dspotless.skip=true`服务器30模块依赖/测试编译成功，10.932秒，`.runtime/member-browser-fixture-compile.log`。这是编译证据，不是新增SQL、真实HTTP、Redis或浏览器执行结果。前端新增两场景及宿主串行入口另仓验证并记录。
+
+### 影响面 / 风险
+
+Long显式主键会提升该临时库后续会员自增编号，预期用于发现数值化问题；不作用于开发库。专用手机号、昵称、生日/地区/分组供资料清空及分页发券使用，运行后应继续确认既有安全/商城场景不受影响。独立Redis程序在沙箱账号下仍WinError5，Edge也已禁止在该账号启动。
+
+### 未做 / 后续
+
+由hh普通终端运行前端scripts/test-integration-host.mjs，串行执行原workspace/mall完整验收并核对新鲜JUnit/浏览器报告。当前尚未执行，不登记新HTTP/H5通过；开发库、运行jar及V012部署前置未改。

@@ -1985,6 +1985,8 @@ Redis程序仍读取拒绝，真实公告CRUD/备注/权限/租户与完整商�
 
 ## 2026-10-27 后台调价与交易/订单项/支付单一致性
 
+宿主真实验收准备（18:44）：JssHttpFixtures在原随机库/数据源守卫内增加9007199254740993/9007199254740995两个专用会员，供会员列表/资料清空、独立写入及跨页发券真实H5使用，不变更原登录身份。定向Spotless和服务器依赖测试编译通过10.932秒，`.runtime/member-browser-fixture-compile.log`；SQL/HTTP/浏览器尚未执行。前端scripts/test-integration-host.mjs只允许非CodexSandbox账号，串行复用原verify_workspace_http.py的workspace/mall --browser，并复制新鲜JUnit/JSON报告；保持原13316随机库/16379归属Redis及finally清理，不用开发3306/6379/48080。完整套件仍待宿主实跑，不能以编译登记通过。
+
 独立核销码转换专项：TradeOrderPickUpCodeConvertTest直接调用生产MapStruct生成实现，修复前两项一失败/一错误0.126秒，前导零丢失且字母码NumberFormatException；改BaseVO为String后两项0.020秒全过。联合5请求VO和2Mockito价格测试共九项执行、零失败/错误/跳过，服务器30模块依赖测试编译成功；`.runtime/pick-up-code-before.log`和`pick-up-code-after.log`。两个Java定向Spotless和差异检查通过。只证明列表/详情转换保真，不含真实HTTP/MySQL核销、门店RBAC或Redis；无新迁移、数据库/运行jar变更。
 
 同一Maven wrapper环境执行 `python script/jss/verify_order_price_services.py`。脚本仅在已归属MySQL8.4.9:13316的 `jss_order_price_verify_<12位随机值>` 中，提取不可变V008交易单/订单项及V004支付单三张原始表DDL。实例归属、报告时效/十二项/零跳过检查、日志口令脱敏与finally删库沿用专项约定；没有导入开发账号/授权或改开发库。

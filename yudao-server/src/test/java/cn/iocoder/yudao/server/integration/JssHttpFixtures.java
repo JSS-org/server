@@ -163,6 +163,18 @@ public class JssHttpFixtures
                     statement.executeUpdate();
                 }
             }
+            // Dedicated browser targets exercise Long IDs without changing login identities.
+            for (long id : new long[] {9007199254740993L, 9007199254740995L}) {
+                try (var statement =
+                        connection.prepareStatement(
+                                "INSERT INTO member_user (id,tenant_id,mobile,password,nickname,status,register_ip,group_id,email,name,sex,area_id,birthday,mark) VALUES (?,1,?,?,?,0,'127.0.0.1',23099,'before@example.com','Before',0,110101,'2000-01-02 00:00:00','Before')")) {
+                    statement.setLong(1, id);
+                    statement.setString(2, id == 9007199254740993L ? "13800009991" : "13800009992");
+                    statement.setString(3, hash);
+                    statement.setString(4, "HTTP large member " + id);
+                    statement.executeUpdate();
+                }
+            }
             try (var statement =
                     connection.prepareStatement(
                             "INSERT INTO member_user (id,tenant_id,mobile,password,nickname,status,register_ip) VALUES (33001,91001,'13800009101',?,'HTTP tenant member',0,'127.0.0.1')")) {

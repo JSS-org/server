@@ -2,6 +2,7 @@ package cn.iocoder.yudao.framework.websocket.core.session;
 
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketHandler;
+import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator;
 import org.springframework.web.socket.handler.WebSocketHandlerDecorator;
@@ -47,5 +48,11 @@ public class WebSocketSessionHandlerDecorator extends WebSocketHandlerDecorator 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus closeStatus) {
         sessionManager.removeSession(session);
+    }
+
+    @Override
+    public void handleMessage(WebSocketSession session, WebSocketMessage<?> message)
+            throws Exception {
+        if (sessionManager.isValid(session)) super.handleMessage(session, message);
     }
 }

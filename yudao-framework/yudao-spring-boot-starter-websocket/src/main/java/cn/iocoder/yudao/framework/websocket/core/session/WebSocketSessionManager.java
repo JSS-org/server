@@ -11,6 +11,14 @@ import java.util.Collection;
  */
 public interface WebSocketSessionManager {
 
+    default boolean isValid(WebSocketSession session) {
+        return true;
+    }
+
+    default boolean canSend(WebSocketSession session, String messageType) {
+        return isValid(session);
+    }
+
     /**
      * 添加 Session
      *

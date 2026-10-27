@@ -3,10 +3,13 @@ package cn.iocoder.yudao.framework.websocket.core.session;
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.security.core.LoginUser;
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
+import cn.iocoder.yudao.framework.websocket.core.security.WebSocketSessionAuthorization;
 import cn.iocoder.yudao.framework.websocket.core.util.WebSocketFrameworkUtils;
 
+import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -21,6 +24,47 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author 芋道源码
  */
 public class WebSocketSessionManagerImpl implements WebSocketSessionManager {
+
+    private final List<WebSocketSessionAuthorization> authorizations;
+
+    public WebSocketSessionManagerImpl() {
+        this(List.of());
+    }
+
+    public WebSocketSessionManagerImpl(List<WebSocketSessionAuthorization> authorizations) {
+        this.authorizations = List.copyOf(authorizations);
+    }
+
+    @Override
+    public boolean isValid(WebSocketSession session) {
+        try {
+            if (authorizations.stream().allMatch(policy -> policy.isValid(session))) return true;
+        } catch (RuntimeException denied) {
+            // Fail closed, including when a policy's authorization store is unavailable.
+        }
+        removeSession(session);
+        try {
+            session.close(CloseStatus.POLICY_VIOLATION);
+        } catch (IOException ignored) {
+            // Already removed; a broken transport must not retain a deliverable session.
+        }
+        return false;
+    }
+
+    @Override
+    public boolean canSend(WebSocketSession session, String messageType) {
+        if (!matchesTenant(session) || !isValid(session)) return false;
+        try {
+            return authorizations.stream().allMatch(policy -> policy.canSend(session, messageType));
+        } catch (RuntimeException denied) {
+            return false;
+        }
+    }
+
+    private boolean matchesTenant(WebSocketSession session) {
+        Long tenantId = TenantContextHolder.getTenantId();
+        return tenantId == null || tenantId.equals(WebSocketFrameworkUtils.getTenantId(session));
+    }
 
     /**
      * id 与 WebSocketSession 映射
@@ -81,6 +125,7 @@ public class WebSocketSessionManagerImpl implements WebSocketSessionManager {
             return;
         }
         CopyOnWriteArrayList<WebSocketSession> sessions = userSessionsMap.get(user.getId());
+        if (sessions == null) return;
         sessions.removeIf(session0 -> session0.getId().equals(session.getId()));
         if (CollUtil.isEmpty(sessions)) {
             userSessionsMap.remove(user.getId(), sessions);
@@ -89,7 +134,8 @@ public class WebSocketSessionManagerImpl implements WebSocketSessionManager {
 
     @Override
     public WebSocketSession getSession(String id) {
-        return idSessions.get(id);
+        WebSocketSession session = idSessions.get(id);
+        return session != null && matchesTenant(session) ? session : null;
     }
 
     @Override
@@ -100,19 +146,12 @@ public class WebSocketSessionManagerImpl implements WebSocketSessionManager {
             return new ArrayList<>();
         }
         LinkedList<WebSocketSession> result = new LinkedList<>(); // 避免扩容
-        Long contextTenantId = TenantContextHolder.getTenantId();
         for (List<WebSocketSession> sessions : userSessionsMap.values()) {
             if (CollUtil.isEmpty(sessions)) {
                 continue;
             }
-            // 特殊：如果租户不匹配，则直接排除
-            if (contextTenantId != null) {
-                Long userTenantId = WebSocketFrameworkUtils.getTenantId(sessions.get(0));
-                if (!contextTenantId.equals(userTenantId)) {
-                    continue;
-                }
-            }
-            result.addAll(sessions);
+            // One user can have multiple sessions; each session retains its bound tenant.
+            sessions.stream().filter(this::matchesTenant).forEach(result::add);
         }
         return result;
     }
@@ -125,6 +164,8 @@ public class WebSocketSessionManagerImpl implements WebSocketSessionManager {
             return new ArrayList<>();
         }
         CopyOnWriteArrayList<WebSocketSession> sessions = userSessionsMap.get(userId);
-        return CollUtil.isNotEmpty(sessions) ? new ArrayList<>(sessions) : new ArrayList<>();
+        return CollUtil.isNotEmpty(sessions)
+                ? sessions.stream().filter(this::matchesTenant).toList()
+                : new ArrayList<>();
     }
 }

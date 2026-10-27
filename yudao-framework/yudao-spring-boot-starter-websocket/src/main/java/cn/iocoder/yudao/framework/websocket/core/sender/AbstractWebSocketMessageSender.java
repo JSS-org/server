@@ -109,6 +109,7 @@ public abstract class AbstractWebSocketMessageSender implements WebSocketMessage
                                 "[doSend][session({}) 已关闭, message({})]", session.getId(), message);
                         return;
                     }
+                    if (!sessionManager.canSend(session, messageType)) return;
                     // 2. 执行发送
                     try {
                         session.sendMessage(new TextMessage(payload));

@@ -6,6 +6,7 @@ import cn.iocoder.yudao.framework.websocket.core.handler.JsonWebSocketMessageHan
 import cn.iocoder.yudao.framework.websocket.core.listener.WebSocketMessageListener;
 import cn.iocoder.yudao.framework.websocket.core.security.LoginUserHandshakeInterceptor;
 import cn.iocoder.yudao.framework.websocket.core.security.WebSocketAuthorizeRequestsCustomizer;
+import cn.iocoder.yudao.framework.websocket.core.security.WebSocketSessionAuthorization;
 import cn.iocoder.yudao.framework.websocket.core.sender.kafka.KafkaWebSocketMessageConsumer;
 import cn.iocoder.yudao.framework.websocket.core.sender.kafka.KafkaWebSocketMessageSender;
 import cn.iocoder.yudao.framework.websocket.core.sender.local.LocalWebSocketMessageSender;
@@ -70,8 +71,9 @@ public class YudaoWebSocketAutoConfiguration {
     }
 
     @Bean
-    public HandshakeInterceptor handshakeInterceptor() {
-        return new LoginUserHandshakeInterceptor();
+    public HandshakeInterceptor handshakeInterceptor(
+            List<WebSocketSessionAuthorization> authorizations) {
+        return new LoginUserHandshakeInterceptor(authorizations);
     }
 
     @Bean
@@ -86,8 +88,9 @@ public class YudaoWebSocketAutoConfiguration {
     }
 
     @Bean
-    public WebSocketSessionManager webSocketSessionManager() {
-        return new WebSocketSessionManagerImpl();
+    public WebSocketSessionManager webSocketSessionManager(
+            List<WebSocketSessionAuthorization> authorizations) {
+        return new WebSocketSessionManagerImpl(authorizations);
     }
 
     @Bean

@@ -11,6 +11,7 @@ import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -24,6 +25,16 @@ import java.util.Map;
  */
 public class LoginUserHandshakeInterceptor implements HandshakeInterceptor {
 
+    private final List<WebSocketSessionAuthorization> authorizations;
+
+    public LoginUserHandshakeInterceptor() {
+        this(List.of());
+    }
+
+    public LoginUserHandshakeInterceptor(List<WebSocketSessionAuthorization> authorizations) {
+        this.authorizations = List.copyOf(authorizations);
+    }
+
     @Override
     public boolean beforeHandshake(
             ServerHttpRequest request,
@@ -35,7 +46,7 @@ public class LoginUserHandshakeInterceptor implements HandshakeInterceptor {
             return false;
         }
         WebSocketFrameworkUtils.setLoginUser(loginUser, attributes);
-        return true;
+        return authorizations.stream().allMatch(policy -> policy.prepare(request, attributes));
     }
 
     @Override

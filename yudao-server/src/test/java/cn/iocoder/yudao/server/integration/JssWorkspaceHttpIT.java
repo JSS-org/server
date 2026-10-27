@@ -554,6 +554,10 @@ class JssWorkspaceHttpIT {
     }
 
     private void assignMenus(String reviewer, List<Long> menus) throws Exception {
+        assignMenus(reviewer, 23004, menus);
+    }
+
+    private void assignMenus(String reviewer, long role, List<Long> menus) throws Exception {
         var expanded = new LinkedHashSet<>(menus);
         try (var connection = datasource.getConnection()) {
             for (long menu : menus) expanded.addAll(JssHttpFixtures.menuBranch(connection, menu));
@@ -562,7 +566,7 @@ class JssWorkspaceHttpIT {
                 api(
                         "POST",
                         "/admin-api/system/permission/assign-role-menu",
-                        Map.of("roleId", 23004, "menuIds", expanded),
+                        Map.of("roleId", role, "menuIds", expanded),
                         reviewer,
                         1),
                 0);
@@ -1012,5 +1016,123 @@ class JssWorkspaceHttpIT {
         var rows = (List<?>) permittedNativeVisit.get("list");
         assertEquals("33001", ((Map<?, ?>) rows.getFirst()).get("id").toString());
         expectCode(api("GET", page, null, token, 1), 0);
+    }
+
+    @Autowired
+    private cn.iocoder.yudao.framework.websocket.core.sender.WebSocketMessageSender socketSender;
+
+    private static class SocketProbe implements java.net.http.WebSocket.Listener {
+        final java.util.concurrent.BlockingQueue<String> frames =
+                new java.util.concurrent.LinkedBlockingQueue<>();
+        final java.util.concurrent.CompletableFuture<Integer> closed =
+                new java.util.concurrent.CompletableFuture<>();
+        final StringBuilder buffer = new StringBuilder();
+
+        @Override
+        public void onOpen(java.net.http.WebSocket socket) {
+            socket.request(1);
+        }
+
+        @Override
+        public java.util.concurrent.CompletionStage<?> onText(
+                java.net.http.WebSocket socket, CharSequence data, boolean last) {
+            buffer.append(data);
+            if (last) {
+                frames.add(buffer.toString());
+                buffer.setLength(0);
+            }
+            socket.request(1);
+            return null;
+        }
+
+        @Override
+        public java.util.concurrent.CompletionStage<?> onClose(
+                java.net.http.WebSocket socket, int status, String reason) {
+            closed.complete(status);
+            return null;
+        }
+    }
+
+    private java.net.http.WebSocket connectSocket(String token, long tenant, SocketProbe probe) {
+        int port = environment.getRequiredProperty("local.server.port", Integer.class);
+        return http.newWebSocketBuilder()
+                .connectTimeout(Duration.ofSeconds(5))
+                .header("tenant-id", String.valueOf(tenant))
+                .buildAsync(
+                        URI.create("ws://127.0.0.1:" + port + "/infra/ws?token=" + token), probe)
+                .join();
+    }
+
+    @Test
+    void realWebSocketUsesWorkspaceCredentialLiveKefuPermissionsTenantAndParentRevocation()
+            throws Exception {
+        String reviewer = login("admin", "jssitreviewer");
+        String member = login("member", "13800009011");
+        expectCode(
+                api(
+                        "POST",
+                        "/admin-api/jss/identity/bind",
+                        Map.of(
+                                "memberUserId",
+                                23011,
+                                "adminUserId",
+                                23011,
+                                "reason",
+                                "Reviewed websocket fixture"),
+                        reviewer,
+                        1),
+                0);
+        long entry = menuId("jss:workspace:access"),
+                conversation = menuId("promotion:kefu-conversation:query"),
+                message = menuId("promotion:kefu-message:query");
+        assignMenus(reviewer, 23011, List.of(entry));
+        String token = issueWorkspace(member);
+        var probe = new SocketProbe();
+        var socket = connectSocket(token, 1, probe);
+        try {
+            socket.sendText("ping", true).join();
+            assertEquals("pong", probe.frames.poll(5, TimeUnit.SECONDS));
+            cn.iocoder.yudao.framework.tenant.core.util.TenantUtils.execute(
+                    1L,
+                    () ->
+                            socketSender.send(
+                                    2, "kefu_message_type", "{\"marker\":\"without-module\"}"));
+            assertNull(probe.frames.poll(1, TimeUnit.SECONDS));
+            assignMenus(reviewer, 23011, List.of(entry, conversation, message));
+            cn.iocoder.yudao.framework.tenant.core.util.TenantUtils.execute(
+                    1L,
+                    () -> socketSender.send(2, "kefu_message_type", "{\"marker\":\"allowed\"}"));
+            String frame = probe.frames.poll(5, TimeUnit.SECONDS);
+            assertNotNull(frame);
+            assertTrue(frame.contains("allowed"));
+            cn.iocoder.yudao.framework.tenant.core.util.TenantUtils.execute(
+                    91001L,
+                    () ->
+                            socketSender.send(
+                                    2,
+                                    23011L,
+                                    "kefu_message_type",
+                                    "{\"marker\":\"foreign-tenant\"}"));
+            assertNull(probe.frames.poll(1, TimeUnit.SECONDS));
+            assignMenus(reviewer, 23011, List.of(entry));
+            cn.iocoder.yudao.framework.tenant.core.util.TenantUtils.execute(
+                    1L,
+                    () ->
+                            socketSender.send(
+                                    2,
+                                    "kefu_message_read_status_change",
+                                    "{\"marker\":\"revoked-module\"}"));
+            assertNull(probe.frames.poll(1, TimeUnit.SECONDS));
+            expectCode(api("POST", "/app-api/jss/auth/logout", null, member, 1), 0);
+            socket.sendText("ping", true).join();
+            assertEquals(1008, probe.closed.get(5, TimeUnit.SECONDS));
+            assertNull(probe.frames.poll(1, TimeUnit.SECONDS));
+        } finally {
+            socket.abort();
+            assignMenus(reviewer, 23011, List.of(entry));
+        }
+        assertThrows(
+                java.util.concurrent.CompletionException.class,
+                () -> connectSocket("jssw_invalid", 1, new SocketProbe()));
     }
 }

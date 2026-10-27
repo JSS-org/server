@@ -1323,6 +1323,324 @@ class JssWorkspaceHttpIT {
                 () -> connectSocket("jssw_invalid", 1, new SocketProbe()));
     }
 
+    @Test
+    void realNotifyManagementAndPersonalReadKeepPermissionsAndRecipientDomainsSeparate()
+            throws Exception {
+        String reviewer = login("admin", "jssitreviewer");
+        String member = login("member", "13800009013");
+        expectCode(
+                api(
+                        "POST",
+                        "/admin-api/jss/identity/bind",
+                        Map.of(
+                                "memberUserId",
+                                23013,
+                                "adminUserId",
+                                23013,
+                                "reason",
+                                "Reviewed owned notify fixture"),
+                        reviewer,
+                        1),
+                0);
+        List<Long> queries =
+                List.of(
+                        menuId("jss:workspace:access"),
+                        menuId("system:notify-template:query"),
+                        menuId("system:notify-message:query"));
+        assignMenus(reviewer, 23013, queries);
+        String token = issueWorkspace(member);
+        var template =
+                new HashMap<String, Object>(
+                        Map.of(
+                                "name",
+                                "Owned notify template",
+                                "code",
+                                "jss_owned_notify_fixture",
+                                "nickname",
+                                "Owned sender",
+                                "type",
+                                1,
+                                "status",
+                                0,
+                                "content",
+                                "Before {name}",
+                                "remark",
+                                "Before"));
+        var send =
+                new HashMap<String, Object>(
+                        Map.of(
+                                "userId",
+                                23013,
+                                "userType",
+                                2,
+                                "templateCode",
+                                "jss_owned_notify_fixture",
+                                "templateParams",
+                                Map.of("name", "Workspace")));
+        expectCode(
+                api("POST", "/admin-api/system/notify-template/create", template, token, 1), 403);
+        var deniedUpdate = new HashMap<>(template);
+        deniedUpdate.put("id", 1);
+        expectCode(
+                api("PUT", "/admin-api/system/notify-template/update", deniedUpdate, token, 1),
+                403);
+        expectCode(
+                api("DELETE", "/admin-api/system/notify-template/delete?id=1", null, token, 1),
+                403);
+        expectCode(
+                api("POST", "/admin-api/system/notify-template/send-notify", send, token, 1), 403);
+        var granted = new ArrayList<>(queries);
+        for (String action : List.of("create", "update", "delete"))
+            granted.add(menuId("system:notify-template:" + action));
+        assignMenus(reviewer, 23013, granted);
+        var created = api("POST", "/admin-api/system/notify-template/create", template, token, 1);
+        expectCode(created, 0);
+        String templateId = created.get("data").toString();
+        template.put("id", templateId);
+        template.put("content", "Hello {name}");
+        template.put("remark", "");
+        expectCode(api("PUT", "/admin-api/system/notify-template/update", template, token, 1), 0);
+        var loaded =
+                data(
+                        api(
+                                "GET",
+                                "/admin-api/system/notify-template/get?id=" + templateId,
+                                null,
+                                token,
+                                1));
+        assertEquals(List.of("name"), loaded.get("params"));
+        assertEquals("", loaded.get("remark"));
+        expectCode(
+                api("POST", "/admin-api/system/notify-template/send-notify", send, token, 1), 403);
+        granted.add(menuId("system:notify-template:send-notify"));
+        assignMenus(reviewer, 23013, granted);
+        var missingParams = new HashMap<>(send);
+        missingParams.put("templateParams", Map.of());
+        assertNotEquals(
+                0,
+                ((Number)
+                                api(
+                                                "POST",
+                                                "/admin-api/system/notify-template/send-notify",
+                                                missingParams,
+                                                token,
+                                                1)
+                                        .get("code"))
+                        .intValue());
+        var delivered =
+                api("POST", "/admin-api/system/notify-template/send-notify", send, token, 1);
+        expectCode(delivered, 0);
+        String adminMessage = delivered.get("data").toString();
+        send.put("userType", 1);
+        var memberDelivered =
+                api("POST", "/admin-api/system/notify-template/send-notify", send, token, 1);
+        expectCode(memberDelivered, 0);
+        String memberMessage = memberDelivered.get("data").toString();
+        send.put("userId", "9007199254740993");
+        var longDelivered =
+                api("POST", "/admin-api/system/notify-template/send-notify", send, token, 1);
+        expectCode(longDelivered, 0);
+        String longMessage = longDelivered.get("data").toString();
+        var adminRecord =
+                data(
+                        api(
+                                "GET",
+                                "/admin-api/system/notify-message/get?id=" + adminMessage,
+                                null,
+                                token,
+                                1));
+        assertEquals("23013", adminRecord.get("userId").toString());
+        assertEquals(2, ((Number) adminRecord.get("userType")).intValue());
+        assertEquals("Hello Workspace", adminRecord.get("templateContent"));
+        assertEquals(Map.of("name", "Workspace"), adminRecord.get("templateParams"));
+        var longRecord =
+                data(
+                        api(
+                                "GET",
+                                "/admin-api/system/notify-message/get?id=" + longMessage,
+                                null,
+                                token,
+                                1));
+        assertEquals("9007199254740993", longRecord.get("userId").toString());
+        assertEquals(1, ((Number) longRecord.get("userType")).intValue());
+        var filtered =
+                data(
+                        api(
+                                "GET",
+                                "/admin-api/system/notify-message/page?pageNo=1&pageSize=10&userId=9007199254740993&userType=1&templateCode=jss_owned_notify_fixture",
+                                null,
+                                token,
+                                1));
+        assertEquals(1, ((Number) filtered.get("total")).intValue());
+        template.put("status", 1);
+        expectCode(api("PUT", "/admin-api/system/notify-template/update", template, token, 1), 0);
+        var ignored = api("POST", "/admin-api/system/notify-template/send-notify", send, token, 1);
+        expectCode(ignored, 0);
+        assertNull(ignored.get("data"));
+        assertEquals(
+                1,
+                ((Number)
+                                data(api(
+                                                "GET",
+                                                "/admin-api/system/notify-message/page?pageNo=1&pageSize=10&userId=9007199254740993&userType=1&templateCode=jss_owned_notify_fixture",
+                                                null,
+                                                token,
+                                                1))
+                                        .get("total"))
+                        .intValue());
+
+        // Keep the workspace live while removing all administrative notify permissions.
+        assignMenus(reviewer, 23013, List.of(menuId("jss:workspace:access")));
+        expectCode(
+                api(
+                        "GET",
+                        "/admin-api/system/notify-message/get?id=" + adminMessage,
+                        null,
+                        token,
+                        1),
+                403);
+        expectCode(
+                api(
+                        "GET",
+                        "/admin-api/system/notify-message/page?pageNo=1&pageSize=10",
+                        null,
+                        token,
+                        1),
+                403);
+        expectCode(
+                api("POST", "/admin-api/system/notify-template/send-notify", send, token, 1), 403);
+        var own =
+                data(
+                        api(
+                                "GET",
+                                "/admin-api/system/notify-message/my-get?id=" + adminMessage,
+                                null,
+                                token,
+                                1));
+        assertEquals(adminMessage, own.get("id").toString());
+        assertEquals(false, own.get("readStatus"));
+        for (String messageId : List.of(memberMessage, longMessage, "9223372036854775806")) {
+            var hidden =
+                    api(
+                            "GET",
+                            "/admin-api/system/notify-message/my-get?id="
+                                    + messageId
+                                    + "&userId=23013&userType=1",
+                            null,
+                            token,
+                            1);
+            expectCode(hidden, 0);
+            assertNull(hidden.get("data"));
+        }
+        String stranger = login("admin", "jssitstaff");
+        var hidden =
+                api(
+                        "GET",
+                        "/admin-api/system/notify-message/my-get?id=" + adminMessage,
+                        null,
+                        stranger,
+                        1);
+        expectCode(hidden, 0);
+        assertNull(hidden.get("data"));
+        expectCode(
+                api(
+                        "GET",
+                        "/admin-api/system/notify-message/my-get?id=" + adminMessage,
+                        null,
+                        member,
+                        1),
+                403);
+        expectCode(
+                api(
+                        "GET",
+                        "/admin-api/system/notify-message/my-get?id=" + adminMessage,
+                        null,
+                        null,
+                        1),
+                401);
+        var personal =
+                data(
+                        api(
+                                "GET",
+                                "/admin-api/system/notify-message/my-page?pageNo=1&pageSize=10",
+                                null,
+                                token,
+                                1));
+        assertEquals(1, ((Number) personal.get("total")).intValue());
+        var personalList = (List<?>) personal.get("list");
+        assertEquals(adminMessage, ((Map<?, ?>) personalList.get(0)).get("id").toString());
+        assertEquals(
+                1,
+                ((Number)
+                                api(
+                                                "GET",
+                                                "/admin-api/system/notify-message/get-unread-count",
+                                                null,
+                                                token,
+                                                1)
+                                        .get("data"))
+                        .intValue());
+        expectCode(
+                api(
+                        "PUT",
+                        "/admin-api/system/notify-message/update-read?ids="
+                                + adminMessage
+                                + ","
+                                + memberMessage
+                                + ","
+                                + longMessage,
+                        null,
+                        token,
+                        1),
+                0);
+        assertEquals(
+                true,
+                data(api(
+                                "GET",
+                                "/admin-api/system/notify-message/my-get?id=" + adminMessage,
+                                null,
+                                token,
+                                1))
+                        .get("readStatus"));
+        assertEquals(
+                0,
+                ((Number)
+                                api(
+                                                "GET",
+                                                "/admin-api/system/notify-message/get-unread-count",
+                                                null,
+                                                token,
+                                                1)
+                                        .get("data"))
+                        .intValue());
+        expectCode(
+                api("PUT", "/admin-api/system/notify-message/update-all-read", null, token, 1), 0);
+        for (String messageId : List.of(memberMessage, longMessage)) {
+            assertEquals(
+                    false,
+                    data(api(
+                                    "GET",
+                                    "/admin-api/system/notify-message/get?id=" + messageId,
+                                    null,
+                                    reviewer,
+                                    1))
+                            .get("readStatus"));
+        }
+        assignMenus(reviewer, 23013, granted);
+        expectCode(
+                api(
+                        "DELETE",
+                        "/admin-api/system/notify-template/delete?id=" + templateId,
+                        null,
+                        token,
+                        1),
+                0);
+        assertNull(
+                api("GET", "/admin-api/system/notify-template/get?id=" + templateId, null, token, 1)
+                        .get("data"));
+        assignMenus(reviewer, 23013, queries);
+    }
+
     private Map<String, Object> awaitMailStatus(String token, String logId, int expected)
             throws Exception {
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(12);

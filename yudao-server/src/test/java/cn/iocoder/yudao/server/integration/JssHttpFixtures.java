@@ -75,6 +75,9 @@ public class JssHttpFixtures
                         INSERT INTO system_user_role (user_id,role_id,tenant_id) VALUES (23001,23001,1),(23002,23002,1),(23004,23004,1),(23005,23001,1),(23007,23001,1),(23008,23001,1);
                         INSERT INTO system_user_role (user_id,role_id,tenant_id) VALUES (33001,33001,91001);
                         INSERT INTO system_role (id,name,code,sort,data_scope,status,type,tenant_id) VALUES (23012,'HTTP mail','jss_http_mail',12,1,0,2,1);
+                        INSERT INTO system_role (id,name,code,sort,data_scope,status,type,tenant_id) VALUES (23013,'HTTP notify','jss_http_notify',13,1,0,2,1);
+                        INSERT INTO system_user_role (user_id,role_id,tenant_id) VALUES (23013,23013,1);
+                        INSERT INTO system_role_menu (role_id,menu_id,tenant_id) SELECT 23013,id,1 FROM system_menu WHERE permission='jss:workspace:access' AND deleted=b'0';
                         INSERT INTO system_user_role (user_id,role_id,tenant_id) VALUES (23012,23012,1);
                         INSERT INTO system_role_menu (role_id,menu_id,tenant_id) SELECT 23012,id,1 FROM system_menu WHERE permission='jss:workspace:access' AND deleted=b'0';
                         INSERT INTO system_role (id,name,code,sort,data_scope,status,type,tenant_id) VALUES (23011,'HTTP websocket','jss_http_websocket',11,1,0,2,1);
@@ -153,6 +156,7 @@ public class JssHttpFixtures
                 "INSERT INTO system_users (id,username,nickname,password,status,tenant_id,mobile) VALUES (23008,'jssitmenu','HTTP menu employee',?,0,1,'13800009008')",
                 "INSERT INTO system_users (id,username,nickname,password,status,tenant_id,mobile) VALUES (23009,'jssitmulti','HTTP multi employee',?,0,1,'13800009009')",
                 "INSERT INTO system_users (id,username,nickname,password,status,tenant_id,mobile) VALUES (23012,'jssitmail','HTTP mail',?,0,1,'13800009012')",
+                "INSERT INTO system_users (id,username,nickname,password,status,tenant_id,mobile) VALUES (23013,'jssitnotify','HTTP notify',?,0,1,'13800009013')",
                 "INSERT INTO system_users (id,username,nickname,password,status,tenant_id,mobile) VALUES (23011,'jssitwebsocket','HTTP websocket',?,0,1,'13800009011')",
                 "INSERT INTO system_users (id,username,nickname,password,status,tenant_id,mobile) VALUES (33001,'jssitforeign','HTTP foreign',?,0,91001,'13800009001')"
             };
@@ -165,7 +169,7 @@ public class JssHttpFixtures
             for (int id :
                     new int[] {
                         23001, 23002, 23003, 23004, 23005, 23006, 23007, 23008, 23009, 23010, 23011,
-                        23012
+                        23012, 23013
                     }) {
                 try (var statement =
                         connection.prepareStatement(

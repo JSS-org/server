@@ -110,4 +110,16 @@ public class PayAppController {
         List<PayAppDO> appListDO = appService.getAppList();
         return success(PayAppConvert.INSTANCE.convertList(appListDO));
     }
+
+    @GetMapping("/simple-list")
+    @Operation(summary = "获得支付查询筛选所需的应用精简列表")
+    @PreAuthorize(
+            "@ss.hasAnyPermissions('pay:app:query', 'pay:channel:query', 'pay:order:query', 'pay:refund:query', 'pay:notify:query', 'pay:transfer:query')")
+    public CommonResult<List<PayAppSimpleRespVO>> getSimpleAppList() {
+        // Historical orders may refer to disabled applications; retain their labels too.
+        return success(
+                convertList(
+                        appService.getAppList(),
+                        app -> new PayAppSimpleRespVO(app.getId(), app.getName())));
+    }
 }

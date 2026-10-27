@@ -2023,3 +2023,11 @@ Redis程序仍读取拒绝，真实公告CRUD/备注/权限/租户与完整商�
 模板update/delete先锁根当前读，修改再按编号当前读锁两类旧子行做diff。首次十项全过12.889秒；最终新增保留计费ID的六并发编辑，十一项全过13.079秒、零失败/错误/跳过，`.runtime/freight-concurrent-final.log/XML`与`.runtime/jss-mysql/freight-template-service-test.xml`。全替换和保留ID两种竞争均要求六次保存都成功，最终只有一套有效计费/包邮行，根名称/排序/模式与该套区域/金额一致；不要求固定线程获胜。删除后旧事务返回原不存在错误且无有效孤立子行。原八项事务/租户/Long/查询继续实际执行，随机库残留0。
 
 常规服务器依赖专项同上：47项中36执行通过、十一条件MySQL跳过，零失败/错误，测试编译成功27.447秒，`.runtime/freight-concurrent-regression.log`。五Java逐类Spotless apply/check、Python编译及差异检查通过，无新Flyway/完整verify/HTTP/Redis证据。最后完整保存生效的语义保留，没有版本号或字段合并；重名创建/更名竞争、普通读多查询快照、旧子行ID友好拒绝、商品引用与全局死锁/吞吐仍待验。
+
+## 2026-10-27 支付应用精简列表的方法鉴权与投影
+
+使用交接wrapper串行执行`.runtime/maven-integration.cmd -B -ntp -Pjss-mall -pl yudao-module-pay -am test -Dtest=PayAppLookupControllerTest -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true`，七项实际执行、零失败/错误/跳过10.518秒，reactor33.667秒，日志`.runtime/pay-app-lookup-test.log`。必须选择jss-mall profile；最初未选profile时reactor不含pay而报错，没有将那次启动错误记为业务复现。
+
+格式化后`.runtime/maven-integration.cmd -B -ntp -Pjss-mall -pl yudao-server -am test -Dtest=PayAppLookupControllerTest,PayWalletControllerTest -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true`八项实际执行全部通过，七新方法鉴权10.152秒、原钱包Controller一项0.127秒，全部服务器依赖/测试编译46.288秒，日志`.runtime/pay-app-lookup-regression.log`和pay模块surefire两份XML。三个改动Java分别用-N spotless:apply/check与单类spotlessFiles检查通过，`.runtime/pay-lookup-format/check-*.log`；没有全仓格式化。
+
+新七项实例化生产PayAppController的真实Spring方法鉴权代理、生产SecurityFrameworkServiceImpl和JSON Long序列化模块，覆盖六query权限各自与工作台上限同时满足时通过、空列表、匿名/旧merchant权限/create-only拒绝、native权限和上限落在OR不同分支时拒绝、空上限拒绝native通配授权、精简读取不提升完整/get和/list权限，以及已停用应用名称仍保留、超JS安全范围Long输出字符串、序列化仅id/name而无appKey/回调URL/备注等字段。PermissionCommonApi和AppService数据为Mockito替身，不是数据库RBAC、HTTP FilterChain、实际租户SQL、Redis或浏览器验收；没有部署/迁移/开发库或运行jar替换。原PayAppServiceTest仍为上游Disabled，未解禁也未计入执行成功数。

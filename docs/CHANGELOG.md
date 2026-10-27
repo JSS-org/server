@@ -5038,3 +5038,34 @@ Long显式主键会提升该临时库后续会员自增编号，预期用于发�
 ### 未做 / 后续
 
 继续真实HTTP/H5/RBAC与报价下单链、跨模板名称竞争、旧子行ID业务错误及商品引用删除策略。没有新Flyway、Redis、完整verify或部署结果，开发库/运行jar及整合验收版本不变。
+
+## [2026-10-27 22:49 ~ 22:55] 为支付筛选提供受查询权限控制的应用精简列表
+
+### 意图
+
+原管理端支付筛选器调用/list需要pay:merchant:query，且该接口返回完整配置；支付订单等查询账号不应为加载应用名称而扩大应用配置权限。本批为保留原支付页面的模块迁移补齐实际阻断接口。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| yudao-module-pay/.../controller/admin/app/PayAppController.java | 新增端点 | /simple-list接受六种支付query能力任一项，仅投影编号/名称 |
+| yudao-module-pay/.../app/vo/PayAppSimpleRespVO.java | 新增 | 独立id/name DTO，不继承完整应用配置 |
+| yudao-module-pay/.../controller/admin/app/PayAppLookupControllerTest.java | 新增 | 七项实际方法鉴权代理/工作台上限及JSON投影契约 |
+| docs/architecture.md / testing.md / CHANGELOG.md | 更新/追加 | 请求路径、权限边界、实际证据及未验项目 |
+
+### 结构关系
+
+新Controller分支→原SecurityFrameworkService的任一query判断（工作台上限先交集）→原AppService/Mapper查询→独立精简DTO。App/channel/order/refund/notify/transfer的query任一项可读名称，原/list及/get授权和响应不变。原tenant_id/逻辑删除路径保留，停用应用仍可用于历史记录筛选；不增加权限授予或数据库对象。
+
+### 验证证据
+
+七新项首次全部通过10.518秒；格式化后服务器依赖回归八项实际执行全过，其中七新项10.152秒、原钱包一项0.127秒，reactor46.288秒，零失败/错误/跳过，命令和XML见testing.md。真实方法代理与生产权限上限/JSON模块执行，RBAC存储和业务数据用Mockito。六权限各自通过、非query/匿名/OR跨分支/空上限拒绝、不得提升完整配置权限及仅id/name/Long字符串投影均有断言。三Java定向Spotless apply/check及差异检查通过。
+
+### 影响面 / 风险
+
+新增只读端点，原管理端列表保持兼容。新移动支付筛选器须随新后端版本切至/simple-list；旧运行jar没有该端点，不能在未更新后端时声明联调可用。字段精简不替代SQL租户隔离，底层原路径本次仅源码检查，没有实际跨租户请求结果。
+
+### 未做 / 后续
+
+继续隔离服务的实际HTTP/租户/RBAC和原支付H5、Demo写入权限、cashier及第三方支付测试环境。不修改开发库、角色、服务进程或运行jar，无新Flyway/Redis/完整verify，整合验收版本不前移。

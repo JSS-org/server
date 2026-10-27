@@ -4850,3 +4850,33 @@ Redis程序仍不可读，真实HTTP/H5/RBAC、订单/签到完整奖励链、�
 ### 未做 / 后续
 
 尚未迁入订单/售后完整前端操作，继续按原全量计划推进。无新增HTTP/RBAC/支付渠道/Redis、Flyway或全量verify；原Redis依赖PayOrderServiceTest未跑，不能以本专项替代。开发库/运行jar未改，V012部署前置及a0a583c44a整合验收版本不变。
+
+## [2026-10-27 11:34 ~ 11:40] 管理端核销码响应保留字符串
+
+### 意图
+
+接入自提页面时发现订单DO为String、管理端BaseVO为Long，转换会丢失前导零，非数字或超Long范围值甚至无法返回详情。
+
+### 改了什么
+
+| 文件 | 变更 | 内容 |
+| --- | --- | --- |
+| TradeOrderBaseVO.java | 修复 | 核销码响应类型与DO保持String |
+| TradeOrderPickUpCodeConvertTest.java | 新增 | 真实MapStruct列表/详情转换保留前导零、字母及超Long范围码 |
+| docs/testing.md / architecture.md / CHANGELOG.md | 更新/追加 | 转换证据与兼容边界 |
+
+### 结构关系
+
+原String数据库字段 → TradeOrderDO → 生产TradeOrderConvert生成实现 → 管理端列表/详情/查码共用BaseVO，统一不再数值化。请求核销码原本就是String，不改查询或核销授权。
+
+### 验证证据
+
+修复前两项：一断言失败（001234变1234）、一NumberFormatException，0.126秒，`.runtime/pick-up-code-before.log`。修复后两项转换0.020秒全过，联合5请求VO和2Mockito价格测试共九项执行、零失败/错误/跳过；30模块服务器依赖测试编译成功，`.runtime/pick-up-code-after.log`。两个Java定向Spotless、差异检查通过。
+
+### 影响面 / 风险
+
+核销码JSON值改为字符串，消费端应按不透明码处理；统一前端已保持字符串。无需数据库迁移，不重写原码。测试使用生产转换器，不包含真实HTTP序列化、MySQL核销、门店权限或Redis链。
+
+### 未做 / 后续
+
+继续完成五页交易前端和真实HTTP/H5/RBAC核销验收；没有升级开发库/运行jar。V012前置、Redis读取权限问题和整合验收版本不变。

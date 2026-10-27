@@ -1985,6 +1985,8 @@ Redis程序仍读取拒绝，真实公告CRUD/备注/权限/租户与完整商�
 
 ## 2026-10-27 后台调价与交易/订单项/支付单一致性
 
+独立核销码转换专项：TradeOrderPickUpCodeConvertTest直接调用生产MapStruct生成实现，修复前两项一失败/一错误0.126秒，前导零丢失且字母码NumberFormatException；改BaseVO为String后两项0.020秒全过。联合5请求VO和2Mockito价格测试共九项执行、零失败/错误/跳过，服务器30模块依赖测试编译成功；`.runtime/pick-up-code-before.log`和`pick-up-code-after.log`。两个Java定向Spotless和差异检查通过。只证明列表/详情转换保真，不含真实HTTP/MySQL核销、门店RBAC或Redis；无新迁移、数据库/运行jar变更。
+
 同一Maven wrapper环境执行 `python script/jss/verify_order_price_services.py`。脚本仅在已归属MySQL8.4.9:13316的 `jss_order_price_verify_<12位随机值>` 中，提取不可变V008交易单/订单项及V004支付单三张原始表DDL。实例归属、报告时效/十二项/零跳过检查、日志口令脱敏与finally删库沿用专项约定；没有导入开发账号/授权或改开发库。
 
 实际装配TradeOrderUpdateServiceImpl、PayOrderApiImpl、PayOrderServiceImpl和三Mapper/租户SQL、生产事务注解advice；没有Service/Mapper替身。只连接调价实际调用的依赖，不实例化未调用的支付客户端/Redis/MQ，未装配TradeOrderLogAspect或完整容器。因此不计真实支付通知、审计切面、HTTP/RBAC或外部渠道验收。另一连接提交支付状态只是竞态夹具，不冒充实际支付回调。

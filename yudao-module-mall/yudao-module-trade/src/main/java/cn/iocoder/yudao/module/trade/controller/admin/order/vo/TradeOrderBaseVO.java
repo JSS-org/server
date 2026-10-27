@@ -101,7 +101,7 @@ public class TradeOrderBaseVO {
     private Long pickUpStoreId;
 
     @Schema(description = "自提核销码", example = "10")
-    private Long pickUpVerifyCode;
+    private String pickUpVerifyCode;
 
     @Schema(description = "配送模板编号", example = "1024")
     private Long deliveryTemplateId;

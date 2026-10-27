@@ -16,8 +16,13 @@ import cn.iocoder.yudao.module.pay.api.notify.dto.PayRefundNotifyReqDTO;
 import cn.iocoder.yudao.module.pay.api.notify.dto.PayTransferNotifyReqDTO;
 import cn.iocoder.yudao.module.pay.controller.admin.demo.vo.order.PayDemoOrderCreateReqVO;
 import cn.iocoder.yudao.module.pay.controller.admin.demo.vo.withdraw.PayDemoWithdrawCreateReqVO;
+import cn.iocoder.yudao.module.pay.controller.admin.order.PayOrderController;
+import cn.iocoder.yudao.module.pay.controller.admin.order.vo.PayOrderSubmitReqVO;
+import cn.iocoder.yudao.module.pay.service.app.PayAppService;
 import cn.iocoder.yudao.module.pay.service.demo.PayDemoOrderService;
 import cn.iocoder.yudao.module.pay.service.demo.PayDemoWithdrawService;
+import cn.iocoder.yudao.module.pay.service.order.PayOrderService;
+import cn.iocoder.yudao.module.pay.service.wallet.PayWalletService;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +52,9 @@ class PayDemoPermissionControllerTest {
     private PayDemoOrderService orderService;
     private PayDemoWithdrawService withdrawService;
     private PermissionCommonApi permissions;
+    private PayOrderController cashier;
+    private PayOrderService payOrders;
+    private PayWalletService wallets;
     private final Set<String> grants = new HashSet<>();
 
     private record Action(String permission, Supplier<?> invoke) {}
@@ -60,6 +68,9 @@ class PayDemoPermissionControllerTest {
         orderService = context.getBean(PayDemoOrderService.class);
         withdrawService = context.getBean(PayDemoWithdrawService.class);
         permissions = context.getBean(PermissionCommonApi.class);
+        cashier = context.getBean(PayOrderController.class);
+        payOrders = context.getBean(PayOrderService.class);
+        wallets = context.getBean(PayWalletService.class);
         assertTrue(AopUtils.isAopProxy(orders));
         assertTrue(AopUtils.isAopProxy(withdrawals));
         when(permissions.hasAnyPermissions(eq(20L), any(String[].class)))
@@ -124,6 +135,28 @@ class PayDemoPermissionControllerTest {
                 error instanceof AccessDeniedException
                         || error instanceof AuthenticationCredentialsNotFoundException,
                 error.toString());
+    }
+
+    @Test
+    void cashierSubmissionRequiresItsOwnNativeAndWorkspacePermissionBeforeWalletOrPaymentWork() {
+        var request = new PayOrderSubmitReqVO().setId(9007199254740993L).setChannelCode("mock");
+        denied(() -> cashier.submitPayOrder(request));
+        grants.add("pay:order:query");
+        login(Set.copyOf(grants));
+        denied(() -> cashier.submitPayOrder(request));
+        grants.add("pay:order:submit");
+        denied(() -> cashier.submitPayOrder(request));
+        login(Set.of("pay:order:submit"));
+        grants.remove("pay:order:submit");
+        denied(() -> cashier.submitPayOrder(request));
+        grants.add("pay:order:submit");
+        login(Set.of());
+        denied(() -> cashier.submitPayOrder(request));
+        verifyNoInteractions(payOrders, wallets);
+        login(Set.of("pay:order:submit"));
+        assertNotNull(cashier.submitPayOrder(request));
+        verify(payOrders).submitOrder(eq(request), any());
+        verifyNoInteractions(wallets);
     }
 
     @Test
@@ -225,7 +258,30 @@ class PayDemoPermissionControllerTest {
     @EnableMethodSecurity(proxyTargetClass = true, jsr250Enabled = true)
     static class Config {
         @Bean
-        PayDemoOrderService orderService() {
+        PayOrderService payOrders() {
+            return mock(PayOrderService.class);
+        }
+
+        @Bean
+        PayWalletService wallets() {
+            return mock(PayWalletService.class);
+        }
+
+        @Bean
+        PayAppService appService() {
+            return mock(PayAppService.class);
+        }
+
+        @Bean
+        PayOrderController cashier(PayOrderService service, PayWalletService wallets) {
+            var controller = new PayOrderController();
+            ReflectionTestUtils.setField(controller, "orderService", service);
+            ReflectionTestUtils.setField(controller, "payWalletService", wallets);
+            return controller;
+        }
+
+        @Bean
+        PayDemoOrderService demoOrders() {
             return mock(PayDemoOrderService.class);
         }
 

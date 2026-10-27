@@ -95,6 +95,7 @@ public class PayOrderController {
 
     @PostMapping("/submit")
     @Operation(summary = "提交支付订单")
+    @PreAuthorize("@ss.hasPermission('pay:order:submit')")
     public CommonResult<PayOrderSubmitRespVO> submitPayOrder(
             @RequestBody PayOrderSubmitReqVO reqVO) {
         // 1. 钱包支付事，需要额外传 user_id 和 user_type

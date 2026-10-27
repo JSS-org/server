@@ -5069,3 +5069,36 @@ Long显式主键会提升该临时库后续会员自增编号，预期用于发�
 ### 未做 / 后续
 
 继续隔离服务的实际HTTP/租户/RBAC和原支付H5、Demo写入权限、cashier及第三方支付测试环境。不修改开发库、角色、服务进程或运行jar，无新Flyway/Redis/完整verify，整合验收版本不前移。
+
+## [2026-10-27 23:06 ~ 23:30] 为支付示例交互补齐独立操作权限及可审阅的定义迁移
+
+### 意图
+
+保留原示例页面时发现两组交互Controller仅依赖后台登录，没有区分查询、创建和资金动作。模块接入须复用实际RBAC，不能把工作台访问资格或query权限当作退款/转账授权。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| PayDemoOrderController / PayDemoWithdrawController.java | 修改 | 六个交互端点各要求对应query/create/refund或transfer权限，原通知PermitAll不改 |
+| PayDemoPermissionControllerTest.java | 新增 | 七项生产方法代理及工作台上限/管理员actor/通知委托契约 |
+| sql/jss/migration/mysql/V013__pay_demo_permissions.sql | 新增 | 六项隐藏权限定义，无角色、用户或套餐授权，不重启用旧停用节点 |
+| script/jss/verify_pay_demo_permissions.py | 新增 | 独立MySQL六项迁移元数据/幂等/保留验证与清理 |
+| script/jss/verify_migrations.py | 扩充 | 保留V012专项演练，增加fresh/受管V012→V013及重复迁移 |
+| sql/jss/README.md / docs/architecture.md / testing.md / CHANGELOG.md | 更新/追加 | 部署前置、调用链、真实证据与边界 |
+
+### 结构关系
+
+交互Controller→原SecurityFrameworkService的精确业务权限→原Service；工作台凭证继续与native RBAC取交集。创建订单/转账保留当前管理员ID，页面不传会员ID替代。V013只登记定义，角色和套餐须经现有管理流程明确授权；通知回调仍由原业务服务校验，不依赖交互用户权限。
+
+### 验证证据
+
+修复前query-only用例一项实际失败9.725秒，未拒绝创建；修复后七项通过，最终十五项回归全执行、零失败/错误/跳过，服务器依赖/测试编译约61秒。三Java定向Spotless及Python语法/差异检查通过。独立MySQL迁移元数据六项、完整真实Flyway生命周期二十项全过，含V012升级V013保留旧权限/角色/套餐与经验历史及重复校验，随机库残留0。命令、时长及XML见testing.md。
+
+### 影响面 / 风险
+
+原先仅登录的示例操作者现在必须有明确权限。部署应先审阅/迁移/validate V013，再配置批准的租户套餐与角色；不自动扩大员工授权。真实方法鉴权已执行，但业务资金和权限存储为替身；迁移SQL虽在真实MySQL/Flyway执行，不代表真实认证HTTP、提供商通知或出款已验。
+
+### 未做 / 后续
+
+尚未部署、迁移开发库、修改角色或运行jar；无新真实HTTP/Redis/H5或支付提供商结果。继续cashier权限/返回URL、原页分页/样式依赖和整批UI/真实业务验收，保留全量页面范围及原整合验收版本。

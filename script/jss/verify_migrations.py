@@ -42,7 +42,7 @@ def main():
                           FLYWAY_TABLE='must_not_override_jss_history', FLYWAY_CLEAN_DISABLED='false')
         framework = (ROOT / 'sql/mysql/ruoyi-vue-pro.sql').read_text(encoding='utf8')
         statements = []
-        for table in sorted(FRAMEWORK):
+        for table in sorted(FRAMEWORK | {'system_tenant_package'}):
             match = re.search(r'CREATE TABLE `' + table + r'`[\s\S]*?ENGINE\s*=\s*InnoDB[^;]*;', framework)
             assert match, table
             statements.append(match[0])
@@ -67,6 +67,9 @@ def main():
         assert managed.sql('SELECT COUNT(*) FROM system_role_menu') == '0'
         assert managed.sql("SELECT COUNT(*) FROM system_menu WHERE permission LIKE 'jss:%'") == '3'
         checks.append('deployment creates definitions without accounts, bindings or role grants')
+        assert managed.sql("SELECT COUNT(*) FROM system_menu WHERE permission LIKE 'pay:demo-%' AND type=3 AND status=0 AND visible=b'0' AND deleted=b'0'") == '6'
+        assert managed.sql('SELECT COUNT(*) FROM system_tenant_package') == '0'
+        checks.append('fresh V013 registers six hidden demo capabilities without role or tenant-package grants')
         managed.sql("INSERT INTO member_user (tenant_id,mobile,status,register_ip) VALUES (1,'13800000002',0,'127.0.0.1')")
         managed.execute('migrate')
         managed.execute('validate')
@@ -127,8 +130,18 @@ def main():
         ]))
         snapshot_sql = "SELECT GROUP_CONCAT(CONCAT_WS('|',id,user_id,biz_type,biz_id,experience,total_experience,tenant_id,deleted+0) ORDER BY id) FROM member_experience_record"
         old_events = upgrade.sql(snapshot_sql)
-        upgrade.execute('migrate')
-        upgrade.execute('validate')
+        def migrate_through(version):
+            with tempfile.TemporaryDirectory(prefix=f'flyway-v{version:03}-', dir=RUNTIME) as temp:
+                prior = Path(temp).resolve()
+                assert prior.parent == RUNTIME.resolve()
+                shutil.copy2(ASSETS / 'pom.xml', prior / 'pom.xml')
+                (prior / 'migration/mysql').mkdir(parents=True)
+                for file in (ASSETS / 'migration/mysql').glob('V*__*.sql'):
+                    if int(re.match(r'V(\d+)__', file.name)[1]) <= version:
+                        shutil.copy2(file, prior / 'migration/mysql' / file.name)
+                upgrade.flyway('migrate', assets=prior)
+                upgrade.flyway('validate', assets=prior)
+        migrate_through(12)
         assert upgrade.sql(snapshot_sql) == old_events
         assert upgrade.sql('SELECT COUNT(*) FROM member_experience_event') == '6'
         assert upgrade.sql('SELECT COUNT(*) FROM member_experience_event WHERE requested_experience IS NULL') == '6'
@@ -141,8 +154,7 @@ def main():
             assert 'duplicate' in str(error).lower(), str(error)
         checks.append('V012 unique receipt rejects replay without changing legacy event count')
         upgrade.sql("INSERT INTO member_experience_event (user_id,biz_type,biz_id,requested_experience,tenant_id) VALUES (9007199254740993,11,'new-request',10,1)")
-        upgrade.execute('migrate')
-        upgrade.execute('validate')
+        migrate_through(12)
         assert upgrade.sql('SELECT COUNT(*) FROM member_experience_event') == '7'
         assert upgrade.sql("SELECT requested_experience FROM member_experience_event WHERE biz_id='new-request'") == '10'
         assert upgrade.sql(snapshot_sql) == old_events
@@ -151,6 +163,27 @@ def main():
         assert upgrade.sql('SELECT process_user_id FROM infra_api_error_log WHERE id=1') == '9007199254740993'
         assert upgrade.sql("SELECT GROUP_CONCAT(COALESCE(process_user_id,'NULL') ORDER BY id) FROM infra_api_error_log WHERE id>1") == 'NULL,0,-1'
         checks.append('managed V010 upgrades to V011, preserving int/null/zero/negative actors and content, then repeat migrate/validate retain Long IDs and remarks')
+        assert upgrade.sql(f'SELECT MAX(CAST(version AS UNSIGNED)) FROM {HISTORY} WHERE success=1') == '12'
+        upgrade.sql("INSERT INTO system_menu (id,name,permission,type,sort,status,visible) VALUES (9007199254740881,'existing disabled demo refund','pay:demo-order:refund',3,80,1,b'1');"
+                    "INSERT INTO system_role_menu (id,role_id,menu_id,tenant_id) VALUES (27,27,9007199254740881,1);"
+                    "INSERT INTO system_tenant_package (id,name,status,menu_ids) VALUES (27,'existing package',0,'[9007199254740881]');")
+        retained = {table: upgrade.sql(f'SELECT * FROM {table} ORDER BY id') for table in ['system_role_menu', 'system_tenant_package']}
+        existing_node = upgrade.sql('SELECT * FROM system_menu WHERE id=9007199254740881')
+        upgrade.execute('migrate')
+        upgrade.execute('validate')
+        assert upgrade.sql(f'SELECT MAX(CAST(version AS UNSIGNED)) FROM {HISTORY} WHERE success=1') == '13'
+        assert upgrade.sql("SELECT COUNT(*) FROM system_menu WHERE permission LIKE 'pay:demo-%' AND deleted=b'0'") == '6'
+        assert upgrade.sql('SELECT * FROM system_menu WHERE id=9007199254740881') == existing_node
+        assert all(upgrade.sql(f'SELECT * FROM {table} ORDER BY id') == value for table, value in retained.items())
+        assert upgrade.sql(snapshot_sql) == old_events
+        assert upgrade.sql('SELECT COUNT(*) FROM member_experience_event') == '7'
+        checks.append('managed V012 upgrades to V013 preserving disabled custom permissions, Long menu IDs, existing grants/packages and experience history')
+        menus = upgrade.sql('SELECT * FROM system_menu ORDER BY id')
+        upgrade.execute('migrate')
+        upgrade.execute('validate')
+        assert upgrade.sql('SELECT * FROM system_menu ORDER BY id') == menus
+        assert all(upgrade.sql(f'SELECT * FROM {table} ORDER BY id') == value for table, value in retained.items())
+        checks.append('repeated V013 migrate/validate preserve menu metadata and existing grants without duplication')
         os.environ['JSS_DB_NAME'] = database
         try:
             managed.execute('init')

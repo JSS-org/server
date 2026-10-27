@@ -2031,3 +2031,13 @@ Redis程序仍读取拒绝，真实公告CRUD/备注/权限/租户与完整商�
 格式化后`.runtime/maven-integration.cmd -B -ntp -Pjss-mall -pl yudao-server -am test -Dtest=PayAppLookupControllerTest,PayWalletControllerTest -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true`八项实际执行全部通过，七新方法鉴权10.152秒、原钱包Controller一项0.127秒，全部服务器依赖/测试编译46.288秒，日志`.runtime/pay-app-lookup-regression.log`和pay模块surefire两份XML。三个改动Java分别用-N spotless:apply/check与单类spotlessFiles检查通过，`.runtime/pay-lookup-format/check-*.log`；没有全仓格式化。
 
 新七项实例化生产PayAppController的真实Spring方法鉴权代理、生产SecurityFrameworkServiceImpl和JSON Long序列化模块，覆盖六query权限各自与工作台上限同时满足时通过、空列表、匿名/旧merchant权限/create-only拒绝、native权限和上限落在OR不同分支时拒绝、空上限拒绝native通配授权、精简读取不提升完整/get和/list权限，以及已停用应用名称仍保留、超JS安全范围Long输出字符串、序列化仅id/name而无appKey/回调URL/备注等字段。PermissionCommonApi和AppService数据为Mockito替身，不是数据库RBAC、HTTP FilterChain、实际租户SQL、Redis或浏览器验收；没有部署/迁移/开发库或运行jar替换。原PayAppServiceTest仍为上游Disabled，未解禁也未计入执行成功数。
+
+## 2026-10-27 示例订单与提现的独立权限及V013
+
+修复前使用交接wrapper `-o -B -ntp -Pjss-mall -pl yudao-module-pay -am test -Dtest=PayDemoPermissionControllerTest#queryOnlyDoesNotAuthorizeWrites -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true`，一项实际失败9.725秒：只有query能力的方法层调用没有拒绝创建，日志/XML `.runtime/pay-demo-permissions-before.log/xml`。这是方法授权复现，非匿名HTTP或真实资金调用。补六个PreAuthorize后新七项实际执行通过11.211秒，`.runtime/pay-demo-permissions-after.log`。
+
+三Java定向Spotless apply/check后，使用同wrapper `-o -B -ntp -Pjss-mall -pl yudao-server -am test -Dtest=PayDemoPermissionControllerTest,PayAppLookupControllerTest,PayWalletControllerTest -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true`，十五项全部执行、零失败/错误/跳过，七新项0.673秒、查询七项10.92秒、钱包一项0.227秒，服务器依赖/测试编译约61秒，`.runtime/pay-demo-permissions-regression.log`及pay模块三XML。真实Controller代理、生产SecurityFrameworkService、方法/JSR250权限运行；RBAC存储和资金Service是Mockito，覆盖六动作逐一同时需要native/ceiling、query-only拒绝四写动作、单写不含其他能力、空上限拒绝native通配、native无上限仍需授权、管理员actor=20及三个PermitAll通知仍委托原Service。未调用实际支付、退款、转账提供商或认证HTTP过滤链。
+
+`python script/jss/verify_pay_demo_permissions.py`在已归属MySQL8.4.9:13316随机三表库实际执行六项：精确六权限/隐藏按钮、重复应用不重写、原菜单/角色授权/套餐逐字保持、停用自定义节点不重启用、软删除历史保留且只生成一个有效替代；最后随机库残留0，`.runtime/jss-mysql/pay-demo-permissions-schema.json`。原生DDL来自框架基座，未触碰开发库或执行角色授权。
+
+设置JSS_MAVEN_COMMAND为本机忽略目录的maven-flyway-v013-offline.cmd（封装原wrapper并追加-o）后，`python -u script/jss/verify_migrations.py`完整二十项真实Flyway生命周期全过，`.runtime/pay-demo-flyway-lifecycle.log`。新增fresh V013六定义无grant、受管V012升级V013保留停用自定义权限/Long菜单/原角色及套餐与经验历史、重复V013 migrate/validate保持全部元数据；原V010–V012升级、校验和拒绝及初始化守卫继续执行。三随机库最后均已删除并核对无匹配schema。没有开发迁移/发布或真实示例HTTP/H5结果。

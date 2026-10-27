@@ -852,3 +852,9 @@ V012只新建事件表并按原经验历史封存外部事件，包含已逻辑�
 支付筛选器使用GET /admin-api/pay/app/simple-list，经现有SecurityFrameworkService.hasAnyPermissions检查app/channel/order/refund/notify/transfer六类query任一项；工作台会话先取权限上限与候选项交集，再交由原RBAC API判断。查询能力不等于支付应用配置读取能力，原/list及/get权限不变。Controller复用PayAppService.getAppList及原Mapper，在响应边界仅构造独立PayAppSimpleRespVO的id/name，不继承完整配置VO，保留已停用应用以筛选历史记录。
 
 底层仍是原pay_app及V004的tenant_id/逻辑删除路径；没有TenantIgnore、跨租户查询、表/迁移或权限授予变更。新测试实际运行方法鉴权代理与生产JSON模块，RBAC存储和业务数据是替身；实际请求认证、SQL租户隔离及H5联调仍须在隔离服务验收，不将源码路径检查当作已执行跨租户验证。
+
+## 支付示例的交互权限与通知回调（2026-10-27）
+
+示例订单的page/create/refund分别要求pay:demo-order:query/create/refund，示例提现的page/create/transfer分别要求pay:demo-withdraw:query/create/transfer。生产SecurityFrameworkService继续校验native RBAC与工作台权限上限交集，工作台入口、查询或某一写动作都不代表其他动作。当前管理员编号仍传入原创建/转账Service，不用会员编号替代。
+
+V013只创建六个隐藏按钮权限定义；套餐和角色必须明确配置，不自动授权，也不重启用已有停用节点。三个异步通知方法仍保留原PermitAll及Service业务通知校验路径，不把后台交互权限套到支付通知上。测试执行真实方法鉴权代理，但业务资金/权限存储用替身；通知测试仅证明委托关系保持，不证明真实提供商通知校验或出款。

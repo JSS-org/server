@@ -160,7 +160,7 @@ public class TradeDeliveryPriceCalculator implements TradePriceCalculator {
                 log.error(
                         "[calculateDeliveryPrice][不能计算快递运费，找不到 templateId({}) 对应的运费模板配置]",
                         templateId);
-                continue;
+                throw exception(PRICE_CALCULATE_DELIVERY_PRICE_TEMPLATE_NOT_FOUND);
             }
             // 1. 优先判断是否包邮。如果包邮不计算快递运费
             if (isExpressTemplateFree(
@@ -199,7 +199,7 @@ public class TradeDeliveryPriceCalculator implements TradePriceCalculator {
             DeliveryExpressTemplateRespBO.Charge templateCharge) {
         if (templateCharge == null) {
             log.error("[calculateExpressFeeByChargeMode][计算快递运费时，找不到 SKU({}) 对应的运费模版]", orderItems);
-            return;
+            throw exception(PRICE_CALCULATE_DELIVERY_PRICE_TEMPLATE_NOT_FOUND);
         }
         double totalChargeValue = getTotalChargeValue(orderItems, chargeMode);
         // 1. 计算 SKU 商品快递费用

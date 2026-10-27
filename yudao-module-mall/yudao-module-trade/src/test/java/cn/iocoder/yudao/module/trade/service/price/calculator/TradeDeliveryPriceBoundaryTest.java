@@ -171,4 +171,37 @@ class TradeDeliveryPriceBoundaryTest extends BaseMockitoUnitTest {
         assertEquals(100, result.getPrice().getDeliveryPrice());
         assertEquals(100, result.getItems().stream().mapToInt(OrderItem::getDeliveryPrice).sum());
     }
+
+    @Test
+    void rejectsAMissingTemplateEvenWhenAnotherTemplateMatchesTheAddress() {
+        var matching =
+                new DeliveryExpressTemplateRespBO().setChargeMode(1).setCharge(charge(1, 29, 1, 0));
+        error(1_011_003_001, () -> run(List.of(item(1, 1L), item(1, 2L)), Map.of(1L, matching)));
+    }
+
+    @Test
+    void rejectsAFreeOnlyRegionWhenItsThresholdIsNotMet() {
+        var freeOnly =
+                new DeliveryExpressTemplateRespBO()
+                        .setChargeMode(1)
+                        .setFree(
+                                new DeliveryExpressTemplateRespBO.Free()
+                                        .setFreeCount(5)
+                                        .setFreePrice(500));
+        error(1_011_003_001, () -> run(List.of(item(3, 1L)), Map.of(1L, freeOnly)));
+    }
+
+    @Test
+    void stillAllowsAFreeOnlyRegionWhenBothThresholdsAreMet() {
+        var freeOnly =
+                new DeliveryExpressTemplateRespBO()
+                        .setChargeMode(1)
+                        .setFree(
+                                new DeliveryExpressTemplateRespBO.Free()
+                                        .setFreeCount(3)
+                                        .setFreePrice(300));
+        var result = run(List.of(item(3, 1L)), Map.of(1L, freeOnly));
+        assertEquals(0, result.getPrice().getDeliveryPrice());
+        assertEquals(300, result.getPrice().getPayPrice());
+    }
 }

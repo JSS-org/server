@@ -1063,6 +1063,15 @@ class JssWorkspaceHttpIT {
                 .join();
     }
 
+    private void assertSocketFrame(SocketProbe probe, String type, String content)
+            throws Exception {
+        String frame = probe.frames.poll(5, TimeUnit.SECONDS);
+        assertNotNull(frame, "Expected actual websocket frame: " + type);
+        Map<String, Object> parsed = JsonUtils.parseObject(frame, new TypeReference<>() {});
+        assertEquals(type, parsed.get("type"));
+        assertTrue(parsed.get("content").toString().contains(content));
+    }
+
     @Test
     void realWebSocketUsesWorkspaceCredentialLiveKefuPermissionsTenantAndParentRevocation()
             throws Exception {
@@ -1114,6 +1123,184 @@ class JssWorkspaceHttpIT {
                                     "kefu_message_type",
                                     "{\"marker\":\"foreign-tenant\"}"));
             assertNull(probe.frames.poll(1, TimeUnit.SECONDS));
+            // Actual original business controllers publish the same frames over real sockets.
+            var memberProbe = new SocketProbe();
+            var memberSocket = connectSocket(member, 1, memberProbe);
+            try {
+                expectCode(
+                        api(
+                                "POST",
+                                "/app-api/promotion/kefu-message/send",
+                                Map.of(
+                                        "contentType",
+                                        1,
+                                        "content",
+                                        "{\"text\":\"actual-member-kefu\"}",
+                                        "senderId",
+                                        33001,
+                                        "senderType",
+                                        2),
+                                member,
+                                1),
+                        0);
+                assertSocketFrame(probe, "kefu_message_type", "actual-member-kefu");
+                assertSocketFrame(memberProbe, "kefu_message_type", "actual-member-kefu");
+                var conversations =
+                        (List<?>)
+                                expectCode(
+                                                api(
+                                                        "GET",
+                                                        "/admin-api/promotion/kefu-conversation/list",
+                                                        null,
+                                                        token,
+                                                        1),
+                                                0)
+                                        .get("data");
+                var conversationRow =
+                        conversations.stream()
+                                .map(row -> (Map<?, ?>) row)
+                                .filter(row -> "23011".equals(row.get("userId").toString()))
+                                .findFirst()
+                                .orElseThrow();
+                String conversationId = conversationRow.get("id").toString();
+                var reply =
+                        Map.of(
+                                "conversationId",
+                                conversationId,
+                                "contentType",
+                                1,
+                                "content",
+                                "{\"text\":\"actual-admin-kefu\"}");
+                expectCode(
+                        api("POST", "/admin-api/promotion/kefu-message/send", reply, token, 1),
+                        403);
+                expectCode(
+                        api(
+                                "PUT",
+                                "/admin-api/promotion/kefu-message/update-read-status?conversationId="
+                                        + conversationId,
+                                null,
+                                token,
+                                1),
+                        403);
+                expectCode(
+                        api(
+                                "PUT",
+                                "/admin-api/promotion/kefu-conversation/update-conversation-pinned",
+                                Map.of("id", conversationId, "adminPinned", true),
+                                token,
+                                1),
+                        403);
+                expectCode(
+                        api(
+                                "DELETE",
+                                "/admin-api/promotion/kefu-conversation/delete?id="
+                                        + conversationId,
+                                null,
+                                token,
+                                1),
+                        403);
+                assignMenus(
+                        reviewer,
+                        23011,
+                        List.of(
+                                entry,
+                                conversation,
+                                message,
+                                menuId("promotion:kefu-message:send"),
+                                menuId("promotion:kefu-message:update"),
+                                menuId("promotion:kefu-conversation:update"),
+                                menuId("promotion:kefu-conversation:delete")));
+                expectCode(
+                        api(
+                                "PUT",
+                                "/admin-api/promotion/kefu-message/update-read-status?conversationId="
+                                        + conversationId,
+                                null,
+                                token,
+                                1),
+                        0);
+                assertSocketFrame(probe, "kefu_message_read_status_change", conversationId);
+                assertSocketFrame(memberProbe, "kefu_message_read_status_change", conversationId);
+                expectCode(
+                        api("POST", "/admin-api/promotion/kefu-message/send", reply, token, 1), 0);
+                assertSocketFrame(probe, "kefu_message_type", "actual-admin-kefu");
+                assertSocketFrame(memberProbe, "kefu_message_type", "actual-admin-kefu");
+                var history =
+                        (List<?>)
+                                expectCode(
+                                                api(
+                                                        "GET",
+                                                        "/admin-api/promotion/kefu-message/list?conversationId="
+                                                                + conversationId,
+                                                        null,
+                                                        token,
+                                                        1),
+                                                0)
+                                        .get("data");
+                assertTrue(
+                        history.stream()
+                                .map(row -> (Map<?, ?>) row)
+                                .anyMatch(
+                                        row ->
+                                                row.get("content")
+                                                                .toString()
+                                                                .contains("actual-member-kefu")
+                                                        && "23011"
+                                                                .equals(
+                                                                        row.get("senderId")
+                                                                                .toString())
+                                                        && "1"
+                                                                .equals(
+                                                                        row.get("senderType")
+                                                                                .toString())
+                                                        && Boolean.TRUE.equals(
+                                                                row.get("readStatus"))));
+                expectCode(
+                        api(
+                                "PUT",
+                                "/admin-api/promotion/kefu-conversation/update-conversation-pinned",
+                                Map.of("id", conversationId, "adminPinned", true),
+                                token,
+                                1),
+                        0);
+                assertEquals(
+                        Boolean.TRUE,
+                        data(api(
+                                        "GET",
+                                        "/admin-api/promotion/kefu-conversation/get?id="
+                                                + conversationId,
+                                        null,
+                                        token,
+                                        1))
+                                .get("adminPinned"));
+                expectCode(
+                        api(
+                                "DELETE",
+                                "/admin-api/promotion/kefu-conversation/delete?id="
+                                        + conversationId,
+                                null,
+                                token,
+                                1),
+                        0);
+                var remaining =
+                        (List<?>)
+                                expectCode(
+                                                api(
+                                                        "GET",
+                                                        "/admin-api/promotion/kefu-conversation/list",
+                                                        null,
+                                                        token,
+                                                        1),
+                                                0)
+                                        .get("data");
+                assertTrue(
+                        remaining.stream()
+                                .map(row -> (Map<?, ?>) row)
+                                .noneMatch(row -> conversationId.equals(row.get("id").toString())));
+            } finally {
+                memberSocket.abort();
+            }
             assignMenus(reviewer, 23011, List.of(entry));
             cn.iocoder.yudao.framework.tenant.core.util.TenantUtils.execute(
                     1L,

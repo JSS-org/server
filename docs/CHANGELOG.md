@@ -4911,3 +4911,37 @@ Long显式主键会提升该临时库后续会员自增编号，预期用于发�
 由hh普通终端运行前端scripts/test-integration-host.mjs，串行执行原workspace/mall完整验收并核对新鲜JUnit/浏览器报告。当前尚未执行，不登记新HTTP/H5通过；开发库、运行jar及V012部署前置未改。
 
 准备复核补充（18:46）：专用昵称前缀缩为HTTP Long，使完整昵称26字、符合原nickname长度30限制；最终测试编译再通过10.190秒，`.runtime/member-browser-fixture-final-compile.log`。这仍不是SQL/HTTP执行证据。
+
+## [2026-10-27 19:13 ~ 19:38] 校验运费模板并拒绝配送金额溢出
+
+### 意图
+
+继续P4物流完整页面迁移前置，防止零续费步长和历史非法模板导致异常，以及运费乘法或配送后应付整数回绕形成错误报价。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| DeliveryExpressRuleUtils.java | 新增 | 请求和运行共用有限、非负及续费步长规则 |
+| expresstemplate下Base/Charge/Free/Create/Update VO | 修改 | 名称长度、合法模式、排序、非空计费行与包邮门槛校验 |
+| trade-api/ErrorCodeConstants.java | 修改 | 非法模板及配送金额越界业务错误 |
+| TradeDeliveryPriceCalculator.java | 修复 | long计算、项/模板/订单总额检查及历史规则兜底 |
+| DeliveryExpressTemplateConvert.java | 修复 | 缺失详情返回null，避免转换空指针 |
+| TradeDeliveryPriceBoundaryTest / DeliveryExpressTemplateValidationTest / DeliveryExpressTemplateConvertTest | 新增 | 计算边界、实际Bean Validation与生产转换回归 |
+| docs/testing.md / CHANGELOG.md | 更新/追加 | 前后有效证据及覆盖边界 |
+
+### 结构关系
+
+沿用原控制器校验→模板Service和原价格计算链；共用纯规则工具同时用于请求校验及报价时历史配置兜底。价格分摊和包邮优先级保留，无新服务、表或迁移。
+
+### 验证证据
+
+修复前新增15项五通过、九失败、一错误，日志及三XML保留于`.runtime/freight-rules-before.log`和`freight-before-*.xml`。最终新15项与原计算18项共33项全部通过、零失败/错误/跳过，服务器30模块依赖/测试编译成功46.646秒，`.runtime/freight-rules-after.log`，复现命令见testing。计算器使用Mockito输入提供者，不是数据库业务验收。12个变更Java逐类定向Spotless格式化，差异检查通过。新增测试初次误用原文件名已恢复，最终原测试无差异且实际执行。
+
+### 影响面 / 风险
+
+零续费金额允许零步长，保持固定运费；正续费必须正步长。新增/修改模板拒绝原先可提交的非法规则，历史记录不改写，报价遇到非法数据返回业务错误。名称128沿用DDL限制。仅覆盖配送阶段金额，不保证此前SKU原价/优惠或全局包邮早返回等路径无溢出。
+
+### 未做 / 后续
+
+继续运费模板完整前端、区域匹配及真实Service/HTTP/H5/RBAC验收；没有新MySQL/Redis/HTTP、Flyway或全量verify结果。开发库、运行jar、V012部署前置及原整合验收版本不变。

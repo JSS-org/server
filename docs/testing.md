@@ -1998,3 +1998,10 @@ Redis程序仍读取拒绝，真实公告CRUD/备注/权限/租户与完整商�
 覆盖两订单正负分摊后三类总额一致、任何非零旧调价拒绝再改、六预读RR快照/一级缓存事务一成功五已调价错误、已支付/已关闭拒绝、租户不可见目标、支付状态另一连接已提交后不同价/同价请求均拒绝、通知未到窗口整体回滚、后置支付SQL和项SQL失败/外层回滚、缺失交易/支付关联、空/零/上下界业务错误。SQL触发器仅在归属随机库制造失败，不替换业务方法。没有验证所有运费/赠品/历史脏项/大单分摊、提交支付报价/支付拓展单与改价竞争、完整取消/退款锁顺序或日志落库。
 
 常规 `-o -Pjss-mall -pl yudao-server -am test -Dtest=TradePriceServiceImplTest,AppTradeOrderSettlementReqVOTest,TradeOrderUpdateServiceTest,JssOrderPriceMySqlServiceIT -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true`（使用交接wrapper）22项中七项执行通过（5请求VO、2Mockito价格计算），15跳过（12条件MySQL、3既有禁用订单Service），零失败/错误；服务器依赖及测试编译成功，`.runtime/order-price-regression.log`。原PayOrderServiceTest依赖内嵌Redis，当前二进制读取权限未恢复，未执行且不将其记为条件通过。五Java定向Spotless、新Python编译及差异检查通过；无新全量verify/Flyway/HTTP或部署结果。
+## 2026-10-27 运费模板规则与金额边界
+
+通过本机 `.runtime/maven-integration.cmd` 串行执行 `-o -Pjss-mall -pl yudao-server -am test -Dtest=TradeDeliveryPriceBoundaryTest,TradeDeliveryPriceCalculatorTest,DeliveryExpressTemplateValidationTest,DeliveryExpressTemplateConvertTest -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true`。最终33项全部实际执行通过、零失败/错误/跳过：新增计算边界10、实际Hibernate Validator三项、生产MapStruct两项及原计算器18项；30模块服务器依赖/测试编译成功，46.646秒，`.runtime/freight-rules-after.log`。输入地址/模板/配置提供者是Mockito，生产价格计算器实际执行；没有新MySQL/HTTP/Redis/H5证据。
+
+有效修复前15项五通过、九失败、一错误，`.runtime/freight-rules-before.log`及`freight-before-{calculator,validation,convert}.xml`：续费零步长、金额乘法正数回绕、非有限或负数规则、未知模式、项/订单应付溢出未正确拒绝，缺失详情转换空指针。新增计算测试最初误用了既有测试文件名，执行前原文件暂被覆盖；现已恢复原文件字节，新增用例独立命名Boundary，最终同时回归原18项。修复前XML中的Calculator类名指新增十项，不指原18项。
+
+正常件数/重量/体积、向上取整、零续费固定运费、包邮门槛及零重量分摊守恒继续通过。请求层拒绝空计费行、非法模式、负数及零步长正续费；运行层对历史规则再次校验并在long中计算运费、项应付及跨模板总额边界。未扩大为所有SKU原价/折扣/营销链的整数安全保证；包邮早返回、区域匹配层级、历史脏数据、真实Service/HTTP/RBAC和运费前端仍待验。没有迁移、开发库或运行jar变化，整合验收版本不前移。

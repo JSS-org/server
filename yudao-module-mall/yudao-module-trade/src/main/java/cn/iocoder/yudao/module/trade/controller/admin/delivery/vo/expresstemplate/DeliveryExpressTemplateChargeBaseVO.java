@@ -1,7 +1,12 @@
 package cn.iocoder.yudao.module.trade.controller.admin.delivery.vo.expresstemplate;
 
+import cn.iocoder.yudao.module.trade.util.delivery.DeliveryExpressRuleUtils;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
@@ -43,4 +48,10 @@ public class DeliveryExpressTemplateChargeBaseVO {
     @Schema(description = "额外价", requiredMode = Schema.RequiredMode.REQUIRED, example = "2000")
     @NotNull(message = "额外价不能为空")
     private Integer extraPrice;
+
+    @JsonIgnore
+    @AssertTrue(message = "计费数量和金额必须非负且有限，有续费时续件数量必须大于零")
+    public boolean isChargeRuleValid() {
+        return DeliveryExpressRuleUtils.validCharge(startCount, startPrice, extraCount, extraPrice);
+    }
 }

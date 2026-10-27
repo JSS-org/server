@@ -46,6 +46,9 @@ public interface DeliveryExpressTemplateConvert {
             DeliveryExpressTemplateDO bean,
             List<DeliveryExpressTemplateChargeDO> chargeList,
             List<DeliveryExpressTemplateFreeDO> freeList) {
+        if (bean == null) {
+            return null;
+        }
         DeliveryExpressTemplateDetailRespVO respVO = convert2(bean);
         respVO.setCharges(convertTemplateChargeList(chargeList));
         respVO.setFrees(convertTemplateFreeList(freeList));

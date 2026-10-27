@@ -23,6 +23,7 @@ import cn.iocoder.yudao.module.trade.service.delivery.bo.DeliveryExpressTemplate
 import cn.iocoder.yudao.module.trade.service.price.bo.TradePriceCalculateReqBO;
 import cn.iocoder.yudao.module.trade.service.price.bo.TradePriceCalculateRespBO;
 import cn.iocoder.yudao.module.trade.service.price.bo.TradePriceCalculateRespBO.OrderItem;
+import cn.iocoder.yudao.module.trade.util.delivery.DeliveryExpressRuleUtils;
 
 import jakarta.annotation.Resource;
 
@@ -170,6 +171,18 @@ public class TradeDeliveryPriceCalculator implements TradePriceCalculator {
             calculateExpressFeeByChargeMode(
                     orderItems, templateBO.getChargeMode(), templateBO.getCharge());
         }
+        long totalDelivery = 0;
+        long totalPay = 0;
+        for (OrderItem item : selectedSkus) {
+            totalDelivery += item.getDeliveryPrice();
+            totalPay += item.getPayPrice();
+        }
+        if (totalDelivery < 0
+                || totalDelivery > Integer.MAX_VALUE
+                || totalPay < 0
+                || totalPay > Integer.MAX_VALUE) {
+            throw exception(PRICE_CALCULATE_DELIVERY_PRICE_OVERFLOW);
+        }
         TradePriceCalculatorHelper.recountAllPrice(result);
     }
 
@@ -190,15 +203,34 @@ public class TradeDeliveryPriceCalculator implements TradePriceCalculator {
         }
         double totalChargeValue = getTotalChargeValue(orderItems, chargeMode);
         // 1. 计算 SKU 商品快递费用
-        int deliveryPrice;
-        if (totalChargeValue <= templateCharge.getStartCount()) {
-            deliveryPrice = templateCharge.getStartPrice();
-        } else {
+        if (!DeliveryExpressRuleUtils.validCharge(
+                templateCharge.getStartCount(),
+                templateCharge.getStartPrice(),
+                templateCharge.getExtraCount(),
+                templateCharge.getExtraPrice())) {
+            throw exception(EXPRESS_TEMPLATE_RULE_INVALID);
+        }
+        long checkedPrice = templateCharge.getStartPrice();
+        if (totalChargeValue > templateCharge.getStartCount()
+                && templateCharge.getExtraPrice() > 0) {
             double remainWeight = totalChargeValue - templateCharge.getStartCount();
             // 剩余重量/ 续件 = 续件的次数. 向上取整
-            int extraNum = (int) Math.ceil(remainWeight / templateCharge.getExtraCount());
-            int extraPrice = templateCharge.getExtraPrice() * extraNum;
-            deliveryPrice = templateCharge.getStartPrice() + extraPrice;
+            double steps = Math.ceil(remainWeight / templateCharge.getExtraCount());
+            if (!Double.isFinite(steps) || steps > Integer.MAX_VALUE) {
+                throw exception(PRICE_CALCULATE_DELIVERY_PRICE_OVERFLOW);
+            }
+            checkedPrice += (long) steps * templateCharge.getExtraPrice();
+        }
+        if (checkedPrice > Integer.MAX_VALUE) {
+            throw exception(PRICE_CALCULATE_DELIVERY_PRICE_OVERFLOW);
+        }
+        int deliveryPrice = (int) checkedPrice;
+        long templatePay = deliveryPrice;
+        for (OrderItem item : orderItems) {
+            templatePay += (long) item.getPayPrice() - item.getDeliveryPrice();
+        }
+        if (templatePay < 0 || templatePay > Integer.MAX_VALUE) {
+            throw exception(PRICE_CALCULATE_DELIVERY_PRICE_OVERFLOW);
         }
 
         // 2. 分摊快递费用到 SKU. 退费的时候，可能按照 SKU 考虑退费金额
@@ -214,6 +246,10 @@ public class TradeDeliveryPriceCalculator implements TradePriceCalculator {
                 partPrice = remainPrice;
             }
             Assert.isTrue(partPrice >= 0, "分摊金额必须大于等于 0");
+            long itemPay = (long) item.getPayPrice() - item.getDeliveryPrice() + partPrice;
+            if (itemPay < 0 || itemPay > Integer.MAX_VALUE) {
+                throw exception(PRICE_CALCULATE_DELIVERY_PRICE_OVERFLOW);
+            }
             // 更新快递运费
             item.setDeliveryPrice(partPrice);
             TradePriceCalculatorHelper.recountPayPrice(item);
@@ -244,25 +280,41 @@ public class TradeDeliveryPriceCalculator implements TradePriceCalculator {
         for (OrderItem orderItem : orderItems) {
             total += getChargeValue(orderItem, chargeMode);
         }
+        if (!Double.isFinite(total) || total < 0) {
+            throw exception(PRICE_CALCULATE_DELIVERY_PRICE_OVERFLOW);
+        }
         return total;
     }
 
     private double getChargeValue(OrderItem orderItem, Integer chargeMode) {
         DeliveryExpressChargeModeEnum chargeModeEnum =
                 DeliveryExpressChargeModeEnum.valueOf(chargeMode);
+        if (chargeModeEnum == null) {
+            throw exception(EXPRESS_TEMPLATE_RULE_INVALID);
+        }
+        double value;
         switch (chargeModeEnum) {
             case COUNT:
-                return orderItem.getCount();
+                value = orderItem.getCount();
+                break;
             case WEIGHT:
-                return orderItem.getWeight() != null
-                        ? orderItem.getWeight() * orderItem.getCount()
-                        : 0;
+                value =
+                        orderItem.getWeight() != null
+                                ? orderItem.getWeight() * orderItem.getCount()
+                                : 0;
+                break;
             case VOLUME:
-                return orderItem.getVolume() != null
-                        ? orderItem.getVolume() * orderItem.getCount()
-                        : 0;
+                value =
+                        orderItem.getVolume() != null
+                                ? orderItem.getVolume() * orderItem.getCount()
+                                : 0;
+                break;
             default:
                 throw new IllegalArgumentException(StrUtil.format("未知的计费模式({})", chargeMode));
         }
+        if (!Double.isFinite(value) || value < 0) {
+            throw exception(PRICE_CALCULATE_DELIVERY_PRICE_OVERFLOW);
+        }
+        return value;
     }
 }

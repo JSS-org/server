@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.trade.controller.admin.delivery.vo.expresstempla
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -18,6 +19,7 @@ public class DeliveryExpressTemplateCreateReqVO extends DeliveryExpressTemplateB
 
     @Schema(description = "区域运费列表")
     @Valid
+    @NotEmpty(message = "请至少配置一条计费区域")
     private List<DeliveryExpressTemplateChargeBaseVO> charges;
 
     @Schema(description = "包邮区域列表")

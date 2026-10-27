@@ -120,6 +120,8 @@ public interface ErrorCodeConstants {
     ErrorCode PRICE_CALCULATE_DELIVERY_PRICE_TYPE_ILLEGAL =
             new ErrorCode(1_011_003_005, "计算快递运费异常，配送方式不匹配");
     ErrorCode PRICE_CALCULATE_COUPON_CAN_NOT_USE = new ErrorCode(1_011_003_006, "该优惠劵无法使用，原因：{}」");
+    ErrorCode PRICE_CALCULATE_DELIVERY_PRICE_OVERFLOW =
+            new ErrorCode(1_011_003_007, "运费或配送后应付金额超出允许范围");
 
     // ========== 物流 Express 模块 1-011-004-000 ==========
     ErrorCode EXPRESS_NOT_EXISTS = new ErrorCode(1_011_004_000, "快递公司不存在");
@@ -133,6 +135,7 @@ public interface ErrorCodeConstants {
     // ========== 物流 Template 模块 1-011-005-000 ==========
     ErrorCode EXPRESS_TEMPLATE_NAME_DUPLICATE = new ErrorCode(1_011_005_000, "已经存在该运费模板名");
     ErrorCode EXPRESS_TEMPLATE_NOT_EXISTS = new ErrorCode(1_011_005_001, "运费模板不存在");
+    ErrorCode EXPRESS_TEMPLATE_RULE_INVALID = new ErrorCode(1_011_005_002, "运费模板计费规则无效，请检查计费数量和金额");
 
     // ==========  物流 PICK_UP 模块 1-011-006-000 ==========
     ErrorCode PICK_UP_STORE_NOT_EXISTS = new ErrorCode(1_011_006_000, "自提门店不存在");

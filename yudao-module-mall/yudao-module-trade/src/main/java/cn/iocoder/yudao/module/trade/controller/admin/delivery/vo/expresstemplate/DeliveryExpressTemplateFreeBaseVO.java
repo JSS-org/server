@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.trade.controller.admin.delivery.vo.expresstempla
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
@@ -24,9 +25,11 @@ public class DeliveryExpressTemplateFreeBaseVO {
 
     @Schema(description = "包邮金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "5000")
     @NotNull(message = "包邮金额不能为空")
+    @Min(value = 0, message = "包邮金额不能为负数")
     private Integer freePrice;
 
     @Schema(description = "包邮件数", requiredMode = Schema.RequiredMode.REQUIRED, example = "5")
     @NotNull(message = "包邮件数不能为空")
+    @Min(value = 0, message = "包邮数量不能为负数")
     private Integer freeCount;
 }

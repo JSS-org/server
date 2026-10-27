@@ -44,6 +44,11 @@ public class JssHttpFixtures
                 statement.executeUpdate("DELETE FROM infra_job");
                 statement.executeUpdate("UPDATE system_sms_channel SET status=1");
                 statement.executeUpdate("UPDATE system_sms_template SET status=1");
+                statement.executeUpdate("UPDATE system_mail_template SET status=1");
+                statement.executeUpdate(
+                        "ALTER TABLE system_mail_account AUTO_INCREMENT=9007199254740993");
+                statement.executeUpdate(
+                        "ALTER TABLE system_mail_template AUTO_INCREMENT=9007199254740995");
                 statement.executeUpdate("UPDATE system_social_client SET status=1");
                 statement.executeUpdate("DELETE FROM infra_file_config WHERE id<>4");
                 statement.executeUpdate("UPDATE infra_file_config SET master=b'1' WHERE id=4");
@@ -69,6 +74,9 @@ public class JssHttpFixtures
                         INSERT INTO system_role_menu (role_id,menu_id,tenant_id) SELECT 23004,id,1 FROM system_menu WHERE permission IN ('jss:workspace:access','system:user:query') AND deleted=b'0';
                         INSERT INTO system_user_role (user_id,role_id,tenant_id) VALUES (23001,23001,1),(23002,23002,1),(23004,23004,1),(23005,23001,1),(23007,23001,1),(23008,23001,1);
                         INSERT INTO system_user_role (user_id,role_id,tenant_id) VALUES (33001,33001,91001);
+                        INSERT INTO system_role (id,name,code,sort,data_scope,status,type,tenant_id) VALUES (23012,'HTTP mail','jss_http_mail',12,1,0,2,1);
+                        INSERT INTO system_user_role (user_id,role_id,tenant_id) VALUES (23012,23012,1);
+                        INSERT INTO system_role_menu (role_id,menu_id,tenant_id) SELECT 23012,id,1 FROM system_menu WHERE permission='jss:workspace:access' AND deleted=b'0';
                         INSERT INTO system_role (id,name,code,sort,data_scope,status,type,tenant_id) VALUES (23011,'HTTP websocket','jss_http_websocket',11,1,0,2,1);
                         INSERT INTO system_user_role (user_id,role_id,tenant_id) VALUES (23011,23011,1);
                         INSERT INTO system_role_menu (role_id,menu_id,tenant_id) SELECT 23011,id,1 FROM system_menu WHERE permission='jss:workspace:access' AND deleted=b'0';
@@ -144,6 +152,7 @@ public class JssHttpFixtures
                 "INSERT INTO system_users (id,username,nickname,password,status,tenant_id,mobile) VALUES (23007,'jssitbrowser','HTTP browser employee',?,0,1,'13800009007')",
                 "INSERT INTO system_users (id,username,nickname,password,status,tenant_id,mobile) VALUES (23008,'jssitmenu','HTTP menu employee',?,0,1,'13800009008')",
                 "INSERT INTO system_users (id,username,nickname,password,status,tenant_id,mobile) VALUES (23009,'jssitmulti','HTTP multi employee',?,0,1,'13800009009')",
+                "INSERT INTO system_users (id,username,nickname,password,status,tenant_id,mobile) VALUES (23012,'jssitmail','HTTP mail',?,0,1,'13800009012')",
                 "INSERT INTO system_users (id,username,nickname,password,status,tenant_id,mobile) VALUES (23011,'jssitwebsocket','HTTP websocket',?,0,1,'13800009011')",
                 "INSERT INTO system_users (id,username,nickname,password,status,tenant_id,mobile) VALUES (33001,'jssitforeign','HTTP foreign',?,0,91001,'13800009001')"
             };
@@ -155,7 +164,8 @@ public class JssHttpFixtures
             }
             for (int id :
                     new int[] {
-                        23001, 23002, 23003, 23004, 23005, 23006, 23007, 23008, 23009, 23010, 23011
+                        23001, 23002, 23003, 23004, 23005, 23006, 23007, 23008, 23009, 23010, 23011,
+                        23012
                     }) {
                 try (var statement =
                         connection.prepareStatement(

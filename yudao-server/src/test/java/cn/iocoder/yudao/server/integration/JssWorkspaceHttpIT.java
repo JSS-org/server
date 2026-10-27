@@ -1322,4 +1322,338 @@ class JssWorkspaceHttpIT {
                 java.util.concurrent.CompletionException.class,
                 () -> connectSocket("jssw_invalid", 1, new SocketProbe()));
     }
+
+    private Map<String, Object> awaitMailStatus(String token, String logId, int expected)
+            throws Exception {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(12);
+        Map<String, Object> log = null;
+        do {
+            log = data(api("GET", "/admin-api/system/mail-log/get?id=" + logId, null, token, 1));
+            if (((Number) log.get("sendStatus")).intValue() == expected) return log;
+            Thread.sleep(50);
+        } while (System.nanoTime() < deadline);
+        assertEquals(
+                expected,
+                ((Number) log.get("sendStatus")).intValue(),
+                "Actual asynchronous mail status");
+        return log;
+    }
+
+    private String mailText(jakarta.mail.Part part) throws Exception {
+        Object content = part.getContent();
+        if (content instanceof jakarta.mail.Multipart multi) {
+            StringBuilder text = new StringBuilder();
+            for (int i = 0; i < multi.getCount(); i++) text.append(mailText(multi.getBodyPart(i)));
+            return text.toString();
+        }
+        return content instanceof String text ? text : "";
+    }
+
+    @Test
+    void realMailManagementUsesIndependentPermissionsAndDeliversOnlyToOwnedLoopbackSmtp()
+            throws Exception {
+        String reviewer = login("admin", "jssitreviewer"), member = login("member", "13800009012");
+        expectCode(
+                api(
+                        "POST",
+                        "/admin-api/jss/identity/bind",
+                        Map.of(
+                                "memberUserId",
+                                23012,
+                                "adminUserId",
+                                23012,
+                                "reason",
+                                "Reviewed owned mail fixture"),
+                        reviewer,
+                        1),
+                0);
+        List<Long> queries =
+                List.of(
+                        menuId("jss:workspace:access"),
+                        menuId("system:mail-account:query"),
+                        menuId("system:mail-template:query"),
+                        menuId("system:mail-log:query"));
+        assignMenus(reviewer, 23012, queries);
+        String token = issueWorkspace(member);
+        try (var smtp = new JssLocalSmtpSink()) {
+            var account =
+                    new HashMap<String, Object>(
+                            Map.of(
+                                    "mail",
+                                    "sender@example.invalid",
+                                    "username",
+                                    "isolated-smtp",
+                                    "password",
+                                    "isolated-smtp-fixture",
+                                    "host",
+                                    "127.0.0.1",
+                                    "port",
+                                    smtp.port(),
+                                    "sslEnable",
+                                    false,
+                                    "starttlsEnable",
+                                    false));
+            var template =
+                    new HashMap<String, Object>(
+                            Map.of(
+                                    "name",
+                                    "Owned mail template",
+                                    "code",
+                                    "jss_owned_mail_fixture",
+                                    "accountId",
+                                    1,
+                                    "nickname",
+                                    "Owned SMTP",
+                                    "title",
+                                    "Isolated Hello {name}",
+                                    "content",
+                                    "<b>Hello {name}</b>",
+                                    "status",
+                                    0));
+            var send =
+                    Map.of(
+                            "templateCode",
+                            "jss_owned_mail_fixture",
+                            "templateParams",
+                            Map.of("name", "Workspace"),
+                            "toMails",
+                            List.of("to@example.invalid"),
+                            "ccMails",
+                            List.of("cc@example.invalid"),
+                            "bccMails",
+                            List.of("bcc@example.invalid"));
+            for (String kind : List.of("account", "template")) {
+                Map<String, Object> body = kind.equals("account") ? account : template;
+                expectCode(
+                        api("POST", "/admin-api/system/mail-" + kind + "/create", body, token, 1),
+                        403);
+                var update = new HashMap<>(body);
+                update.put("id", 1);
+                expectCode(
+                        api("PUT", "/admin-api/system/mail-" + kind + "/update", update, token, 1),
+                        403);
+                expectCode(
+                        api(
+                                "DELETE",
+                                "/admin-api/system/mail-" + kind + "/delete?id=1",
+                                null,
+                                token,
+                                1),
+                        403);
+            }
+            expectCode(
+                    api("POST", "/admin-api/system/mail-template/send-mail", send, token, 1), 403);
+            assertEquals(0, smtp.transactions);
+            var granted = new ArrayList<>(queries);
+            for (String kind : List.of("account", "template"))
+                for (String action : List.of("create", "update", "delete"))
+                    granted.add(menuId("system:mail-" + kind + ":" + action));
+            assignMenus(reviewer, 23012, granted);
+            String accountId =
+                    expectCode(
+                                    api(
+                                            "POST",
+                                            "/admin-api/system/mail-account/create",
+                                            account,
+                                            token,
+                                            1),
+                                    0)
+                            .get("data")
+                            .toString();
+            account.put("id", accountId);
+            account.put("username", "updated-isolated-smtp");
+            expectCode(api("PUT", "/admin-api/system/mail-account/update", account, token, 1), 0);
+            var savedAccount =
+                    data(
+                            api(
+                                    "GET",
+                                    "/admin-api/system/mail-account/get?id=" + accountId,
+                                    null,
+                                    token,
+                                    1));
+            assertEquals("updated-isolated-smtp", savedAccount.get("username"));
+            assertEquals(Boolean.FALSE, savedAccount.get("sslEnable"));
+            assertEquals(Boolean.FALSE, savedAccount.get("starttlsEnable"));
+            var simple =
+                    (List<?>)
+                            expectCode(
+                                            api(
+                                                    "GET",
+                                                    "/admin-api/system/mail-account/simple-list",
+                                                    null,
+                                                    token,
+                                                    1),
+                                            0)
+                                    .get("data");
+            var selectedAccount =
+                    simple.stream()
+                            .map(row -> (Map<?, ?>) row)
+                            .filter(row -> accountId.equals(row.get("id").toString()))
+                            .findFirst()
+                            .orElseThrow();
+            assertEquals("sender@example.invalid", selectedAccount.get("mail"));
+            assertFalse(selectedAccount.containsKey("password"));
+            assertInstanceOf(String.class, selectedAccount.get("id"));
+            assertEquals("9007199254740993", accountId);
+            template.put("accountId", accountId);
+            String templateId =
+                    expectCode(
+                                    api(
+                                            "POST",
+                                            "/admin-api/system/mail-template/create",
+                                            template,
+                                            token,
+                                            1),
+                                    0)
+                            .get("data")
+                            .toString();
+            assertEquals("9007199254740995", templateId);
+            template.put("id", templateId);
+            template.put("title", "Isolated Updated {name}");
+            expectCode(api("PUT", "/admin-api/system/mail-template/update", template, token, 1), 0);
+            assertTrue(
+                    ((List<?>)
+                                    data(api(
+                                                    "GET",
+                                                    "/admin-api/system/mail-template/get?id="
+                                                            + templateId,
+                                                    null,
+                                                    token,
+                                                    1))
+                                            .get("params"))
+                            .contains("name"));
+            String foreign = login("admin", "jssitforeign", 91001);
+            expectCode(
+                    api(
+                            "GET",
+                            "/admin-api/system/mail-account/get?id=" + accountId,
+                            null,
+                            foreign,
+                            91001),
+                    403);
+            expectCode(
+                    api("POST", "/admin-api/system/mail-template/send-mail", send, token, 1), 403);
+            granted.add(menuId("system:mail-template:send-mail"));
+            assignMenus(reviewer, 23012, granted);
+            var missing = new HashMap<String, Object>(send);
+            missing.put("templateParams", Map.of());
+            assertNotEquals(
+                    0,
+                    ((Number)
+                                    api(
+                                                    "POST",
+                                                    "/admin-api/system/mail-template/send-mail",
+                                                    missing,
+                                                    token,
+                                                    1)
+                                            .get("code"))
+                            .intValue());
+            assertEquals(0, smtp.transactions);
+            String logId =
+                    expectCode(
+                                    api(
+                                            "POST",
+                                            "/admin-api/system/mail-template/send-mail",
+                                            send,
+                                            token,
+                                            1),
+                                    0)
+                            .get("data")
+                            .toString();
+            var captured = smtp.received.poll(12, TimeUnit.SECONDS);
+            assertNotNull(captured, "Actual loopback SMTP receipt");
+            assertEquals(
+                    java.util.Set.of(
+                            "<to@example.invalid>",
+                            "<cc@example.invalid>",
+                            "<bcc@example.invalid>"),
+                    java.util.Set.copyOf(captured.recipients()));
+            var message =
+                    new jakarta.mail.internet.MimeMessage(
+                            jakarta.mail.Session.getInstance(new java.util.Properties()),
+                            new java.io.ByteArrayInputStream(
+                                    captured.mime()
+                                            .getBytes(
+                                                    java.nio.charset.StandardCharsets.ISO_8859_1)));
+            assertEquals("Isolated Updated Workspace", message.getSubject());
+            assertTrue(mailText(message).contains("Hello Workspace"));
+            assertNull(message.getHeader("Bcc"));
+            var delivered = awaitMailStatus(token, logId, 10);
+            assertEquals(List.of("bcc@example.invalid"), delivered.get("bccMails"));
+            assertFalse(delivered.get("sendMessageId").toString().isBlank());
+            smtp.rejectDelivery = true;
+            String failed =
+                    expectCode(
+                                    api(
+                                            "POST",
+                                            "/admin-api/system/mail-template/send-mail",
+                                            send,
+                                            token,
+                                            1),
+                                    0)
+                            .get("data")
+                            .toString();
+            assertFalse(
+                    awaitMailStatus(token, failed, 20).get("sendException").toString().isBlank());
+            assertEquals(2, smtp.transactions);
+            template.put("status", 1);
+            expectCode(api("PUT", "/admin-api/system/mail-template/update", template, token, 1), 0);
+            String ignored =
+                    expectCode(
+                                    api(
+                                            "POST",
+                                            "/admin-api/system/mail-template/send-mail",
+                                            send,
+                                            token,
+                                            1),
+                                    0)
+                            .get("data")
+                            .toString();
+            awaitMailStatus(token, ignored, 30);
+            assertEquals(2, smtp.transactions);
+            var page =
+                    data(
+                            api(
+                                    "GET",
+                                    "/admin-api/system/mail-log/page?pageNo=1&pageSize=10&templateId="
+                                            + templateId
+                                            + "&userId=23012&sendStatus=10",
+                                    null,
+                                    token,
+                                    1));
+            assertEquals(1, ((Number) page.get("total")).intValue());
+            assignMenus(reviewer, 23012, queries);
+            expectCode(
+                    api("POST", "/admin-api/system/mail-template/send-mail", send, token, 1), 403);
+            assignMenus(reviewer, 23012, granted);
+            expectCode(
+                    api(
+                            "DELETE",
+                            "/admin-api/system/mail-template/delete?id=" + templateId,
+                            null,
+                            token,
+                            1),
+                    0);
+            expectCode(
+                    api(
+                            "DELETE",
+                            "/admin-api/system/mail-account/delete?id=" + accountId,
+                            null,
+                            token,
+                            1),
+                    0);
+            assertNull(
+                    expectCode(
+                                    api(
+                                            "GET",
+                                            "/admin-api/system/mail-account/get?id=" + accountId,
+                                            null,
+                                            token,
+                                            1),
+                                    0)
+                            .get("data"));
+        } finally {
+            assignMenus(reviewer, 23012, queries);
+        }
+    }
 }

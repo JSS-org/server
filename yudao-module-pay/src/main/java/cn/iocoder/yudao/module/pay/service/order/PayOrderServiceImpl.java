@@ -716,8 +716,11 @@ public class PayOrderServiceImpl implements PayOrderService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updatePayOrderPrice(Long id, Integer payPrice) {
-        PayOrderDO order = orderMapper.selectById(id);
+        if (payPrice == null || payPrice <= 0) throw exception(PAY_ORDER_PRICE_INVALID);
+        PayOrderDO order =
+                id == null ? null : orderMapper.selectOneForUpdate(PayOrderDO::getId, id);
         if (order == null) {
             throw exception(PAY_ORDER_NOT_FOUND);
         }
@@ -728,7 +731,12 @@ public class PayOrderServiceImpl implements PayOrderService {
             return;
         }
 
-        orderMapper.updateById(new PayOrderDO().setId(order.getId()).setPrice(payPrice));
+        int count =
+                orderMapper.updateByIdAndStatus(
+                        order.getId(),
+                        PayOrderStatusEnum.WAITING.getStatus(),
+                        new PayOrderDO().setPrice(payPrice));
+        if (count != 1) throw exception(PAY_ORDER_STATUS_IS_NOT_WAITING);
     }
 
     @Override

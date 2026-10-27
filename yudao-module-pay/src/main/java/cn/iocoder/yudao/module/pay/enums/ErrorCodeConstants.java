@@ -30,6 +30,7 @@ public interface ErrorCodeConstants {
             new ErrorCode(1_007_002_004, "发起支付报错，错误码：{}，错误提示：{}");
     ErrorCode PAY_ORDER_REFUND_FAIL_STATUS_ERROR =
             new ErrorCode(1_007_002_005, "支付订单退款失败，原因：状态不是已支付或已退款");
+    ErrorCode PAY_ORDER_PRICE_INVALID = new ErrorCode(1_007_002_006, "支付订单金额须为正数");
 
     // ========== ORDER 模块(拓展单) 1-007-003-000 ==========
     ErrorCode PAY_ORDER_EXTENSION_NOT_FOUND = new ErrorCode(1_007_003_000, "支付交易拓展单不存在");

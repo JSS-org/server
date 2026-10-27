@@ -73,6 +73,8 @@ import cn.iocoder.yudao.module.trade.service.price.bo.TradePriceCalculateReqBO;
 import cn.iocoder.yudao.module.trade.service.price.bo.TradePriceCalculateRespBO;
 import cn.iocoder.yudao.module.trade.service.price.calculator.TradePriceCalculatorHelper;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.constraints.NotNull;
 
@@ -839,30 +841,46 @@ public class TradeOrderUpdateServiceImpl implements TradeOrderUpdateService {
     @TradeOrderLog(operateType = TradeOrderOperateTypeEnum.ADMIN_UPDATE_PRICE)
     public void updateOrderPrice(TradeOrderUpdatePriceReqVO reqVO) {
         // 1.1 校验交易订单
-        TradeOrderDO order = validateOrderExists(reqVO.getId());
-        if (order.getPayStatus()) {
+        if (reqVO.getAdjustPrice() == null || reqVO.getAdjustPrice() == 0)
+            throw exception(ORDER_UPDATE_PRICE_FAIL_ADJUSTMENT_INVALID);
+        TradeOrderDO order =
+                reqVO.getId() == null
+                        ? null
+                        : tradeOrderMapper.selectOneForUpdate(TradeOrderDO::getId, reqVO.getId());
+        if (order == null) throw exception(ORDER_NOT_FOUND);
+        if (Boolean.TRUE.equals(order.getPayStatus())) {
             throw exception(ORDER_UPDATE_PRICE_FAIL_PAID);
         }
+        if (!TradeOrderStatusEnum.isUnpaid(order.getStatus()))
+            throw exception(ORDER_UPDATE_PRICE_FAIL_STATUS);
         // 1.2 校验调价金额是否变化
-        if (order.getAdjustPrice() > 0) {
+        if (ObjectUtil.defaultIfNull(order.getAdjustPrice(), 0) != 0) {
             throw exception(ORDER_UPDATE_PRICE_FAIL_ALREADY);
         }
         // 1.3 支付价格不能为 0
-        int newPayPrice = order.getPayPrice() + reqVO.getAdjustPrice();
-        if (newPayPrice <= 0) {
+        long expectedPrice = (long) order.getPayPrice() + reqVO.getAdjustPrice();
+        if (expectedPrice <= 0 || expectedPrice > Integer.MAX_VALUE) {
             throw exception(ORDER_UPDATE_PRICE_FAIL_PRICE_ERROR);
         }
+        int newPayPrice = (int) expectedPrice;
 
         // 2. 更新订单
-        tradeOrderMapper.updateById(
-                new TradeOrderDO()
-                        .setId(order.getId())
-                        .setAdjustPrice(reqVO.getAdjustPrice() + order.getAdjustPrice())
-                        .setPayPrice(newPayPrice));
+        int orderCount =
+                tradeOrderMapper.updateByIdAndStatus(
+                        order.getId(),
+                        TradeOrderStatusEnum.UNPAID.getStatus(),
+                        new TradeOrderDO()
+                                .setAdjustPrice(reqVO.getAdjustPrice())
+                                .setPayPrice(newPayPrice));
+        if (orderCount != 1) throw exception(ORDER_UPDATE_PRICE_FAIL_STATUS);
 
         // 3. 更新 TradeOrderItem，需要做 adjustPrice 的分摊
         List<TradeOrderItemDO> orderOrderItems =
-                tradeOrderItemMapper.selectListByOrderId(order.getId());
+                tradeOrderItemMapper.selectList(
+                        new LambdaQueryWrapper<TradeOrderItemDO>()
+                                .eq(TradeOrderItemDO::getOrderId, order.getId())
+                                .orderByAsc(TradeOrderItemDO::getId)
+                                .last("FOR UPDATE"));
         List<Integer> dividePrices =
                 TradePriceCalculatorHelper.dividePrice2(orderOrderItems, reqVO.getAdjustPrice());
         List<TradeOrderItemDO> updateItems = new ArrayList<>();

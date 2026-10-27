@@ -1982,3 +1982,15 @@ Redis程序仍读取拒绝，真实公告CRUD/备注/权限/租户与完整商�
 新增用例在同一归属随机库内用实际Service创建流水，固定首日00:00:00/末日23:59:59及范围外一秒、不同标题/会员/租户夹具，实际Service组合会员昵称/编号、标题、业务类型、日期并翻到第二页，再检查昵称无匹配时空结果。有效SQL修复前十一项十通过/一失败12.046秒，日期范围应返回2却返回3，`.runtime/member-point-date-before-valid.log/XML`。最初测试夹具误把继承BaseDO链式setter结果当子类插入，编译错误已修正，不计业务证据；旧条件跳过XML未作为有效复现。
 
 最终十一项实际MySQL全过13.419秒、零失败/错误/跳过，`.runtime/member-point-date-final-verified.log`、`.runtime/member-point-date-final.xml`，随机库残留0。服务器30模块依赖常规20项中九项积分H2/spy执行通过、十一项实际MySQL条件跳过，零失败/错误，`.runtime/member-point-date-regression.log`；测试编译成功。三变更Java定向Spotless（另匹配App同后缀VO仅换行，无内容差异）、Python编译与差异检查通过，无新增HTTP/RBAC/全量verify或Flyway结果。会员页面仍待迁入，Redis读取权限与V012部署前置不变。
+
+## 2026-10-27 后台调价与交易/订单项/支付单一致性
+
+同一Maven wrapper环境执行 `python script/jss/verify_order_price_services.py`。脚本仅在已归属MySQL8.4.9:13316的 `jss_order_price_verify_<12位随机值>` 中，提取不可变V008交易单/订单项及V004支付单三张原始表DDL。实例归属、报告时效/十二项/零跳过检查、日志口令脱敏与finally删库沿用专项约定；没有导入开发账号/授权或改开发库。
+
+实际装配TradeOrderUpdateServiceImpl、PayOrderApiImpl、PayOrderServiceImpl和三Mapper/租户SQL、生产事务注解advice；没有Service/Mapper替身。只连接调价实际调用的依赖，不实例化未调用的支付客户端/Redis/MQ，未装配TradeOrderLogAspect或完整容器。因此不计真实支付通知、审计切面、HTTP/RBAC或外部渠道验收。另一连接提交支付状态只是竞态夹具，不冒充实际支付回调。
+
+有效修复前十项五通过/五失败13.508秒，`.runtime/order-price-before.log/XML`：负数调价可重复/归零、六个旧快照事务全部成功而应只一笔、已支付状态被旧缓存绕过、已关闭未支付单仍可改、空增量触发NPE。首次修复后十项全过13.585秒；补充支付已完成但交易尚未收到通知及缺失关联两项后，最终十二项全过14.106秒、零失败/错误/跳过，`.runtime/order-price-final.log/XML`、`.runtime/jss-mysql/order-price-service-test.xml`，随机库残留0。
+
+覆盖两订单正负分摊后三类总额一致、任何非零旧调价拒绝再改、六预读RR快照/一级缓存事务一成功五已调价错误、已支付/已关闭拒绝、租户不可见目标、支付状态另一连接已提交后不同价/同价请求均拒绝、通知未到窗口整体回滚、后置支付SQL和项SQL失败/外层回滚、缺失交易/支付关联、空/零/上下界业务错误。SQL触发器仅在归属随机库制造失败，不替换业务方法。没有验证所有运费/赠品/历史脏项/大单分摊、提交支付报价/支付拓展单与改价竞争、完整取消/退款锁顺序或日志落库。
+
+常规 `-o -Pjss-mall -pl yudao-server -am test -Dtest=TradePriceServiceImplTest,AppTradeOrderSettlementReqVOTest,TradeOrderUpdateServiceTest,JssOrderPriceMySqlServiceIT -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true`（使用交接wrapper）22项中七项执行通过（5请求VO、2Mockito价格计算），15跳过（12条件MySQL、3既有禁用订单Service），零失败/错误；服务器依赖及测试编译成功，`.runtime/order-price-regression.log`。原PayOrderServiceTest依赖内嵌Redis，当前二进制读取权限未恢复，未执行且不将其记为条件通过。五Java定向Spotless、新Python编译及差异检查通过；无新全量verify/Flyway/HTTP或部署结果。

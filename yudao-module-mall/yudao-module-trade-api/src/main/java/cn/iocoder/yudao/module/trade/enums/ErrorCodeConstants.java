@@ -45,7 +45,7 @@ public interface ErrorCodeConstants {
             new ErrorCode(1_011_000_026, "支付订单调价失败，原因：支付订单已付款,不能调价");
     ErrorCode ORDER_UPDATE_PRICE_FAIL_ALREADY = new ErrorCode(1_011_000_027, "支付订单调价失败，原因：已经修改过价格");
     ErrorCode ORDER_UPDATE_PRICE_FAIL_PRICE_ERROR =
-            new ErrorCode(1_011_000_028, "支付订单调价失败，原因：调整后支付价格不能小于 0.01 元");
+            new ErrorCode(1_011_000_028, "订单调价失败，调整后金额须为正数且不超过允许上限");
     ErrorCode ORDER_DELETE_FAIL_STATUS_NOT_CANCEL =
             new ErrorCode(1_011_000_029, "交易订单删除失败，订单不是【已取消】状态");
     ErrorCode ORDER_RECEIVE_FAIL_DELIVERY_TYPE_NOT_PICK_UP =
@@ -67,6 +67,9 @@ public interface ErrorCodeConstants {
     ErrorCode ORDER_PICK_UP_FAIL_STATUS_NOT_UNDELIVERED =
             new ErrorCode(1_011_000_039, "交易订单自提失败，订单不是【待核销】状态");
     ErrorCode ORDER_SKU_DUPLICATE = new ErrorCode(1_011_000_040, "同一商品规格不能重复提交，请合并购买数量");
+    ErrorCode ORDER_UPDATE_PRICE_FAIL_STATUS = new ErrorCode(1_011_000_041, "订单调价失败，订单不是待付款状态");
+    ErrorCode ORDER_UPDATE_PRICE_FAIL_ADJUSTMENT_INVALID =
+            new ErrorCode(1_011_000_042, "订单调价金额不能为空或零");
 
     // ========== After Sale 模块 1-011-000-100 ==========
     ErrorCode AFTER_SALE_NOT_FOUND = new ErrorCode(1_011_000_100, "售后单不存在");

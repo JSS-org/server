@@ -28,6 +28,11 @@ public class NotifyMessageServiceImpl implements NotifyMessageService {
     @Resource private NotifyMessageMapper notifyMessageMapper;
 
     @Override
+    public NotifyMessageDO getMyNotifyMessage(Long id, Long userId, Integer userType) {
+        return notifyMessageMapper.selectByIdAndOwner(id, userId, userType);
+    }
+
+    @Override
     public Long createNotifyMessage(
             Long userId,
             Integer userType,

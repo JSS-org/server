@@ -61,6 +61,9 @@ public interface NotifyMessageService {
      */
     NotifyMessageDO getNotifyMessage(Long id);
 
+    /** Return only the addressed user's message, matching both identifier and identity domain. */
+    NotifyMessageDO getMyNotifyMessage(Long id, Long userId, Integer userType);
+
     /**
      * 获得【我的】未读站内信列表
      *

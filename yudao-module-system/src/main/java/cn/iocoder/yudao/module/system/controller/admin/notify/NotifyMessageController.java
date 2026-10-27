@@ -57,6 +57,16 @@ public class NotifyMessageController {
 
     // ========== 查看自己的站内信 ==========
 
+    @GetMapping("/my-get")
+    @Operation(summary = "获得我的站内信")
+    @Parameter(name = "id", description = "编号", required = true)
+    public CommonResult<NotifyMessageRespVO> getMyNotifyMessage(@RequestParam("id") Long id) {
+        NotifyMessageDO message =
+                notifyMessageService.getMyNotifyMessage(
+                        id, getLoginUserId(), UserTypeEnum.ADMIN.getValue());
+        return success(BeanUtils.toBean(message, NotifyMessageRespVO.class));
+    }
+
     @GetMapping("/my-page")
     @Operation(summary = "获得我的站内信分页")
     public CommonResult<PageResult<NotifyMessageRespVO>> getMyMyNotifyMessagePage(

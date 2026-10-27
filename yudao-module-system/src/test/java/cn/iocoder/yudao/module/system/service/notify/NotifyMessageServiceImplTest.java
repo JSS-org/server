@@ -42,6 +42,32 @@ public class NotifyMessageServiceImplTest extends BaseDbUnitTest {
     @Resource private NotifyMessageMapper notifyMessageMapper;
 
     @Test
+    public void testGetMyNotifyMessage_requiresBothOwnerAndUserType() {
+        NotifyMessageDO message =
+                randomPojo(
+                        NotifyMessageDO.class,
+                        o -> {
+                            o.setUserId(20L);
+                            o.setUserType(UserTypeEnum.ADMIN.getValue());
+                            o.setTemplateParams(randomTemplateParams());
+                        });
+        notifyMessageMapper.insert(message);
+        assertPojoEquals(
+                message,
+                notifyMessageService.getMyNotifyMessage(
+                        message.getId(), 20L, UserTypeEnum.ADMIN.getValue()));
+        assertNull(
+                notifyMessageService.getMyNotifyMessage(
+                        message.getId(), 21L, UserTypeEnum.ADMIN.getValue()));
+        assertNull(
+                notifyMessageService.getMyNotifyMessage(
+                        message.getId(), 20L, UserTypeEnum.MEMBER.getValue()));
+        assertNull(
+                notifyMessageService.getMyNotifyMessage(
+                        message.getId() + 1, 20L, UserTypeEnum.ADMIN.getValue()));
+    }
+
+    @Test
     public void testCreateNotifyMessage_success() {
         // 准备参数
         Long userId = randomLongId();

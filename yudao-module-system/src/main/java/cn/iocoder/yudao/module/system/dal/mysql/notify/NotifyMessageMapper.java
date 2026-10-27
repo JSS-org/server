@@ -17,6 +17,14 @@ import java.util.List;
 @Mapper
 public interface NotifyMessageMapper extends BaseMapperX<NotifyMessageDO> {
 
+    default NotifyMessageDO selectByIdAndOwner(Long id, Long userId, Integer userType) {
+        return selectOne(
+                new LambdaQueryWrapperX<NotifyMessageDO>()
+                        .eq(NotifyMessageDO::getId, id)
+                        .eq(NotifyMessageDO::getUserId, userId)
+                        .eq(NotifyMessageDO::getUserType, userType));
+    }
+
     default PageResult<NotifyMessageDO> selectPage(NotifyMessagePageReqVO reqVO) {
         return selectPage(
                 reqVO,

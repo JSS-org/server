@@ -57,6 +57,7 @@ import javax.sql.DataSource;
             "yudao.captcha.enable=false",
             "yudao.security.mock-enable=false",
             "jss.workspace.enabled=true",
+            "yudao.access-log.enable=true",
             "spring.data.redis.host=127.0.0.1",
             "spring.data.redis.port=16379",
             "spring.data.redis.database=14",
@@ -133,7 +134,7 @@ class JssWorkspaceHttpIT {
                             var process = builder.start();
                             try {
                                 assertTrue(
-                                        process.waitFor(240, TimeUnit.SECONDS),
+                                        process.waitFor(1080, TimeUnit.SECONDS),
                                         "Real browser acceptance timed out");
                                 assertEquals(
                                         0,

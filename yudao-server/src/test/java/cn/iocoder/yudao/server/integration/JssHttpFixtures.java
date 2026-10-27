@@ -171,7 +171,7 @@ public class JssHttpFixtures
                     statement.setLong(1, id);
                     statement.setString(2, id == 9007199254740993L ? "13800009991" : "13800009992");
                     statement.setString(3, hash);
-                    statement.setString(4, "HTTP large member " + id);
+                    statement.setString(4, "HTTP Long " + id);
                     statement.executeUpdate();
                 }
             }

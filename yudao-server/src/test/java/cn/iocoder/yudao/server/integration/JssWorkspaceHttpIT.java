@@ -784,7 +784,7 @@ class JssWorkspaceHttpIT {
     }
 
     @Test
-    void disabledButtonsParentsAndWorkspaceEntryRestrictOnlyTheApplicationScopedToken()
+    void disabledBranchesRestrictBothTokensWhileWorkspaceEntryRestrictsOnlyApplicationToken()
             throws Exception {
         String reviewer = login("admin", "jssitreviewer");
         String nativeStaff = login("admin", "jssitmenu");
@@ -806,26 +806,30 @@ class JssWorkspaceHttpIT {
         String token = issueWorkspace(member);
         String page = "/admin-api/system/user/page?pageNo=1&pageSize=10";
         expectCode(api("GET", page, null, token, 1), 0);
+        expectCode(api("GET", page, null, nativeStaff, 1), 0);
         var query = menuConfiguration(reviewer, menuId("system:user:query"));
         try {
             saveMenu(reviewer, query, 1);
             expectCode(api("GET", page, null, token, 1), 403);
             assertCapability(member, true);
-            // Preserve the pre-existing native OAuth/RBAC semantics.
-            expectCode(api("GET", page, null, nativeStaff, 1), 0);
+            // Shared menu hierarchy enforcement also applies to native OAuth RBAC.
+            expectCode(api("GET", page, null, nativeStaff, 1), 403);
         } finally {
             saveMenu(reviewer, query, 0);
         }
         expectCode(api("GET", page, null, token, 1), 0);
+        expectCode(api("GET", page, null, nativeStaff, 1), 0);
         var parent = menuConfiguration(reviewer, Long.parseLong(query.get("parentId").toString()));
         try {
             saveMenu(reviewer, parent, 1);
             expectCode(api("GET", page, null, token, 1), 403);
+            expectCode(api("GET", page, null, nativeStaff, 1), 403);
             assertCapability(member, true);
         } finally {
             saveMenu(reviewer, parent, 0);
         }
         expectCode(api("GET", page, null, token, 1), 0);
+        expectCode(api("GET", page, null, nativeStaff, 1), 0);
         var entry = menuConfiguration(reviewer, menuId("jss:workspace:access"));
         try {
             saveMenu(reviewer, entry, 1);

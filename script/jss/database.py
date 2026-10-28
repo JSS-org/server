@@ -13,7 +13,7 @@ ASSETS = ROOT / 'sql/jss'
 HISTORY = 'flyway_jss_schema_history'
 FRAMEWORK = {'system_users', 'system_menu', 'system_role', 'system_role_menu',
              'system_user_role', 'system_tenant', 'system_notice', 'infra_api_access_log', 'infra_api_error_log'}
-BUSINESS_PREFIXES = ('member_', 'jss_', 'product_', 'promotion_', 'trade_', 'pay_', 'crm_', 'bpm_', 'erp_', 'hrm_', 'fms_', 'mes_', 'act_', 'flw_')
+BUSINESS_PREFIXES = ('member_', 'jss_', 'product_', 'promotion_', 'trade_', 'pay_', 'crm_', 'bpm_', 'erp_', 'hrm_', 'fms_', 'mes_', 'wms_', 'act_', 'flw_')
 
 
 class Database:

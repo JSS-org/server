@@ -1,0 +1,1065 @@
+{
+  "status": "16 independent native WMS tables and 134 persistent fields retained; reactor compile and owned MySQL DDL/column checks passed; real inventory business acceptance pending",
+  "tables": [
+    {
+      "source": "yudao-module-wms/src/main/java/cn/iocoder/yudao/module/wms/dal/dataobject/inventory/WmsInventoryDO.java",
+      "sourceSha256": "11ba730a04baea5b416f2e0077651bc32d6711b45e527b414a7b4b6c48dff4e8",
+      "table": "wms_inventory",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "skuId",
+          "column": "sku_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "warehouseId",
+          "column": "warehouse_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "quantity",
+          "column": "quantity",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-wms/src/main/java/cn/iocoder/yudao/module/wms/dal/dataobject/inventory/WmsInventoryHistoryDO.java",
+      "sourceSha256": "986dcc6c3bee4346547885196336d84f8cd7a75d75c2f12ac08916e8316fcc43",
+      "table": "wms_inventory_history",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "warehouseId",
+          "column": "warehouse_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "skuId",
+          "column": "sku_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "quantity",
+          "column": "quantity",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "beforeQuantity",
+          "column": "before_quantity",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "afterQuantity",
+          "column": "after_quantity",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "price",
+          "column": "price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "totalPrice",
+          "column": "total_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "orderId",
+          "column": "order_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "orderNo",
+          "column": "order_no",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "orderType",
+          "column": "order_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-wms/src/main/java/cn/iocoder/yudao/module/wms/dal/dataobject/md/item/WmsItemBrandDO.java",
+      "sourceSha256": "7b8802d32a8d88cde7fc4bfa8dcca1ff79f5db9d13befbde64fd4e1a53e009b3",
+      "table": "wms_item_brand",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "code",
+          "column": "code",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-wms/src/main/java/cn/iocoder/yudao/module/wms/dal/dataobject/md/item/WmsItemCategoryDO.java",
+      "sourceSha256": "ff4cf99690b3114bc63932ae4c581f1f73aa7e49c51b5b8c84bf5bf38b5bf58e",
+      "table": "wms_item_category",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "parentId",
+          "column": "parent_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "code",
+          "column": "code",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-wms/src/main/java/cn/iocoder/yudao/module/wms/dal/dataobject/md/item/WmsItemDO.java",
+      "sourceSha256": "e2092deaab6be423c396d184b794fe41cbf689dfa9760deac3d0c830cc6a8783",
+      "table": "wms_item",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "code",
+          "column": "code",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "unit",
+          "column": "unit",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "categoryId",
+          "column": "category_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "brandId",
+          "column": "brand_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-wms/src/main/java/cn/iocoder/yudao/module/wms/dal/dataobject/md/item/WmsItemSkuDO.java",
+      "sourceSha256": "378e38630f8b68801f944c48ef853734eba490aca54d55c8f661cc5695bf97c9",
+      "table": "wms_item_sku",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "itemId",
+          "column": "item_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "barCode",
+          "column": "bar_code",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "code",
+          "column": "code",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "length",
+          "column": "length",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "width",
+          "column": "width",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "height",
+          "column": "height",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "grossWeight",
+          "column": "gross_weight",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "netWeight",
+          "column": "net_weight",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "costPrice",
+          "column": "cost_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "sellingPrice",
+          "column": "selling_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-wms/src/main/java/cn/iocoder/yudao/module/wms/dal/dataobject/md/merchant/WmsMerchantDO.java",
+      "sourceSha256": "eebdbb46cc6cc4179a4ace983256902b1ab6984c9e57bb22089836b90fee5f0d",
+      "table": "wms_merchant",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "code",
+          "column": "code",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "level",
+          "column": "level",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "bankName",
+          "column": "bank_name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "bankAccount",
+          "column": "bank_account",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "address",
+          "column": "address",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "mobile",
+          "column": "mobile",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "telephone",
+          "column": "telephone",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "contact",
+          "column": "contact",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "email",
+          "column": "email",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-wms/src/main/java/cn/iocoder/yudao/module/wms/dal/dataobject/md/warehouse/WmsWarehouseDO.java",
+      "sourceSha256": "3b328450279f78505d823197a22ff87d91b721bb965af28b05eb90450a6078d5",
+      "table": "wms_warehouse",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "code",
+          "column": "code",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-wms/src/main/java/cn/iocoder/yudao/module/wms/dal/dataobject/order/check/WmsCheckOrderDetailDO.java",
+      "sourceSha256": "cc9d43e8d267ff68a982cb0772169abcde19124b0b1ed6b14e47c427d4390c61",
+      "table": "wms_check_order_detail",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "orderId",
+          "column": "order_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "skuId",
+          "column": "sku_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "warehouseId",
+          "column": "warehouse_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "inventoryId",
+          "column": "inventory_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "receiptTime",
+          "column": "receipt_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "quantity",
+          "column": "quantity",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "checkQuantity",
+          "column": "check_quantity",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "price",
+          "column": "price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-wms/src/main/java/cn/iocoder/yudao/module/wms/dal/dataobject/order/check/WmsCheckOrderDO.java",
+      "sourceSha256": "897856267d2a5d17b42ea60f20d5380e0e2cf2dee35a3fa16267ae10618e9fe5",
+      "table": "wms_check_order",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "no",
+          "column": "no",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "orderTime",
+          "column": "order_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "warehouseId",
+          "column": "warehouse_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "totalQuantity",
+          "column": "total_quantity",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "totalPrice",
+          "column": "total_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "actualPrice",
+          "column": "actual_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-wms/src/main/java/cn/iocoder/yudao/module/wms/dal/dataobject/order/movement/WmsMovementOrderDetailDO.java",
+      "sourceSha256": "9f48acdd3d9f26457dcb07b762c6e6a6f1806e436a3a61e409090e5eb4499806",
+      "table": "wms_movement_order_detail",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "orderId",
+          "column": "order_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "skuId",
+          "column": "sku_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "sourceWarehouseId",
+          "column": "source_warehouse_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "targetWarehouseId",
+          "column": "target_warehouse_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "quantity",
+          "column": "quantity",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "price",
+          "column": "price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "totalPrice",
+          "column": "total_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-wms/src/main/java/cn/iocoder/yudao/module/wms/dal/dataobject/order/movement/WmsMovementOrderDO.java",
+      "sourceSha256": "103c76d18dfb9f355400a933128a9ffecdd9471a9100986ad9667d1ff9394fd9",
+      "table": "wms_movement_order",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "no",
+          "column": "no",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "orderTime",
+          "column": "order_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "sourceWarehouseId",
+          "column": "source_warehouse_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "targetWarehouseId",
+          "column": "target_warehouse_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "totalQuantity",
+          "column": "total_quantity",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "totalPrice",
+          "column": "total_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-wms/src/main/java/cn/iocoder/yudao/module/wms/dal/dataobject/order/receipt/WmsReceiptOrderDetailDO.java",
+      "sourceSha256": "8d93b06332f13d7aac78480e42f2c20d9e0dccafc4a080fc70c1495346a5e3fa",
+      "table": "wms_receipt_order_detail",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "orderId",
+          "column": "order_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "skuId",
+          "column": "sku_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "warehouseId",
+          "column": "warehouse_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "quantity",
+          "column": "quantity",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "price",
+          "column": "price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "totalPrice",
+          "column": "total_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-wms/src/main/java/cn/iocoder/yudao/module/wms/dal/dataobject/order/receipt/WmsReceiptOrderDO.java",
+      "sourceSha256": "70138fcb17c8749a8ad0ef6f3b87240883d84cb4f4d3fc968beb418e1f94f1d0",
+      "table": "wms_receipt_order",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "no",
+          "column": "no",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "orderTime",
+          "column": "order_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "bizOrderNo",
+          "column": "biz_order_no",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "merchantId",
+          "column": "merchant_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "warehouseId",
+          "column": "warehouse_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "totalQuantity",
+          "column": "total_quantity",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "totalPrice",
+          "column": "total_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-wms/src/main/java/cn/iocoder/yudao/module/wms/dal/dataobject/order/shipment/WmsShipmentOrderDetailDO.java",
+      "sourceSha256": "758d26764b16465c564f32e6cc018b65204f2faf02de3cf8422f40187908b86e",
+      "table": "wms_shipment_order_detail",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "orderId",
+          "column": "order_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "skuId",
+          "column": "sku_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "warehouseId",
+          "column": "warehouse_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "quantity",
+          "column": "quantity",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "price",
+          "column": "price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "totalPrice",
+          "column": "total_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-wms/src/main/java/cn/iocoder/yudao/module/wms/dal/dataobject/order/shipment/WmsShipmentOrderDO.java",
+      "sourceSha256": "ab54b540c93c590d782180a209ed38dd7f6c0c70353916cb9fc294a8c59927e0",
+      "table": "wms_shipment_order",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "no",
+          "column": "no",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "orderTime",
+          "column": "order_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "bizOrderNo",
+          "column": "biz_order_no",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "merchantId",
+          "column": "merchant_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "warehouseId",
+          "column": "warehouse_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "totalQuantity",
+          "column": "total_quantity",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "totalPrice",
+          "column": "total_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "compile": ".runtime/wms-compile-result.json",
+    "compileExitCode": 0,
+    "ddl": ".runtime/wms-schema-check.json",
+    "schema": "jss_wms_verify_eb431e51e274",
+    "tables": 16,
+    "nativeFields": 134,
+    "remainingSchemas": 0,
+    "scope": "No tests, full Flyway, application context, browser, real inventory/order workflow or device acceptance in this fast migration batch."
+  }
+}

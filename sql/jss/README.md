@@ -69,3 +69,9 @@ python script/jss/database.py validate
 标准 jss-mall 构建与 yudao-server 已纳入完整 yudao-module-mes。V021 保留 133 张原生 DO 表、1379 个外层持久字段以及 BaseDO 审计、租户字段；逐表来源哈希及类型映射见 docs/jss-mes-schema.json。BigDecimal 使用 DECIMAL(38,12)；IntegerListTypeHandler 按原生 CSV LONGTEXT 保留。
 
 本批 reactor compile（跳过测试）退出 0；归属 MySQL 8.4.9:13316 的随机隔离库 jss_mes_verify_837d4a91a21a 实际建表与全部列核对通过，finally 删除后残留 0。未改开发库；完整 Flyway、应用上下文、真实生产/质量/库存流程及权限业务验收按用户快速迁移优先级另列后续任务。
+
+## V022：完整 WMS 独立业务结构（快速迁移批次）
+
+标准 jss-mall 构建与 yudao-server 已纳入完整 yudao-module-wms。V022 保留 16 张原生 DO 表、134 个持久字段以及 BaseDO 审计和租户列；来源哈希与 SQL 类型映射见 docs/jss-wms-schema.json，BigDecimal 为 DECIMAL(38,12)。WMS 的库存/入出库/调拨/盘点域和 MES 仓储域独立保留，不合并表、API 或状态流转。
+
+跳过测试的 reactor compile 退出 0；归属 MySQL 8.4.9:13316 随机库 jss_wms_verify_eb431e51e274 实际建表和全部列核对通过，finally 删除后残留 0。未改开发库；完整 Flyway/应用上下文、真实单据和库存数量价格链、权限/租户及设备验收后续单列。

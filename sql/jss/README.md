@@ -63,3 +63,9 @@ python script/jss/database.py validate
 ## V020：完整FMS基础表
 
 标准jss-mall已纳入原FMS及其锁定Aviator依赖，未升级版本。V020按30份DO的306个顶层持久字段保留全部列及审计/租户，原Jackson3列表使用JSON，不展开内层分录/辅助核算记录；BigDecimal使用JSS选择的DECIMAL(38,12)。完整来源、字段与处理器映射见docs/jss-fms-schema.json。归属MySQL随机库的30表DDL/精确列集合及标准compile通过，随机库残留0；未运行单测或大型回归。init拒绝未托管fms_表，V001–V019未改。完整生命周期/服务上下文、账套成员授权与账务全过程、外部文件及设备后续单列验收；未部署开发库。
+
+## V021：完整 MES 原生业务结构（快速迁移批次）
+
+标准 jss-mall 构建与 yudao-server 已纳入完整 yudao-module-mes。V021 保留 133 张原生 DO 表、1379 个外层持久字段以及 BaseDO 审计、租户字段；逐表来源哈希及类型映射见 docs/jss-mes-schema.json。BigDecimal 使用 DECIMAL(38,12)；IntegerListTypeHandler 按原生 CSV LONGTEXT 保留。
+
+本批 reactor compile（跳过测试）退出 0；归属 MySQL 8.4.9:13316 的随机隔离库 jss_mes_verify_837d4a91a21a 实际建表与全部列核对通过，finally 删除后残留 0。未改开发库；完整 Flyway、应用上下文、真实生产/质量/库存流程及权限业务验收按用户快速迁移优先级另列后续任务。

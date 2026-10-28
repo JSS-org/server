@@ -41,6 +41,13 @@
 
     <profiles>
         <profile>
+            <id>jss-crm</id>
+            <modules>
+                <module>yudao-module-bpm</module>
+                <module>yudao-module-crm</module>
+            </modules>
+        </profile>
+        <profile>
             <id>jss-mall</id>
             <modules>
                 <module>yudao-module-pay</module>

@@ -203,6 +203,21 @@
 
     <profiles>
         <profile>
+            <id>jss-crm</id>
+            <dependencies>
+                <dependency>
+                    <groupId>cn.iocoder.boot</groupId>
+                    <artifactId>yudao-module-bpm</artifactId>
+                    <version>${revision}</version>
+                </dependency>
+                <dependency>
+                    <groupId>cn.iocoder.boot</groupId>
+                    <artifactId>yudao-module-crm</artifactId>
+                    <version>${revision}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
             <id>jss-mall</id>
             <dependencies>
                 <dependency>

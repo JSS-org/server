@@ -1,0 +1,2368 @@
+{
+  "status": "Complete native outer DO mapping; standard compile and isolated MySQL DDL/column checks passed; deep accounting acceptance deferred",
+  "tables": [
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/closing/FmsClosingPeriodDO.java",
+      "sourceSha256": "f9820b335b94c433e99c08ca48ade3922c57c003e56108f2a3b17f30a2dee767",
+      "table": "fms_closing_period",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "closingTime",
+          "column": "closing_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "accountSetId",
+          "column": "account_set_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/closing/FmsClosingSchemeDO.java",
+      "sourceSha256": "3235a21a23b5909d479257252652118192c183b5bab4b638fa9992ca15f00ab1",
+      "table": "fms_closing",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "periodEnd",
+          "column": "period_end",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "subjectId",
+          "column": "subject_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "formulaRule",
+          "column": "formula_rule",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "timeType",
+          "column": "time_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "voucherWordId",
+          "column": "voucher_word_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "digest",
+          "column": "digest",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "voucherType",
+          "column": "voucher_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "priorYearAdjustmentSubjectId",
+          "column": "prior_year_adjustment_subject_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "adjustmentClosingSubjectId",
+          "column": "adjustment_closing_subject_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "otherClosingSubjectId",
+          "column": "other_closing_subject_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "reverseBalance",
+          "column": "reverse_balance",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "accountSetId",
+          "column": "account_set_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "closingDay",
+          "column": "closing_day",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "subjectRules",
+          "column": "subject_rules",
+          "javaType": "List<SubjectRule>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/closing/FmsClosingTemplateDO.java",
+      "sourceSha256": "c178cc230fd91496fd06f6bc80fb6ce602a23a1c6632c6d19810ba6afc8c0cec",
+      "table": "fms_closing_template",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "accountSetId",
+          "column": "account_set_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "presetCode",
+          "column": "preset_code",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "category",
+          "column": "category",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "periodEnd",
+          "column": "period_end",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "subjectId",
+          "column": "subject_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "formulaRule",
+          "column": "formula_rule",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "timeType",
+          "column": "time_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "subjectRules",
+          "column": "subject_rules",
+          "javaType": "List<SubjectRule>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/closing/FmsClosingVoucherDO.java",
+      "sourceSha256": "091ebe5109ed082184ff9984c81c53616eb0c186bc6a82354b6a02922065a61b",
+      "table": "fms_closing_voucher",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "closingId",
+          "column": "closing_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "voucherId",
+          "column": "voucher_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "voucherTime",
+          "column": "voucher_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "amount",
+          "column": "amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "closed",
+          "column": "closed",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "accountSetId",
+          "column": "account_set_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/config/FmsAccountSetDO.java",
+      "sourceSha256": "2f7e9b445a3ead6d808d53026ef1865e7d0a0096524d2f8f809061726f482258",
+      "table": "fms_account_set",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "companyCode",
+          "column": "company_code",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "companyName",
+          "column": "company_name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "companyProfile",
+          "column": "company_profile",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "industry",
+          "column": "industry",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "location",
+          "column": "location",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "legalRepresentative",
+          "column": "legal_representative",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "legalRepresentativeIdNumber",
+          "column": "legal_representative_id_number",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "businessLicenseNumber",
+          "column": "business_license_number",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "organizationCode",
+          "column": "organization_code",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "contactName",
+          "column": "contact_name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "officeTelephone",
+          "column": "office_telephone",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "mobile",
+          "column": "mobile",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "faxNumber",
+          "column": "fax_number",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "qqNumber",
+          "column": "qq_number",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "email",
+          "column": "email",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "otherContact",
+          "column": "other_contact",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "address",
+          "column": "address",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "currencyId",
+          "column": "currency_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "startTime",
+          "column": "start_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "standard",
+          "column": "standard",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "initialized",
+          "column": "initialized",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/config/FmsAccountUserDO.java",
+      "sourceSha256": "54ab486427590f86ca97cff5b41ea60c929219d196c18036a0da4f853ed93987",
+      "table": "fms_account_user",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "accountSetId",
+          "column": "account_set_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "column": "user_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "defaultStatus",
+          "column": "default_status",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "founder",
+          "column": "founder",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "level",
+          "column": "level",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/config/FmsAuxiliaryCombinationDO.java",
+      "sourceSha256": "4389b7253bd14486e91cb4cd03175184c3de41ca9324e6886aa81745abcc4001",
+      "table": "fms_assist_combination",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "subjectId",
+          "column": "subject_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "accountSetId",
+          "column": "account_set_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "items",
+          "column": "items",
+          "javaType": "List<AuxiliaryItem>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/config/FmsAuxiliaryItemDO.java",
+      "sourceSha256": "410238d3459ae0a61b51becc9dda0822a1f8b75933d2395d5f288a579b1dff27",
+      "table": "fms_auxiliary_item",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "code",
+          "column": "code",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "auxiliaryTypeId",
+          "column": "auxiliary_type_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "accountSetId",
+          "column": "account_set_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "specification",
+          "column": "specification",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "unit",
+          "column": "unit",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/config/FmsAuxiliaryTypeDO.java",
+      "sourceSha256": "1f232f8e9807166ae610e9b5b92d9a1309c16ecd60091dd6c8d493eda07eb0b1",
+      "table": "fms_auxiliary_type",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "systemPreset",
+          "column": "system_preset",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "accountSetId",
+          "column": "account_set_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/config/FmsCurrencyDO.java",
+      "sourceSha256": "d5c5f9aa717ccea4f3cc3a9c4804c9ba9066dbe5cb323fb5532d271bdc6aa3cb",
+      "table": "fms_currency",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "code",
+          "column": "code",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "exchangeRate",
+          "column": "exchange_rate",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "standard",
+          "column": "standard",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "accountSetId",
+          "column": "account_set_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/config/FmsDigestDO.java",
+      "sourceSha256": "a9d01f6cfa17d465edbe4cc5eb77e85f440f7d5e4a6a2cdeb051173ef27b6b48",
+      "table": "fms_digest",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "content",
+          "column": "content",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "accountSetId",
+          "column": "account_set_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/config/FmsFinanceIndicatorDO.java",
+      "sourceSha256": "98a14b9abd1ba47a0125cd17f55deb8b5a1854ae768a91c63af8d3d89568fa26",
+      "table": "fms_finance_indicator",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "accountSetId",
+          "column": "account_set_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "code",
+          "column": "code",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "formula",
+          "column": "formula",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/config/FmsFinanceParameterDO.java",
+      "sourceSha256": "bc9534d099a13d77e38ad15167d0d73156bb4f1d702a0bf687bcb3ac973ec6dd",
+      "table": "fms_finance_parameter",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "accountSetId",
+          "column": "account_set_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "level",
+          "column": "level",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "subjectCodeRule",
+          "column": "subject_code_rule",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "ledgerBalanceMode",
+          "column": "ledger_balance_mode",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "deficitCheck",
+          "column": "deficit_check",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "voucherReviewRequired",
+          "column": "voucher_review_required",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "assetPeriodLocked",
+          "column": "asset_period_locked",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "taxpayerName",
+          "column": "taxpayer_name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "taxpayerNumber",
+          "column": "taxpayer_number",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/config/FmsInitialBalanceDO.java",
+      "sourceSha256": "57fceee0c3cc86fb43d0ebcd466239b9223fbaf8380cb188fbbeb14786c4c19d",
+      "table": "fms_initial_balance",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "subjectId",
+          "column": "subject_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "auxiliaryAccounting",
+          "column": "auxiliary_accounting",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "openingAmount",
+          "column": "opening_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "openingQuantity",
+          "column": "opening_quantity",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "yearDebitAmount",
+          "column": "year_debit_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "yearDebitQuantity",
+          "column": "year_debit_quantity",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "yearCreditAmount",
+          "column": "year_credit_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "yearCreditQuantity",
+          "column": "year_credit_quantity",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "yearOpeningAmount",
+          "column": "year_opening_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "yearOpeningQuantity",
+          "column": "year_opening_quantity",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "profitLossAmount",
+          "column": "profit_loss_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "profitLossQuantity",
+          "column": "profit_loss_quantity",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "accountSetId",
+          "column": "account_set_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "assistBalances",
+          "column": "assist_balances",
+          "javaType": "List<AssistBalance>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/config/FmsSubjectDO.java",
+      "sourceSha256": "ec2f280a7a45c6ca845b988765337c1038289fa5ad88fd19dcaa338bf206d90c",
+      "table": "fms_subject",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "code",
+          "column": "code",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "parentId",
+          "column": "parent_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "category",
+          "column": "category",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "balanceDirection",
+          "column": "balance_direction",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "quantityUnit",
+          "column": "quantity_unit",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "cash",
+          "column": "cash",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "level",
+          "column": "level",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "quantityAccounting",
+          "column": "quantity_accounting",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "accountSetId",
+          "column": "account_set_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "auxiliaryTypeIds",
+          "column": "auxiliary_type_ids",
+          "javaType": "List<Long>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "currencyIds",
+          "column": "currency_ids",
+          "javaType": "List<Long>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/config/FmsSubjectTemplateDO.java",
+      "sourceSha256": "f96776ea7fde581ccc3d7c21bbe35df15356bbb5497094c4cb9219aa0d4aaf1c",
+      "table": "fms_subject_template",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "code",
+          "column": "code",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "parentId",
+          "column": "parent_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "category",
+          "column": "category",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "balanceDirection",
+          "column": "balance_direction",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "quantityUnit",
+          "column": "quantity_unit",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "cash",
+          "column": "cash",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "level",
+          "column": "level",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "quantityAccounting",
+          "column": "quantity_accounting",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/config/FmsVoucherTemplateCategoryDO.java",
+      "sourceSha256": "30fb8e51677848643f7719799cfabe506ee56f30a9b05e355893a341f9182947",
+      "table": "fms_voucher_template_category",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "accountSetId",
+          "column": "account_set_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/config/FmsVoucherTemplateDO.java",
+      "sourceSha256": "567a8c8af730b770fa051d4f8fe6cd9f77ea1c1882c2f527bc611f6a89dd128f",
+      "table": "fms_voucher_template",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "categoryId",
+          "column": "category_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "entries",
+          "column": "entries",
+          "javaType": "List<Entry>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "accountSetId",
+          "column": "account_set_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/config/FmsVoucherWordDO.java",
+      "sourceSha256": "bc4f9bbb0efece78d0da1e5a483ca0b7d4e28a3f5c29454a141746d2f2e8ceff",
+      "table": "fms_voucher_word",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "printTitle",
+          "column": "print_title",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "defaultStatus",
+          "column": "default_status",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "accountSetId",
+          "column": "account_set_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/report/balance/FmsBalanceSheetConfigDO.java",
+      "sourceSha256": "dbd545753d964910f23dd7a5cc37b587a573ca52b46f693d8c03c459ddbe2c13",
+      "table": "fms_balance_sheet_config",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "rowNo",
+          "column": "row_no",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "formula",
+          "column": "formula",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "editable",
+          "column": "editable",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "accountSetId",
+          "column": "account_set_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "level",
+          "column": "level",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "rowId",
+          "column": "row_id",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/report/balance/FmsBalanceSheetReportDO.java",
+      "sourceSha256": "c2e40d1cb90b3ae54a768d46d0d168048f6bf6b0b2a2b6b4ae2b695cf089781f",
+      "table": "fms_balance_sheet_report",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "fromPeriod",
+          "column": "from_period",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "toPeriod",
+          "column": "to_period",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "level",
+          "column": "level",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "rowNo",
+          "column": "row_no",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "formula",
+          "column": "formula",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "editable",
+          "column": "editable",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "openingAmount",
+          "column": "opening_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "closingAmount",
+          "column": "closing_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "accountSetId",
+          "column": "account_set_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "settled",
+          "column": "settled",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "rowId",
+          "column": "row_id",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/report/cashflow/FmsCashFlowExtendConfigDO.java",
+      "sourceSha256": "973b8639a95dc1eeda83e9749c9c52e80ad9d7ba645c7f7ab11cf4c57d0bb645",
+      "table": "fms_cash_flow_extend_config",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "rowNo",
+          "column": "row_no",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "formula",
+          "column": "formula",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "category",
+          "column": "category",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "currentAmount",
+          "column": "current_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "yearAmount",
+          "column": "year_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "editable",
+          "column": "editable",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "accountSetId",
+          "column": "account_set_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "level",
+          "column": "level",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/report/cashflow/FmsCashFlowExtendDataDO.java",
+      "sourceSha256": "252cd6bf74999b93754e18e62369b8b2533f390d6193c19958565ed76f632de5",
+      "table": "fms_cash_flow_extend_data",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "rowNo",
+          "column": "row_no",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "formula",
+          "column": "formula",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "category",
+          "column": "category",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "currentAmount",
+          "column": "current_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "yearAmount",
+          "column": "year_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "fromPeriod",
+          "column": "from_period",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "editable",
+          "column": "editable",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "accountSetId",
+          "column": "account_set_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "toPeriod",
+          "column": "to_period",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "level",
+          "column": "level",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/report/cashflow/FmsCashFlowStatementConfigDO.java",
+      "sourceSha256": "675b9b7a531868b78e625b0d2d5b4f5dc440eace348f60b5ab957aaa6b5cb646",
+      "table": "fms_cash_flow_statement_config",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "rowNo",
+          "column": "row_no",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "formula",
+          "column": "formula",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "editable",
+          "column": "editable",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "category",
+          "column": "category",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "accountSetId",
+          "column": "account_set_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "level",
+          "column": "level",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/report/cashflow/FmsCashFlowStatementReportDO.java",
+      "sourceSha256": "0e0b68dae6d295cd81f9b0f4ca288d41d15033370c318f15121c757c6de3bde9",
+      "table": "fms_cash_flow_statement_report",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "fromPeriod",
+          "column": "from_period",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "rowNo",
+          "column": "row_no",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "formula",
+          "column": "formula",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "editable",
+          "column": "editable",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "currentAmount",
+          "column": "current_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "yearAmount",
+          "column": "year_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "category",
+          "column": "category",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "accountSetId",
+          "column": "account_set_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "toPeriod",
+          "column": "to_period",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "level",
+          "column": "level",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/report/FmsReportTemplateDO.java",
+      "sourceSha256": "f7f1d23af767236188daedf3278634c385415910ed4dab45323355561fe22844",
+      "table": "fms_report_template",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "rowNo",
+          "column": "row_no",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "formula",
+          "column": "formula",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "editable",
+          "column": "editable",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "rowId",
+          "column": "row_id",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "category",
+          "column": "category",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "level",
+          "column": "level",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/report/income/FmsIncomeStatementConfigDO.java",
+      "sourceSha256": "d0e6b589ac66775d70856dc3f6c69650da98900ba67faac7c277fcdba51c4fa3",
+      "table": "fms_income_statement_config",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "rowNo",
+          "column": "row_no",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "formula",
+          "column": "formula",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "editable",
+          "column": "editable",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "accountSetId",
+          "column": "account_set_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "level",
+          "column": "level",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/report/income/FmsIncomeStatementReportDO.java",
+      "sourceSha256": "90da67e8f014a6ca6bae67951ca023d434d3994364c544bc66a326df96743751",
+      "table": "fms_income_statement_report",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "fromPeriod",
+          "column": "from_period",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "toPeriod",
+          "column": "to_period",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "rowNo",
+          "column": "row_no",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "formula",
+          "column": "formula",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "editable",
+          "column": "editable",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "currentAmount",
+          "column": "current_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "yearAmount",
+          "column": "year_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "accountSetId",
+          "column": "account_set_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "level",
+          "column": "level",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "settled",
+          "column": "settled",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/voucher/FmsVoucherDO.java",
+      "sourceSha256": "3b64cd6f387a97b687070b65f06f7148ad9f0a37a6f8cfb5148fdfe16ce2fac0",
+      "table": "fms_voucher",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "voucherWordId",
+          "column": "voucher_word_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "voucherNumber",
+          "column": "voucher_number",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "voucherTime",
+          "column": "voucher_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "attachmentUrls",
+          "column": "attachment_urls",
+          "javaType": "List<String>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "attachmentCount",
+          "column": "attachment_count",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "debitAmount",
+          "column": "debit_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "creditAmount",
+          "column": "credit_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "total",
+          "column": "total",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "reviewerUserId",
+          "column": "reviewer_user_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "accountSetId",
+          "column": "account_set_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-fms/src/main/java/cn/iocoder/yudao/module/fms/dal/dataobject/voucher/FmsVoucherEntryDO.java",
+      "sourceSha256": "0d27e748df1822749bfa2dc1c6a6993f5b72479f1023d185febd1aef1beb7e92",
+      "table": "fms_voucher_entry",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "digest",
+          "column": "digest",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "subjectName",
+          "column": "subject_name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "quantity",
+          "column": "quantity",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "debitAmount",
+          "column": "debit_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "creditAmount",
+          "column": "credit_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "voucherId",
+          "column": "voucher_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "subjectCode",
+          "column": "subject_code",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "subjectId",
+          "column": "subject_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "accountSetId",
+          "column": "account_set_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "unitPrice",
+          "column": "unit_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "assistCombinationId",
+          "column": "assist_combination_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "auxiliaries",
+          "column": "auxiliaries",
+          "javaType": "List<AuxiliaryItem>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "standardBuildProfile": "jss-mall",
+    "compile": "passed; no tests run",
+    "mysqlDdlTables": 30,
+    "nativePersistentFields": 306,
+    "schema": "jss_fms_verify_42b3ad6732de",
+    "remainingSchemas": 0,
+    "compileLog": ".runtime/fms-compile.log",
+    "schemaLog": ".runtime/fms-schema-check.log",
+    "pending": "Full Flyway lifecycle/context, account-set membership/tenant, accounting/voucher/ledger/report/closing and device acceptance remain separate pending work"
+  }
+}

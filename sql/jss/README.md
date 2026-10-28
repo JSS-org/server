@@ -59,3 +59,7 @@ python script/jss/database.py validate
 ## V019：完整HRM基础表
 
 标准jss-mall构建纳入完整原HRM模块及已存在的BPM依赖。V019按50份原DO的544个顶层持久字段保留全部列及继承审计/tenant_id；嵌套Java记录按原Jackson3处理器使用JSON，原LongList/StringList处理器使用LONGTEXT保留CSV语义，不将内层字段展开为数据库列。时间域分别保留DATE/TIME/DATETIME，BigDecimal使用JSS明确选择的DECIMAL(38,12)。来源及字段/处理器/SQL类型完整对照见docs/jss-hrm-schema.json。归属MySQL随机库50表实际DDL与全部精确列集合、标准compile通过，随机库残留0，未运行单测或大型回归。init拒绝未托管hrm_表，V001–V018不变；完整生命周期、服务上下文和考勤/工资/社保/招聘/绩效流程、角色/租户、设备待后续验收。未部署到开发库。
+
+## V020：完整FMS基础表
+
+标准jss-mall已纳入原FMS及其锁定Aviator依赖，未升级版本。V020按30份DO的306个顶层持久字段保留全部列及审计/租户，原Jackson3列表使用JSON，不展开内层分录/辅助核算记录；BigDecimal使用JSS选择的DECIMAL(38,12)。完整来源、字段与处理器映射见docs/jss-fms-schema.json。归属MySQL随机库的30表DDL/精确列集合及标准compile通过，随机库残留0；未运行单测或大型回归。init拒绝未托管fms_表，V001–V019未改。完整生命周期/服务上下文、账套成员授权与账务全过程、外部文件及设备后续单列验收；未部署开发库。

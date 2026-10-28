@@ -71,6 +71,9 @@ public interface MesWmMiscIssueService {
      */
     void cancelMiscIssue(Long id);
 
+    /** 校验行数量与分配明细的数量一致；不预留或扣减库存。 */
+    Boolean checkMiscIssueQuantity(Long id);
+
     /**
      * 校验杂项出库单存在且处于可编辑状态（草稿）
      *

@@ -1,11 +1,16 @@
 package cn.iocoder.yudao.module.mes.service.wm.miscissue;
 
 import cn.iocoder.yudao.module.mes.controller.admin.wm.miscissue.vo.line.MesWmMiscIssueLineSaveReqVO;
+import cn.iocoder.yudao.module.mes.dal.dataobject.wm.miscissue.MesWmMiscIssueDetailDO;
+import java.util.List;
 
 /**
  * MES 杂项出库明细 Service 接口
  */
 public interface MesWmMiscIssueDetailService {
+
+    /** 按出库单编号查询全部分配明细。 */
+    List<MesWmMiscIssueDetailDO> getMiscIssueDetailListByIssueId(Long issueId);
 
     /**
      * 创建杂项出库明细

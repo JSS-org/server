@@ -132,6 +132,14 @@ public class MesWmMiscIssueController {
         return success(true);
     }
 
+    @GetMapping("/check-quantity")
+    @Operation(summary = "校验杂项出库行数量与分配明细是否一致")
+    @Parameter(name = "id", description = "出库单编号", required = true)
+    @PreAuthorize("@ss.hasPermission('mes:wm-misc-issue:query')")
+    public CommonResult<Boolean> checkMiscIssueQuantity(@RequestParam("id") Long id) {
+        return success(miscIssueService.checkMiscIssueQuantity(id));
+    }
+
     // ==================== 拼接 VO ====================
 
     private List<MesWmMiscIssueRespVO> buildRespVOList(List<MesWmMiscIssueDO> list) {

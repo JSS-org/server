@@ -101,6 +101,15 @@ public class MesWmMiscIssueLineController {
                 new PageResult<>(buildRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
+    @GetMapping("/list-by-issue-id")
+    @Operation(summary = "获得杂项出库单的全部行")
+    @Parameter(name = "issueId", description = "出库单编号", required = true)
+    @PreAuthorize("@ss.hasPermission('mes:wm-misc-issue:query')")
+    public CommonResult<List<MesWmMiscIssueLineRespVO>> getMiscIssueLineListByIssueId(
+            @RequestParam("issueId") Long issueId) {
+        return success(buildRespVOList(miscIssueLineService.getMiscIssueLineListByIssueId(issueId)));
+    }
+
     // ==================== 拼接 VO ====================
 
     private List<MesWmMiscIssueLineRespVO> buildRespVOList(List<MesWmMiscIssueLineDO> list) {

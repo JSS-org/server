@@ -26,6 +26,11 @@ public class MesWmMiscIssueDetailServiceImpl implements MesWmMiscIssueDetailServ
     @Resource private MesWmMiscIssueDetailMapper issueDetailMapper;
 
     @Override
+    public List<MesWmMiscIssueDetailDO> getMiscIssueDetailListByIssueId(Long issueId) {
+        return issueDetailMapper.selectListByIssueId(issueId);
+    }
+
+    @Override
     public Long createMiscIssueDetail(MesWmMiscIssueLineSaveReqVO createReqVO) {
         MesWmMiscIssueDetailDO detail = BeanUtils.toBean(createReqVO, MesWmMiscIssueDetailDO.class);
         detail.setId(null); // 清空 id，让数据库自动生成

@@ -12,6 +12,7 @@ import cn.iocoder.yudao.framework.common.util.object.ObjectUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.miscissue.vo.MesWmMiscIssuePageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.miscissue.vo.MesWmMiscIssueSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.miscissue.MesWmMiscIssueDO;
+import cn.iocoder.yudao.module.mes.dal.dataobject.wm.miscissue.MesWmMiscIssueDetailDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.miscissue.MesWmMiscIssueLineDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.miscissue.MesWmMiscIssueMapper;
 import cn.iocoder.yudao.module.mes.enums.MesBizTypeConstants;
@@ -29,6 +30,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.math.BigDecimal;
 
 /**
  * MES 杂项出库单 Service 实现类
@@ -41,6 +45,7 @@ public class MesWmMiscIssueServiceImpl implements MesWmMiscIssueService {
     @Resource private MesWmMiscIssueMapper miscIssueMapper;
 
     @Resource private MesWmMiscIssueLineService miscIssueLineService;
+    @Resource private MesWmMiscIssueDetailService miscIssueDetailService;
     @Resource private MesWmTransactionService wmTransactionService;
 
     @Override
@@ -129,6 +134,32 @@ public class MesWmMiscIssueServiceImpl implements MesWmMiscIssueService {
                 new MesWmMiscIssueDO()
                         .setId(id)
                         .setStatus(MesWmMiscIssueStatusEnum.FINISHED.getStatus()));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Boolean checkMiscIssueQuantity(Long id) {
+        validateMiscIssueExists(id);
+        List<MesWmMiscIssueLineDO> lines = miscIssueLineService.getMiscIssueLineListByIssueId(id);
+        if (CollUtil.isEmpty(lines)) {
+            return false;
+        }
+        Map<Long, BigDecimal> remaining = new HashMap<>();
+        for (MesWmMiscIssueLineDO line : lines) {
+            if (line.getId() == null || line.getQuantity() == null
+                    || line.getQuantity().signum() <= 0
+                    || remaining.put(line.getId(), line.getQuantity()) != null) {
+                return false;
+            }
+        }
+        for (MesWmMiscIssueDetailDO detail : miscIssueDetailService.getMiscIssueDetailListByIssueId(id)) {
+            BigDecimal quantity = detail.getQuantity();
+            if (!remaining.containsKey(detail.getLineId()) || quantity == null || quantity.signum() <= 0) {
+                return false;
+            }
+            remaining.computeIfPresent(detail.getLineId(), (lineId, rest) -> rest.subtract(quantity));
+        }
+        return remaining.values().stream().allMatch(value -> value.signum() == 0);
     }
 
     private void createTransactionList(MesWmMiscIssueDO issue) {

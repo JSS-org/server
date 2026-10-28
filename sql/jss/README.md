@@ -99,3 +99,9 @@ python script/jss/database.py validate
 标准jss-mall聚合纳入iot-biz、iot-core和独立iot-gateway，yudao-server只依赖原业务模块，网关部署边界保持。V026包含15张原@TableName表、141外层持久字段、8个Jackson3 JSON字段及5个原CSV LongList/LongSet/IntegerList字段。原设备消息/属性继续由TDengine或IoTDB存储，20个物模型/规则配置内层类继续留在父JSON，不误扩成MySQL表。来源SHA和逐字段映射见docs/jss-iot-schema.json。
 
 server与原IoT gateway reactor跳过测试的compile退出0；归属MySQL8.4.9:13316随机库jss_iot_verify_d52bc0169af1实际DDL、全部列/列类型核对通过，finally删除后残留0，开发库未改。前端43源页正在下一完整批次迁入。完整Flyway/context、时序库提供商、消息/网关协议、真实设备及OTA/权限归属/租户仍待验，没有启动或部署网关。
+
+## V027 / V028：完整 AI 与公众号原生结构（快速迁移准备）
+
+标准jss-mall和yudao-server纳入完整原yudao-module-ai与yudao-module-mp，保留模型/向量库/工作流及微信提供商依赖。V027保留14张原AI表、149外层持久字段、4JSON和5CSV；V028保留8张原公众号表、118外层持久字段、3JSON和1CSV。内层工具/模型/文章配置继续使用原类型处理器，不展开为SQL列；来源SHA与逐字段映射见docs/jss-ai-schema.json、docs/jss-mp-schema.json。
+
+包含完整AI/MP的server reactor跳过测试compile退出0。归属MySQL8.4.9:13316随机库jss_ai_verify_ef5402488627和jss_mp_verify_c0840cb62861实际DDL、全部列与类型核对通过，finally清理后均残留0。开发库未改，没有启动模型生成、消息发送或公众号发布；完整Flyway/context、实际模型/向量库/SSE、微信素材/消息/发布与归属/租户及设备另列待验。前端下一62源页整组正在迁入，仅做必要类型/资源/来源检查。

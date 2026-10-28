@@ -56,6 +56,8 @@
                 <module>yudao-module-pms</module>
                 <module>yudao-module-im</module>
                 <module>yudao-module-iot</module>
+                <module>yudao-module-ai</module>
+                <module>yudao-module-mp</module>
             </modules>
         </profile>
     </profiles>

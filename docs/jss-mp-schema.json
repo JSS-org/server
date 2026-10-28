@@ -1,0 +1,1024 @@
+{
+  "status": "Complete native MP outer schema retained; compile and owned MySQL DDL/all-column checks passed; full Flyway/context/mp-provider/ownership/tenant acceptance pending",
+  "summary": {
+    "tables": 8,
+    "nativePersistentFields": 118,
+    "jsonFields": 3,
+    "csvFields": 1,
+    "nonRelationalOrInnerClasses": 0,
+    "excludedTransientFields": 0
+  },
+  "tables": [
+    {
+      "source": "yudao-module-mp/src/main/java/cn/iocoder/yudao/module/mp/dal/dataobject/account/MpAccountDO.java",
+      "table": "mp_account",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "column": "name",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "account",
+          "javaType": "String",
+          "column": "account",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "appId",
+          "javaType": "String",
+          "column": "app_id",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "appSecret",
+          "javaType": "String",
+          "column": "app_secret",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "token",
+          "javaType": "String",
+          "column": "token",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "aesKey",
+          "javaType": "String",
+          "column": "aes_key",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "qrCodeUrl",
+          "javaType": "String",
+          "column": "qr_code_url",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "remark",
+          "javaType": "String",
+          "column": "remark",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "5e11a9d6a5a0ab5954689cde7e8033ba18290a3ed935133bc8aad10e35d60f07"
+    },
+    {
+      "source": "yudao-module-mp/src/main/java/cn/iocoder/yudao/module/mp/dal/dataobject/material/MpMaterialDO.java",
+      "table": "mp_material",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "accountId",
+          "javaType": "Long",
+          "column": "account_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "appId",
+          "javaType": "String",
+          "column": "app_id",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "mediaId",
+          "javaType": "String",
+          "column": "media_id",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "type",
+          "javaType": "String",
+          "column": "type",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "permanent",
+          "javaType": "Boolean",
+          "column": "permanent",
+          "sqlType": "BIT(1)",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "url",
+          "javaType": "String",
+          "column": "url",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "column": "name",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "mpUrl",
+          "javaType": "String",
+          "column": "mp_url",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "title",
+          "javaType": "String",
+          "column": "title",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "introduction",
+          "javaType": "String",
+          "column": "introduction",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "67790e003931387822c713ba782a600d2945541a03513f50442d4204c018e5f3"
+    },
+    {
+      "source": "yudao-module-mp/src/main/java/cn/iocoder/yudao/module/mp/dal/dataobject/menu/MpMenuDO.java",
+      "table": "mp_menu",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "accountId",
+          "javaType": "Long",
+          "column": "account_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "appId",
+          "javaType": "String",
+          "column": "app_id",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "column": "name",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "menuKey",
+          "javaType": "String",
+          "column": "menu_key",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "parentId",
+          "javaType": "Long",
+          "column": "parent_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "type",
+          "javaType": "String",
+          "column": "type",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "url",
+          "javaType": "String",
+          "column": "url",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "miniProgramAppId",
+          "javaType": "String",
+          "column": "mini_program_app_id",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "miniProgramPagePath",
+          "javaType": "String",
+          "column": "mini_program_page_path",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "articleId",
+          "javaType": "String",
+          "column": "article_id",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "replyMessageType",
+          "javaType": "String",
+          "column": "reply_message_type",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "replyContent",
+          "javaType": "String",
+          "column": "reply_content",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "replyMediaId",
+          "javaType": "String",
+          "column": "reply_media_id",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "replyMediaUrl",
+          "javaType": "String",
+          "column": "reply_media_url",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "replyTitle",
+          "javaType": "String",
+          "column": "reply_title",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "replyDescription",
+          "javaType": "String",
+          "column": "reply_description",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "replyThumbMediaId",
+          "javaType": "String",
+          "column": "reply_thumb_media_id",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "replyThumbMediaUrl",
+          "javaType": "String",
+          "column": "reply_thumb_media_url",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "replyArticles",
+          "javaType": "List<MpMessageDO.Article>",
+          "column": "reply_articles",
+          "sqlType": "JSON",
+          "handler": "Jackson3TypeHandler",
+          "kind": "json"
+        },
+        {
+          "name": "replyMusicUrl",
+          "javaType": "String",
+          "column": "reply_music_url",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "replyHqMusicUrl",
+          "javaType": "String",
+          "column": "reply_hq_music_url",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "f689d9f3ae560005209fc3e9627107cfe6415f1ef6debeec9201102ba9adb194"
+    },
+    {
+      "source": "yudao-module-mp/src/main/java/cn/iocoder/yudao/module/mp/dal/dataobject/message/MpAutoReplyDO.java",
+      "table": "mp_auto_reply",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "accountId",
+          "javaType": "Long",
+          "column": "account_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "appId",
+          "javaType": "String",
+          "column": "app_id",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "column": "type",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "requestKeyword",
+          "javaType": "String",
+          "column": "request_keyword",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "requestMatch",
+          "javaType": "Integer",
+          "column": "request_match",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "requestMessageType",
+          "javaType": "String",
+          "column": "request_message_type",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "responseMessageType",
+          "javaType": "String",
+          "column": "response_message_type",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "responseContent",
+          "javaType": "String",
+          "column": "response_content",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "responseMediaId",
+          "javaType": "String",
+          "column": "response_media_id",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "responseMediaUrl",
+          "javaType": "String",
+          "column": "response_media_url",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "responseTitle",
+          "javaType": "String",
+          "column": "response_title",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "responseDescription",
+          "javaType": "String",
+          "column": "response_description",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "responseThumbMediaId",
+          "javaType": "String",
+          "column": "response_thumb_media_id",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "responseThumbMediaUrl",
+          "javaType": "String",
+          "column": "response_thumb_media_url",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "responseArticles",
+          "javaType": "List<MpMessageDO.Article>",
+          "column": "response_articles",
+          "sqlType": "JSON",
+          "handler": "Jackson3TypeHandler",
+          "kind": "json"
+        },
+        {
+          "name": "responseMusicUrl",
+          "javaType": "String",
+          "column": "response_music_url",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "responseHqMusicUrl",
+          "javaType": "String",
+          "column": "response_hq_music_url",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "d20fd3d83ada49a2369c7e46c2e540a1b4b270b2b779961f8a5ba169049cbeba"
+    },
+    {
+      "source": "yudao-module-mp/src/main/java/cn/iocoder/yudao/module/mp/dal/dataobject/message/MpMessageDO.java",
+      "table": "mp_message",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "msgId",
+          "javaType": "Long",
+          "column": "msg_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "accountId",
+          "javaType": "Long",
+          "column": "account_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "appId",
+          "javaType": "String",
+          "column": "app_id",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "column": "user_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "openid",
+          "javaType": "String",
+          "column": "openid",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "type",
+          "javaType": "String",
+          "column": "type",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "sendFrom",
+          "javaType": "Integer",
+          "column": "send_from",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "content",
+          "javaType": "String",
+          "column": "content",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "mediaId",
+          "javaType": "String",
+          "column": "media_id",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "mediaUrl",
+          "javaType": "String",
+          "column": "media_url",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "recognition",
+          "javaType": "String",
+          "column": "recognition",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "format",
+          "javaType": "String",
+          "column": "format",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "title",
+          "javaType": "String",
+          "column": "title",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "description",
+          "javaType": "String",
+          "column": "description",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "thumbMediaId",
+          "javaType": "String",
+          "column": "thumb_media_id",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "thumbMediaUrl",
+          "javaType": "String",
+          "column": "thumb_media_url",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "url",
+          "javaType": "String",
+          "column": "url",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "locationX",
+          "javaType": "Double",
+          "column": "location_x",
+          "sqlType": "DOUBLE",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "locationY",
+          "javaType": "Double",
+          "column": "location_y",
+          "sqlType": "DOUBLE",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "scale",
+          "javaType": "Double",
+          "column": "scale",
+          "sqlType": "DOUBLE",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "label",
+          "javaType": "String",
+          "column": "label",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "articles",
+          "javaType": "List<Article>",
+          "column": "articles",
+          "sqlType": "JSON",
+          "handler": "Jackson3TypeHandler",
+          "kind": "json"
+        },
+        {
+          "name": "musicUrl",
+          "javaType": "String",
+          "column": "music_url",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "hqMusicUrl",
+          "javaType": "String",
+          "column": "hq_music_url",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "event",
+          "javaType": "String",
+          "column": "event",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "eventKey",
+          "javaType": "String",
+          "column": "event_key",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "5de6f3702453998552ac810a5d437009d9850be5072cf82f1fe5fda63a568f30"
+    },
+    {
+      "source": "yudao-module-mp/src/main/java/cn/iocoder/yudao/module/mp/dal/dataobject/message/MpMessageTemplateDO.java",
+      "table": "mp_message_template",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "accountId",
+          "javaType": "Long",
+          "column": "account_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "appId",
+          "javaType": "String",
+          "column": "app_id",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "templateId",
+          "javaType": "String",
+          "column": "template_id",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "title",
+          "javaType": "String",
+          "column": "title",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "content",
+          "javaType": "String",
+          "column": "content",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "example",
+          "javaType": "String",
+          "column": "example",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "primaryIndustry",
+          "javaType": "String",
+          "column": "primary_industry",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "deputyIndustry",
+          "javaType": "String",
+          "column": "deputy_industry",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "208831039024c0553bcf5ed22f1205d87110e5af0b0025d3dcf151fb19f32d9d"
+    },
+    {
+      "source": "yudao-module-mp/src/main/java/cn/iocoder/yudao/module/mp/dal/dataobject/tag/MpTagDO.java",
+      "table": "mp_tag",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "tagId",
+          "javaType": "Long",
+          "column": "tag_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "column": "name",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "count",
+          "javaType": "Integer",
+          "column": "count",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "accountId",
+          "javaType": "Long",
+          "column": "account_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "appId",
+          "javaType": "String",
+          "column": "app_id",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "f76da4eb88b851f87c52ece3ccbae8f5268b47bf878269bb45fb4e232efd8023"
+    },
+    {
+      "source": "yudao-module-mp/src/main/java/cn/iocoder/yudao/module/mp/dal/dataobject/user/MpUserDO.java",
+      "table": "mp_user",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "openid",
+          "javaType": "String",
+          "column": "openid",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "unionId",
+          "javaType": "String",
+          "column": "union_id",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "subscribeStatus",
+          "javaType": "Integer",
+          "column": "subscribe_status",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "subscribeTime",
+          "javaType": "LocalDateTime",
+          "column": "subscribe_time",
+          "sqlType": "DATETIME",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "unsubscribeTime",
+          "javaType": "LocalDateTime",
+          "column": "unsubscribe_time",
+          "sqlType": "DATETIME",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "nickname",
+          "javaType": "String",
+          "column": "nickname",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "headImageUrl",
+          "javaType": "String",
+          "column": "head_image_url",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "language",
+          "javaType": "String",
+          "column": "language",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "country",
+          "javaType": "String",
+          "column": "country",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "province",
+          "javaType": "String",
+          "column": "province",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "city",
+          "javaType": "String",
+          "column": "city",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "remark",
+          "javaType": "String",
+          "column": "remark",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "tagIds",
+          "javaType": "List<Long>",
+          "column": "tag_ids",
+          "sqlType": "LONGTEXT",
+          "handler": "LongListTypeHandler",
+          "kind": "csv"
+        },
+        {
+          "name": "accountId",
+          "javaType": "Long",
+          "column": "account_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "appId",
+          "javaType": "String",
+          "column": "app_id",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "9a8509c3f94ee219f960935054ad7231be1336b0f7548d927319d0b14f828c17"
+    }
+  ],
+  "nonRelationalOrInnerClasses": [],
+  "excludedTransientFields": [],
+  "storage": "Original type handlers and nested value objects are retained; provider and vector/messaging stores remain separate acceptance work.",
+  "verification": {
+    "compile": ".runtime/ai-mp-compile-result.json",
+    "ddl": ".runtime/mp-schema-check.json",
+    "compileExitCode": 0,
+    "schema": "jss_mp_verify_c0840cb62861",
+    "remainingSchemas": 0,
+    "scope": "Necessary compile and relational DDL only; no full Flyway/context, mp provider, messaging/vector/model/role/tenant or device acceptance."
+  }
+}

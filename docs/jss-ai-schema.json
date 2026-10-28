@@ -1,0 +1,1314 @@
+{
+  "status": "Complete native AI outer schema retained; compile and owned MySQL DDL/all-column checks passed; full Flyway/context/ai-provider/ownership/tenant acceptance pending",
+  "summary": {
+    "tables": 14,
+    "nativePersistentFields": 149,
+    "jsonFields": 4,
+    "csvFields": 5,
+    "nonRelationalOrInnerClasses": 0,
+    "excludedTransientFields": 0
+  },
+  "tables": [
+    {
+      "source": "yudao-module-ai/src/main/java/cn/iocoder/yudao/module/ai/dal/dataobject/chat/AiChatConversationDO.java",
+      "table": "ai_chat_conversation",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "column": "user_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "title",
+          "javaType": "String",
+          "column": "title",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "pinned",
+          "javaType": "Boolean",
+          "column": "pinned",
+          "sqlType": "BIT(1)",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "pinnedTime",
+          "javaType": "LocalDateTime",
+          "column": "pinned_time",
+          "sqlType": "DATETIME",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "roleId",
+          "javaType": "Long",
+          "column": "role_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "modelId",
+          "javaType": "Long",
+          "column": "model_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "model",
+          "javaType": "String",
+          "column": "model",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "systemMessage",
+          "javaType": "String",
+          "column": "system_message",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "temperature",
+          "javaType": "Double",
+          "column": "temperature",
+          "sqlType": "DOUBLE",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "maxTokens",
+          "javaType": "Integer",
+          "column": "max_tokens",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "maxContexts",
+          "javaType": "Integer",
+          "column": "max_contexts",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "03de2488a80b1ad31e1cfcdb2d622654728bc95ef3fe4e6670b6a3360b186c79"
+    },
+    {
+      "source": "yudao-module-ai/src/main/java/cn/iocoder/yudao/module/ai/dal/dataobject/chat/AiChatMessageDO.java",
+      "table": "ai_chat_message",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "conversationId",
+          "javaType": "Long",
+          "column": "conversation_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "replyId",
+          "javaType": "Long",
+          "column": "reply_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "type",
+          "javaType": "String",
+          "column": "type",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "column": "user_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "roleId",
+          "javaType": "Long",
+          "column": "role_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "model",
+          "javaType": "String",
+          "column": "model",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "modelId",
+          "javaType": "Long",
+          "column": "model_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "content",
+          "javaType": "String",
+          "column": "content",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "reasoningContent",
+          "javaType": "String",
+          "column": "reasoning_content",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "useContext",
+          "javaType": "Boolean",
+          "column": "use_context",
+          "sqlType": "BIT(1)",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "segmentIds",
+          "javaType": "List<Long>",
+          "column": "segment_ids",
+          "sqlType": "LONGTEXT",
+          "handler": "LongListTypeHandler",
+          "kind": "csv"
+        },
+        {
+          "name": "webSearchPages",
+          "javaType": "List<AiWebSearchResponse.WebPage>",
+          "column": "web_search_pages",
+          "sqlType": "JSON",
+          "handler": "Jackson3TypeHandler",
+          "kind": "json"
+        },
+        {
+          "name": "attachmentUrls",
+          "javaType": "List<String>",
+          "column": "attachment_urls",
+          "sqlType": "LONGTEXT",
+          "handler": "StringListTypeHandler",
+          "kind": "csv"
+        }
+      ],
+      "sourceSha256": "06fe02648ec05151f6b495f393f8360529de5a473044f9d038a83c9327beeada"
+    },
+    {
+      "source": "yudao-module-ai/src/main/java/cn/iocoder/yudao/module/ai/dal/dataobject/image/AiImageDO.java",
+      "table": "ai_image",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "column": "user_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "prompt",
+          "javaType": "String",
+          "column": "prompt",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "platform",
+          "javaType": "String",
+          "column": "platform",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "modelId",
+          "javaType": "Long",
+          "column": "model_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "model",
+          "javaType": "String",
+          "column": "model",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "width",
+          "javaType": "Integer",
+          "column": "width",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "height",
+          "javaType": "Integer",
+          "column": "height",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "column": "status",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "finishTime",
+          "javaType": "LocalDateTime",
+          "column": "finish_time",
+          "sqlType": "DATETIME",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "errorMessage",
+          "javaType": "String",
+          "column": "error_message",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "picUrl",
+          "javaType": "String",
+          "column": "pic_url",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "publicStatus",
+          "javaType": "Boolean",
+          "column": "public_status",
+          "sqlType": "BIT(1)",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "options",
+          "javaType": "Map<String, Object>",
+          "column": "options",
+          "sqlType": "JSON",
+          "handler": "Jackson3TypeHandler",
+          "kind": "json"
+        },
+        {
+          "name": "buttons",
+          "javaType": "List<MidjourneyApi.Button>",
+          "column": "buttons",
+          "sqlType": "JSON",
+          "handler": "Jackson3TypeHandler",
+          "kind": "json"
+        },
+        {
+          "name": "taskId",
+          "javaType": "String",
+          "column": "task_id",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "bb4849935de2c45f11e810064687be46ba149f9af280124017d145e5308d4448"
+    },
+    {
+      "source": "yudao-module-ai/src/main/java/cn/iocoder/yudao/module/ai/dal/dataobject/knowledge/AiKnowledgeDO.java",
+      "table": "ai_knowledge",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "column": "name",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "description",
+          "javaType": "String",
+          "column": "description",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "embeddingModelId",
+          "javaType": "Long",
+          "column": "embedding_model_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "embeddingModel",
+          "javaType": "String",
+          "column": "embedding_model",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "topK",
+          "javaType": "Integer",
+          "column": "top_k",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "similarityThreshold",
+          "javaType": "Double",
+          "column": "similarity_threshold",
+          "sqlType": "DOUBLE",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "column": "status",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "4dbbf720ad71af9d9e0ad23ce24150e26030f84f4813ba211b81925ad4743baa"
+    },
+    {
+      "source": "yudao-module-ai/src/main/java/cn/iocoder/yudao/module/ai/dal/dataobject/knowledge/AiKnowledgeDocumentDO.java",
+      "table": "ai_knowledge_document",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "knowledgeId",
+          "javaType": "Long",
+          "column": "knowledge_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "column": "name",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "url",
+          "javaType": "String",
+          "column": "url",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "content",
+          "javaType": "String",
+          "column": "content",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "contentLength",
+          "javaType": "Integer",
+          "column": "content_length",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "tokens",
+          "javaType": "Integer",
+          "column": "tokens",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "segmentMaxTokens",
+          "javaType": "Integer",
+          "column": "segment_max_tokens",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "retrievalCount",
+          "javaType": "Integer",
+          "column": "retrieval_count",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "column": "status",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "34448c640f68e04964ab35b0861710ca0edf505a6aa2c9d01d3e1679e50c73a9"
+    },
+    {
+      "source": "yudao-module-ai/src/main/java/cn/iocoder/yudao/module/ai/dal/dataobject/knowledge/AiKnowledgeSegmentDO.java",
+      "table": "ai_knowledge_segment",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "knowledgeId",
+          "javaType": "Long",
+          "column": "knowledge_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "documentId",
+          "javaType": "Long",
+          "column": "document_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "content",
+          "javaType": "String",
+          "column": "content",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "contentLength",
+          "javaType": "Integer",
+          "column": "content_length",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "vectorId",
+          "javaType": "String",
+          "column": "vector_id",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "tokens",
+          "javaType": "Integer",
+          "column": "tokens",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "retrievalCount",
+          "javaType": "Integer",
+          "column": "retrieval_count",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "column": "status",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "2a9e943638924a90a9c5d19d611348d6593133b16338e61fcd9d77b6478ced6f"
+    },
+    {
+      "source": "yudao-module-ai/src/main/java/cn/iocoder/yudao/module/ai/dal/dataobject/mindmap/AiMindMapDO.java",
+      "table": "ai_mind_map",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "column": "user_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "platform",
+          "javaType": "String",
+          "column": "platform",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "modelId",
+          "javaType": "Long",
+          "column": "model_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "model",
+          "javaType": "String",
+          "column": "model",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "prompt",
+          "javaType": "String",
+          "column": "prompt",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "generatedContent",
+          "javaType": "String",
+          "column": "generated_content",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "errorMessage",
+          "javaType": "String",
+          "column": "error_message",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "ce0a97639445af3932e799554924ad67eb532b999119401401878c0ba3d79296"
+    },
+    {
+      "source": "yudao-module-ai/src/main/java/cn/iocoder/yudao/module/ai/dal/dataobject/model/AiApiKeyDO.java",
+      "table": "ai_api_key",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "column": "name",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "apiKey",
+          "javaType": "String",
+          "column": "api_key",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "platform",
+          "javaType": "String",
+          "column": "platform",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "url",
+          "javaType": "String",
+          "column": "url",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "column": "status",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "1ce96e23cda42517c860acec057c14923871ea55722028a42f2322b2a68ce472"
+    },
+    {
+      "source": "yudao-module-ai/src/main/java/cn/iocoder/yudao/module/ai/dal/dataobject/model/AiChatRoleDO.java",
+      "table": "ai_chat_role",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "column": "name",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "avatar",
+          "javaType": "String",
+          "column": "avatar",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "category",
+          "javaType": "String",
+          "column": "category",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "description",
+          "javaType": "String",
+          "column": "description",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "systemMessage",
+          "javaType": "String",
+          "column": "system_message",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "column": "user_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "modelId",
+          "javaType": "Long",
+          "column": "model_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "knowledgeIds",
+          "javaType": "List<Long>",
+          "column": "knowledge_ids",
+          "sqlType": "LONGTEXT",
+          "handler": "LongListTypeHandler",
+          "kind": "csv"
+        },
+        {
+          "name": "toolIds",
+          "javaType": "List<Long>",
+          "column": "tool_ids",
+          "sqlType": "LONGTEXT",
+          "handler": "LongListTypeHandler",
+          "kind": "csv"
+        },
+        {
+          "name": "mcpClientNames",
+          "javaType": "List<String>",
+          "column": "mcp_client_names",
+          "sqlType": "LONGTEXT",
+          "handler": "StringListTypeHandler",
+          "kind": "csv"
+        },
+        {
+          "name": "publicStatus",
+          "javaType": "Boolean",
+          "column": "public_status",
+          "sqlType": "BIT(1)",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "sort",
+          "javaType": "Integer",
+          "column": "sort",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "column": "status",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "e052b378a420bf6a590cc8915dba00894820caa3472af171a708221fceb26e04"
+    },
+    {
+      "source": "yudao-module-ai/src/main/java/cn/iocoder/yudao/module/ai/dal/dataobject/model/AiModelDO.java",
+      "table": "ai_model",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "keyId",
+          "javaType": "Long",
+          "column": "key_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "column": "name",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "model",
+          "javaType": "String",
+          "column": "model",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "platform",
+          "javaType": "String",
+          "column": "platform",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "column": "type",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "sort",
+          "javaType": "Integer",
+          "column": "sort",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "column": "status",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "temperature",
+          "javaType": "Double",
+          "column": "temperature",
+          "sqlType": "DOUBLE",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "maxTokens",
+          "javaType": "Integer",
+          "column": "max_tokens",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "maxContexts",
+          "javaType": "Integer",
+          "column": "max_contexts",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "95d0279716a230bc5a0632449d8026f389174a21e23162021fb531443afea653"
+    },
+    {
+      "source": "yudao-module-ai/src/main/java/cn/iocoder/yudao/module/ai/dal/dataobject/model/AiToolDO.java",
+      "table": "ai_tool",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "column": "name",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "description",
+          "javaType": "String",
+          "column": "description",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "column": "status",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "945a71e690e99ed911b810e368709b403834b571cfc28137a5551eedc7c74eab"
+    },
+    {
+      "source": "yudao-module-ai/src/main/java/cn/iocoder/yudao/module/ai/dal/dataobject/music/AiMusicDO.java",
+      "table": "ai_music",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "column": "user_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "title",
+          "javaType": "String",
+          "column": "title",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "lyric",
+          "javaType": "String",
+          "column": "lyric",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "imageUrl",
+          "javaType": "String",
+          "column": "image_url",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "audioUrl",
+          "javaType": "String",
+          "column": "audio_url",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "videoUrl",
+          "javaType": "String",
+          "column": "video_url",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "column": "status",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "generateMode",
+          "javaType": "Integer",
+          "column": "generate_mode",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "description",
+          "javaType": "String",
+          "column": "description",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "platform",
+          "javaType": "String",
+          "column": "platform",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "model",
+          "javaType": "String",
+          "column": "model",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "tags",
+          "javaType": "List<String>",
+          "column": "tags",
+          "sqlType": "JSON",
+          "handler": "Jackson3TypeHandler",
+          "kind": "json"
+        },
+        {
+          "name": "duration",
+          "javaType": "Double",
+          "column": "duration",
+          "sqlType": "DOUBLE",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "publicStatus",
+          "javaType": "Boolean",
+          "column": "public_status",
+          "sqlType": "BIT(1)",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "taskId",
+          "javaType": "String",
+          "column": "task_id",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "errorMessage",
+          "javaType": "String",
+          "column": "error_message",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "24f44b56877f0008a52674e09a15d0a8b2c080a4956c9fb73d0670514c5eaa10"
+    },
+    {
+      "source": "yudao-module-ai/src/main/java/cn/iocoder/yudao/module/ai/dal/dataobject/workflow/AiWorkflowDO.java",
+      "table": "ai_workflow",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "column": "name",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "code",
+          "javaType": "String",
+          "column": "code",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "graph",
+          "javaType": "String",
+          "column": "graph",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "remark",
+          "javaType": "String",
+          "column": "remark",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "column": "status",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "13a239af1af5d209f334164b7a3a55afeebc5870d5d1f03c2ed8b7955352fe1e"
+    },
+    {
+      "source": "yudao-module-ai/src/main/java/cn/iocoder/yudao/module/ai/dal/dataobject/write/AiWriteDO.java",
+      "table": "ai_write",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "column": "user_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "column": "type",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "platform",
+          "javaType": "String",
+          "column": "platform",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "modelId",
+          "javaType": "Long",
+          "column": "model_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "model",
+          "javaType": "String",
+          "column": "model",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "prompt",
+          "javaType": "String",
+          "column": "prompt",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "generatedContent",
+          "javaType": "String",
+          "column": "generated_content",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "originalContent",
+          "javaType": "String",
+          "column": "original_content",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "length",
+          "javaType": "Integer",
+          "column": "length",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "format",
+          "javaType": "Integer",
+          "column": "format",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "tone",
+          "javaType": "Integer",
+          "column": "tone",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "language",
+          "javaType": "Integer",
+          "column": "language",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "errorMessage",
+          "javaType": "String",
+          "column": "error_message",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "98a9ca64b24e65476b168dc4d9c158de0976fd0834d2b749a3576fd00125f677"
+    }
+  ],
+  "nonRelationalOrInnerClasses": [],
+  "excludedTransientFields": [],
+  "storage": "Original type handlers and nested value objects are retained; provider and vector/messaging stores remain separate acceptance work.",
+  "verification": {
+    "compile": ".runtime/ai-mp-compile-result.json",
+    "ddl": ".runtime/ai-schema-check.json",
+    "compileExitCode": 0,
+    "schema": "jss_ai_verify_ef5402488627",
+    "remainingSchemas": 0,
+    "scope": "Necessary compile and relational DDL only; no full Flyway/context, ai provider, messaging/vector/model/role/tenant or device acceptance."
+  }
+}

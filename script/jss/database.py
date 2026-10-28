@@ -13,7 +13,7 @@ ASSETS = ROOT / 'sql/jss'
 HISTORY = 'flyway_jss_schema_history'
 FRAMEWORK = {'system_users', 'system_menu', 'system_role', 'system_role_menu',
              'system_user_role', 'system_tenant', 'system_notice', 'infra_api_access_log', 'infra_api_error_log'}
-BUSINESS_PREFIXES = ('member_', 'jss_', 'product_', 'promotion_', 'trade_', 'pay_')
+BUSINESS_PREFIXES = ('member_', 'jss_', 'product_', 'promotion_', 'trade_', 'pay_', 'crm_', 'bpm_', 'act_', 'flw_')
 
 
 class Database:
@@ -78,7 +78,7 @@ class Database:
         if action == 'init':
             if HISTORY in tables:
                 raise ValueError('Already managed; use migrate or validate')
-            existing = sorted(table for table in tables if table.startswith(BUSINESS_PREFIXES))
+            existing = sorted(table for table in tables if table.lower().startswith(BUSINESS_PREFIXES))
             if existing:
                 raise ValueError('Refusing automatic adoption of existing business tables: ' + ','.join(existing))
             # Explicitly baseline only an existing framework-only schema, then apply JSS versions.

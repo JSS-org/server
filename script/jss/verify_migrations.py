@@ -53,6 +53,10 @@ def main():
         versions = [re.match(r'V(\d+)__', file.name)[1] for file in sorted((ASSETS / 'migration/mysql').glob('V*__*.sql'))]
         assert managed.sql(f"SELECT GROUP_CONCAT(version ORDER BY installed_rank) FROM {HISTORY} WHERE success=1") == ','.join(['0', *versions])
         checks.append('explicit baseline-zero and all versioned migrations execute on MySQL')
+        assert managed.sql("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name REGEXP '^(crm_|bpm_)'") == '29'
+        assert managed.sql("SELECT VALUE_ FROM ACT_GE_PROPERTY WHERE NAME_='schema.version'") == '8.0.0.0'
+        assert managed.sql('SELECT COUNT(*) FROM ACT_RE_PROCDEF') == '0'
+        checks.append('fresh V016/V017 create complete CRM/BPM and native Flowable metadata without deployed workflows')
         assert managed.sql("SELECT CONCAT(title,'|',content,'|',remark) FROM system_notice WHERE id=1") == 'Legacy notice|<p>Original content</p>|'
         managed.sql("UPDATE system_notice SET remark='retained remark' WHERE id=1")
         checks.append('V010 adds an empty remark without changing existing notice content')
@@ -181,19 +185,34 @@ def main():
         checks.append('managed V012 upgrades to V013 preserving disabled custom permissions, Long menu IDs, existing grants/packages and experience history')
         upgrade.sql("INSERT INTO system_menu (id,name,permission,type,sort,status,visible) VALUES (9007199254740900,'existing disabled cashier submit','pay:order:submit',3,81,1,b'1');")
         submit_node = upgrade.sql('SELECT * FROM system_menu WHERE id=9007199254740900')
-        upgrade.execute('migrate')
-        upgrade.execute('validate')
+        migrate_through(14)
         assert upgrade.sql(f'SELECT MAX(CAST(version AS UNSIGNED)) FROM {HISTORY} WHERE success=1') == '14'
         assert upgrade.sql("SELECT COUNT(*) FROM system_menu WHERE permission='pay:order:submit' AND deleted=b'0'") == '1'
         assert upgrade.sql('SELECT * FROM system_menu WHERE id=9007199254740900') == submit_node
         assert all(upgrade.sql(f'SELECT * FROM {table} ORDER BY id') == value for table, value in retained.items())
         checks.append('managed V013 upgrades to V014 without changing disabled custom cashier permissions or grants')
         menus = upgrade.sql('SELECT * FROM system_menu ORDER BY id')
-        upgrade.execute('migrate')
-        upgrade.execute('validate')
+        migrate_through(14)
         assert upgrade.sql('SELECT * FROM system_menu ORDER BY id') == menus
         assert all(upgrade.sql(f'SELECT * FROM {table} ORDER BY id') == value for table, value in retained.items())
         checks.append('repeated V014 migrate/validate preserve menu metadata and existing grants without duplication')
+        migrate_through(15)
+        assert upgrade.sql(f'SELECT MAX(CAST(version AS UNSIGNED)) FROM {HISTORY} WHERE success=1') == '15'
+        upgrade.sql("INSERT INTO member_user (id,tenant_id,mobile,status,register_ip) VALUES (9007199254740993,1,'13800000002',0,'127.0.0.1')")
+        prior_tables = {table: upgrade.sql(f'SELECT * FROM {table} ORDER BY id') for table in ['member_user','system_menu','system_role_menu','system_tenant_package','member_experience_record','member_experience_event']}
+        upgrade.execute('migrate')
+        upgrade.execute('validate')
+        assert upgrade.sql(f'SELECT MAX(CAST(version AS UNSIGNED)) FROM {HISTORY} WHERE success=1') == '17'
+        assert all(upgrade.sql(f'SELECT * FROM {table} ORDER BY id') == value for table, value in prior_tables.items())
+        assert upgrade.sql("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name REGEXP '^(crm_|bpm_)'") == '29'
+        assert upgrade.sql("SELECT VALUE_ FROM ACT_GE_PROPERTY WHERE NAME_='schema.version'") == '8.0.0.0'
+        checks.append('managed V015 upgrades through V016/V017 preserving Long members, menus, grants, packages and experience history')
+        upgrade.sql("INSERT INTO crm_customer (id,tenant_id,name) VALUES (9007199254740993,1,'Preserved customer'); INSERT INTO bpm_user_group (id,tenant_id,name,user_ids) VALUES (9007199254740995,1,'Preserved group','[9007199254740993]');")
+        upgrade.execute('migrate')
+        upgrade.execute('validate')
+        assert upgrade.sql('SELECT id,name FROM crm_customer') == '9007199254740993\tPreserved customer'
+        assert upgrade.sql("SELECT id,JSON_UNQUOTE(JSON_EXTRACT(user_ids,'$[0]')) FROM bpm_user_group") == '9007199254740995\t9007199254740993'
+        checks.append('repeated V017 migrate/validate preserve CRM records, BPM JSON Long IDs and native engine metadata')
         os.environ['JSS_DB_NAME'] = database
         try:
             managed.execute('init')
@@ -223,13 +242,18 @@ def main():
         except ValueError:
             assert not empty.tables()
             checks.append('missing framework prerequisites fail without creating history or business tables')
-        sql(f'USE `{empty_database}`;\n' + '\n'.join(statements) + '\nCREATE TABLE member_existing (id BIGINT PRIMARY KEY);')
-        try:
-            empty.execute('init')
-            raise AssertionError('Existing business tables were silently adopted')
-        except ValueError:
-            assert HISTORY not in empty.tables()
-            checks.append('unmanaged existing business tables require review instead of automatic adoption')
+        sql(f'USE `{empty_database}`;\n' + '\n'.join(statements))
+        for table in ['member_existing','crm_existing','bpm_existing','ACT_RE_PROCDEF','FLW_EV_EVENT_DEPLOYMENT']:
+            empty.sql(f'CREATE TABLE `{table}` (id BIGINT PRIMARY KEY)')
+            try:
+                empty.execute('init')
+                raise AssertionError('Existing business/engine tables were silently adopted: ' + table)
+            except ValueError as error:
+                assert table.lower() in str(error).lower()
+                assert HISTORY not in empty.tables()
+            finally:
+                empty.sql(f'DROP TABLE `{table}`')
+        checks.append('unmanaged member, CRM, BPM and upper/lower-case Flowable tables require review instead of automatic adoption')
         for check in checks:
             print('PASS ' + check)
         print(f'{len(checks)} Flyway lifecycle checks passed on {live["version"]}:{live["port"]}')

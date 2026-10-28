@@ -1,0 +1,2309 @@
+{
+  "status": "MySQL schema/storage and Flyway lifecycle verified; actual engine startup, mappers, authentication and business acceptance remain separate",
+  "tables": [
+    {
+      "table": "crm_business",
+      "source": "yudao-module-crm/src/main/java/cn/iocoder/yudao/module/crm/dal/dataobject/business/CrmBusinessDO.java",
+      "sourceSha256": "eb445dec083b4639b0a540be2c17c1ac40213368fd5598409ba4efe312bf4d63",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "customerId",
+          "column": "customer_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "followUpStatus",
+          "column": "follow_up_status",
+          "javaType": "Boolean",
+          "handler": null,
+          "sql": "BIT(1) NOT NULL DEFAULT b'0'"
+        },
+        {
+          "field": "contactLastTime",
+          "column": "contact_last_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sql": "DATETIME(3) NULL"
+        },
+        {
+          "field": "contactNextTime",
+          "column": "contact_next_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sql": "DATETIME(3) NULL"
+        },
+        {
+          "field": "ownerUserId",
+          "column": "owner_user_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "statusTypeId",
+          "column": "status_type_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "statusId",
+          "column": "status_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "endStatus",
+          "column": "end_status",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "endRemark",
+          "column": "end_remark",
+          "javaType": "String",
+          "handler": null,
+          "sql": "LONGTEXT NULL"
+        },
+        {
+          "field": "dealTime",
+          "column": "deal_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sql": "DATETIME(3) NULL"
+        },
+        {
+          "field": "totalProductPrice",
+          "column": "total_product_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        },
+        {
+          "field": "discountPercent",
+          "column": "discount_percent",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        },
+        {
+          "field": "totalPrice",
+          "column": "total_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        },
+        {
+          "field": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sql": "LONGTEXT NULL"
+        }
+      ]
+    },
+    {
+      "table": "crm_business_product",
+      "source": "yudao-module-crm/src/main/java/cn/iocoder/yudao/module/crm/dal/dataobject/business/CrmBusinessProductDO.java",
+      "sourceSha256": "dc3a6b2607760147864f1ec17e3ae5fa08538e5f2a41768a35ac960aa2a63e01",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "businessId",
+          "column": "business_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "productId",
+          "column": "product_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "productPrice",
+          "column": "product_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        },
+        {
+          "field": "businessPrice",
+          "column": "business_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        },
+        {
+          "field": "count",
+          "column": "count",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        },
+        {
+          "field": "totalPrice",
+          "column": "total_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        }
+      ]
+    },
+    {
+      "table": "crm_business_status",
+      "source": "yudao-module-crm/src/main/java/cn/iocoder/yudao/module/crm/dal/dataobject/business/CrmBusinessStatusDO.java",
+      "sourceSha256": "a71fcb6b6dba3f530dc8981b01faa21c279afb371ae0f750e09af41bcbe1713b",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "typeId",
+          "column": "type_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "percent",
+          "column": "percent",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        }
+      ]
+    },
+    {
+      "table": "crm_business_status_type",
+      "source": "yudao-module-crm/src/main/java/cn/iocoder/yudao/module/crm/dal/dataobject/business/CrmBusinessStatusTypeDO.java",
+      "sourceSha256": "30958dc798316f28ea5a556224300d732eb3fa92845bd41f99b253f4652ab398",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "deptIds",
+          "column": "dept_ids",
+          "javaType": "List<Long>",
+          "handler": "LongListTypeHandler",
+          "sql": "LONGTEXT NULL"
+        }
+      ]
+    },
+    {
+      "table": "crm_clue",
+      "source": "yudao-module-crm/src/main/java/cn/iocoder/yudao/module/crm/dal/dataobject/clue/CrmClueDO.java",
+      "sourceSha256": "9eaf315ba9ef5b7542963d80deeb245a95e65ba45b5135053a50a06ea791ea8d",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "followUpStatus",
+          "column": "follow_up_status",
+          "javaType": "Boolean",
+          "handler": null,
+          "sql": "BIT(1) NOT NULL DEFAULT b'0'"
+        },
+        {
+          "field": "contactLastTime",
+          "column": "contact_last_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sql": "DATETIME(3) NULL"
+        },
+        {
+          "field": "contactLastContent",
+          "column": "contact_last_content",
+          "javaType": "String",
+          "handler": null,
+          "sql": "LONGTEXT NULL"
+        },
+        {
+          "field": "contactNextTime",
+          "column": "contact_next_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sql": "DATETIME(3) NULL"
+        },
+        {
+          "field": "ownerUserId",
+          "column": "owner_user_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "transformStatus",
+          "column": "transform_status",
+          "javaType": "Boolean",
+          "handler": null,
+          "sql": "BIT(1) NOT NULL DEFAULT b'0'"
+        },
+        {
+          "field": "customerId",
+          "column": "customer_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "mobile",
+          "column": "mobile",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "telephone",
+          "column": "telephone",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "qq",
+          "column": "qq",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "wechat",
+          "column": "wechat",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "email",
+          "column": "email",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "areaId",
+          "column": "area_id",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "detailAddress",
+          "column": "detail_address",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(2048) NULL"
+        },
+        {
+          "field": "industryId",
+          "column": "industry_id",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "level",
+          "column": "level",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "source",
+          "column": "source",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sql": "LONGTEXT NULL"
+        }
+      ]
+    },
+    {
+      "table": "crm_contact_business",
+      "source": "yudao-module-crm/src/main/java/cn/iocoder/yudao/module/crm/dal/dataobject/contact/CrmContactBusinessDO.java",
+      "sourceSha256": "184d1767ba73430427f000646c274e62004bf81046f7bead25ab4c7fc2f93787",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "contactId",
+          "column": "contact_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "businessId",
+          "column": "business_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        }
+      ]
+    },
+    {
+      "table": "crm_contact",
+      "source": "yudao-module-crm/src/main/java/cn/iocoder/yudao/module/crm/dal/dataobject/contact/CrmContactDO.java",
+      "sourceSha256": "e6bbd1e1ba94e52db82d902e4d6caf279979a58d97dae891ea33e4a5840f6f5d",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "customerId",
+          "column": "customer_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "contactLastTime",
+          "column": "contact_last_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sql": "DATETIME(3) NULL"
+        },
+        {
+          "field": "contactLastContent",
+          "column": "contact_last_content",
+          "javaType": "String",
+          "handler": null,
+          "sql": "LONGTEXT NULL"
+        },
+        {
+          "field": "contactNextTime",
+          "column": "contact_next_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sql": "DATETIME(3) NULL"
+        },
+        {
+          "field": "ownerUserId",
+          "column": "owner_user_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "mobile",
+          "column": "mobile",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "telephone",
+          "column": "telephone",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "email",
+          "column": "email",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "qq",
+          "column": "qq",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "wechat",
+          "column": "wechat",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "areaId",
+          "column": "area_id",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "detailAddress",
+          "column": "detail_address",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(2048) NULL"
+        },
+        {
+          "field": "sex",
+          "column": "sex",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "master",
+          "column": "master",
+          "javaType": "Boolean",
+          "handler": null,
+          "sql": "BIT(1) NOT NULL DEFAULT b'0'"
+        },
+        {
+          "field": "post",
+          "column": "post",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "parentId",
+          "column": "parent_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sql": "LONGTEXT NULL"
+        }
+      ]
+    },
+    {
+      "table": "crm_contract_config",
+      "source": "yudao-module-crm/src/main/java/cn/iocoder/yudao/module/crm/dal/dataobject/contract/CrmContractConfigDO.java",
+      "sourceSha256": "9786fc753afb423f2ab62ae35b5c655696c6e347400d2d147eac2a66d00fbbde",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "notifyEnabled",
+          "column": "notify_enabled",
+          "javaType": "Boolean",
+          "handler": null,
+          "sql": "BIT(1) NOT NULL DEFAULT b'0'"
+        },
+        {
+          "field": "notifyDays",
+          "column": "notify_days",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        }
+      ]
+    },
+    {
+      "table": "crm_contract",
+      "source": "yudao-module-crm/src/main/java/cn/iocoder/yudao/module/crm/dal/dataobject/contract/CrmContractDO.java",
+      "sourceSha256": "55b360a793371faff3780b08f370544201247cd31bfb72668977be741065627d",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "no",
+          "column": "no",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) COLLATE utf8mb4_bin NULL"
+        },
+        {
+          "field": "customerId",
+          "column": "customer_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "businessId",
+          "column": "business_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "contactLastTime",
+          "column": "contact_last_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sql": "DATETIME(3) NULL"
+        },
+        {
+          "field": "ownerUserId",
+          "column": "owner_user_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "processInstanceId",
+          "column": "process_instance_id",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) COLLATE utf8mb4_bin NULL"
+        },
+        {
+          "field": "auditStatus",
+          "column": "audit_status",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "orderDate",
+          "column": "order_date",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sql": "DATETIME(3) NULL"
+        },
+        {
+          "field": "startTime",
+          "column": "start_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sql": "DATETIME(3) NULL"
+        },
+        {
+          "field": "endTime",
+          "column": "end_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sql": "DATETIME(3) NULL"
+        },
+        {
+          "field": "totalProductPrice",
+          "column": "total_product_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        },
+        {
+          "field": "discountPercent",
+          "column": "discount_percent",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        },
+        {
+          "field": "totalPrice",
+          "column": "total_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        },
+        {
+          "field": "signContactId",
+          "column": "sign_contact_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "signUserId",
+          "column": "sign_user_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sql": "LONGTEXT NULL"
+        }
+      ]
+    },
+    {
+      "table": "crm_contract_product",
+      "source": "yudao-module-crm/src/main/java/cn/iocoder/yudao/module/crm/dal/dataobject/contract/CrmContractProductDO.java",
+      "sourceSha256": "0af06a407f08a535007f8e56a5bf1fc3c0751b71aa578542c74c8074a3480f96",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "contractId",
+          "column": "contract_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "productId",
+          "column": "product_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "productPrice",
+          "column": "product_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        },
+        {
+          "field": "contractPrice",
+          "column": "contract_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        },
+        {
+          "field": "count",
+          "column": "count",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        },
+        {
+          "field": "totalPrice",
+          "column": "total_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        }
+      ]
+    },
+    {
+      "table": "crm_customer",
+      "source": "yudao-module-crm/src/main/java/cn/iocoder/yudao/module/crm/dal/dataobject/customer/CrmCustomerDO.java",
+      "sourceSha256": "36d0613424f8fb817c2db6c2c6857bb77cf413c25c51f3b2ae8afb528a20f9a3",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "followUpStatus",
+          "column": "follow_up_status",
+          "javaType": "Boolean",
+          "handler": null,
+          "sql": "BIT(1) NOT NULL DEFAULT b'0'"
+        },
+        {
+          "field": "contactLastTime",
+          "column": "contact_last_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sql": "DATETIME(3) NULL"
+        },
+        {
+          "field": "contactLastContent",
+          "column": "contact_last_content",
+          "javaType": "String",
+          "handler": null,
+          "sql": "LONGTEXT NULL"
+        },
+        {
+          "field": "contactNextTime",
+          "column": "contact_next_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sql": "DATETIME(3) NULL"
+        },
+        {
+          "field": "ownerUserId",
+          "column": "owner_user_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "ownerTime",
+          "column": "owner_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sql": "DATETIME(3) NULL"
+        },
+        {
+          "field": "lockStatus",
+          "column": "lock_status",
+          "javaType": "Boolean",
+          "handler": null,
+          "sql": "BIT(1) NOT NULL DEFAULT b'0'"
+        },
+        {
+          "field": "dealStatus",
+          "column": "deal_status",
+          "javaType": "Boolean",
+          "handler": null,
+          "sql": "BIT(1) NOT NULL DEFAULT b'0'"
+        },
+        {
+          "field": "mobile",
+          "column": "mobile",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "telephone",
+          "column": "telephone",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "qq",
+          "column": "qq",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "wechat",
+          "column": "wechat",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "email",
+          "column": "email",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "areaId",
+          "column": "area_id",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "detailAddress",
+          "column": "detail_address",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(2048) NULL"
+        },
+        {
+          "field": "industryId",
+          "column": "industry_id",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "level",
+          "column": "level",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "source",
+          "column": "source",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sql": "LONGTEXT NULL"
+        }
+      ]
+    },
+    {
+      "table": "crm_customer_limit_config",
+      "source": "yudao-module-crm/src/main/java/cn/iocoder/yudao/module/crm/dal/dataobject/customer/CrmCustomerLimitConfigDO.java",
+      "sourceSha256": "7eef380b33675f188c09f9b4110046106ca1caa519972b1e3d396d51498121ac",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "userIds",
+          "column": "user_ids",
+          "javaType": "List<Long>",
+          "handler": "LongListTypeHandler",
+          "sql": "LONGTEXT NULL"
+        },
+        {
+          "field": "deptIds",
+          "column": "dept_ids",
+          "javaType": "List<Long>",
+          "handler": "LongListTypeHandler",
+          "sql": "LONGTEXT NULL"
+        },
+        {
+          "field": "maxCount",
+          "column": "max_count",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "dealCountEnabled",
+          "column": "deal_count_enabled",
+          "javaType": "Boolean",
+          "handler": null,
+          "sql": "BIT(1) NOT NULL DEFAULT b'0'"
+        }
+      ]
+    },
+    {
+      "table": "crm_customer_pool_config",
+      "source": "yudao-module-crm/src/main/java/cn/iocoder/yudao/module/crm/dal/dataobject/customer/CrmCustomerPoolConfigDO.java",
+      "sourceSha256": "c17e484dd30929e77250bd78ef31ecd0b045660b3cbafb7fe5abc8b502a82260",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "enabled",
+          "column": "enabled",
+          "javaType": "Boolean",
+          "handler": null,
+          "sql": "BIT(1) NOT NULL DEFAULT b'0'"
+        },
+        {
+          "field": "contactExpireDays",
+          "column": "contact_expire_days",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "dealExpireDays",
+          "column": "deal_expire_days",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "notifyEnabled",
+          "column": "notify_enabled",
+          "javaType": "Boolean",
+          "handler": null,
+          "sql": "BIT(1) NOT NULL DEFAULT b'0'"
+        },
+        {
+          "field": "notifyDays",
+          "column": "notify_days",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        }
+      ]
+    },
+    {
+      "table": "crm_follow_up_record",
+      "source": "yudao-module-crm/src/main/java/cn/iocoder/yudao/module/crm/dal/dataobject/followup/CrmFollowUpRecordDO.java",
+      "sourceSha256": "0db7a4d0e0daaa23c79c99fdf26201ee0ebd0f422304a2db1ed14514275640ad",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "bizType",
+          "column": "biz_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "bizId",
+          "column": "biz_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "content",
+          "column": "content",
+          "javaType": "String",
+          "handler": null,
+          "sql": "LONGTEXT NULL"
+        },
+        {
+          "field": "nextTime",
+          "column": "next_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sql": "DATETIME(3) NULL"
+        },
+        {
+          "field": "picUrls",
+          "column": "pic_urls",
+          "javaType": "List<String>",
+          "handler": "StringListTypeHandler",
+          "sql": "LONGTEXT NULL"
+        },
+        {
+          "field": "fileUrls",
+          "column": "file_urls",
+          "javaType": "List<String>",
+          "handler": "StringListTypeHandler",
+          "sql": "LONGTEXT NULL"
+        },
+        {
+          "field": "businessIds",
+          "column": "business_ids",
+          "javaType": "List<Long>",
+          "handler": "LongListTypeHandler",
+          "sql": "LONGTEXT NULL"
+        },
+        {
+          "field": "contactIds",
+          "column": "contact_ids",
+          "javaType": "List<Long>",
+          "handler": "LongListTypeHandler",
+          "sql": "LONGTEXT NULL"
+        }
+      ]
+    },
+    {
+      "table": "crm_performance_config",
+      "source": "yudao-module-crm/src/main/java/cn/iocoder/yudao/module/crm/dal/dataobject/performance/CrmPerformanceConfigDO.java",
+      "sourceSha256": "8071aee3819281faacc878c94cb043c90e19b8f645c2c70687b389fa79dffcd1",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "bizType",
+          "column": "biz_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "objectId",
+          "column": "object_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "objectType",
+          "column": "object_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "year",
+          "column": "year",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "yearTargetPrice",
+          "column": "year_target_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        },
+        {
+          "field": "januaryTargetPrice",
+          "column": "january_target_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        },
+        {
+          "field": "februaryTargetPrice",
+          "column": "february_target_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        },
+        {
+          "field": "marchTargetPrice",
+          "column": "march_target_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        },
+        {
+          "field": "aprilTargetPrice",
+          "column": "april_target_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        },
+        {
+          "field": "mayTargetPrice",
+          "column": "may_target_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        },
+        {
+          "field": "juneTargetPrice",
+          "column": "june_target_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        },
+        {
+          "field": "julyTargetPrice",
+          "column": "july_target_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        },
+        {
+          "field": "augustTargetPrice",
+          "column": "august_target_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        },
+        {
+          "field": "septemberTargetPrice",
+          "column": "september_target_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        },
+        {
+          "field": "octoberTargetPrice",
+          "column": "october_target_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        },
+        {
+          "field": "novemberTargetPrice",
+          "column": "november_target_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        },
+        {
+          "field": "decemberTargetPrice",
+          "column": "december_target_price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        }
+      ]
+    },
+    {
+      "table": "crm_owner_record",
+      "source": "yudao-module-crm/src/main/java/cn/iocoder/yudao/module/crm/dal/dataobject/permission/CrmOwnerRecordDO.java",
+      "sourceSha256": "957d5d30e08c5a3b049cc0a0c90312f95394d9f042d9b62d5c9aea7f43708397",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "bizType",
+          "column": "biz_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "bizId",
+          "column": "biz_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "preOwnerUserId",
+          "column": "pre_owner_user_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "postOwnerUserId",
+          "column": "post_owner_user_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        }
+      ]
+    },
+    {
+      "table": "crm_permission",
+      "source": "yudao-module-crm/src/main/java/cn/iocoder/yudao/module/crm/dal/dataobject/permission/CrmPermissionDO.java",
+      "sourceSha256": "abf20188b10f7213293d1ae67494cb12d53be3d761f4da76932dca695c5a8d9a",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "bizType",
+          "column": "biz_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "bizId",
+          "column": "biz_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "userId",
+          "column": "user_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "level",
+          "column": "level",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        }
+      ]
+    },
+    {
+      "table": "crm_product_category",
+      "source": "yudao-module-crm/src/main/java/cn/iocoder/yudao/module/crm/dal/dataobject/product/CrmProductCategoryDO.java",
+      "sourceSha256": "6fac0cbfd9b2364effe8f91aaef419f65c80d7b4e975ab70176f9f01a0840f45",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "parentId",
+          "column": "parent_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        }
+      ]
+    },
+    {
+      "table": "crm_product",
+      "source": "yudao-module-crm/src/main/java/cn/iocoder/yudao/module/crm/dal/dataobject/product/CrmProductDO.java",
+      "sourceSha256": "9f647a89426f3d9f7b0ab8df79501911875b7be9866482685676d65ca7d2f6b6",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "no",
+          "column": "no",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) COLLATE utf8mb4_bin NULL"
+        },
+        {
+          "field": "unit",
+          "column": "unit",
+          "javaType": "int",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "price",
+          "column": "price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        },
+        {
+          "field": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "categoryId",
+          "column": "category_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "description",
+          "column": "description",
+          "javaType": "String",
+          "handler": null,
+          "sql": "LONGTEXT NULL"
+        },
+        {
+          "field": "ownerUserId",
+          "column": "owner_user_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        }
+      ]
+    },
+    {
+      "table": "crm_receivable",
+      "source": "yudao-module-crm/src/main/java/cn/iocoder/yudao/module/crm/dal/dataobject/receivable/CrmReceivableDO.java",
+      "sourceSha256": "4538f12d28414986116dc789b0ef1d1dd42f1470ef8caab050ebe89cc97e4736",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "no",
+          "column": "no",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) COLLATE utf8mb4_bin NULL"
+        },
+        {
+          "field": "planId",
+          "column": "plan_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "customerId",
+          "column": "customer_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "contractId",
+          "column": "contract_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "ownerUserId",
+          "column": "owner_user_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "returnTime",
+          "column": "return_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sql": "DATETIME(3) NULL"
+        },
+        {
+          "field": "returnType",
+          "column": "return_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "price",
+          "column": "price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        },
+        {
+          "field": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sql": "LONGTEXT NULL"
+        },
+        {
+          "field": "processInstanceId",
+          "column": "process_instance_id",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) COLLATE utf8mb4_bin NULL"
+        },
+        {
+          "field": "auditStatus",
+          "column": "audit_status",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        }
+      ]
+    },
+    {
+      "table": "crm_receivable_plan",
+      "source": "yudao-module-crm/src/main/java/cn/iocoder/yudao/module/crm/dal/dataobject/receivable/CrmReceivablePlanDO.java",
+      "sourceSha256": "aa54499e00d78e4cdcad8c0f0df2c4ac4b5cbd3cfe1285ba870f57608dfd8bfa",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "period",
+          "column": "period",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "customerId",
+          "column": "customer_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "contractId",
+          "column": "contract_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "ownerUserId",
+          "column": "owner_user_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "returnTime",
+          "column": "return_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sql": "DATETIME(3) NULL"
+        },
+        {
+          "field": "returnType",
+          "column": "return_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "price",
+          "column": "price",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sql": "DECIMAL(38,12) NULL"
+        },
+        {
+          "field": "receivableId",
+          "column": "receivable_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "remindDays",
+          "column": "remind_days",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "remindTime",
+          "column": "remind_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sql": "DATETIME(3) NULL"
+        },
+        {
+          "field": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sql": "LONGTEXT NULL"
+        }
+      ]
+    },
+    {
+      "table": "bpm_category",
+      "source": "yudao-module-bpm/src/main/java/cn/iocoder/yudao/module/bpm/dal/dataobject/definition/BpmCategoryDO.java",
+      "sourceSha256": "6441fcebc2f62f06957b15de81b081c10f6b1de7b700c8e62b743c2362903682",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "code",
+          "column": "code",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) COLLATE utf8mb4_bin NULL"
+        },
+        {
+          "field": "description",
+          "column": "description",
+          "javaType": "String",
+          "handler": null,
+          "sql": "LONGTEXT NULL"
+        },
+        {
+          "field": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        }
+      ]
+    },
+    {
+      "table": "bpm_form",
+      "source": "yudao-module-bpm/src/main/java/cn/iocoder/yudao/module/bpm/dal/dataobject/definition/BpmFormDO.java",
+      "sourceSha256": "6d340fc43f87f27981bec008a4e14fa469542cb1a066b9f8a0f24dee0222e20a",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "conf",
+          "column": "conf",
+          "javaType": "String",
+          "handler": null,
+          "sql": "LONGTEXT NULL"
+        },
+        {
+          "field": "fields",
+          "column": "fields",
+          "javaType": "List<String>",
+          "handler": "Jackson3TypeHandler",
+          "sql": "JSON NULL"
+        },
+        {
+          "field": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sql": "LONGTEXT NULL"
+        }
+      ]
+    },
+    {
+      "table": "bpm_process_definition_info",
+      "source": "yudao-module-bpm/src/main/java/cn/iocoder/yudao/module/bpm/dal/dataobject/definition/BpmProcessDefinitionInfoDO.java",
+      "sourceSha256": "cc65cb4955d99488697cd0b42615a63a2abd37a0b5988bc22cb5afcb6649999f",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "processDefinitionId",
+          "column": "process_definition_id",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) COLLATE utf8mb4_bin NULL"
+        },
+        {
+          "field": "modelId",
+          "column": "model_id",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) COLLATE utf8mb4_bin NULL"
+        },
+        {
+          "field": "modelType",
+          "column": "model_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "category",
+          "column": "category",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "icon",
+          "column": "icon",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(2048) NULL"
+        },
+        {
+          "field": "description",
+          "column": "description",
+          "javaType": "String",
+          "handler": null,
+          "sql": "LONGTEXT NULL"
+        },
+        {
+          "field": "formType",
+          "column": "form_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "formId",
+          "column": "form_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "formConf",
+          "column": "form_conf",
+          "javaType": "String",
+          "handler": null,
+          "sql": "LONGTEXT NULL"
+        },
+        {
+          "field": "formFields",
+          "column": "form_fields",
+          "javaType": "List<String>",
+          "handler": "Jackson3TypeHandler",
+          "sql": "JSON NULL"
+        },
+        {
+          "field": "formCustomCreatePath",
+          "column": "form_custom_create_path",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(2048) NULL"
+        },
+        {
+          "field": "formCustomViewPath",
+          "column": "form_custom_view_path",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(2048) NULL"
+        },
+        {
+          "field": "simpleModel",
+          "column": "simple_model",
+          "javaType": "String",
+          "handler": null,
+          "sql": "LONGTEXT NULL"
+        },
+        {
+          "field": "visible",
+          "column": "visible",
+          "javaType": "Boolean",
+          "handler": null,
+          "sql": "BIT(1) NOT NULL DEFAULT b'1'"
+        },
+        {
+          "field": "sort",
+          "column": "sort",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "startUserIds",
+          "column": "start_user_ids",
+          "javaType": "List<Long>",
+          "handler": "LongListTypeHandler",
+          "sql": "LONGTEXT NULL"
+        },
+        {
+          "field": "startDeptIds",
+          "column": "start_dept_ids",
+          "javaType": "List<Long>",
+          "handler": "LongListTypeHandler",
+          "sql": "LONGTEXT NULL"
+        },
+        {
+          "field": "managerUserIds",
+          "column": "manager_user_ids",
+          "javaType": "List<Long>",
+          "handler": "LongListTypeHandler",
+          "sql": "LONGTEXT NULL"
+        },
+        {
+          "field": "allowCancelRunningProcess",
+          "column": "allow_cancel_running_process",
+          "javaType": "Boolean",
+          "handler": null,
+          "sql": "BIT(1) NOT NULL DEFAULT b'0'"
+        },
+        {
+          "field": "allowWithdrawTask",
+          "column": "allow_withdraw_task",
+          "javaType": "Boolean",
+          "handler": null,
+          "sql": "BIT(1) NOT NULL DEFAULT b'0'"
+        },
+        {
+          "field": "processIdRule",
+          "column": "process_id_rule",
+          "javaType": "BpmModelMetaInfoVO.ProcessIdRule",
+          "handler": "Jackson3TypeHandler",
+          "sql": "JSON NULL"
+        },
+        {
+          "field": "autoApprovalType",
+          "column": "auto_approval_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "titleSetting",
+          "column": "title_setting",
+          "javaType": "BpmModelMetaInfoVO.TitleSetting",
+          "handler": "Jackson3TypeHandler",
+          "sql": "JSON NULL"
+        },
+        {
+          "field": "summarySetting",
+          "column": "summary_setting",
+          "javaType": "BpmModelMetaInfoVO.SummarySetting",
+          "handler": "Jackson3TypeHandler",
+          "sql": "JSON NULL"
+        },
+        {
+          "field": "processBeforeTriggerSetting",
+          "column": "process_before_trigger_setting",
+          "javaType": "BpmModelMetaInfoVO.HttpRequestSetting",
+          "handler": "Jackson3TypeHandler",
+          "sql": "JSON NULL"
+        },
+        {
+          "field": "processAfterTriggerSetting",
+          "column": "process_after_trigger_setting",
+          "javaType": "BpmModelMetaInfoVO.HttpRequestSetting",
+          "handler": "Jackson3TypeHandler",
+          "sql": "JSON NULL"
+        },
+        {
+          "field": "taskBeforeTriggerSetting",
+          "column": "task_before_trigger_setting",
+          "javaType": "BpmModelMetaInfoVO.HttpRequestSetting",
+          "handler": "Jackson3TypeHandler",
+          "sql": "JSON NULL"
+        },
+        {
+          "field": "taskAfterTriggerSetting",
+          "column": "task_after_trigger_setting",
+          "javaType": "BpmModelMetaInfoVO.HttpRequestSetting",
+          "handler": "Jackson3TypeHandler",
+          "sql": "JSON NULL"
+        },
+        {
+          "field": "printTemplateSetting",
+          "column": "print_template_setting",
+          "javaType": "BpmModelMetaInfoVO.PrintTemplateSetting",
+          "handler": "Jackson3TypeHandler",
+          "sql": "JSON NULL"
+        }
+      ]
+    },
+    {
+      "table": "bpm_process_expression",
+      "source": "yudao-module-bpm/src/main/java/cn/iocoder/yudao/module/bpm/dal/dataobject/definition/BpmProcessExpressionDO.java",
+      "sourceSha256": "e8995dd7dfac99c93e023f63911b5484e809b86663985154f1ea20b1e657112d",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "expression",
+          "column": "expression",
+          "javaType": "String",
+          "handler": null,
+          "sql": "LONGTEXT NULL"
+        }
+      ]
+    },
+    {
+      "table": "bpm_process_listener",
+      "source": "yudao-module-bpm/src/main/java/cn/iocoder/yudao/module/bpm/dal/dataobject/definition/BpmProcessListenerDO.java",
+      "sourceSha256": "167e70e5f0cbc13ddbf4be9447cfd7e3e748fbe4a8be2125aa705ede4c4a3812",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "type",
+          "column": "type",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "event",
+          "column": "event",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "valueType",
+          "column": "value_type",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "value",
+          "column": "value",
+          "javaType": "String",
+          "handler": null,
+          "sql": "LONGTEXT NULL"
+        }
+      ]
+    },
+    {
+      "table": "bpm_user_group",
+      "source": "yudao-module-bpm/src/main/java/cn/iocoder/yudao/module/bpm/dal/dataobject/definition/BpmUserGroupDO.java",
+      "sourceSha256": "363580119583b33ee22b373840f6aed43cce53bc385108c5826bab3a398c5ca3",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "description",
+          "column": "description",
+          "javaType": "String",
+          "handler": null,
+          "sql": "LONGTEXT NULL"
+        },
+        {
+          "field": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "userIds",
+          "column": "user_ids",
+          "javaType": "Set<Long>",
+          "handler": "Jackson3TypeHandler",
+          "sql": "JSON NULL"
+        }
+      ]
+    },
+    {
+      "table": "bpm_oa_leave",
+      "source": "yudao-module-bpm/src/main/java/cn/iocoder/yudao/module/bpm/dal/dataobject/oa/BpmOALeaveDO.java",
+      "sourceSha256": "388e2e36a77f462ca77e67d7f59906e6c4d617b31423e81ab3d2208f05d6a8f5",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "userId",
+          "column": "user_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "reason",
+          "column": "reason",
+          "javaType": "String",
+          "handler": null,
+          "sql": "LONGTEXT NULL"
+        },
+        {
+          "field": "startTime",
+          "column": "start_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sql": "DATETIME(3) NULL"
+        },
+        {
+          "field": "endTime",
+          "column": "end_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sql": "DATETIME(3) NULL"
+        },
+        {
+          "field": "day",
+          "column": "day",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sql": "INT NULL"
+        },
+        {
+          "field": "processInstanceId",
+          "column": "process_instance_id",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) COLLATE utf8mb4_bin NULL"
+        }
+      ]
+    },
+    {
+      "table": "bpm_process_instance_copy",
+      "source": "yudao-module-bpm/src/main/java/cn/iocoder/yudao/module/bpm/dal/dataobject/task/BpmProcessInstanceCopyDO.java",
+      "sourceSha256": "987745f305dede4206209aa2fa9c9e4307245201a804a13bb7e2785ac1cf51dc",
+      "fields": [
+        {
+          "field": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NOT NULL AUTO_INCREMENT"
+        },
+        {
+          "field": "startUserId",
+          "column": "start_user_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "processInstanceName",
+          "column": "process_instance_name",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "processInstanceId",
+          "column": "process_instance_id",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) COLLATE utf8mb4_bin NULL"
+        },
+        {
+          "field": "processDefinitionId",
+          "column": "process_definition_id",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) COLLATE utf8mb4_bin NULL"
+        },
+        {
+          "field": "category",
+          "column": "category",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "activityId",
+          "column": "activity_id",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) COLLATE utf8mb4_bin NULL"
+        },
+        {
+          "field": "activityName",
+          "column": "activity_name",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) NULL"
+        },
+        {
+          "field": "taskId",
+          "column": "task_id",
+          "javaType": "String",
+          "handler": null,
+          "sql": "VARCHAR(255) COLLATE utf8mb4_bin NULL"
+        },
+        {
+          "field": "userId",
+          "column": "user_id",
+          "javaType": "Long",
+          "handler": null,
+          "sql": "BIGINT NULL"
+        },
+        {
+          "field": "reason",
+          "column": "reason",
+          "javaType": "String",
+          "handler": null,
+          "sql": "LONGTEXT NULL"
+        }
+      ]
+    }
+  ],
+  "engineScripts": [
+    {
+      "artifact": "org.flowable:flowable-engine-common:8.0.0",
+      "jarSha256": "05fc5f40f78d1abb4e584b3f0c7a93d16141d678644185f5ace58bcae0841b5b",
+      "resource": "org/flowable/common/db/create/flowable.mysql.create.common.sql",
+      "scriptSha256": "56ae5bf765e38bad866ef106c2e42d244a9864a4c47c4d30b12cde7e884b5198",
+      "tables": [
+        "ACT_GE_PROPERTY",
+        "ACT_GE_BYTEARRAY",
+        "ACT_RU_ENTITYLINK",
+        "ACT_HI_ENTITYLINK",
+        "ACT_RU_IDENTITYLINK",
+        "ACT_HI_IDENTITYLINK",
+        "ACT_RU_JOB",
+        "ACT_RU_TIMER_JOB",
+        "ACT_RU_SUSPENDED_JOB",
+        "ACT_RU_DEADLETTER_JOB",
+        "ACT_RU_HISTORY_JOB",
+        "ACT_RU_EXTERNAL_JOB",
+        "FLW_RU_BATCH",
+        "FLW_RU_BATCH_PART",
+        "ACT_RU_TASK",
+        "ACT_HI_TASKINST",
+        "ACT_HI_TSK_LOG",
+        "ACT_RU_VARIABLE",
+        "ACT_HI_VARINST",
+        "ACT_RU_EVENT_SUBSCR"
+      ]
+    },
+    {
+      "artifact": "org.flowable:flowable-idm-engine:8.0.0",
+      "jarSha256": "a6e5859bf4b7d76db7bee10b4b33157f92ea25444fa36375e3ca4ee4491eef99",
+      "resource": "org/flowable/idm/db/create/flowable.mysql.create.identity.sql",
+      "scriptSha256": "2d8567ab9653492a5ad62e1fac7401384658c6769e917b2ae73725cc8d116598",
+      "tables": [
+        "ACT_ID_PROPERTY",
+        "ACT_ID_BYTEARRAY",
+        "ACT_ID_GROUP",
+        "ACT_ID_MEMBERSHIP",
+        "ACT_ID_USER",
+        "ACT_ID_INFO",
+        "ACT_ID_TOKEN",
+        "ACT_ID_PRIV",
+        "ACT_ID_PRIV_MAPPING"
+      ]
+    },
+    {
+      "artifact": "org.flowable:flowable-event-registry:8.0.0",
+      "jarSha256": "d2776d7caeb9940cafeb2218e68558f13029c25233eebc63cb22c5f7db8c65bb",
+      "resource": "org/flowable/eventregistry/db/create/flowable.mysql.create.eventregistry.sql",
+      "scriptSha256": "950b82df1e98e43fb241944d140ba177b9f75f5deea621370a0d76a24dd509c6",
+      "tables": [
+        "FLW_EVENT_DEPLOYMENT",
+        "FLW_EVENT_RESOURCE",
+        "FLW_EVENT_DEFINITION",
+        "FLW_CHANNEL_DEFINITION"
+      ]
+    },
+    {
+      "artifact": "org.flowable:flowable-engine:8.0.0",
+      "jarSha256": "e81615c4c2f7332c184f31d362e34a807c6c745e6b9da745e73b2d3adb4f5850",
+      "resource": "org/flowable/db/create/flowable.mysql.create.engine.sql",
+      "scriptSha256": "b0f3289b3428ae96a9b5d10aa8264dc8cf515514b642cd97e2d171d9cefe8a44",
+      "tables": [
+        "ACT_RE_DEPLOYMENT",
+        "ACT_RE_MODEL",
+        "ACT_RU_EXECUTION",
+        "ACT_RE_PROCDEF",
+        "ACT_EVT_LOG",
+        "ACT_PROCDEF_INFO",
+        "ACT_RU_ACTINST"
+      ]
+    },
+    {
+      "artifact": "org.flowable:flowable-engine:8.0.0",
+      "jarSha256": "e81615c4c2f7332c184f31d362e34a807c6c745e6b9da745e73b2d3adb4f5850",
+      "resource": "org/flowable/db/create/flowable.mysql.create.history.sql",
+      "scriptSha256": "64b614d72b81e092b5cba374d7dab3df961fe47f4270505c27cd23a63defbc61",
+      "tables": [
+        "ACT_HI_PROCINST",
+        "ACT_HI_ACTINST",
+        "ACT_HI_DETAIL",
+        "ACT_HI_COMMENT",
+        "ACT_HI_ATTACHMENT"
+      ]
+    }
+  ],
+  "verification": {
+    "schemaChecks": 6,
+    "schemaLog": ".runtime/crm-bpm-schema-final.log",
+    "schema": "jss_crm_bpm_verify_a7dfdae580b8",
+    "schemaRemaining": 0,
+    "flywayChecks": 25,
+    "flywayLog": ".runtime/crm-bpm-flyway-first.log",
+    "remainingOwnedSchemaProbes": 0,
+    "remainingOwnedFlywayProbes": 0,
+    "verifiedMySqlVersion": "8.4.9",
+    "verifiedMySqlPort": 13316
+  }
+}

@@ -1,0 +1,4400 @@
+{
+  "status": "48 native OA tables and 506 outer persistent fields retained; reactor compile and owned MySQL DDL/column checks passed; OA frontend and real business acceptance pending",
+  "tables": [
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/announcement/OaAnnouncementDO.java",
+      "table": "oa_announcement",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "priority",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "priority",
+          "sqlType": "INT"
+        },
+        {
+          "name": "title",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "title",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "content",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "content",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "url",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "url",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "top",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "top",
+          "sqlType": "BIT(1)"
+        }
+      ],
+      "sourceSha256": "b37372e7cf6b04565b0e0d4918bc7761394bfc52d5e338f95411e77b99d25413"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/announcement/OaAnnouncementReceiverDO.java",
+      "table": "oa_announcement_receiver",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "announcementId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "announcement_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "receiverUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "receiver_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "readStatus",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "read_status",
+          "sqlType": "BIT(1)"
+        }
+      ],
+      "sourceSha256": "fad8652db1753fba6267355d84f767abfba56292fecbc5ba1ffa68465c54f45c"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/attendance/OaAttendanceDO.java",
+      "table": "oa_attendance",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "attendanceTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "attendance_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "attendanceIp",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "attendance_ip",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "remark",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "remark",
+          "sqlType": "LONGTEXT"
+        }
+      ],
+      "sourceSha256": "be25f59517aef1897dd21d3520da7c9bf02eaa86aefe80a48acf95f78bd0b203"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/contact/OaContactCategoryDO.java",
+      "table": "oa_contact_category",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "sort",
+          "sqlType": "INT"
+        }
+      ],
+      "sourceSha256": "637e181e0560f0e0e82aae86bd064ea61073e3c87a3402e4cea87d0472179b8b"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/contact/OaContactDO.java",
+      "table": "oa_contact",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "categoryId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "category_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "pinyin",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "pinyin",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "sex",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "sex",
+          "sqlType": "INT"
+        },
+        {
+          "name": "mobile",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "mobile",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "email",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "email",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "address",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "address",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "companyName",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "company_name",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "companyPhone",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "company_phone",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "avatar",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "avatar",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "remark",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "remark",
+          "sqlType": "LONGTEXT"
+        }
+      ],
+      "sourceSha256": "a75ec578de4af51d8c77ced6300809f5d447a50305a2976d5ed69305ff5898ee"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/contact/OaContactShareDO.java",
+      "table": "oa_contact_share",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "contactId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "contact_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "categoryId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "category_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "handleStatus",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "handle_status",
+          "sqlType": "BIT(1)"
+        }
+      ],
+      "sourceSha256": "97ff485b1c575ecc65feef5bd76d376a315c0845f122f2b5c7bfe041c27b26ef"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/discussion/OaDiscussionDO.java",
+      "table": "oa_discussion",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "title",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "title",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "content",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "content",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "fileUrls",
+          "javaType": "List<String>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "file_urls",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "visitCount",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "visit_count",
+          "sqlType": "INT"
+        },
+        {
+          "name": "voteMultiple",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "vote_multiple",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "voteStartTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "vote_start_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "voteEndTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "vote_end_time",
+          "sqlType": "DATETIME(3)"
+        }
+      ],
+      "sourceSha256": "b227a585a8ab5a0f4423a3e9248ab00fc361be09339f5cad89daf2e844574591"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/discussion/OaDiscussionLikeDO.java",
+      "table": "oa_discussion_like",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "discussionId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "discussion_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "replyId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "reply_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        }
+      ],
+      "sourceSha256": "9b4fa4928a984805802456a66e4c2d751e053c16f1a3ac92765d23660ebb95f5"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/discussion/OaDiscussionReplyDO.java",
+      "table": "oa_discussion_reply",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "discussionId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "discussion_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "parentId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "parent_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "replyUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "reply_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "content",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "content",
+          "sqlType": "LONGTEXT"
+        }
+      ],
+      "sourceSha256": "b7e6e1a057873c19423495711d0d1e3a85bcc7fabe65cd3301ab9ed74f1cb388"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/discussion/OaVoteOptionDO.java",
+      "table": "oa_vote_option",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "discussionId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "discussion_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "title",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "title",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "color",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "color",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "sort",
+          "sqlType": "INT"
+        }
+      ],
+      "sourceSha256": "3aa0c18f1b8b03f52985f1fc669380e6e3fc7aae57a837eb2ed609719ccc8ad1"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/discussion/OaVoteRecordDO.java",
+      "table": "oa_vote_record",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "discussionId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "discussion_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "optionId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "option_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        }
+      ],
+      "sourceSha256": "938895038aef510c63f008bbf6c2fb090cb667aee8105dfea6dba86c4af424ac"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/file/OaFileFavoriteDO.java",
+      "table": "oa_file_favorite",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "nodeId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "node_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        }
+      ],
+      "sourceSha256": "c7c73e2c986d935ed9061a00858316819025fdb5824aa3e84e8e15f96c7b0770"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/file/OaFileNodeDO.java",
+      "table": "oa_file_node",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "parentId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "parent_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "extension",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "extension",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "category",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "category",
+          "sqlType": "INT"
+        },
+        {
+          "name": "size",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "size",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "url",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "url",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "deptId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "dept_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        }
+      ],
+      "sourceSha256": "648dee503b832160cdeeb05a295efe84ac82b86b3753bdcb58f0a1f2e0ede8bd"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/file/OaFilePermissionDO.java",
+      "table": "oa_file_permission",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "nodeId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "node_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "subjectType",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "subject_type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "subjectId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "subject_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "level",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "level",
+          "sqlType": "INT"
+        },
+        {
+          "name": "inherit",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "inherit",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "expireTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "expire_time",
+          "sqlType": "DATETIME(3)"
+        }
+      ],
+      "sourceSha256": "c57e6fbdf3c6c607d3595f187e2ac6830cf036c60d2ace924ed40370fbb9da8c"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/leave/OaLeaveApplyDO.java",
+      "table": "oa_leave_apply",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "title",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "title",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "urgency",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "urgency",
+          "sqlType": "INT"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "startTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "start_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "endTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "end_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "days",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "days",
+          "sqlType": "INT"
+        },
+        {
+          "name": "reason",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "reason",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "processInstanceId",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "process_instance_id",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "fileUrls",
+          "javaType": "List<String>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "file_urls",
+          "sqlType": "JSON"
+        }
+      ],
+      "sourceSha256": "d9c11c2f30d118689286cb140eaee18bb1ee19426c72b6962e1efbd3e3b3a500"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/mail/OaMailAccountDO.java",
+      "table": "oa_mail_account",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "providerId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "provider_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "mail",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "mail",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "username",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "username",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "password",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "password",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "defaultStatus",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "default_status",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        }
+      ],
+      "sourceSha256": "47e4ecf6bafccd83c5f055a68e6d37c2c6ff55596c1e107ea49e3520a000519c"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/mail/OaMailFolderDO.java",
+      "table": "oa_mail_folder",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "accountId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "account_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "type",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "uidValidity",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "uid_validity",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "syncTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "sync_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "available",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "available",
+          "sqlType": "BIT(1)"
+        }
+      ],
+      "sourceSha256": "35b9b60add88ea5ebcf072e3caeb81f8d36fa21fc77165c1ce96514dcb396bea"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/mail/OaMailMessageDO.java",
+      "table": "oa_mail_message",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "accountId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "account_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "folderId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "folder_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "uidValidity",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "uid_validity",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "uid",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "uid",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "subject",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "subject",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "content",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "content",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "replyTos",
+          "javaType": "List<String>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "reply_tos",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "attachments",
+          "javaType": "List<Attachment>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "attachments",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "sender",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "sender",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "recipients",
+          "javaType": "List<String>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "recipients",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "ccs",
+          "javaType": "List<String>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "ccs",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "receiveTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "receive_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "readStatus",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "read_status",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "hasAttach",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "has_attach",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "size",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "size",
+          "sqlType": "INT"
+        }
+      ],
+      "sourceSha256": "79a33c3c5a1e2892cf5a2ba3208ca3b8a47bf46a64a1754c3b1d2587ccafc4b7"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/mail/OaMailProviderDO.java",
+      "table": "oa_mail_provider",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "imap",
+          "javaType": "ConnectionConfig",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "imap",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "smtp",
+          "javaType": "ConnectionConfig",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "smtp",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        }
+      ],
+      "sourceSha256": "f43a55390048a327a848698ba40658129c508b5b596728c53d4ede571f422167"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/meetingroom/OaMeetingRoomBookingDO.java",
+      "table": "oa_meeting_room_booking",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "no",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "no",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "roomId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "room_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "title",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "title",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "startTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "start_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "endTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "end_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "moderatorUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "moderator_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "attendeeUserIds",
+          "javaType": "List<Long>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "attendee_user_ids",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "reminderType",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "reminder_type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "reminded",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "reminded",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "description",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "description",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "deptId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "dept_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "processInstanceId",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "process_instance_id",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "needApproval",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "need_approval",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "useStatus",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "use_status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "remark",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "remark",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "fileUrls",
+          "javaType": "List<String>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "file_urls",
+          "sqlType": "JSON"
+        }
+      ],
+      "sourceSha256": "3cd8803aaf7ec962893f9d5d3bc7e15ba69dd31efbfb58d4f704257534415790"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/meetingroom/OaMeetingRoomDO.java",
+      "table": "oa_meeting_room",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "location",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "location",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "managerUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "manager_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "picUrl",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "pic_url",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "seatCount",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "seat_count",
+          "sqlType": "INT"
+        },
+        {
+          "name": "equipments",
+          "javaType": "List<Integer>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "equipments",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "allowBooking",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "allow_booking",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "needApproval",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "need_approval",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "bookingScope",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "booking_scope",
+          "sqlType": "INT"
+        },
+        {
+          "name": "bookingUserIds",
+          "javaType": "List<Long>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "booking_user_ids",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "sort",
+          "sqlType": "INT"
+        },
+        {
+          "name": "remark",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "remark",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "fileUrls",
+          "javaType": "List<String>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "file_urls",
+          "sqlType": "JSON"
+        }
+      ],
+      "sourceSha256": "8a876e5da0bfc96d87bbe27f7f2b64762c130e82f56529b267302a32743585cc"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/note/OaNoteCategoryDO.java",
+      "table": "oa_note_category",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "sort",
+          "sqlType": "INT"
+        }
+      ],
+      "sourceSha256": "85df925947c314f614ff92b40b9a19591337398edf5a86a4309a7df83596daf8"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/note/OaNoteDO.java",
+      "table": "oa_note",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "categoryId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "category_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "priority",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "priority",
+          "sqlType": "INT"
+        },
+        {
+          "name": "title",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "title",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "content",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "content",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "favorite",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "favorite",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "fileUrls",
+          "javaType": "List<String>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "file_urls",
+          "sqlType": "JSON"
+        }
+      ],
+      "sourceSha256": "06e8e900ff39daaee58e07ab4801e8633bfd8c31546bfc8ba497b0c71cbc64b0"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/note/OaNoteReceiverDO.java",
+      "table": "oa_note_receiver",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "noteId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "note_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        }
+      ],
+      "sourceSha256": "b1e8ed8565ce445041ce4b5db53b8f83a4345ff6fe6b55247270489b7b015532"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/officialdoc/OaOfficialDocReceiveDO.java",
+      "table": "oa_official_doc_receive",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "no",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "no",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "sendId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "send_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "receiveType",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "receive_type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "title",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "title",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "documentNo",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "document_no",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "secrecyLevel",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "secrecy_level",
+          "sqlType": "INT"
+        },
+        {
+          "name": "urgencyLevel",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "urgency_level",
+          "sqlType": "INT"
+        },
+        {
+          "name": "receiveTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "receive_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "receiveDeptId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "receive_dept_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "handlerUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "handler_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "instruction",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "instruction",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "result",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "result",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "deadlineTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "deadline_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "summary",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "summary",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "remark",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "remark",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "fileUrls",
+          "javaType": "List<String>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "file_urls",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "formalFileUrl",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "formal_file_url",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "handleStatus",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "handle_status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "processInstanceId",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "process_instance_id",
+          "sqlType": "LONGTEXT"
+        }
+      ],
+      "sourceSha256": "034759e170222856c4510b6974e61ee572c3765237f3312c9f95d4526c544d07"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/officialdoc/OaOfficialDocSendDO.java",
+      "table": "oa_official_doc_send",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "no",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "no",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "templateId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "template_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "title",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "title",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "noPrefix",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "no_prefix",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "year",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "year",
+          "sqlType": "INT"
+        },
+        {
+          "name": "sequence",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "sequence",
+          "sqlType": "INT"
+        },
+        {
+          "name": "documentNo",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "document_no",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "secrecyLevel",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "secrecy_level",
+          "sqlType": "INT"
+        },
+        {
+          "name": "urgencyLevel",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "urgency_level",
+          "sqlType": "INT"
+        },
+        {
+          "name": "disclosureType",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "disclosure_type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "issueTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "issue_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "sendDeptId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "send_dept_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "mainDeptIds",
+          "javaType": "List<Long>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "main_dept_ids",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "copyDeptIds",
+          "javaType": "List<Long>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "copy_dept_ids",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "signerUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "signer_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "content",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "content",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "fileUrls",
+          "javaType": "List<String>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "file_urls",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "formalFileUrl",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "formal_file_url",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "remark",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "remark",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "processInstanceId",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "process_instance_id",
+          "sqlType": "LONGTEXT"
+        }
+      ],
+      "sourceSha256": "c114888a123443164ea4a9cd5035e6f6d879e229554529b82c0d870ea44fc8f4"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/officialdoc/OaOfficialDocTemplateDO.java",
+      "table": "oa_official_doc_template",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "authorityName",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "authority_name",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "fontSize",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "font_size",
+          "sqlType": "INT"
+        },
+        {
+          "name": "noPrefix",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "no_prefix",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "sealPicUrl",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "seal_pic_url",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "separatorType",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "separator_type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "sort",
+          "sqlType": "INT"
+        },
+        {
+          "name": "remark",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "remark",
+          "sqlType": "LONGTEXT"
+        }
+      ],
+      "sourceSha256": "302a4c293116bc93f0549dd04a2784d7043a4e6ef4d081d11b7407645d932019"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/overtime/OaOvertimeApplyDO.java",
+      "table": "oa_overtime_apply",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "title",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "title",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "urgency",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "urgency",
+          "sqlType": "INT"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "startTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "start_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "endTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "end_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "days",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "annotations": "",
+          "column": "days",
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "reason",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "reason",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "processInstanceId",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "process_instance_id",
+          "sqlType": "LONGTEXT"
+        }
+      ],
+      "sourceSha256": "010b7fd8f12de0cd2d550f1792e2f107ffbecc753b13dd112be81ace4c043b53"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/plan/OaPlanDO.java",
+      "table": "oa_plan",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "title",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "title",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "label",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "label",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "content",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "content",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "summary",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "summary",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "comment",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "comment",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "startTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "start_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "endTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "end_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "fileUrls",
+          "javaType": "List<String>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "file_urls",
+          "sqlType": "JSON"
+        }
+      ],
+      "sourceSha256": "0bd4b14ceb687024d9897f9889492009f5700c0f31f1fdf79adebeeacb3dd0e2"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/regular/OaRegularApplyDO.java",
+      "table": "oa_regular_apply",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "title",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "title",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "urgency",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "urgency",
+          "sqlType": "INT"
+        },
+        {
+          "name": "startTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "start_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "endTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "end_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "days",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "days",
+          "sqlType": "INT"
+        },
+        {
+          "name": "experience",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "experience",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "understanding",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "understanding",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "growth",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "growth",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "deficiency",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "deficiency",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "improvement",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "improvement",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "suggestion",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "suggestion",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "processInstanceId",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "process_instance_id",
+          "sqlType": "LONGTEXT"
+        }
+      ],
+      "sourceSha256": "bbf5f5bbcdf9ed8258b6592cc2f75fa3670a474231bf440843169d88f01da948"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/reimbursement/OaReimbursementDO.java",
+      "table": "oa_reimbursement",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "title",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "title",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "urgency",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "urgency",
+          "sqlType": "INT"
+        },
+        {
+          "name": "reason",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "reason",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "witnessUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "witness_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "customerName",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "customer_name",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "paymentMethod",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "payment_method",
+          "sqlType": "INT"
+        },
+        {
+          "name": "invoiceCount",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "invoice_count",
+          "sqlType": "INT"
+        },
+        {
+          "name": "totalPrice",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "annotations": "",
+          "column": "total_price",
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "processInstanceId",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "process_instance_id",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "items",
+          "javaType": "List<Item>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "items",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "fileUrls",
+          "javaType": "List<String>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "file_urls",
+          "sqlType": "JSON"
+        }
+      ],
+      "sourceSha256": "509eba7253a915ecc89b3b805999d59c3e410b791262f4c4e0334040c5aade5f"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/resign/OaResignApplyDO.java",
+      "table": "oa_resign_apply",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "title",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "title",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "urgency",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "urgency",
+          "sqlType": "INT"
+        },
+        {
+          "name": "reason",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "reason",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "handoverUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "handover_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "unfinishedWork",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "unfinished_work",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "hasPendingReimbursement",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "has_pending_reimbursement",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "suggestion",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "suggestion",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "processInstanceId",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "process_instance_id",
+          "sqlType": "LONGTEXT"
+        }
+      ],
+      "sourceSha256": "e577664c3e6bae0c8af61773b3ccba00cfa76e8ac3c08da04abf160750a24e69"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/schedule/OaScheduleDO.java",
+      "table": "oa_schedule",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "priority",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "priority",
+          "sqlType": "INT"
+        },
+        {
+          "name": "title",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "title",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "description",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "description",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "startTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "start_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "endTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "end_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "remind",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "remind",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "reminded",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "reminded",
+          "sqlType": "BIT(1)"
+        }
+      ],
+      "sourceSha256": "00b3ef5d0e68f4cb799f774520cc8db666d7727d3797e1e97a020560160abb85"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/schedule/OaScheduleParticipantDO.java",
+      "table": "oa_schedule_participant",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "scheduleId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "schedule_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "readStatus",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "read_status",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "readTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "read_time",
+          "sqlType": "DATETIME(3)"
+        }
+      ],
+      "sourceSha256": "0df60073b845cf00020ab463a3a9b429f9ce6d77adec0b72b2e10bae205c9797"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/seal/OaSealApplyDO.java",
+      "table": "oa_seal_apply",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "no",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "no",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "deptId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "dept_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "sealId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "seal_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "sealNo",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "seal_no",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "sealName",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "seal_name",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "sealType",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "seal_type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "keeperDeptId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "keeper_dept_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "keeperUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "keeper_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "reason",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "reason",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "mode",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "mode",
+          "sqlType": "INT"
+        },
+        {
+          "name": "documentTitle",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "document_title",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "documentType",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "document_type",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "documentCount",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "document_count",
+          "sqlType": "INT"
+        },
+        {
+          "name": "contractPrice",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "annotations": "",
+          "column": "contract_price",
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "contractParty",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "contract_party",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "expectedUseTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "expected_use_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "actualUseTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "actual_use_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "expectedReturnTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "expected_return_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "actualReturnTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "actual_return_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "useStatus",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "use_status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "processInstanceId",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "process_instance_id",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "urgent",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "urgent",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "remark",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "remark",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "fileUrls",
+          "javaType": "List<String>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "file_urls",
+          "sqlType": "JSON"
+        }
+      ],
+      "sourceSha256": "ec2d7b19ab3946c3a9d411851cdff3a5c9e1706bc53ae8eb9ad16b195377ac8b"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/seal/OaSealDO.java",
+      "table": "oa_seal",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "deptId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "dept_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "no",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "no",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "category",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "category",
+          "sqlType": "INT"
+        },
+        {
+          "name": "keeperUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "keeper_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "keeperDeptId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "keeper_dept_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "purchaseTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "purchase_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "enableTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "enable_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "disableTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "disable_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "picUrl",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "pic_url",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "sort",
+          "sqlType": "INT"
+        },
+        {
+          "name": "remark",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "remark",
+          "sqlType": "LONGTEXT"
+        }
+      ],
+      "sourceSha256": "838934b4ffc3c4d80aa21523fd3ecaa50a4bd5804a9b0c947917cac8ecea3bce"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/supply/OaSupplyApplyDO.java",
+      "table": "oa_supply_apply",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "no",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "no",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "deptId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "dept_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "applyTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "apply_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "useType",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "use_type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "pickupMethod",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "pickup_method",
+          "sqlType": "INT"
+        },
+        {
+          "name": "reason",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "reason",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "processInstanceId",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "process_instance_id",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "fileUrls",
+          "javaType": "List<String>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "file_urls",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "remark",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "remark",
+          "sqlType": "LONGTEXT"
+        }
+      ],
+      "sourceSha256": "e5fa9ed91f829436af079f246eeffca81103fec48a4bf3aaa75aa083382bada7"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/supply/OaSupplyApplyItemDO.java",
+      "table": "oa_supply_apply_item",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "applyId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "apply_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "itemId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "item_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "itemName",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "item_name",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "model",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "model",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "unit",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "unit",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "manageType",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "manage_type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "applyQuantity",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "apply_quantity",
+          "sqlType": "INT"
+        },
+        {
+          "name": "issuedQuantity",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "issued_quantity",
+          "sqlType": "INT"
+        },
+        {
+          "name": "returnedQuantity",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "returned_quantity",
+          "sqlType": "INT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "issueUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "issue_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "issueTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "issue_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "issueRemark",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "issue_remark",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "returnRemark",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "return_remark",
+          "sqlType": "LONGTEXT"
+        }
+      ],
+      "sourceSha256": "01e97055816297262dc7268bfe94103b5f0f5f71435969003a5a2f4961661f6f"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/supply/OaSupplyItemDO.java",
+      "table": "oa_supply_item",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "deptId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "dept_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "no",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "no",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "category",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "category",
+          "sqlType": "INT"
+        },
+        {
+          "name": "manageType",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "manage_type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "model",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "model",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "unit",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "unit",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "referencePrice",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "annotations": "",
+          "column": "reference_price",
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "stockQuantity",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "stock_quantity",
+          "sqlType": "INT"
+        },
+        {
+          "name": "minStockQuantity",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "min_stock_quantity",
+          "sqlType": "INT"
+        },
+        {
+          "name": "picUrl",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "pic_url",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "sort",
+          "sqlType": "INT"
+        },
+        {
+          "name": "remark",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "remark",
+          "sqlType": "LONGTEXT"
+        }
+      ],
+      "sourceSha256": "43838105ad6994b5b1c4bf917d2e690231ac355a45cc61a4fcd1721c26730436"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/task/OaTaskDO.java",
+      "table": "oa_task",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "title",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "title",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "description",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "description",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "comment",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "comment",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "startTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "start_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "endTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "end_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "publishTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "publish_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "top",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "top",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "canceled",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "canceled",
+          "sqlType": "BIT(1)"
+        }
+      ],
+      "sourceSha256": "e4253a70dcd4e4323b6ea1fce298b6882f39a6d01831d5efafa8a5f3d61dd24a"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/task/OaTaskLogDO.java",
+      "table": "oa_task_log",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "taskId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "task_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "content",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "content",
+          "sqlType": "LONGTEXT"
+        }
+      ],
+      "sourceSha256": "365115b2f7d8224a34e67247c72a849814e0246bdd29a63f3a680cde7bf5113e"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/task/OaTaskReceiverDO.java",
+      "table": "oa_task_receiver",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "taskId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "task_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        }
+      ],
+      "sourceSha256": "5a623f5b2896e8bd69c745a6376f16b50eddd52f49903887d4b8a71aadb58a49"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/travel/OaTravelApplyDO.java",
+      "table": "oa_travel_apply",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "no",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "no",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "deptId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "dept_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "reason",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "reason",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "startTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "start_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "endTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "end_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "days",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "days",
+          "sqlType": "INT"
+        },
+        {
+          "name": "companion",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "companion",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "estimatedPrice",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "annotations": "",
+          "column": "estimated_price",
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "reimburseStatus",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "reimburse_status",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "processInstanceId",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "process_instance_id",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "remark",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "remark",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "items",
+          "javaType": "List<Item>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "items",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "fileUrls",
+          "javaType": "List<String>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "file_urls",
+          "sqlType": "JSON"
+        }
+      ],
+      "sourceSha256": "45f43fd7527833a576e25e89fe7b31ed773c3ae67b7d5da913ebc56b19a5ed43"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/travel/OaTravelReimbursementDO.java",
+      "table": "oa_travel_reimbursement",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "no",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "no",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "deptId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "dept_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "travelApplyId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "travel_apply_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "reason",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "reason",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "startTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "start_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "endTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "end_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "days",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "days",
+          "sqlType": "INT"
+        },
+        {
+          "name": "totalPrice",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "annotations": "",
+          "column": "total_price",
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "payStatus",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "pay_status",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "processInstanceId",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "process_instance_id",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "remark",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "remark",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "items",
+          "javaType": "List<Item>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "items",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "fileUrls",
+          "javaType": "List<String>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "file_urls",
+          "sqlType": "JSON"
+        }
+      ],
+      "sourceSha256": "9af1ef6882ddae26daaf395198282f9e31b2b7993595ef0639eceb081c587075"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/vehicle/OaVehicleApplyDO.java",
+      "table": "oa_vehicle_apply",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "no",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "no",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "vehicleId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "vehicle_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "vehicleNo",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "vehicle_no",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "deptId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "dept_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "startTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "start_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "endTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "end_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "startLocation",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "start_location",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "endLocation",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "end_location",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "reason",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "reason",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "passenger",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "passenger",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "returnStatus",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "return_status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "processInstanceId",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "process_instance_id",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "remark",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "remark",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "fileUrls",
+          "javaType": "List<String>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "file_urls",
+          "sqlType": "JSON"
+        }
+      ],
+      "sourceSha256": "1eb7642bce1a4b4c95d6e6ec1a96a43c1976b09ffea90d9ee10d49b764740f63"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/vehicle/OaVehicleDO.java",
+      "table": "oa_vehicle",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "no",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "no",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "deptId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableField(updateStrategy = FieldStrategy.ALWAYS)",
+          "column": "dept_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "category",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "category",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "brandModel",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "brand_model",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "seatCount",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "seat_count",
+          "sqlType": "INT"
+        },
+        {
+          "name": "barePrice",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "annotations": "",
+          "column": "bare_price",
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "compulsoryInsuranceExpireTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "compulsory_insurance_expire_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "commercialInsuranceExpireTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "commercial_insurance_expire_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "inspectionExpireTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "inspection_expire_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "picUrl",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "pic_url",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "sort",
+          "sqlType": "INT"
+        },
+        {
+          "name": "remark",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "remark",
+          "sqlType": "LONGTEXT"
+        }
+      ],
+      "sourceSha256": "3a55d306ab5566796109444c8dcc72fe9075b92fa5b475e0394966e9d7bee3bb"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/vehicle/OaVehicleReturnDO.java",
+      "table": "oa_vehicle_return",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "no",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "no",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "applyId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "apply_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "vehicleId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "vehicle_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "deptId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "dept_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "actualStartTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "actual_start_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "startLocation",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "start_location",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "reason",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "reason",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "passenger",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "passenger",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "actualReturnTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "actual_return_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "returnLocation",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "return_location",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "processInstanceId",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "process_instance_id",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "remark",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "remark",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "fileUrls",
+          "javaType": "List<String>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "file_urls",
+          "sqlType": "JSON"
+        }
+      ],
+      "sourceSha256": "a453f54d2a62b02e757862fbd65b5d1bb11a0dcbce7c677485d559f2858d38f9"
+    },
+    {
+      "source": "yudao-module-oa/src/main/java/cn/iocoder/yudao/module/oa/dal/dataobject/workreport/OaWorkReportDO.java",
+      "table": "oa_work_report",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "no",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "no",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "deptId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "dept_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "startTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "start_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "endTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "end_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "title",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "title",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "summary",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "summary",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "plan",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "plan",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "problem",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "problem",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "workItems",
+          "javaType": "List<WorkItem>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "work_items",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "planItems",
+          "javaType": "List<PlanItem>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "plan_items",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "fileUrls",
+          "javaType": "List<String>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "file_urls",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "remark",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "remark",
+          "sqlType": "LONGTEXT"
+        }
+      ],
+      "sourceSha256": "d90e1fbfb34ebbb5a7912c6dc590cbd1ace0b81313f79ba07b90ae9a93133033"
+    }
+  ],
+  "verification": {
+    "compile": ".runtime/oa-compile-result.json",
+    "compileExitCode": 0,
+    "ddl": ".runtime/oa-schema-check.json",
+    "schema": "jss_oa_verify_f875e51f7551",
+    "tables": 48,
+    "nativeFields": 506,
+    "jsonFields": 32,
+    "remainingSchemas": 0,
+    "scope": "No tests, full Flyway, context, browser, real OA workflow/file sharing/email provider or device acceptance in this rapid migration batch."
+  }
+}

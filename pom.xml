@@ -52,6 +52,7 @@
                 <module>yudao-module-fms</module>
                 <module>yudao-module-mes</module>
                 <module>yudao-module-wms</module>
+                <module>yudao-module-oa</module>
             </modules>
         </profile>
     </profiles>

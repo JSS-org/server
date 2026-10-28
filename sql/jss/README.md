@@ -75,3 +75,9 @@ python script/jss/database.py validate
 标准 jss-mall 构建与 yudao-server 已纳入完整 yudao-module-wms。V022 保留 16 张原生 DO 表、134 个持久字段以及 BaseDO 审计和租户列；来源哈希与 SQL 类型映射见 docs/jss-wms-schema.json，BigDecimal 为 DECIMAL(38,12)。WMS 的库存/入出库/调拨/盘点域和 MES 仓储域独立保留，不合并表、API 或状态流转。
 
 跳过测试的 reactor compile 退出 0；归属 MySQL 8.4.9:13316 随机库 jss_wms_verify_eb431e51e274 实际建表和全部列核对通过，finally 删除后残留 0。未改开发库；完整 Flyway/应用上下文、真实单据和库存数量价格链、权限/租户及设备验收后续单列。
+
+## V023：完整 OA 原生业务结构（快速迁移准备）
+
+标准 jss-mall 与 yudao-server 已纳入完整 OA 模块及原 system/infra/BPM 依赖。V023保留48原生表、506外层持久字段、审计/租户列与32个Jackson3 JSON字段；连接配置、邮件附件、报销及报告的内层DTO继续保存在父JSON中，不展开为额外SQL列。来源哈希与逐字段映射见 docs/jss-oa-schema.json；BigDecimal 明确使用 DECIMAL(38,12)。
+
+跳过测试的 reactor compile 退出0；归属 MySQL8.4.9:13316 随机库 jss_oa_verify_f875e51f7551 实际建表和全部列核对通过，finally删除后残留0。开发库未改。OA106前端页尚在下一批，完整 Flyway/应用上下文、真实审批/共享云盘/邮箱提供商、权限归属/租户和设备仍待验。

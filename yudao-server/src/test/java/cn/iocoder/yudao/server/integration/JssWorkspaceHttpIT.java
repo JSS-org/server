@@ -94,6 +94,42 @@ class JssWorkspaceHttpIT {
     private final List<OwnedToken> tokens = new ArrayList<>();
 
     @TestFactory
+    Stream<DynamicTest> actualCrmBpmAcceptance() {
+        if (!"1".equals(System.getenv("JSS_TEST_CRM_BPM"))) return Stream.empty();
+        return Stream.of(DynamicTest.dynamicTest("nativeCrmAndBpmModulesUseManagedSchemaAndRealHttp", () -> {
+            assertEquals("false", environment.getProperty("flowable.database-schema-update"));
+            String token = login("admin", "jssitreviewer");
+            var category = expectCode(api("POST", "/admin-api/bpm/category/create",
+                    Map.of("name", "Owned BPM category", "code", "jss_owned", "status", 0, "sort", 1), token, 1), 0).get("data").toString();
+            assertEquals("Owned BPM category", data(api("GET", "/admin-api/bpm/category/get?id=" + category, null, token, 1)).get("name"));
+            var group = expectCode(api("POST", "/admin-api/bpm/user-group/create",
+                    Map.of("name", "Owned BPM group", "description", "Native JSON roundtrip", "status", 0, "userIds", List.of(1)), token, 1), 0).get("data").toString();
+            var savedGroup = data(api("GET", "/admin-api/bpm/user-group/get?id=" + group, null, token, 1));
+            assertEquals("Owned BPM group", savedGroup.get("name"));
+            assertEquals(List.of("1"), ((List<?>) savedGroup.get("userIds")).stream().map(Object::toString).toList());
+            var customer = expectCode(api("POST", "/admin-api/crm/customer/create",
+                    Map.of("name", "Owned CRM customer", "ownerUserId", 1, "remark", "Native owner and permissions"), token, 1), 0).get("data").toString();
+            var savedCustomer = data(api("GET", "/admin-api/crm/customer/get?id=" + customer, null, token, 1));
+            assertEquals("Owned CRM customer", savedCustomer.get("name"));
+            assertEquals("1", savedCustomer.get("ownerUserId").toString());
+            var definitions = expectCode(api("GET", "/admin-api/bpm/process-definition/list?suspensionState=1", null, token, 1), 0);
+            assertTrue(definitions.get("data") instanceof List<?>);
+            var processes = data(api("GET", "/admin-api/bpm/process-instance/my-page?pageNo=1&pageSize=10", null, token, 1));
+            assertNotNull(processes.get("list"));
+            // A member sharing the super-admin's numeric ID must not inherit that role.
+            try (var connection = datasource.getConnection(); var statement = connection.createStatement()) {
+                statement.executeUpdate("INSERT INTO member_user (id,tenant_id,mobile,password,nickname,status,register_ip,group_id) SELECT 1,1,'13900009714',password,'Owned ID collision',0,'127.0.0.1',23099 FROM member_user WHERE id=23001");
+            }
+            String member = login("member", "13900009714");
+            assertEquals("1", data(api("GET", "/app-api/member/user/get", null, member, 1)).get("id").toString());
+            var context = data(api("GET", "/app-api/jss/auth/context", null, member, 1));
+            assertEquals(Boolean.FALSE, ((Map<?,?>) context.get("capabilities")).get("workspace"));
+            expectCode(api("GET", "/admin-api/bpm/category/page?pageNo=1&pageSize=10", null, member, 1), 403);
+            expectCode(api("GET", "/admin-api/bpm/category/page?pageNo=1&pageSize=10", null, null, 1), 401);
+        }));
+    }
+
+    @TestFactory
     Stream<DynamicTest> actualBrowserAcceptance() {
         if (!"1".equals(System.getenv("JSS_TEST_BROWSER"))) return Stream.empty();
         return Stream.of(

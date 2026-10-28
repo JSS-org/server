@@ -26,7 +26,10 @@ def main():
     parser.add_argument('--browser', action='store_true', help='Also run the sibling uni-app real-login browser acceptance')
     parser.add_argument('--suite', choices=['workspace', 'mall'], default='workspace',
                         help='Run workspace security or mall catalog/cart/order acceptance')
+    parser.add_argument('--crm-bpm', action='store_true', help='Include complete CRM/BPM modules and actual native module HTTP smoke')
     args = parser.parse_args()
+    if args.crm_bpm and args.suite != 'workspace':
+        raise ValueError('CRM/BPM verification uses the workspace suite')
     runtime = ROOT / ('.runtime/jss-http' if args.suite == 'workspace' else '.runtime/jss-mall-http')
     test_class = 'JssWorkspaceHttpIT' if args.suite == 'workspace' else 'JssMallHttpIT'
     sys.stdout.reconfigure(encoding='utf8', errors='replace')
@@ -93,6 +96,8 @@ def main():
                            JSS_TEST_HTTP_PASSWORD=http_password,
                            JSS_TEST_REDIS_PASSWORD=redis_password, JSS_TEST_REDIS_RUN_ID=owned['runId'],
                            JSS_TEST_RUNTIME_DIR=run_directory.as_posix())
+        if args.crm_bpm:
+            environment['JSS_TEST_CRM_BPM'] = '1'
         if args.browser:
             frontend = ROOT.parent / 'JSS-uniapp'
             browser_config = 'playwright.authenticated.config.ts' if args.suite == 'workspace' else 'playwright.mall.config.ts'
@@ -102,7 +107,7 @@ def main():
         maven = os.environ.get('JSS_MAVEN_COMMAND') or shutil.which('mvn')
         if not maven:
             maven = str(ROOT.parent / '.tools/apache-maven-3.9.11/bin' / ('mvn.cmd' if os.name == 'nt' else 'mvn'))
-        command = [maven, '-B', '-ntp', '-q', '-Pjss-mall', '-pl', 'yudao-server', '-am', 'test',
+        command = [maven, '-B', '-ntp', '-q', '-Pjss-mall,jss-crm' if args.crm_bpm else '-Pjss-mall', '-pl', 'yudao-server', '-am', 'test',
                    f'-Dtest={test_class}', '-Dsurefire.failIfNoSpecifiedTests=false', '-Dspotless.skip=true']
         started = time.time()
         result = subprocess.run(command, cwd=ROOT, env=environment, capture_output=True,
@@ -120,8 +125,10 @@ def main():
         report = ROOT / f'yudao-server/target/surefire-reports/TEST-cn.iocoder.yudao.server.integration.{test_class}.xml'
         assert report.stat().st_mtime >= started
         suite = ET.parse(report).getroot()
-        expected = ('13' if args.browser else '12') if args.suite == 'workspace' else ('14' if args.browser else '13')
+        expected = str((13 if args.browser else 12) + (1 if args.crm_bpm else 0)) if args.suite == 'workspace' else ('14' if args.browser else '13')
         assert suite.attrib['tests'] == expected and all(suite.attrib[k] == '0' for k in ['errors', 'failures', 'skipped']), suite.attrib
+        shutil.copy2(report, run_directory / 'junit.xml')
+        (run_directory / 'verification.json').write_text(json.dumps({'schema': schema, 'suite': args.suite, 'crmBpm': args.crm_bpm, 'browser': args.browser, 'junit': suite.attrib}, indent=2), encoding='utf8')
         for case in suite.findall('testcase'):
             print('PASS ' + case.attrib['name'])
         print(f'Full server {args.suite} HTTP acceptance verified with real MySQL and Redis')

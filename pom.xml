@@ -47,6 +47,7 @@
                 <module>yudao-module-mall</module>
                 <module>yudao-module-bpm</module>
                 <module>yudao-module-crm</module>
+                <module>yudao-module-erp</module>
             </modules>
         </profile>
     </profiles>

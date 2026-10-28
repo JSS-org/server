@@ -51,3 +51,7 @@ python script/jss/database.py validate
 `migrate`/`validate` 要求已有历史。自动 baseline、乱序迁移、clean 均禁用；CLI 不提供 repair、clean 或 seed。MySQL DDL 可能隐式提交，失败后应检查当前结构和 Flyway 历史，按审核后的前向迁移或备份恢复处理。后续追加新版本，不修改已应用的版本文件。
 
 原 `sql/jss/001-identity.sql` 已移入 V002，Git 保留原文件历史；请统一通过本工具部署，避免业务库出现无版本记录的表。
+
+## V018：完整ERP基础表
+
+标准jss-mall构建现包含原ERP模块。V018按33份原ERP DO保留全部持久字段及继承审计/tenant_id，精确列集合见docs/jss-erp-schema.json。原BigDecimal用DECIMAL(38,12)，这是JSS的新建存储选择；不冒称上游DDL或完整业务精度验收。Long保持BIGINT，单据明细与关联编号添加租户前导索引。init拒绝未托管erp_表；V001–V017未改。归属MySQL随机库的33表实际DDL和全部列集合检查通过，随机库残留0；标准compile通过，未运行测试。按用户快速迁移优先级，完整Flyway生命周期、服务启动和ERP业务/RBAC/租户/库存财务深度回归待后续验收；未部署开发库。

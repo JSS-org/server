@@ -1,0 +1,623 @@
+{
+  "status": "Complete native DO mapping; standard JSS compile and isolated MySQL DDL/column checks passed; deep business and full lifecycle regression deferred",
+  "tables": [
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/finance/ErpAccountDO.java",
+      "sourceSha256": "5511f500cc52b45afae824771c8e028d546d41d570b110edbea3853fc581ce7f",
+      "table": "erp_account",
+      "fields": [
+        "id",
+        "name",
+        "no",
+        "remark",
+        "status",
+        "sort",
+        "default_status"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/finance/ErpFinancePaymentDO.java",
+      "sourceSha256": "b42fe8dd9ddd7fd9b9ef92c508d292c1d48643bd76d3866c15f239ecce7b9f0f",
+      "table": "erp_finance_payment",
+      "fields": [
+        "id",
+        "no",
+        "status",
+        "payment_time",
+        "finance_user_id",
+        "supplier_id",
+        "account_id",
+        "total_price",
+        "discount_price",
+        "payment_price",
+        "remark"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/finance/ErpFinancePaymentItemDO.java",
+      "sourceSha256": "8af2582d93d474664b7c99bd3c6a28bfbd42f7409fd0dfd03d9a79d656739d2d",
+      "table": "erp_finance_payment_item",
+      "fields": [
+        "id",
+        "payment_id",
+        "biz_type",
+        "biz_id",
+        "biz_no",
+        "total_price",
+        "paid_price",
+        "payment_price",
+        "remark"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/finance/ErpFinanceReceiptDO.java",
+      "sourceSha256": "daa2841fe6b13b071f41b2ef933056c71b0c2f224e695abeb0d453d00413863f",
+      "table": "erp_finance_receipt",
+      "fields": [
+        "id",
+        "no",
+        "status",
+        "receipt_time",
+        "finance_user_id",
+        "customer_id",
+        "account_id",
+        "total_price",
+        "discount_price",
+        "receipt_price",
+        "remark"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/finance/ErpFinanceReceiptItemDO.java",
+      "sourceSha256": "6e5f3d741e879b7373d3a428fb5c490818b5180a210df952a705dd0ea540e066",
+      "table": "erp_finance_receipt_item",
+      "fields": [
+        "id",
+        "receipt_id",
+        "biz_type",
+        "biz_id",
+        "biz_no",
+        "total_price",
+        "receipted_price",
+        "receipt_price",
+        "remark"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/product/ErpProductCategoryDO.java",
+      "sourceSha256": "69498b55ee3b2bd7da6cdc98d6b225cdc7d6f28da4df46b17991f3fd9629304b",
+      "table": "erp_product_category",
+      "fields": [
+        "id",
+        "parent_id",
+        "name",
+        "code",
+        "sort",
+        "status"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/product/ErpProductDO.java",
+      "sourceSha256": "9f20636bdbbd8c3417f3d6c7fe3aa6b860823f354f191ae856f3b420bbb8e2f2",
+      "table": "erp_product",
+      "fields": [
+        "id",
+        "name",
+        "bar_code",
+        "category_id",
+        "unit_id",
+        "status",
+        "standard",
+        "remark",
+        "expiry_day",
+        "weight",
+        "purchase_price",
+        "sale_price",
+        "min_price"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/product/ErpProductUnitDO.java",
+      "sourceSha256": "35de623498df55cb7ab23e3cae81ceaf9dcb917900586c0b563257eddb2e820d",
+      "table": "erp_product_unit",
+      "fields": [
+        "id",
+        "name",
+        "status"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/purchase/ErpPurchaseInDO.java",
+      "sourceSha256": "3fafdee7d4464608a575650e649489c13157212324af3ac6f74e7a05f820381e",
+      "table": "erp_purchase_in",
+      "fields": [
+        "id",
+        "no",
+        "status",
+        "supplier_id",
+        "account_id",
+        "in_time",
+        "order_id",
+        "order_no",
+        "total_count",
+        "total_price",
+        "payment_price",
+        "total_product_price",
+        "total_tax_price",
+        "discount_percent",
+        "discount_price",
+        "other_price",
+        "file_url",
+        "remark"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/purchase/ErpPurchaseInItemDO.java",
+      "sourceSha256": "79f77bada54a67b1cff4b18c0c968744545519b9d15f298f4cc3c024ac559e55",
+      "table": "erp_purchase_in_items",
+      "fields": [
+        "id",
+        "in_id",
+        "order_item_id",
+        "warehouse_id",
+        "product_id",
+        "product_unit_id",
+        "product_price",
+        "count",
+        "total_price",
+        "tax_percent",
+        "tax_price",
+        "remark"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/purchase/ErpPurchaseOrderDO.java",
+      "sourceSha256": "a62281777ed6771bf268d5c9942a51717f6b78a33565fdbc1c93f07da3d42ba2",
+      "table": "erp_purchase_order",
+      "fields": [
+        "id",
+        "no",
+        "status",
+        "supplier_id",
+        "account_id",
+        "order_time",
+        "total_count",
+        "total_price",
+        "total_product_price",
+        "total_tax_price",
+        "discount_percent",
+        "discount_price",
+        "deposit_price",
+        "file_url",
+        "remark",
+        "in_count",
+        "return_count"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/purchase/ErpPurchaseOrderItemDO.java",
+      "sourceSha256": "adf5936777f7532fa323e881e753a7285b87b9e8bb9424848ed6a2ccaf90ebc6",
+      "table": "erp_purchase_order_items",
+      "fields": [
+        "id",
+        "order_id",
+        "product_id",
+        "product_unit_id",
+        "product_price",
+        "count",
+        "total_price",
+        "tax_percent",
+        "tax_price",
+        "remark",
+        "in_count",
+        "return_count"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/purchase/ErpPurchaseReturnDO.java",
+      "sourceSha256": "d5352ba307292054c88d4b535236e1dcb310a1c1c4ec60b7465b54def38bb3a9",
+      "table": "erp_purchase_return",
+      "fields": [
+        "id",
+        "no",
+        "status",
+        "supplier_id",
+        "account_id",
+        "return_time",
+        "order_id",
+        "order_no",
+        "total_count",
+        "total_price",
+        "refund_price",
+        "total_product_price",
+        "total_tax_price",
+        "discount_percent",
+        "discount_price",
+        "other_price",
+        "file_url",
+        "remark"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/purchase/ErpPurchaseReturnItemDO.java",
+      "sourceSha256": "1c68fca0f0f4d7f13a08041995f70ddf818bdceb06eb2932c3dbdb83c873192f",
+      "table": "erp_purchase_return_items",
+      "fields": [
+        "id",
+        "return_id",
+        "order_item_id",
+        "warehouse_id",
+        "product_id",
+        "product_unit_id",
+        "product_price",
+        "count",
+        "total_price",
+        "tax_percent",
+        "tax_price",
+        "remark"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/purchase/ErpSupplierDO.java",
+      "sourceSha256": "20e10290f780591c7c1dcb1e8f5ed071eb5d763a0642b35153b96d420b7c706e",
+      "table": "erp_supplier",
+      "fields": [
+        "id",
+        "name",
+        "contact",
+        "mobile",
+        "telephone",
+        "email",
+        "fax",
+        "remark",
+        "status",
+        "sort",
+        "tax_no",
+        "tax_percent",
+        "bank_name",
+        "bank_account",
+        "bank_address"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/sale/ErpCustomerDO.java",
+      "sourceSha256": "32b9d9ea754838233bcbbdf829d8d7e14b6260c0369cb1a0ab32ddbcd892adc8",
+      "table": "erp_customer",
+      "fields": [
+        "id",
+        "name",
+        "contact",
+        "mobile",
+        "telephone",
+        "email",
+        "fax",
+        "remark",
+        "status",
+        "sort",
+        "tax_no",
+        "tax_percent",
+        "bank_name",
+        "bank_account",
+        "bank_address"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/sale/ErpSaleOrderDO.java",
+      "sourceSha256": "f0fea76b74cb70be20c01998f4d1f18b33ab375f9a11e88a8349e7602127c067",
+      "table": "erp_sale_order",
+      "fields": [
+        "id",
+        "no",
+        "status",
+        "customer_id",
+        "account_id",
+        "sale_user_id",
+        "order_time",
+        "total_count",
+        "total_price",
+        "total_product_price",
+        "total_tax_price",
+        "discount_percent",
+        "discount_price",
+        "deposit_price",
+        "file_url",
+        "remark",
+        "out_count",
+        "return_count"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/sale/ErpSaleOrderItemDO.java",
+      "sourceSha256": "c66f8f43c8b914645cdd5be30808fdbca3f5aef86fca2efcc284b0320e629670",
+      "table": "erp_sale_order_items",
+      "fields": [
+        "id",
+        "order_id",
+        "product_id",
+        "product_unit_id",
+        "product_price",
+        "count",
+        "total_price",
+        "tax_percent",
+        "tax_price",
+        "remark",
+        "out_count",
+        "return_count"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/sale/ErpSaleOutDO.java",
+      "sourceSha256": "36aa9a600fc0a91b31e60801cf7138cacea0fe142e5405d60ed5713ba456e06e",
+      "table": "erp_sale_out",
+      "fields": [
+        "id",
+        "no",
+        "status",
+        "customer_id",
+        "account_id",
+        "sale_user_id",
+        "out_time",
+        "order_id",
+        "order_no",
+        "total_count",
+        "total_price",
+        "receipt_price",
+        "total_product_price",
+        "total_tax_price",
+        "discount_percent",
+        "discount_price",
+        "other_price",
+        "file_url",
+        "remark"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/sale/ErpSaleOutItemDO.java",
+      "sourceSha256": "cfb17c75b396375f01aa592036265948d37e3a11676dfec33070fd0a0a5e5154",
+      "table": "erp_sale_out_items",
+      "fields": [
+        "id",
+        "out_id",
+        "order_item_id",
+        "warehouse_id",
+        "product_id",
+        "product_unit_id",
+        "product_price",
+        "count",
+        "total_price",
+        "tax_percent",
+        "tax_price",
+        "remark"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/sale/ErpSaleReturnDO.java",
+      "sourceSha256": "7c6ff78816c8fa47e689dbaf9f9c2a2b1b3736a1ca4ee157b3193167b08bf4c9",
+      "table": "erp_sale_return",
+      "fields": [
+        "id",
+        "no",
+        "status",
+        "customer_id",
+        "account_id",
+        "sale_user_id",
+        "return_time",
+        "order_id",
+        "order_no",
+        "total_count",
+        "total_price",
+        "refund_price",
+        "total_product_price",
+        "total_tax_price",
+        "discount_percent",
+        "discount_price",
+        "other_price",
+        "file_url",
+        "remark"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/sale/ErpSaleReturnItemDO.java",
+      "sourceSha256": "0202ffee4b5860e1ee374f3504dfe336fce33269d687ff97797fe1db7ae35964",
+      "table": "erp_sale_return_items",
+      "fields": [
+        "id",
+        "return_id",
+        "order_item_id",
+        "warehouse_id",
+        "product_id",
+        "product_unit_id",
+        "product_price",
+        "count",
+        "total_price",
+        "tax_percent",
+        "tax_price",
+        "remark"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/stock/ErpStockCheckDO.java",
+      "sourceSha256": "acf6086abd5f188ea87536c0c1536b0133f1327e5db432c5814745460fc3ef2f",
+      "table": "erp_stock_check",
+      "fields": [
+        "id",
+        "no",
+        "check_time",
+        "total_count",
+        "total_price",
+        "status",
+        "remark",
+        "file_url"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/stock/ErpStockCheckItemDO.java",
+      "sourceSha256": "24e23441af3f42e7ffc475056555ff08972b7cb3109217d446d5f11ca7b3ad5d",
+      "table": "erp_stock_check_item",
+      "fields": [
+        "id",
+        "check_id",
+        "warehouse_id",
+        "product_id",
+        "product_unit_id",
+        "product_price",
+        "stock_count",
+        "actual_count",
+        "count",
+        "total_price",
+        "remark"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/stock/ErpStockDO.java",
+      "sourceSha256": "81773d204297843c8fb1a71b3b7a4f3bc4eea07eb3b2b648a02896fe3e03c141",
+      "table": "erp_stock",
+      "fields": [
+        "id",
+        "product_id",
+        "warehouse_id",
+        "count"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/stock/ErpStockInDO.java",
+      "sourceSha256": "9451355e5e49d38d570ae807dff6dceda393d60cf118a6d8a612a4051defa57d",
+      "table": "erp_stock_in",
+      "fields": [
+        "id",
+        "no",
+        "supplier_id",
+        "in_time",
+        "total_count",
+        "total_price",
+        "status",
+        "remark",
+        "file_url"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/stock/ErpStockInItemDO.java",
+      "sourceSha256": "6e23b8c8ec8dbf9de3af8b6aecf1428c80eb30d6d3ac39fa35f9b877d5fb94a2",
+      "table": "erp_stock_in_item",
+      "fields": [
+        "id",
+        "in_id",
+        "warehouse_id",
+        "product_id",
+        "product_unit_id",
+        "product_price",
+        "count",
+        "total_price",
+        "remark"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/stock/ErpStockMoveDO.java",
+      "sourceSha256": "551d481caea35d4a63452dc7e42645bf972e7382021c73fe72f45f2ea8d528c0",
+      "table": "erp_stock_move",
+      "fields": [
+        "id",
+        "no",
+        "move_time",
+        "total_count",
+        "total_price",
+        "status",
+        "remark",
+        "file_url"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/stock/ErpStockMoveItemDO.java",
+      "sourceSha256": "a091e38966c116ee9c5e6556f786c2d6713a7cde3f75067872c7136dae2b0aeb",
+      "table": "erp_stock_move_item",
+      "fields": [
+        "id",
+        "move_id",
+        "from_warehouse_id",
+        "to_warehouse_id",
+        "product_id",
+        "product_unit_id",
+        "product_price",
+        "count",
+        "total_price",
+        "remark"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/stock/ErpStockOutDO.java",
+      "sourceSha256": "9ab28ce9e4a112435510a5d8b9abb1abe56fac8a328a3e00d8c092687ff1d914",
+      "table": "erp_stock_out",
+      "fields": [
+        "id",
+        "no",
+        "customer_id",
+        "out_time",
+        "total_count",
+        "total_price",
+        "status",
+        "remark",
+        "file_url"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/stock/ErpStockOutItemDO.java",
+      "sourceSha256": "955308f977e7d054aeaf3833d9cd865bc27a9fa451a7933fea24ed7640a84555",
+      "table": "erp_stock_out_item",
+      "fields": [
+        "id",
+        "out_id",
+        "warehouse_id",
+        "product_id",
+        "product_unit_id",
+        "product_price",
+        "count",
+        "total_price",
+        "remark"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/stock/ErpStockRecordDO.java",
+      "sourceSha256": "8113ece55b0599eb87fdbe9c11d9592b3a7c18abcea78d0413474103d03a3d74",
+      "table": "erp_stock_record",
+      "fields": [
+        "id",
+        "product_id",
+        "warehouse_id",
+        "count",
+        "total_count",
+        "biz_type",
+        "biz_id",
+        "biz_item_id",
+        "biz_no"
+      ]
+    },
+    {
+      "source": "yudao-module-erp/src/main/java/cn/iocoder/yudao/module/erp/dal/dataobject/stock/ErpWarehouseDO.java",
+      "sourceSha256": "04fe8bf7a885c0fcb987636575e0de499795924d9164e7f0e35ecc25d53e116d",
+      "table": "erp_warehouse",
+      "fields": [
+        "id",
+        "name",
+        "address",
+        "sort",
+        "remark",
+        "principal",
+        "warehouse_price",
+        "truckage_price",
+        "status",
+        "default_status"
+      ]
+    }
+  ],
+  "verification": {
+    "standardBuildProfile": "jss-mall",
+    "compile": "passed; no tests run",
+    "mysqlDdlTables": 33,
+    "mysqlColumnSets": "all exact including inherited audit/tenant columns",
+    "schema": "jss_erp_verify_0ca6e06b10a3",
+    "remainingSchemas": 0,
+    "compileLog": ".runtime/erp-compile-final.log",
+    "schemaLog": ".runtime/erp-schema-check.log",
+    "pending": "Full Flyway lifecycle/context and ERP business/RBAC/tenant/stock/finance acceptance remain separate pending work under rapid-migration priority"
+  }
+}

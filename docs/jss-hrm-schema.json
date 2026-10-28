@@ -1,0 +1,4174 @@
+{
+  "status": "Complete native persistent outer fields mapped; standard JSS compile and isolated MySQL DDL/column checks passed; deep business acceptance deferred",
+  "tables": [
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/attendance/config/HrmAttendanceGroupDO.java",
+      "sourceSha256": "7090e96a62c176d7bcd14ccd42e6c7b6dea5bae44aa63679c786577b6e6ca664",
+      "table": "hrm_attendance_group",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "deptIds",
+          "column": "dept_ids",
+          "javaType": "List<Long>",
+          "handler": "LongListTypeHandler",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "employeeIds",
+          "column": "employee_ids",
+          "javaType": "List<Long>",
+          "handler": "LongListTypeHandler",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "openWifiCard",
+          "column": "open_wifi_card",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "openPointCard",
+          "column": "open_point_card",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "shifts",
+          "column": "shifts",
+          "javaType": "List<Shift>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "rest",
+          "column": "rest",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "specialDates",
+          "column": "special_dates",
+          "javaType": "List<SpecialDate>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "points",
+          "column": "points",
+          "javaType": "List<Point>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "wifis",
+          "column": "wifis",
+          "javaType": "List<Wifi>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "deductRule",
+          "column": "deduct_rule",
+          "javaType": "DeductRule",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "defaultStatus",
+          "column": "default_status",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/attendance/config/HrmAttendanceHolidayDO.java",
+      "sourceSha256": "c4a0f01705b452598ac6ee3617684a5ce144f09b3b9306bb93bb68494097ee8e",
+      "table": "hrm_attendance_holiday",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "date",
+          "column": "date",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/attendance/record/HrmAttendanceClockDO.java",
+      "sourceSha256": "b8448a3599ef232690c2a9b78e7bae6a38d0f2153a502b3bb3773527ec1f2dea",
+      "table": "hrm_attendance_clock",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "employeeId",
+          "column": "employee_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "clockTime",
+          "column": "clock_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "attendanceTime",
+          "column": "attendance_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "sourceType",
+          "column": "source_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "stage",
+          "column": "stage",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "address",
+          "column": "address",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "longitude",
+          "column": "longitude",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "latitude",
+          "column": "latitude",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "ssid",
+          "column": "ssid",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "mac",
+          "column": "mac",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/attendance/record/HrmAttendanceLeaveDO.java",
+      "sourceSha256": "f395921ac71befea0b85f58033eeb3f3fefec5a724582ee1104d16acb6afb1aa",
+      "table": "hrm_attendance_leave",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "employeeId",
+          "column": "employee_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "startTime",
+          "column": "start_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "endTime",
+          "column": "end_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "day",
+          "column": "day",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "reason",
+          "column": "reason",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "approvalStatus",
+          "column": "approval_status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "processInstanceId",
+          "column": "process_instance_id",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "approvalTime",
+          "column": "approval_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "approvalReason",
+          "column": "approval_reason",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/config/HrmConfigDO.java",
+      "sourceSha256": "ae2dd22fe6d7ec25cc856b7156b8ba8b09032d6a0f5eb1575994809651d7aa05",
+      "table": "hrm_config",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "value",
+          "column": "value",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/employee/employment/HrmEmployeeChangeRecordDO.java",
+      "sourceSha256": "89ddbfa19f6fdc4b639b883b3619b6f0e6d4e117399593fc35fb4aed24936288",
+      "table": "hrm_employee_change_record",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "employeeId",
+          "column": "employee_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "reason",
+          "column": "reason",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "oldDeptId",
+          "column": "old_dept_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "newDeptId",
+          "column": "new_dept_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "oldPostName",
+          "column": "old_post_name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "newPostName",
+          "column": "new_post_name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "oldPostLevel",
+          "column": "old_post_level",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "newPostLevel",
+          "column": "new_post_level",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "oldWorkAddress",
+          "column": "old_work_address",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "newWorkAddress",
+          "column": "new_work_address",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "oldLeaderEmployeeId",
+          "column": "old_leader_employee_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "newLeaderEmployeeId",
+          "column": "new_leader_employee_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "probation",
+          "column": "probation",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "effectTime",
+          "column": "effect_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "appliedTime",
+          "column": "applied_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/employee/employment/HrmEmployeeContractDO.java",
+      "sourceSha256": "72114e3543c26a412e1dd67f15ddb8281da21aaa844ac554177870ba02ab369e",
+      "table": "hrm_employee_contract",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "employeeId",
+          "column": "employee_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "no",
+          "column": "no",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "startTime",
+          "column": "start_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "endTime",
+          "column": "end_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "term",
+          "column": "term",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "signCompany",
+          "column": "sign_company",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "signTime",
+          "column": "sign_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "expireRemind",
+          "column": "expire_remind",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "fileUrls",
+          "column": "file_urls",
+          "javaType": "List<String>",
+          "handler": "StringListTypeHandler",
+          "sqlType": "LONGTEXT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/employee/employment/HrmEmployeeQuitInfoDO.java",
+      "sourceSha256": "09b3cb8d538106cb1929ed2867133aea6b7763697a7270265e0861bfd7500ae4",
+      "table": "hrm_employee_quit_info",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "employeeId",
+          "column": "employee_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "planQuitTime",
+          "column": "plan_quit_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "applyQuitTime",
+          "column": "apply_quit_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "salarySettlementTime",
+          "column": "salary_settlement_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "reason",
+          "column": "reason",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "oldEmployeeStatus",
+          "column": "old_employee_status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/employee/employment/HrmEmployeeSalaryCardDO.java",
+      "sourceSha256": "76051373ebbce2c85ea400ece54667c4138c5bdd5f82a4746c3cf30b3dee43e6",
+      "table": "hrm_employee_salary_card",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "employeeId",
+          "column": "employee_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "bankCardNumber",
+          "column": "bank_card_number",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "bankAreaId",
+          "column": "bank_area_id",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "bankName",
+          "column": "bank_name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "bankBranchName",
+          "column": "bank_branch_name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/employee/experience/HrmEmployeeCertificateDO.java",
+      "sourceSha256": "39e1a418fb4b7aa74104b38c2f882dba16bc5550f9f69c45cf32b3bba5eed897",
+      "table": "hrm_employee_certificate",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "employeeId",
+          "column": "employee_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "level",
+          "column": "level",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "no",
+          "column": "no",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "startTime",
+          "column": "start_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "endTime",
+          "column": "end_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "issuingAuthority",
+          "column": "issuing_authority",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "issuingTime",
+          "column": "issuing_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/employee/experience/HrmEmployeeEducationExperienceDO.java",
+      "sourceSha256": "2871725ab55e7f00e68e4da4b25a85d48516f1974de62674f4e83f8f46eda07e",
+      "table": "hrm_employee_education_experience",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "employeeId",
+          "column": "employee_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "education",
+          "column": "education",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "graduateSchool",
+          "column": "graduate_school",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "major",
+          "column": "major",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "admissionTime",
+          "column": "admission_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "graduationTime",
+          "column": "graduation_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "teachingMethods",
+          "column": "teaching_methods",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "firstDegree",
+          "column": "first_degree",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/employee/experience/HrmEmployeeTrainingExperienceDO.java",
+      "sourceSha256": "5ac1c4a7ad7f5ec414cf024b610459133aa41cab59365b50b827856a473cb75d",
+      "table": "hrm_employee_training_experience",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "employeeId",
+          "column": "employee_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "course",
+          "column": "course",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "organizationName",
+          "column": "organization_name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "startTime",
+          "column": "start_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "endTime",
+          "column": "end_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "duration",
+          "column": "duration",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "result",
+          "column": "result",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "certificateName",
+          "column": "certificate_name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/employee/experience/HrmEmployeeWorkExperienceDO.java",
+      "sourceSha256": "52646a4fc54bea7261b373dcd4cc45d9277f22da5ceb798d43922febe1170b3c",
+      "table": "hrm_employee_work_experience",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "employeeId",
+          "column": "employee_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "workUnit",
+          "column": "work_unit",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "postName",
+          "column": "post_name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "startTime",
+          "column": "start_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "endTime",
+          "column": "end_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "reason",
+          "column": "reason",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "witnessName",
+          "column": "witness_name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "witnessPhone",
+          "column": "witness_phone",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/employee/info/HrmEmployeeContactDO.java",
+      "sourceSha256": "301a1b3055edba0b310efd21b6812715334aac57469f2bac5dc949ccecf64eac",
+      "table": "hrm_employee_contact",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "employeeId",
+          "column": "employee_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "relation",
+          "column": "relation",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "phone",
+          "column": "phone",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "workUnit",
+          "column": "work_unit",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "postName",
+          "column": "post_name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "address",
+          "column": "address",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/employee/info/HrmEmployeeDO.java",
+      "sourceSha256": "884e48c587cc778d7c120f218a8444091cfdc58c88f8a79d5a1e62342242e5f8",
+      "table": "hrm_employee",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "jobNumber",
+          "column": "job_number",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "userId",
+          "column": "user_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "mobile",
+          "column": "mobile",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "country",
+          "column": "country",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "nation",
+          "column": "nation",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "idType",
+          "column": "id_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "idNumber",
+          "column": "id_number",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "sex",
+          "column": "sex",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "email",
+          "column": "email",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "nativePlace",
+          "column": "native_place",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "birthday",
+          "column": "birthday",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "age",
+          "column": "age",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "address",
+          "column": "address",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "highestEducation",
+          "column": "highest_education",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "deptId",
+          "column": "dept_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "leaderEmployeeId",
+          "column": "leader_employee_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "entryStatus",
+          "column": "entry_status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "entryTime",
+          "column": "entry_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "probation",
+          "column": "probation",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "regularTime",
+          "column": "regular_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "leaveTime",
+          "column": "leave_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "postName",
+          "column": "post_name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "postLevel",
+          "column": "post_level",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "workCity",
+          "column": "work_city",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "workAddress",
+          "column": "work_address",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "workDetailAddress",
+          "column": "work_detail_address",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "channelId",
+          "column": "channel_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "companyAgeStartTime",
+          "column": "company_age_start_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "companyAge",
+          "column": "company_age",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "candidateId",
+          "column": "candidate_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/employee/info/HrmEmployeeFileDO.java",
+      "sourceSha256": "a3b9bef33fb06f876a4a1c66b2e3f7ce16395fd79129dc5e6ac3044675ddce4c",
+      "table": "hrm_employee_file",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "employeeId",
+          "column": "employee_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "url",
+          "column": "url",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/employee/info/HrmEmployeePersonalNoteDO.java",
+      "sourceSha256": "2c7b85a215348fe31c65e9664f08e859182e043b886c3e565f97e4faeed3fc93",
+      "table": "hrm_employee_personal_note",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "employeeId",
+          "column": "employee_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "content",
+          "column": "content",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "reminderTime",
+          "column": "reminder_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/insurance/config/HrmInsuranceSchemeDO.java",
+      "sourceSha256": "57bd8fb5d14fa1188377c859522bd54f3b3fb5125495f8a222d69e8cd9ee4591",
+      "table": "hrm_insurance_scheme",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "areaId",
+          "column": "area_id",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "householdType",
+          "column": "household_type",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/insurance/config/HrmInsuranceSchemeProjectDO.java",
+      "sourceSha256": "502aeff3f60600b7825980c8e6b0ba1fb8f8d62fcdc656b9943a57319f4ceb66",
+      "table": "hrm_insurance_scheme_project",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "schemeId",
+          "column": "scheme_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "baseAmount",
+          "column": "base_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "corporateRate",
+          "column": "corporate_rate",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "personalRate",
+          "column": "personal_rate",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "corporateAmount",
+          "column": "corporate_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "personalAmount",
+          "column": "personal_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/insurance/employee/HrmInsuranceEmployeeInfoDO.java",
+      "sourceSha256": "48936ceec049ceb995d5dbe0dc0894d9e1bfe3c4d51005e97b5381ba5852675c",
+      "table": "hrm_insurance_employee_info",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "employeeId",
+          "column": "employee_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "firstSocialSecurity",
+          "column": "first_social_security",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "firstAccumulationFund",
+          "column": "first_accumulation_fund",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "socialSecurityNumber",
+          "column": "social_security_number",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "accumulationFundNumber",
+          "column": "accumulation_fund_number",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "socialSecurityStartMonth",
+          "column": "social_security_start_month",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "schemeId",
+          "column": "scheme_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/insurance/monthrecord/HrmInsuranceMonthEmployeeRecordDO.java",
+      "sourceSha256": "4a566758665edcd950d0f93c4833169df56c8c183ccca37e90a62df48349054c",
+      "table": "hrm_insurance_month_employee_record",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "monthRecordId",
+          "column": "month_record_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "employeeId",
+          "column": "employee_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "schemeId",
+          "column": "scheme_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "year",
+          "column": "year",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "month",
+          "column": "month",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "personalInsuranceAmount",
+          "column": "personal_insurance_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "personalProvidentFundAmount",
+          "column": "personal_provident_fund_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "corporateInsuranceAmount",
+          "column": "corporate_insurance_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "corporateProvidentFundAmount",
+          "column": "corporate_provident_fund_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "projects",
+          "column": "projects",
+          "javaType": "List<Project>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/insurance/monthrecord/HrmInsuranceMonthRecordDO.java",
+      "sourceSha256": "d3627f936c7f6444c34d48f9f5528b0e0d443f2c0105219908e492b0b79e3c71",
+      "table": "hrm_insurance_month_record",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "title",
+          "column": "title",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "year",
+          "column": "year",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "month",
+          "column": "month",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "insuredEmployeeCount",
+          "column": "insured_employee_count",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "stoppedEmployeeCount",
+          "column": "stopped_employee_count",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "personalInsuranceAmount",
+          "column": "personal_insurance_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "personalProvidentFundAmount",
+          "column": "personal_provident_fund_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "corporateInsuranceAmount",
+          "column": "corporate_insurance_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "corporateProvidentFundAmount",
+          "column": "corporate_provident_fund_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/performance/assessment/HrmPerformanceAssessmentActionRecordDO.java",
+      "sourceSha256": "5ed236df87694dcd40b76012c15d8583521d65fcca505c49adf5a35767fbc328",
+      "table": "hrm_performance_assessment_action_record",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "assessmentId",
+          "column": "assessment_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "stageId",
+          "column": "stage_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "employeeId",
+          "column": "employee_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "title",
+          "column": "title",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "content",
+          "column": "content",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "fileUrls",
+          "column": "file_urls",
+          "javaType": "List<String>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/performance/assessment/HrmPerformanceAssessmentAppealRecordDO.java",
+      "sourceSha256": "e5095bb8b90b9c5b8178e1040148a5e358feec241df94afa730e4d699ede4062",
+      "table": "hrm_performance_assessment_appeal_record",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "assessmentId",
+          "column": "assessment_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "stageId",
+          "column": "stage_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/performance/assessment/HrmPerformanceAssessmentDimensionDO.java",
+      "sourceSha256": "c257d85f6cf90fb381b2f2b8caea0328b0a00ffca8ffa0fb2882c1484e5ac370",
+      "table": "hrm_performance_assessment_dimension",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "assessmentId",
+          "column": "assessment_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "quotaType",
+          "column": "quota_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "weight",
+          "column": "weight",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "allowEdit",
+          "column": "allow_edit",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/performance/assessment/HrmPerformanceAssessmentDO.java",
+      "sourceSha256": "0b4b99ecbbfccdb8902cd3303f30dc4ea57287e606145c2a6d8f124ec67ff07b",
+      "table": "hrm_performance_assessment",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "planId",
+          "column": "plan_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "employeeId",
+          "column": "employee_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "processStatus",
+          "column": "process_status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "stageType",
+          "column": "stage_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "stageSort",
+          "column": "stage_sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "score",
+          "column": "score",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "resultLevel",
+          "column": "result_level",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "coefficient",
+          "column": "coefficient",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "targetConfirmationResult",
+          "column": "target_confirmation_result",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "targetConfirmationComment",
+          "column": "target_confirmation_comment",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "targetConfirmationTime",
+          "column": "target_confirmation_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "selfComment",
+          "column": "self_comment",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "reviewerComment",
+          "column": "reviewer_comment",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "resultComment",
+          "column": "result_comment",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "resultConfirmationTime",
+          "column": "result_confirmation_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "resultAuditStatus",
+          "column": "result_audit_status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "resultAuditTime",
+          "column": "result_audit_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "resultAuditReason",
+          "column": "result_audit_reason",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "appealReason",
+          "column": "appeal_reason",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "appealFileUrls",
+          "column": "appeal_file_urls",
+          "javaType": "List<String>",
+          "handler": "StringListTypeHandler",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "appealSubmitTime",
+          "column": "appeal_submit_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "appealStatus",
+          "column": "appeal_status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "appealTime",
+          "column": "appeal_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "appealComment",
+          "column": "appeal_comment",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "archiveTime",
+          "column": "archive_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/performance/assessment/HrmPerformanceAssessmentQuotaDO.java",
+      "sourceSha256": "2b6a45005c6c423091cf39b01ffadeb2a9f57facb019b9c93ed26e124509be71",
+      "table": "hrm_performance_assessment_quota",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "assessmentId",
+          "column": "assessment_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "dimensionId",
+          "column": "dimension_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "preset",
+          "column": "preset",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "description",
+          "column": "description",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "standard",
+          "column": "standard",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "weight",
+          "column": "weight",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "scoreType",
+          "column": "score_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "targetValue",
+          "column": "target_value",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "actualValue",
+          "column": "actual_value",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "selfScore",
+          "column": "self_score",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "reviewerScore",
+          "column": "reviewer_score",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "finalScore",
+          "column": "final_score",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/performance/assessment/HrmPerformanceAssessmentQuotaScoreDO.java",
+      "sourceSha256": "346111c2ac06c2e46990b619a74eb5526dd056d2a4c7c80a8761aa14ee08a9dd",
+      "table": "hrm_performance_assessment_quota_score",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "assessmentStageId",
+          "column": "assessment_stage_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "assessmentQuotaId",
+          "column": "assessment_quota_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "score",
+          "column": "score",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "comment",
+          "column": "comment",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/performance/assessment/HrmPerformanceAssessmentStageDO.java",
+      "sourceSha256": "619085ff8aef4a86700c3101020d7a624aca5224f411a7ebfa759e0c325240b4",
+      "table": "hrm_performance_assessment_stage",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "assessmentId",
+          "column": "assessment_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "handlerEmployeeId",
+          "column": "handler_employee_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "raterType",
+          "column": "rater_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "weight",
+          "column": "weight",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "scoringType",
+          "column": "scoring_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "visibleContent",
+          "column": "visible_content",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "requiredSetting",
+          "column": "required_setting",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "rejectAuthority",
+          "column": "reject_authority",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "score",
+          "column": "score",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "resultLevel",
+          "column": "result_level",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "comment",
+          "column": "comment",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "rejectReason",
+          "column": "reject_reason",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "submitTime",
+          "column": "submit_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "deadlineTime",
+          "column": "deadline_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/performance/config/HrmPerformanceAssessmentTemplateDO.java",
+      "sourceSha256": "93ce1e404fb071c7e57456716133c532200fc2eea1b3ffb1b649889b02425257",
+      "table": "hrm_performance_assessment_template",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "illustrate",
+          "column": "illustrate",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "scoreCalculation",
+          "column": "score_calculation",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "upperLimitType",
+          "column": "upper_limit_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "upperLimitScore",
+          "column": "upper_limit_score",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "dimensionCount",
+          "column": "dimension_count",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "quotaCount",
+          "column": "quota_count",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "dimensions",
+          "column": "dimensions",
+          "javaType": "List<Dimension>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/performance/config/HrmPerformanceResultTemplateDO.java",
+      "sourceSha256": "fe45e1241cb17ea991e912acc3c7eb3ab11ebbe60f666b0f2d2525430bef9a1b",
+      "table": "hrm_performance_result_template",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "levels",
+          "column": "levels",
+          "javaType": "List<Level>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/performance/plan/HrmPerformancePlanDO.java",
+      "sourceSha256": "e62160fe262a95448136a907eb9a67c643d6b3957ec376c865637d55c4dfd62a",
+      "table": "hrm_performance_plan",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "stageType",
+          "column": "stage_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "operationType",
+          "column": "operation_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "terminateTime",
+          "column": "terminate_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "cycleType",
+          "column": "cycle_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "cycle",
+          "column": "cycle",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "quarter",
+          "column": "quarter",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "startTime",
+          "column": "start_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "endTime",
+          "column": "end_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "description",
+          "column": "description",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "scopes",
+          "column": "scopes",
+          "javaType": "List<Scope>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "assessmentTemplateId",
+          "column": "assessment_template_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "quotaSettingType",
+          "column": "quota_setting_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "targetConfirmation",
+          "column": "target_confirmation",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "targetConfirmationStage",
+          "column": "target_confirmation_stage",
+          "javaType": "HandlerStage",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "reviewStages",
+          "column": "review_stages",
+          "javaType": "List<ReviewStage>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "resultAudit",
+          "column": "result_audit",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "resultAuditStages",
+          "column": "result_audit_stages",
+          "javaType": "List<HandlerStage>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "resultConfirmation",
+          "column": "result_confirmation",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "appealStages",
+          "column": "appeal_stages",
+          "javaType": "List<HandlerStage>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "appealTimeoutDays",
+          "column": "appeal_timeout_days",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "appealTimeoutAction",
+          "column": "appeal_timeout_action",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "resultTemplateId",
+          "column": "result_template_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "resultConfig",
+          "column": "result_config",
+          "javaType": "ResultConfig",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "syncToSalary",
+          "column": "sync_to_salary",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "paidForMonth",
+          "column": "paid_for_month",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/recruit/candidate/HrmRecruitCandidateDO.java",
+      "sourceSha256": "07f3ac4c752068435de852a2a896885b0bcbc59e6fb462c6a3a887af98ea3167",
+      "table": "hrm_recruit_candidate",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "mobile",
+          "column": "mobile",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "sex",
+          "column": "sex",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "age",
+          "column": "age",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "email",
+          "column": "email",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "postId",
+          "column": "post_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "stageNumber",
+          "column": "stage_number",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "workTime",
+          "column": "work_time",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "education",
+          "column": "education",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "graduateSchool",
+          "column": "graduate_school",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "latestWorkPlace",
+          "column": "latest_work_place",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "channelId",
+          "column": "channel_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "eliminate",
+          "column": "eliminate",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "statusUpdateTime",
+          "column": "status_update_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "entryTime",
+          "column": "entry_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "resumeUrls",
+          "column": "resume_urls",
+          "javaType": "List<String>",
+          "handler": "StringListTypeHandler",
+          "sqlType": "LONGTEXT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/recruit/candidate/HrmRecruitInterviewDO.java",
+      "sourceSha256": "b80aa0d49d356971a90e3b3c2c93595704ca2f1c74b230daa44645ad3c1bd6d2",
+      "table": "hrm_recruit_interview",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "candidateId",
+          "column": "candidate_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "stageNumber",
+          "column": "stage_number",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "interviewEmployeeId",
+          "column": "interview_employee_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "otherInterviewEmployeeIds",
+          "column": "other_interview_employee_ids",
+          "javaType": "List<Long>",
+          "handler": "LongListTypeHandler",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "interviewTime",
+          "column": "interview_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "address",
+          "column": "address",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "result",
+          "column": "result",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "evaluate",
+          "column": "evaluate",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "cancelReason",
+          "column": "cancel_reason",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/recruit/config/HrmRecruitChannelDO.java",
+      "sourceSha256": "d1ee24d6f373ebeb84fc2048e59fe81f80d77d34080d4a6041bc41ff43b395e7",
+      "table": "hrm_recruit_channel",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "systemFlag",
+          "column": "system_flag",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/recruit/post/HrmRecruitPostDO.java",
+      "sourceSha256": "ceb722eb9ff943717c8cc8eab77e7ad60346001195d635418bb16614b46a2b67",
+      "table": "hrm_recruit_post",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "postName",
+          "column": "post_name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "deptId",
+          "column": "dept_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "jobNature",
+          "column": "job_nature",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "areaId",
+          "column": "area_id",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "recruitNum",
+          "column": "recruit_num",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "reason",
+          "column": "reason",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "workTime",
+          "column": "work_time",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "educationRequire",
+          "column": "education_require",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "minSalary",
+          "column": "min_salary",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "maxSalary",
+          "column": "max_salary",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "salaryUnit",
+          "column": "salary_unit",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "minAge",
+          "column": "min_age",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "maxAge",
+          "column": "max_age",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "latestEntryTime",
+          "column": "latest_entry_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "ownerEmployeeId",
+          "column": "owner_employee_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "interviewEmployeeIds",
+          "column": "interview_employee_ids",
+          "javaType": "List<Long>",
+          "handler": "LongListTypeHandler",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "description",
+          "column": "description",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "emergencyLevel",
+          "column": "emergency_level",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "postTypeId",
+          "column": "post_type_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "stopReason",
+          "column": "stop_reason",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/recruit/post/HrmRecruitPostTypeDO.java",
+      "sourceSha256": "14bacbecd595f8473115d33f19d5205651ac34209616ba5e8854bfc80479d149",
+      "table": "hrm_recruit_post_type",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "parentId",
+          "column": "parent_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "sort",
+          "column": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/salary/config/HrmSalaryChangeTemplateDO.java",
+      "sourceSha256": "023be2f228c7a9f2961c5d43f1e96bc9e32db620ba3bc221eaebaf20b4d2b1a2",
+      "table": "hrm_salary_change_template",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "defaultStatus",
+          "column": "default_status",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "options",
+          "column": "options",
+          "javaType": "List<Option>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/salary/config/HrmSalaryConfigDO.java",
+      "sourceSha256": "152e25eb403133d913b8cca38c2f49123472af4f018d20a405bafc94cf2b8c07",
+      "table": "hrm_salary_config",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "cycleStartDay",
+          "column": "cycle_start_day",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "cycleEndDay",
+          "column": "cycle_end_day",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "socialSecurityMonthType",
+          "column": "social_security_month_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "startYear",
+          "column": "start_year",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "startMonth",
+          "column": "start_month",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/salary/config/HrmSalaryGroupDO.java",
+      "sourceSha256": "ea7929f438b359d203881875066b48170699920cbddf295b7c3740b08fa9adf9",
+      "table": "hrm_salary_group",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "salaryStandard",
+          "column": "salary_standard",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "changeRule",
+          "column": "change_rule",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "deptIds",
+          "column": "dept_ids",
+          "javaType": "List<Long>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "employeeIds",
+          "column": "employee_ids",
+          "javaType": "List<Long>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "taxRuleId",
+          "column": "tax_rule_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/salary/config/HrmSalaryOptionDO.java",
+      "sourceSha256": "027dd902df8a5363e8628edc66f048cbad697c8b130915151c969346cddca169",
+      "table": "hrm_salary_option",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "templateId",
+          "column": "template_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "code",
+          "column": "code",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "parentCode",
+          "column": "parent_code",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "systemFlag",
+          "column": "system_flag",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "visible",
+          "column": "visible",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "enabled",
+          "column": "enabled",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "taxEnabled",
+          "column": "tax_enabled",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "calculateEnabled",
+          "column": "calculate_enabled",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/salary/config/HrmSalaryOptionTemplateDO.java",
+      "sourceSha256": "74f98afb8f080e0a28938ec1001234600a134a2f85860d96f25d42b6f90ee92e",
+      "table": "hrm_salary_option_template",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "code",
+          "column": "code",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "parentCode",
+          "column": "parent_code",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "systemFlag",
+          "column": "system_flag",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "visible",
+          "column": "visible",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "taxEnabled",
+          "column": "tax_enabled",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "calculateEnabled",
+          "column": "calculate_enabled",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/salary/config/HrmSalaryTaxRuleDO.java",
+      "sourceSha256": "b2b8e791ebe6ba2db3ca842f16df166ea87f490a8c4e48a6493e34db4fed1226",
+      "table": "hrm_salary_tax_rule",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "taxEnabled",
+          "column": "tax_enabled",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "threshold",
+          "column": "threshold",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "decimalScale",
+          "column": "decimal_scale",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "cycleType",
+          "column": "cycle_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/salary/employee/HrmSalaryChangeRecordDO.java",
+      "sourceSha256": "8360da54b1f9e132b498cbb7a3ff2214f3946c182528c1889e9b1057695d7012",
+      "table": "hrm_salary_change_record",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "employeeId",
+          "column": "employee_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "column": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "reason",
+          "column": "reason",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "effectTime",
+          "column": "effect_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "beforeTotal",
+          "column": "before_total",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "afterTotal",
+          "column": "after_total",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "probationBeforeTotal",
+          "column": "probation_before_total",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "probationAfterTotal",
+          "column": "probation_after_total",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "salaryOptions",
+          "column": "salary_options",
+          "javaType": "List<SalaryOption>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "probationSalaryOptions",
+          "column": "probation_salary_options",
+          "javaType": "List<SalaryOption>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/salary/employee/HrmSalaryEmployeeInfoDO.java",
+      "sourceSha256": "7ab6e4f1152d26c3044f5f7fd2ca62e6759d1bc3efe4d7ad8e99ec315d8c651c",
+      "table": "hrm_salary_employee_info",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "employeeId",
+          "column": "employee_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "changeReason",
+          "column": "change_reason",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "effectTime",
+          "column": "effect_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "changeType",
+          "column": "change_type",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "probationSalary",
+          "column": "probation_salary",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "regularSalary",
+          "column": "regular_salary",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "salaryOptions",
+          "column": "salary_options",
+          "javaType": "List<SalaryOption>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "probationSalaryOptions",
+          "column": "probation_salary_options",
+          "javaType": "List<SalaryOption>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/salary/monthrecord/HrmSalaryMonthEmployeeRecordDO.java",
+      "sourceSha256": "31555008a8c71fc4cc4bb3fd4a046fee6e133d154740f26bae1fb1f51bfe4559",
+      "table": "hrm_salary_month_employee_record",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "monthRecordId",
+          "column": "month_record_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "employeeId",
+          "column": "employee_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "actualWorkDay",
+          "column": "actual_work_day",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "needWorkDay",
+          "column": "need_work_day",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "year",
+          "column": "year",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "month",
+          "column": "month",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "expectedPaySalary",
+          "column": "expected_pay_salary",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "taxableSalary",
+          "column": "taxable_salary",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "personalTax",
+          "column": "personal_tax",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "realPaySalary",
+          "column": "real_pay_salary",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "optionValues",
+          "column": "option_values",
+          "javaType": "List<OptionValue>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/salary/monthrecord/HrmSalaryMonthRecordDO.java",
+      "sourceSha256": "17292d6404dc1cb761a62399769abdbafab5c0827d2d1423a8e8320d44c9579b",
+      "table": "hrm_salary_month_record",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "title",
+          "column": "title",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "year",
+          "column": "year",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "month",
+          "column": "month",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "employeeCount",
+          "column": "employee_count",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "startTime",
+          "column": "start_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "endTime",
+          "column": "end_time",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "expectedPaySalary",
+          "column": "expected_pay_salary",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "personalTax",
+          "column": "personal_tax",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "realPaySalary",
+          "column": "real_pay_salary",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "personalInsuranceAmount",
+          "column": "personal_insurance_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "personalProvidentFundAmount",
+          "column": "personal_provident_fund_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "corporateInsuranceAmount",
+          "column": "corporate_insurance_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "corporateProvidentFundAmount",
+          "column": "corporate_provident_fund_amount",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "optionHeaders",
+          "column": "option_headers",
+          "javaType": "List<OptionHeader>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "status",
+          "column": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/salary/slip/HrmSalarySlipDO.java",
+      "sourceSha256": "2ae454a248f46449d99687fe0af21f37982277304de0d3c5a7f345639e41eaca",
+      "table": "hrm_salary_slip",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "sendRecordId",
+          "column": "send_record_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "monthEmployeeRecordId",
+          "column": "month_employee_record_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "employeeId",
+          "column": "employee_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "year",
+          "column": "year",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "month",
+          "column": "month",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "readStatus",
+          "column": "read_status",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "realPaySalary",
+          "column": "real_pay_salary",
+          "javaType": "BigDecimal",
+          "handler": null,
+          "sqlType": "DECIMAL(38,12)"
+        },
+        {
+          "name": "remark",
+          "column": "remark",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "options",
+          "column": "options",
+          "javaType": "List<Option>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/salary/slip/HrmSalarySlipSendRecordDO.java",
+      "sourceSha256": "da40ed67002d4c4f4fec390a02d4c4fd178dd48534f7f22c4432a3ec09ccd703",
+      "table": "hrm_salary_slip_send_record",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "monthRecordId",
+          "column": "month_record_id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "employeeCount",
+          "column": "employee_count",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "sendEmployeeCount",
+          "column": "send_employee_count",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "year",
+          "column": "year",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        },
+        {
+          "name": "month",
+          "column": "month",
+          "javaType": "Integer",
+          "handler": null,
+          "sqlType": "INT"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-hrm/src/main/java/cn/iocoder/yudao/module/hrm/dal/dataobject/salary/slip/HrmSalarySlipTemplateDO.java",
+      "sourceSha256": "73c42d5f5c55535a8c8724c8f6a284e5046da470734edc15ea736bf2b955c437",
+      "table": "hrm_salary_slip_template",
+      "fields": [
+        {
+          "name": "id",
+          "column": "id",
+          "javaType": "Long",
+          "handler": null,
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "column": "name",
+          "javaType": "String",
+          "handler": null,
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "hideEmpty",
+          "column": "hide_empty",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "defaultStatus",
+          "column": "default_status",
+          "javaType": "Boolean",
+          "handler": null,
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "options",
+          "column": "options",
+          "javaType": "List<Option>",
+          "handler": "Jackson3TypeHandler",
+          "sqlType": "JSON"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "standardBuildProfile": "jss-mall",
+    "compile": "passed; no tests run",
+    "mysqlDdlTables": 50,
+    "nativePersistentFields": 544,
+    "schema": "jss_hrm_verify_11707d8650a7",
+    "remainingSchemas": 0,
+    "compileLog": ".runtime/hrm-compile.log",
+    "schemaLog": ".runtime/hrm-schema-check.log",
+    "pending": "Full Flyway lifecycle/context, HRM ordinary-role/tenant/payroll/insurance/attendance/performance workflows and native device acceptance deferred under rapid migration priority"
+  }
+}

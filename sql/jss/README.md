@@ -55,3 +55,7 @@ python script/jss/database.py validate
 ## V018：完整ERP基础表
 
 标准jss-mall构建现包含原ERP模块。V018按33份原ERP DO保留全部持久字段及继承审计/tenant_id，精确列集合见docs/jss-erp-schema.json。原BigDecimal用DECIMAL(38,12)，这是JSS的新建存储选择；不冒称上游DDL或完整业务精度验收。Long保持BIGINT，单据明细与关联编号添加租户前导索引。init拒绝未托管erp_表；V001–V017未改。归属MySQL随机库的33表实际DDL和全部列集合检查通过，随机库残留0；标准compile通过，未运行测试。按用户快速迁移优先级，完整Flyway生命周期、服务启动和ERP业务/RBAC/租户/库存财务深度回归待后续验收；未部署开发库。
+
+## V019：完整HRM基础表
+
+标准jss-mall构建纳入完整原HRM模块及已存在的BPM依赖。V019按50份原DO的544个顶层持久字段保留全部列及继承审计/tenant_id；嵌套Java记录按原Jackson3处理器使用JSON，原LongList/StringList处理器使用LONGTEXT保留CSV语义，不将内层字段展开为数据库列。时间域分别保留DATE/TIME/DATETIME，BigDecimal使用JSS明确选择的DECIMAL(38,12)。来源及字段/处理器/SQL类型完整对照见docs/jss-hrm-schema.json。归属MySQL随机库50表实际DDL与全部精确列集合、标准compile通过，随机库残留0，未运行单测或大型回归。init拒绝未托管hrm_表，V001–V018不变；完整生命周期、服务上下文和考勤/工资/社保/招聘/绩效流程、角色/租户、设备待后续验收。未部署到开发库。

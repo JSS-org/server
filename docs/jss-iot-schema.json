@@ -1,0 +1,1346 @@
+{
+  "status": "Complete native IoT relational schema retained; compile and owned MySQL DDL/all-column checks passed; full Flyway/context/time-series/gateway/device acceptance pending",
+  "summary": {
+    "tables": 15,
+    "nativePersistentFields": 141,
+    "jsonFields": 8,
+    "csvFields": 5,
+    "nonRelationalOrInnerClasses": 22,
+    "excludedTransientFields": 0
+  },
+  "tables": [
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/alert/IotAlertConfigDO.java",
+      "table": "iot_alert_config",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "column": "name",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "description",
+          "javaType": "String",
+          "column": "description",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "level",
+          "javaType": "Integer",
+          "column": "level",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "column": "status",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "sceneRuleIds",
+          "javaType": "List<Long>",
+          "column": "scene_rule_ids",
+          "sqlType": "LONGTEXT",
+          "handler": "LongListTypeHandler",
+          "kind": "csv"
+        },
+        {
+          "name": "receiveUserIds",
+          "javaType": "List<Long>",
+          "column": "receive_user_ids",
+          "sqlType": "LONGTEXT",
+          "handler": "LongListTypeHandler",
+          "kind": "csv"
+        },
+        {
+          "name": "receiveTypes",
+          "javaType": "List<Integer>",
+          "column": "receive_types",
+          "sqlType": "LONGTEXT",
+          "handler": "IntegerListTypeHandler",
+          "kind": "csv"
+        },
+        {
+          "name": "smsTemplateCode",
+          "javaType": "String",
+          "column": "sms_template_code",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "mailTemplateCode",
+          "javaType": "String",
+          "column": "mail_template_code",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "notifyTemplateCode",
+          "javaType": "String",
+          "column": "notify_template_code",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "3d315c840985be8aa3c31ec0b008cabe074ba470d8b32b63fe91baa6959be954"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/alert/IotAlertRecordDO.java",
+      "table": "iot_alert_record",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "configId",
+          "javaType": "Long",
+          "column": "config_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "configName",
+          "javaType": "String",
+          "column": "config_name",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "configLevel",
+          "javaType": "Integer",
+          "column": "config_level",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "sceneRuleId",
+          "javaType": "Long",
+          "column": "scene_rule_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "productId",
+          "javaType": "Long",
+          "column": "product_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "deviceId",
+          "javaType": "Long",
+          "column": "device_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "deviceMessage",
+          "javaType": "IotDeviceMessage",
+          "column": "device_message",
+          "sqlType": "JSON",
+          "handler": "Jackson3TypeHandler",
+          "kind": "json"
+        },
+        {
+          "name": "processStatus",
+          "javaType": "Boolean",
+          "column": "process_status",
+          "sqlType": "BIT(1)",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "processRemark",
+          "javaType": "String",
+          "column": "process_remark",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "cbe52061a6fc9c23bf293653d5dbe932ee9fe651f73411caebd5dcf086178602"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/device/IotDeviceDO.java",
+      "table": "iot_device",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "deviceName",
+          "javaType": "String",
+          "column": "device_name",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "nickname",
+          "javaType": "String",
+          "column": "nickname",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "serialNumber",
+          "javaType": "String",
+          "column": "serial_number",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "picUrl",
+          "javaType": "String",
+          "column": "pic_url",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "groupIds",
+          "javaType": "Set<Long>",
+          "column": "group_ids",
+          "sqlType": "LONGTEXT",
+          "handler": "LongSetTypeHandler",
+          "kind": "csv"
+        },
+        {
+          "name": "productId",
+          "javaType": "Long",
+          "column": "product_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "productKey",
+          "javaType": "String",
+          "column": "product_key",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "deviceType",
+          "javaType": "Integer",
+          "column": "device_type",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "gatewayId",
+          "javaType": "Long",
+          "column": "gateway_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "state",
+          "javaType": "Integer",
+          "column": "state",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "onlineTime",
+          "javaType": "LocalDateTime",
+          "column": "online_time",
+          "sqlType": "DATETIME",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "offlineTime",
+          "javaType": "LocalDateTime",
+          "column": "offline_time",
+          "sqlType": "DATETIME",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "activeTime",
+          "javaType": "LocalDateTime",
+          "column": "active_time",
+          "sqlType": "DATETIME",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "firmwareId",
+          "javaType": "Long",
+          "column": "firmware_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "deviceSecret",
+          "javaType": "String",
+          "column": "device_secret",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "latitude",
+          "javaType": "BigDecimal",
+          "column": "latitude",
+          "sqlType": "DECIMAL(38,12)",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "longitude",
+          "javaType": "BigDecimal",
+          "column": "longitude",
+          "sqlType": "DECIMAL(38,12)",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "config",
+          "javaType": "String",
+          "column": "config",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "418fd390c26dfb96958079854a08cb69ebef5dc0d63bc6a054b6f23ee97cd7c2"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/device/IotDeviceGroupDO.java",
+      "table": "iot_device_group",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "column": "name",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "column": "status",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "description",
+          "javaType": "String",
+          "column": "description",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "e1935b620dbdd08ed578385aa688565cc68593a6be7852ffb502ee734e2119c6"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/device/IotDeviceModbusConfigDO.java",
+      "table": "iot_device_modbus_config",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "productId",
+          "javaType": "Long",
+          "column": "product_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "deviceId",
+          "javaType": "Long",
+          "column": "device_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "ip",
+          "javaType": "String",
+          "column": "ip",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "port",
+          "javaType": "Integer",
+          "column": "port",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "slaveId",
+          "javaType": "Integer",
+          "column": "slave_id",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "timeout",
+          "javaType": "Integer",
+          "column": "timeout",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "retryInterval",
+          "javaType": "Integer",
+          "column": "retry_interval",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "mode",
+          "javaType": "Integer",
+          "column": "mode",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "frameFormat",
+          "javaType": "Integer",
+          "column": "frame_format",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "column": "status",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "62fb3e01ed2d5f4d9d4395ae45a5b47245f4bc687ccb13e9ed4730ed4225efcd"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/device/IotDeviceModbusPointDO.java",
+      "table": "iot_device_modbus_point",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "deviceId",
+          "javaType": "Long",
+          "column": "device_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "thingModelId",
+          "javaType": "Long",
+          "column": "thing_model_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "identifier",
+          "javaType": "String",
+          "column": "identifier",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "column": "name",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "functionCode",
+          "javaType": "Integer",
+          "column": "function_code",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "registerAddress",
+          "javaType": "Integer",
+          "column": "register_address",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "registerCount",
+          "javaType": "Integer",
+          "column": "register_count",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "byteOrder",
+          "javaType": "String",
+          "column": "byte_order",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "rawDataType",
+          "javaType": "String",
+          "column": "raw_data_type",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "scale",
+          "javaType": "BigDecimal",
+          "column": "scale",
+          "sqlType": "DECIMAL(38,12)",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "pollInterval",
+          "javaType": "Integer",
+          "column": "poll_interval",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "column": "status",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "c133b35fb2ec6f0112123095bfbc8f5b9810e8129a291bcd1d6986022640f003"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/ota/IotOtaFirmwareDO.java",
+      "table": "iot_ota_firmware",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "column": "name",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "description",
+          "javaType": "String",
+          "column": "description",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "version",
+          "javaType": "String",
+          "column": "version",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "productId",
+          "javaType": "Long",
+          "column": "product_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "fileUrl",
+          "javaType": "String",
+          "column": "file_url",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "fileSize",
+          "javaType": "Long",
+          "column": "file_size",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "fileDigestAlgorithm",
+          "javaType": "String",
+          "column": "file_digest_algorithm",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "fileDigestValue",
+          "javaType": "String",
+          "column": "file_digest_value",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "a75c5e9c6669be249e40e780e86701968189886d910622b3048198a80f9b29ad"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/ota/IotOtaTaskDO.java",
+      "table": "iot_ota_task",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "column": "name",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "description",
+          "javaType": "String",
+          "column": "description",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "firmwareId",
+          "javaType": "Long",
+          "column": "firmware_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "column": "status",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "deviceScope",
+          "javaType": "Integer",
+          "column": "device_scope",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "deviceTotalCount",
+          "javaType": "Integer",
+          "column": "device_total_count",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "deviceSuccessCount",
+          "javaType": "Integer",
+          "column": "device_success_count",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "60e2e29e531a98df23ca091a806203afb5606dbb661c35f22fbb3233630107e9"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/ota/IotOtaTaskRecordDO.java",
+      "table": "iot_ota_task_record",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "firmwareId",
+          "javaType": "Long",
+          "column": "firmware_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "taskId",
+          "javaType": "Long",
+          "column": "task_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "deviceId",
+          "javaType": "Long",
+          "column": "device_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "fromFirmwareId",
+          "javaType": "Long",
+          "column": "from_firmware_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "column": "status",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "progress",
+          "javaType": "Integer",
+          "column": "progress",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "description",
+          "javaType": "String",
+          "column": "description",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "17a3625c225eb594e741a2435f4d92509f90793fbda9fc0c4cf4f53e49b133e6"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/product/IotProductCategoryDO.java",
+      "table": "iot_product_category",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "column": "name",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "sort",
+          "javaType": "Integer",
+          "column": "sort",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "column": "status",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "description",
+          "javaType": "String",
+          "column": "description",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "6bf1329e28c60852672d35e4ccd2dd5c611dc50f2ff26ac664cb9368c4ef0fa6"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/product/IotProductDO.java",
+      "table": "iot_product",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "column": "name",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "productKey",
+          "javaType": "String",
+          "column": "product_key",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "productSecret",
+          "javaType": "String",
+          "column": "product_secret",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "registerEnabled",
+          "javaType": "Boolean",
+          "column": "register_enabled",
+          "sqlType": "BIT(1)",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "categoryId",
+          "javaType": "Long",
+          "column": "category_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "icon",
+          "javaType": "String",
+          "column": "icon",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "picUrl",
+          "javaType": "String",
+          "column": "pic_url",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "description",
+          "javaType": "String",
+          "column": "description",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "column": "status",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "deviceType",
+          "javaType": "Integer",
+          "column": "device_type",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "netType",
+          "javaType": "Integer",
+          "column": "net_type",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "protocolType",
+          "javaType": "String",
+          "column": "protocol_type",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "serializeType",
+          "javaType": "String",
+          "column": "serialize_type",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        }
+      ],
+      "sourceSha256": "ebd75b9445d9e5ae450263c29e1739dfd25be8aa3da075e3065a86e9fe138aef"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/rule/IotDataRuleDO.java",
+      "table": "iot_data_rule",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "column": "name",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "description",
+          "javaType": "String",
+          "column": "description",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "column": "status",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "sourceConfigs",
+          "javaType": "List<SourceConfig>",
+          "column": "source_configs",
+          "sqlType": "JSON",
+          "handler": "Jackson3TypeHandler",
+          "kind": "json"
+        },
+        {
+          "name": "sinkIds",
+          "javaType": "List<Long>",
+          "column": "sink_ids",
+          "sqlType": "LONGTEXT",
+          "handler": "LongListTypeHandler",
+          "kind": "csv"
+        }
+      ],
+      "sourceSha256": "666db656ffcdbf77230a8d29f9f1c95e3ccf007656c726a14f07ce5f8fa248a6"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/rule/IotDataSinkDO.java",
+      "table": "iot_data_sink",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "column": "name",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "description",
+          "javaType": "String",
+          "column": "description",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "column": "status",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "column": "type",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "config",
+          "javaType": "IotAbstractDataSinkConfig",
+          "column": "config",
+          "sqlType": "JSON",
+          "handler": "Jackson3TypeHandler",
+          "kind": "json"
+        }
+      ],
+      "sourceSha256": "d43ccf8a9f97c2f6fadf12d8e635ee5dd21ccf1bc3b1473c2cbd0015c65ed227"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/rule/IotSceneRuleDO.java",
+      "table": "iot_scene_rule",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "column": "name",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "description",
+          "javaType": "String",
+          "column": "description",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "column": "status",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "lastTriggerTime",
+          "javaType": "LocalDateTime",
+          "column": "last_trigger_time",
+          "sqlType": "DATETIME",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "triggers",
+          "javaType": "List<Trigger>",
+          "column": "triggers",
+          "sqlType": "JSON",
+          "handler": "Jackson3TypeHandler",
+          "kind": "json"
+        },
+        {
+          "name": "actions",
+          "javaType": "List<Action>",
+          "column": "actions",
+          "sqlType": "JSON",
+          "handler": "Jackson3TypeHandler",
+          "kind": "json"
+        }
+      ],
+      "sourceSha256": "ddf91623d35bfa48c807cae670ebad6fefc4bdf7c0aec33a9b4589f4357dfe67"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/thingmodel/IotThingModelDO.java",
+      "table": "iot_thing_model",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "column": "id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "identifier",
+          "javaType": "String",
+          "column": "identifier",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "column": "name",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "description",
+          "javaType": "String",
+          "column": "description",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "productId",
+          "javaType": "Long",
+          "column": "product_id",
+          "sqlType": "BIGINT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "productKey",
+          "javaType": "String",
+          "column": "product_key",
+          "sqlType": "LONGTEXT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "column": "type",
+          "sqlType": "INT",
+          "handler": null,
+          "kind": "scalar"
+        },
+        {
+          "name": "property",
+          "javaType": "ThingModelProperty",
+          "column": "property",
+          "sqlType": "JSON",
+          "handler": "Jackson3TypeHandler",
+          "kind": "json"
+        },
+        {
+          "name": "event",
+          "javaType": "ThingModelEvent",
+          "column": "event",
+          "sqlType": "JSON",
+          "handler": "Jackson3TypeHandler",
+          "kind": "json"
+        },
+        {
+          "name": "service",
+          "javaType": "ThingModelService",
+          "column": "service",
+          "sqlType": "JSON",
+          "handler": "Jackson3TypeHandler",
+          "kind": "json"
+        }
+      ],
+      "sourceSha256": "eb21e3283d12289310ca45e20c9ad7615815b26a5f56c6a8c9e7939beec6f834"
+    }
+  ],
+  "nonRelationalOrInnerClasses": [
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/device/IotDeviceMessageDO.java",
+      "sourceSha256": "b74751936caa78b78d25438010770055ffb4b82158a97b33c200503da8826fce"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/device/IotDevicePropertyDO.java",
+      "sourceSha256": "8c72af078e42a23d9e0d0e7754e3a092c1a51542d5e71cc307cd5c16d6dc2a45"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/rule/config/IotAbstractDataSinkConfig.java",
+      "sourceSha256": "eeb6318c0aad685233428b6c08c29b1a4b66a4e1a3bb669bc21c67f28aba9be2"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/rule/config/IotDataSinkDatabaseConfig.java",
+      "sourceSha256": "51d63b566790c7590b3eea625f5b679928e4547ceb90c419df10f7f5290419d3"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/rule/config/IotDataSinkHttpConfig.java",
+      "sourceSha256": "045b22d1aa87ec64f3bfa2a6cc4857dab4b725a213165ea72e091d09e534104b"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/rule/config/IotDataSinkKafkaConfig.java",
+      "sourceSha256": "5ddd7f9691937a3fb823af591512db9856c58ea1246bed24b3c01d7dbdf8e540"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/rule/config/IotDataSinkMqttConfig.java",
+      "sourceSha256": "40280e60ca31cbef3c61e7dd050d2706d73512fd36f90311ce32b5f0513d6bf3"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/rule/config/IotDataSinkRabbitMQConfig.java",
+      "sourceSha256": "5b877b5ca029dd3064c376127c81d259697ebcb4fcc77be57b52c61e227fced2"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/rule/config/IotDataSinkRedisConfig.java",
+      "sourceSha256": "3563f7b136460e1e28cd9c9f73f5e14d46be6bde239c329f1fbd59bf5260f7c9"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/rule/config/IotDataSinkRocketMQConfig.java",
+      "sourceSha256": "a7c039dbee9904e932679428ea637278f20e7635b33663891e49796fae886573"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/rule/config/IotDataSinkTcpConfig.java",
+      "sourceSha256": "0dab4be9f047a4c0512f265d8af9a8b7c0d6c1ea1a515b4d9abd932d546b31c0"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/rule/config/IotDataSinkWebSocketConfig.java",
+      "sourceSha256": "231305a7a218760ceb8ecfa51412057e3021e71cd29960cd1746d0c0988fcc34"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/thingmodel/model/dataType/ThingModelArrayDataSpecs.java",
+      "sourceSha256": "143053ee49211928e392bc4579f0e1e334a6bd507b0d63dace3941eefb27903a"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/thingmodel/model/dataType/ThingModelBoolOrEnumDataSpecs.java",
+      "sourceSha256": "59ae0a9b087dee284925510b246eecd03c669e669f3a2132ced5c4f043765cda"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/thingmodel/model/dataType/ThingModelDataSpecs.java",
+      "sourceSha256": "6fdf2056254db24b26b304bb6967efe22cc8260a19b6870a1e962a578c5b2fca"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/thingmodel/model/dataType/ThingModelDateOrTextDataSpecs.java",
+      "sourceSha256": "497c2d0ef309ea4f74e091b3e975f6625dfb43cc3ebdc6c141c1608be2c60ea0"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/thingmodel/model/dataType/ThingModelNumericDataSpec.java",
+      "sourceSha256": "e8b91960cb8eccdc52cd50cd7ccd423e34bc6872ea855e8b3c72d29865b7c982"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/thingmodel/model/dataType/ThingModelStructDataSpecs.java",
+      "sourceSha256": "496ba4dd5cd2befa20218285e9db096fb6a55d39a5c4fb1a3630b643572df09a"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/thingmodel/model/ThingModelEvent.java",
+      "sourceSha256": "989083bc3cce33dbaae0bdb58b3070c7447bdfd8de2830a08ac6350ebf40c4fe"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/thingmodel/model/ThingModelParam.java",
+      "sourceSha256": "d092bd92ebb6d0be3c205e5b10e8bd708eb6a7045bccf7cc5e7b2088ea7d96c6"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/thingmodel/model/ThingModelProperty.java",
+      "sourceSha256": "3765866e7d3f4421bf587955f619d5a765c16b06daf9b4a5841b1e7821f0c31b"
+    },
+    {
+      "source": "yudao-module-iot/yudao-module-iot-biz/src/main/java/cn/iocoder/yudao/module/iot/dal/dataobject/thingmodel/model/ThingModelService.java",
+      "sourceSha256": "85f5063b8292cc7359e19cb6f16039271c43ffb64b27bc8e885e536a0ff9010c"
+    }
+  ],
+  "excludedTransientFields": [],
+  "storage": "Original yudao.iot.storage.type selects TDengine or IoTDB; message/property structures are not MySQL tables.",
+  "verification": {
+    "compile": ".runtime/iot-compile-result.json",
+    "ddl": ".runtime/iot-schema-check.json",
+    "compileExitCode": 0,
+    "schema": "jss_iot_verify_d52bc0169af1",
+    "remainingSchemas": 0,
+    "scope": "Necessary compile and relational DDL only; no full Flyway/context, time-series provider, gateway/protocol/OTA/role/tenant or device acceptance."
+  }
+}

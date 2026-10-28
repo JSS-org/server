@@ -93,3 +93,9 @@ python script/jss/database.py validate
 标准jss-mall与yudao-server纳入完整IM原模块，保留system/infra/Redis、原敏感词和拼音依赖。V025是17张@TableName持久表、146外层持久字段和审计/租户列；29个dataobject文件中的12种消息内容DTO继续随原String消息内容使用，不扩成表。ImGroupMessageDO.readCount明确exist=false，保持为动态回算字段，未错误建列；四个LongListTypeHandler按原CSV LONGTEXT存储。来源哈希及排除清单见docs/jss-im-schema.json。
 
 跳过测试的reactor compile退出0；归属MySQL8.4.9:13316随机库jss_im_verify_979484c87e64实际DDL/全部列核对通过，finally清理后残留0，开发库未改。IM44前端页仍在后续批次；完整Flyway/context、实时协议/未读撤回/群与频道/离线缓存、RTC和LiveKit、归属/租户及设备另列待验。
+
+## V026：完整 IoT 原生关系结构（快速迁移准备）
+
+标准jss-mall聚合纳入iot-biz、iot-core和独立iot-gateway，yudao-server只依赖原业务模块，网关部署边界保持。V026包含15张原@TableName表、141外层持久字段、8个Jackson3 JSON字段及5个原CSV LongList/LongSet/IntegerList字段。原设备消息/属性继续由TDengine或IoTDB存储，20个物模型/规则配置内层类继续留在父JSON，不误扩成MySQL表。来源SHA和逐字段映射见docs/jss-iot-schema.json。
+
+server与原IoT gateway reactor跳过测试的compile退出0；归属MySQL8.4.9:13316随机库jss_iot_verify_d52bc0169af1实际DDL、全部列/列类型核对通过，finally删除后残留0，开发库未改。前端43源页正在下一完整批次迁入。完整Flyway/context、时序库提供商、消息/网关协议、真实设备及OTA/权限归属/租户仍待验，没有启动或部署网关。

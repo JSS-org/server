@@ -92,20 +92,33 @@ public class MemberUserServiceImpl implements MemberUserService {
             return user;
         }
         // 用户不存在，则进行创建
-        return createUser(mobile, null, null, registerIp, terminal);
+        return createUser(mobile, null, null, registerIp, terminal, null);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public MemberUserDO createUser(
             String nickname, String avtar, String registerIp, Integer terminal) {
-        return createUser(null, nickname, avtar, registerIp, terminal);
+        return createUser(null, nickname, avtar, registerIp, terminal, null);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public MemberUserDO registerUser(
+            String mobile, String password, String nickname, String registerIp, Integer terminal) {
+        validateMobileUnique(null, mobile);
+        try {
+            return createUser(mobile, nickname, null, registerIp, terminal, password);
+        } catch (org.springframework.dao.DuplicateKeyException exception) {
+            // The existing unique active-mobile key resolves concurrent registration attempts.
+            throw exception(USER_MOBILE_USED, mobile);
+        }
     }
 
     private MemberUserDO createUser(
-            String mobile, String nickname, String avtar, String registerIp, Integer terminal) {
-        // 生成密码
-        String password = IdUtil.fastSimpleUUID();
+            String mobile, String nickname, String avtar, String registerIp, Integer terminal,
+            String suppliedPassword) {
+        String password = suppliedPassword == null ? IdUtil.fastSimpleUUID() : suppliedPassword;
         // 插入用户
         MemberUserDO user = new MemberUserDO();
         user.setMobile(mobile);

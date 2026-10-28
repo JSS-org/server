@@ -39,6 +39,10 @@ public class AppAuthSmsLoginReqVO {
     @Pattern(regexp = "^[0-9]+$", message = "手机验证码必须都是数字")
     private String code;
 
+    @Schema(description = "可选图形验证码校验值，提交时由服务端校验")
+    @Length(max = 4096)
+    private String captchaVerification;
+
     // ========== 绑定社交登录时，需要传递如下参数 ==========
 
     @Schema(

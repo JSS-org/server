@@ -50,6 +50,10 @@ public interface MemberUserService {
      */
     MemberUserDO createUserIfAbsent(@Mobile String mobile, String registerIp, Integer terminal);
 
+    /** Insert a new member only; never return or change an existing mobile account. */
+    MemberUserDO registerUser(
+            @Mobile String mobile, String password, String nickname, String registerIp, Integer terminal);
+
     /**
      * 创建用户
      * 目的：三方登录时，如果未绑定用户时，自动创建对应用户

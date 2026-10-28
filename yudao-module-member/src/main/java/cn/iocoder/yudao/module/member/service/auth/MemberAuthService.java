@@ -21,6 +21,9 @@ public interface MemberAuthService {
      */
     AppAuthLoginRespVO login(@Valid AppAuthLoginReqVO reqVO);
 
+    /** Register a fresh SMS-verified member; employee binding remains a separate reviewed flow. */
+    AppAuthLoginRespVO register(@Valid AppAuthRegisterReqVO reqVO);
+
     /**
      * 基于 token 退出登录
      *

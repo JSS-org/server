@@ -37,6 +37,10 @@ public class AppAuthLoginReqVO {
     @Length(min = 4, max = 16, message = "密码长度为 4-16 位")
     private String password;
 
+    @Schema(description = "可选图形验证码校验值，提交时由服务端校验")
+    @Length(max = 4096)
+    private String captchaVerification;
+
     // ========== 绑定社交登录时，需要传递如下参数 ==========
 
     @Schema(

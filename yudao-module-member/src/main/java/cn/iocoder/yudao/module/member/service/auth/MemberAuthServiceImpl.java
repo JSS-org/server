@@ -6,6 +6,10 @@ import static cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils.getTerm
 import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.*;
 
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.StrUtil;
+import com.anji.captcha.model.vo.CaptchaVO;
+import com.anji.captcha.service.CaptchaService;
+import cn.iocoder.yudao.module.system.api.sms.dto.code.SmsCodeUseReqDTO;
 import cn.iocoder.yudao.framework.common.biz.system.oauth2.OAuth2TokenCommonApi;
 import cn.iocoder.yudao.framework.common.biz.system.oauth2.dto.OAuth2AccessTokenCreateReqDTO;
 import cn.iocoder.yudao.framework.common.biz.system.oauth2.dto.OAuth2AccessTokenRespDTO;
@@ -51,6 +55,7 @@ import java.util.Objects;
 public class MemberAuthServiceImpl implements MemberAuthService {
 
     @Resource private MemberUserService userService;
+    @Resource private CaptchaService captchaService;
     @Resource private SmsCodeApi smsCodeApi;
     @Resource private LoginLogApi loginLogApi;
     @Resource private SocialUserApi socialUserApi;
@@ -59,6 +64,7 @@ public class MemberAuthServiceImpl implements MemberAuthService {
 
     @Override
     public AppAuthLoginRespVO login(AppAuthLoginReqVO reqVO) {
+        validateCaptchaIfSupplied(reqVO.getCaptchaVerification());
         // 使用手机 + 密码，进行登录。
         MemberUserDO user = login0(reqVO.getMobile(), reqVO.getPassword());
 
@@ -81,8 +87,34 @@ public class MemberAuthServiceImpl implements MemberAuthService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public AppAuthLoginRespVO register(AppAuthRegisterReqVO reqVO) {
+        if (userService.getUserByMobile(reqVO.getMobile()) != null) {
+            throw exception(AUTH_MOBILE_USED);
+        }
+        validateCaptchaIfSupplied(reqVO.getCaptchaVerification());
+        String userIp = getClientIP();
+        smsCodeApi.useSmsCode(new SmsCodeUseReqDTO()
+                .setMobile(reqVO.getMobile()).setCode(reqVO.getCode())
+                .setScene(SmsSceneEnum.MEMBER_LOGIN.getScene()).setUsedIp(userIp));
+        MemberUserDO user = userService.registerUser(reqVO.getMobile(), reqVO.getPassword(),
+                reqVO.getNickname(), userIp, getTerminal());
+        return createTokenAfterLoginSuccess(user, reqVO.getMobile(), LoginLogTypeEnum.LOGIN_SMS, null);
+    }
+
+    private void validateCaptchaIfSupplied(String verification) {
+        if (StrUtil.isBlank(verification)) return;
+        CaptchaVO captcha = new CaptchaVO();
+        captcha.setCaptchaVerification(verification);
+        if (!captchaService.verification(captcha).isSuccess()) {
+            throw exception(AUTH_CAPTCHA_INVALID);
+        }
+    }
+
+    @Override
     @Transactional
     public AppAuthLoginRespVO smsLogin(AppAuthSmsLoginReqVO reqVO) {
+        validateCaptchaIfSupplied(reqVO.getCaptchaVerification());
         // 校验验证码
         String userIp = getClientIP();
         smsCodeApi.useSmsCode(
@@ -272,6 +304,7 @@ public class MemberAuthServiceImpl implements MemberAuthService {
 
     @Override
     public void sendSmsCode(Long userId, AppAuthSmsSendReqVO reqVO) {
+        validateMemberSmsScene(reqVO.getScene(), userId);
         // 情况 1：如果是修改手机场景，需要校验新手机号是否已经注册，说明不能使用该手机了
         if (Objects.equals(reqVO.getScene(), SmsSceneEnum.MEMBER_UPDATE_MOBILE.getScene())) {
             MemberUserDO user = userService.getUserByMobile(reqVO.getMobile());
@@ -299,7 +332,19 @@ public class MemberAuthServiceImpl implements MemberAuthService {
 
     @Override
     public void validateSmsCode(Long userId, AppAuthSmsValidateReqVO reqVO) {
+        validateMemberSmsScene(reqVO.getScene(), userId);
         smsCodeApi.validateSmsCode(AuthConvert.INSTANCE.convert(reqVO));
+    }
+
+    private void validateMemberSmsScene(Integer scene, Long userId) {
+        if (scene == null || scene < SmsSceneEnum.MEMBER_LOGIN.getScene()
+                || scene > SmsSceneEnum.MEMBER_RESET_PASSWORD.getScene()) {
+            throw exception(AUTH_SMS_SCENE_INVALID);
+        }
+        if ((scene.equals(SmsSceneEnum.MEMBER_UPDATE_MOBILE.getScene())
+                || scene.equals(SmsSceneEnum.MEMBER_UPDATE_PASSWORD.getScene())) && userId == null) {
+            throw exception(cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants.UNAUTHORIZED);
+        }
     }
 
     @Override

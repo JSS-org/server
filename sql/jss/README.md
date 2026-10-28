@@ -81,3 +81,9 @@ python script/jss/database.py validate
 标准 jss-mall 与 yudao-server 已纳入完整 OA 模块及原 system/infra/BPM 依赖。V023保留48原生表、506外层持久字段、审计/租户列与32个Jackson3 JSON字段；连接配置、邮件附件、报销及报告的内层DTO继续保存在父JSON中，不展开为额外SQL列。来源哈希与逐字段映射见 docs/jss-oa-schema.json；BigDecimal 明确使用 DECIMAL(38,12)。
 
 跳过测试的 reactor compile 退出0；归属 MySQL8.4.9:13316 随机库 jss_oa_verify_f875e51f7551 实际建表和全部列核对通过，finally删除后残留0。开发库未改。OA106前端页尚在下一批，完整 Flyway/应用上下文、真实审批/共享云盘/邮箱提供商、权限归属/租户和设备仍待验。
+
+## V024：完整 PMS 原生业务结构（快速迁移准备）
+
+标准 jss-mall 与 yudao-server 纳入完整 PMS 模块及原 system/infra 依赖。V024保留33原生表、220外层持久字段与审计/租户列，8个Jackson3字段为JSON，knowledge_document.labelIds按原LongListTypeHandler保留CSV LONGTEXT。原内层文档/状态/看板模板留在父JSON，不扩展为SQL列。来源哈希与逐字段映射见docs/jss-pms-schema.json。
+
+跳过测试的reactor compile退出0；归属MySQL8.4.9:13316随机库jss_pms_verify_822607eb00da实际DDL/全部列核对通过，finally删除后残留0，未改开发库。前端PMS33页仍在后续批次，完整Flyway/context、实际项目/工时/事项与知识库权限及分享、租户和设备另列待验。

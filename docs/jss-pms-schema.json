@@ -1,0 +1,2008 @@
+{
+  "status": "33 native PMS tables and 220 outer persistent fields retained; reactor compile and owned MySQL DDL/column checks passed; PMS frontend and real project/knowledge-base acceptance pending",
+  "tables": [
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/kb/content/PmsKnowledgeContentPermissionDO.java",
+      "table": "pms_knowledge_content_permission",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "libraryId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "library_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "openStatus",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "open_status",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "openLevel",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "open_level",
+          "sqlType": "INT"
+        }
+      ],
+      "sourceSha256": "acf3e856f1743420fa3eb538d1d58afefd1ab8a2d7df719fab0f1acad6841393"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/kb/content/PmsKnowledgeContentPermissionMemberDO.java",
+      "table": "pms_knowledge_content_permission_member",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "permissionId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "permission_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "deptId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "dept_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "level",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "level",
+          "sqlType": "INT"
+        }
+      ],
+      "sourceSha256": "e15324dbf19db3b4193cacaeaaf19418d0c969a86c43cdf08dfa2b28a62dba16"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/kb/content/PmsKnowledgeDocumentDO.java",
+      "table": "pms_knowledge_document",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "libraryId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "library_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "permissionId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "permission_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "folderId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "folder_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "parentId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "parent_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "title",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "title",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "content",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "content",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "fileType",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "file_type",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "fileSize",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "file_size",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "labelIds",
+          "javaType": "List<Long>",
+          "handler": "LongListTypeHandler",
+          "annotations": "@TableField(typeHandler = LongListTypeHandler.class)",
+          "column": "label_ids",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "deleteUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "delete_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "deleteTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "delete_time",
+          "sqlType": "DATETIME(3)"
+        }
+      ],
+      "sourceSha256": "03330435d718bf5662d172c19a75665b1c83ed160e41ea99ccd507c51d198038"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/kb/content/PmsKnowledgeDocumentLabelDO.java",
+      "table": "pms_knowledge_document_label",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "color",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "color",
+          "sqlType": "LONGTEXT"
+        }
+      ],
+      "sourceSha256": "c214d9f5dd08fbe0b2126349d138c4041a8207abc5856069f2f4233035932a8e"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/kb/content/PmsKnowledgeFolderDO.java",
+      "table": "pms_knowledge_folder",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "libraryId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "library_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "permissionId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "permission_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "parentId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "parent_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "title",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "title",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "deleteUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "delete_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "deleteTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "delete_time",
+          "sqlType": "DATETIME(3)"
+        }
+      ],
+      "sourceSha256": "8714cc1c05e176475fac2b5199a9afa9a303f92707f79a439441618aa1066d01"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/kb/interaction/PmsKnowledgeDocumentCommentDO.java",
+      "table": "pms_knowledge_document_comment",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "documentId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "document_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "mainId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "main_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "replyUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "reply_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "content",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "content",
+          "sqlType": "LONGTEXT"
+        }
+      ],
+      "sourceSha256": "fbd4fec021dfdb6541f7245f594845935b6e771ae68c4607c225f4ecbaa9ec5b"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/kb/interaction/PmsKnowledgeDocumentLikeDO.java",
+      "table": "pms_knowledge_document_like",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "documentId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "document_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        }
+      ],
+      "sourceSha256": "5a8cdece5a6958bc23042ec2d6047062b7ae3c95c36133cffd1dd230f5b4c988"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/kb/interaction/PmsKnowledgeDocumentShareDO.java",
+      "table": "pms_knowledge_document_share",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "documentId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "document_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "shareUserIds",
+          "javaType": "List<Long>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "share_user_ids",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "token",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "token",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "closeUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "close_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "closeTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "close_time",
+          "sqlType": "DATETIME(3)"
+        }
+      ],
+      "sourceSha256": "12cc23cdf6945ead0dbc142512775cebc60ea91ab1bf65a14fcebf4158097527"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/kb/interaction/PmsKnowledgeFavoriteDO.java",
+      "table": "pms_knowledge_favorite",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "libraryId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "library_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "entityId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "entity_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        }
+      ],
+      "sourceSha256": "1a23accfa582f1b5749988c29808ec8de03f099e2d6b3c2006dcd2829f20e9f2"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/kb/interaction/PmsKnowledgeViewRecordDO.java",
+      "table": "pms_knowledge_view_record",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "libraryId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "library_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "entityId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "entity_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        }
+      ],
+      "sourceSha256": "b61a8d83966ca67ae0c5d9089e12a8e4d33bfdcd14b005b16f4c7cccb2bdef99"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/kb/library/PmsKnowledgeGroupDO.java",
+      "table": "pms_knowledge_group",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "sort",
+          "sqlType": "INT"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "INT"
+        }
+      ],
+      "sourceSha256": "749125f8e0f14be371ecc2a0ad5d4f8f059e4fb9c9e5336d3114095e9cf2971a"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/kb/library/PmsKnowledgeGroupRelationDO.java",
+      "table": "pms_knowledge_group_relation",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "groupId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "group_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "libraryId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "library_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "sort",
+          "sqlType": "INT"
+        }
+      ],
+      "sourceSha256": "69691e0ea6b7953dd0341af26124a27864f9dafb3307624720c8f3395ddcd977"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/kb/library/PmsKnowledgeLibraryDO.java",
+      "table": "pms_knowledge_library",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "description",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "description",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "openStatus",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "open_status",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "coverUrl",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "cover_url",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "deleteUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "delete_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "deleteTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "delete_time",
+          "sqlType": "DATETIME(3)"
+        }
+      ],
+      "sourceSha256": "1de0f2782d924e28b9b0bae56b2529b8093f262c715e36655a6cc440fad0d28f"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/kb/library/PmsKnowledgeLibraryMemberDO.java",
+      "table": "pms_knowledge_library_member",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "libraryId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "library_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "deptId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "dept_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "level",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "level",
+          "sqlType": "INT"
+        }
+      ],
+      "sourceSha256": "321842eb3fcfde4031939216cd613e125d3b094643f513439f42c8a7e6dc831c"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/kb/library/PmsKnowledgeLibraryTemplateDO.java",
+      "table": "pms_knowledge_library_template",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "description",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "description",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "coverUrl",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "cover_url",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "sort",
+          "sqlType": "INT"
+        },
+        {
+          "name": "documents",
+          "javaType": "List<Document>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "documents",
+          "sqlType": "JSON"
+        }
+      ],
+      "sourceSha256": "5d3ec86711807d0168226bf71d90ebf9517ed8c7c94b74461875175ed8e27279"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/kb/recycle/PmsKnowledgeRecycleRecordDO.java",
+      "table": "pms_knowledge_recycle_record",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "libraryId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "library_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "entityId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "entity_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "deleteUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "delete_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "deleteTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "delete_time",
+          "sqlType": "DATETIME(3)"
+        }
+      ],
+      "sourceSha256": "a559cb881c5d4c0a5d05564c6c24607668416e3c06f9faebd47601136c43e3b5"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/pm/iteration/PmsIterationDO.java",
+      "table": "pms_iteration",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "projectId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "project_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "ownerUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "owner_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "startTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "start_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "endTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "end_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "finishTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "finish_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "target",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "target",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "description",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "description",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "sort",
+          "sqlType": "INT"
+        }
+      ],
+      "sourceSha256": "81b75f99e81feb32e0068609209cc938e517cff12f67e96c091a2ad4cb61a588"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/pm/project/PmsProjectAnnouncementDO.java",
+      "table": "pms_project_announcement",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "projectId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "project_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "content",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "content",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "fileUrls",
+          "javaType": "List<String>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "file_urls",
+          "sqlType": "JSON"
+        }
+      ],
+      "sourceSha256": "f733cce62f7db02832d354b5ef53326bd87374cdbbcd710d2c36d2130a7026e5"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/pm/project/PmsProjectDO.java",
+      "table": "pms_project",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "level",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "level",
+          "sqlType": "INT"
+        },
+        {
+          "name": "description",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "description",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "openStatus",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "open_status",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "icon",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "icon",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "sort",
+          "sqlType": "INT"
+        },
+        {
+          "name": "startTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "start_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "endTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "end_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "archiveTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "archive_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "recycleTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "recycle_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "accessTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "access_time",
+          "sqlType": "DATETIME(3)"
+        }
+      ],
+      "sourceSha256": "317a5250ae790b16461b3bbcc288dffdda87c3665abc2f10cd5aeda3adaa0355"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/pm/project/PmsProjectFavoriteDO.java",
+      "table": "pms_project_favorite",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "projectId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "project_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        }
+      ],
+      "sourceSha256": "4a987e5936d014ff0d840f4dc16af53713938ffe7377180c53e25e8bb14b7534"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/pm/project/PmsProjectGroupDO.java",
+      "table": "pms_project_group",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "sort",
+          "sqlType": "INT"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "INT"
+        }
+      ],
+      "sourceSha256": "62f5ad27f183ce70d6ea1d0c12e99107330f7cdb8b7f739c4303967d3c0637ca"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/pm/project/PmsProjectGroupRelationDO.java",
+      "table": "pms_project_group_relation",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "groupId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "group_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "projectId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "project_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "sort",
+          "sqlType": "INT"
+        }
+      ],
+      "sourceSha256": "cc164dcc276580bfed00975e3506212064a958c7deea294b9e98affba9b0d64b"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/pm/project/PmsProjectMemberDO.java",
+      "table": "pms_project_member",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "projectId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "project_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "level",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "level",
+          "sqlType": "INT"
+        }
+      ],
+      "sourceSha256": "f63895375c2853af32ec54b8bb20e38869a7802ea2fe6bbf012927e993cc2f99"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/pm/project/PmsProjectTemplateDO.java",
+      "table": "pms_project_template",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "description",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "description",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "projectType",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "project_type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "sort",
+          "sqlType": "INT"
+        },
+        {
+          "name": "itemTypes",
+          "javaType": "List<Integer>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "item_types",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "statuses",
+          "javaType": "List<StatusTemplate>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "statuses",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "boards",
+          "javaType": "List<BoardTemplate>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "boards",
+          "sqlType": "JSON"
+        }
+      ],
+      "sourceSha256": "0d4fcc4fbc489eb4593b3c9da539d6bc120ce4d348f65120fc2171eedb05923a"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/pm/workitem/PmsWorkItemActivityDO.java",
+      "table": "pms_work_item_activity",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "projectId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "project_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "workItemId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "work_item_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "operatorUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "operator_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "content",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "content",
+          "sqlType": "LONGTEXT"
+        }
+      ],
+      "sourceSha256": "0c1f93013a30874f5b7a2ee1f9828dc01b3feaa20ccfaa5f43b52193948ce5b7"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/pm/workitem/PmsWorkItemBoardDO.java",
+      "table": "pms_work_item_board",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "projectId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "project_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "workItemType",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "work_item_type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "sort",
+          "sqlType": "INT"
+        }
+      ],
+      "sourceSha256": "74d1591218739e7e18167b381f185c3505628a41d3b071abdfa70326b0526b02"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/pm/workitem/PmsWorkItemCommentDO.java",
+      "table": "pms_work_item_comment",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "workItemId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "work_item_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "mainId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "main_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "replyUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "reply_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "content",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "content",
+          "sqlType": "LONGTEXT"
+        }
+      ],
+      "sourceSha256": "ddef5f8868d724cb509bb1c7c11ca7547f610af59b5877510fe181c6ca3a9816"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/pm/workitem/PmsWorkItemDO.java",
+      "table": "pms_work_item",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "projectId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "project_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "serialNumber",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "serial_number",
+          "sqlType": "INT"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "description",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "description",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "priority",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "priority",
+          "sqlType": "INT"
+        },
+        {
+          "name": "assigneeUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "assignee_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "statusId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "status_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "lifecycleStatus",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "lifecycle_status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "archiveTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "archive_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "recycleTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "recycle_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "iterationId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "iteration_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "parentId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "parent_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "relatedRequirementId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "related_requirement_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "defectType",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "defect_type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "startTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "start_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "endTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "end_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "estimatedHours",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "estimated_hours",
+          "sqlType": "INT"
+        },
+        {
+          "name": "progress",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "progress",
+          "sqlType": "INT"
+        },
+        {
+          "name": "fileUrls",
+          "javaType": "List<String>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "file_urls",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "labelIds",
+          "javaType": "List<Long>",
+          "handler": "Jackson3TypeHandler",
+          "annotations": "@TableField(typeHandler = Jackson3TypeHandler.class)",
+          "column": "label_ids",
+          "sqlType": "JSON"
+        },
+        {
+          "name": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "sort",
+          "sqlType": "INT"
+        }
+      ],
+      "sourceSha256": "6ee87278d576abb4215ff31f1a00f488121d818db32b6e969fb58dd75a520c11"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/pm/workitem/PmsWorkItemLabelDO.java",
+      "table": "pms_work_item_label",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "color",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "color",
+          "sqlType": "LONGTEXT"
+        }
+      ],
+      "sourceSha256": "508f4c74c7aa61373dda3b6438a796a9cf36d772b7be4f78c1f3fa15e2d7a1e3"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/pm/workitem/PmsWorkItemMemberDO.java",
+      "table": "pms_work_item_member",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "projectId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "project_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "workItemId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "work_item_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        }
+      ],
+      "sourceSha256": "407e60b1e2e587ceffd40a9410a003e0dba2e64fbae0d566f15f5f25b664b20a"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/pm/workitem/PmsWorkItemStatusDO.java",
+      "table": "pms_work_item_status",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "projectId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "project_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "workItemType",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "work_item_type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "statusType",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status_type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "description",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "description",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "boardName",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "board_name",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "systemCode",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "system_code",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "defaultStatus",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "default_status",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "sort",
+          "sqlType": "INT"
+        }
+      ],
+      "sourceSha256": "7c9739f2e7f31a76a4581a9a1680566530db0b0b57f2facace250bb83ef79ab5"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/pm/workitem/PmsWorkItemUserSortDO.java",
+      "table": "pms_work_item_user_sort",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "projectId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "project_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "workItemId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "work_item_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "sort",
+          "sqlType": "INT"
+        }
+      ],
+      "sourceSha256": "68b11a0275a5a807611b710e112d32a95cb9678933110ca1d07c4d29ee7ad8a5"
+    },
+    {
+      "source": "yudao-module-pms/src/main/java/cn/iocoder/yudao/module/pms/dal/dataobject/pm/workitem/PmsWorkItemWorkLogDO.java",
+      "table": "pms_work_item_work_log",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "projectId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "project_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "workItemId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "work_item_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "actualHours",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "actual_hours",
+          "sqlType": "INT"
+        },
+        {
+          "name": "remainingHours",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "remaining_hours",
+          "sqlType": "INT"
+        },
+        {
+          "name": "description",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "description",
+          "sqlType": "LONGTEXT"
+        }
+      ],
+      "sourceSha256": "169bfca3b03aa6baa158b4b685628396560618c6dbe40a19bebddac5a1a91de3"
+    }
+  ],
+  "verification": {
+    "compile": ".runtime/pms-compile-result.json",
+    "compileExitCode": 0,
+    "ddl": ".runtime/pms-schema-check.json",
+    "schema": "jss_pms_verify_822607eb00da",
+    "tables": 33,
+    "nativeFields": 220,
+    "jsonFields": 8,
+    "csvFields": 1,
+    "remainingSchemas": 0,
+    "scope": "No tests, full Flyway/context, browser, real project/knowledge permissions/work-item/time or device acceptance in this rapid migration preparation."
+  }
+}

@@ -1,0 +1,1313 @@
+{
+  "status": "17 native IM tables and 146 persistent outer fields retained; reactor compile and owned MySQL DDL/column checks passed; IM frontend and real messaging/RTC acceptance pending",
+  "tables": [
+    {
+      "source": "yudao-module-im/src/main/java/cn/iocoder/yudao/module/im/dal/dataobject/channel/ImChannelDO.java",
+      "table": "im_channel",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "code",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "code",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "avatar",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "avatar",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "sort",
+          "sqlType": "INT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        }
+      ],
+      "sourceSha256": "0f0c68185cda58177c7e71a5888631d40215a88c0d966853a9ccc9781f4db19e"
+    },
+    {
+      "source": "yudao-module-im/src/main/java/cn/iocoder/yudao/module/im/dal/dataobject/channel/ImChannelMaterialDO.java",
+      "table": "im_channel_material",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "channelId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "channel_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "title",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "title",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "coverUrl",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "cover_url",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "summary",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "summary",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "content",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "content",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "url",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "url",
+          "sqlType": "LONGTEXT"
+        }
+      ],
+      "sourceSha256": "6a78231b503cc6a2ed7224e857247be7ac8d4b8b2dbc84b7d6441770b0dc8252"
+    },
+    {
+      "source": "yudao-module-im/src/main/java/cn/iocoder/yudao/module/im/dal/dataobject/conversation/ImConversationReadDO.java",
+      "table": "im_conversation_read",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "conversationType",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "conversation_type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "targetId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "target_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "messageId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "message_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "readTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "read_time",
+          "sqlType": "DATETIME(3)"
+        }
+      ],
+      "sourceSha256": "d1420a7b6fdb9811b26f0fa9e064b643ed19353cfe0d486d3361b92f35c78c3d"
+    },
+    {
+      "source": "yudao-module-im/src/main/java/cn/iocoder/yudao/module/im/dal/dataobject/face/ImFacePackDO.java",
+      "table": "im_face_pack",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "icon",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "icon",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "sort",
+          "sqlType": "INT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        }
+      ],
+      "sourceSha256": "a5ead928570f39785c9b0b775269126163a5d71e04239ea0c1e325d6a0a1d3aa"
+    },
+    {
+      "source": "yudao-module-im/src/main/java/cn/iocoder/yudao/module/im/dal/dataobject/face/ImFacePackItemDO.java",
+      "table": "im_face_pack_item",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "packId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "pack_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "url",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "url",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "width",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "width",
+          "sqlType": "INT"
+        },
+        {
+          "name": "height",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "height",
+          "sqlType": "INT"
+        },
+        {
+          "name": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "sort",
+          "sqlType": "INT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        }
+      ],
+      "sourceSha256": "414af33784c4019d0f00a5ff27dd0c139ab253e6c4245bab62c2ce1dada6dd92"
+    },
+    {
+      "source": "yudao-module-im/src/main/java/cn/iocoder/yudao/module/im/dal/dataobject/face/ImFaceUserItemDO.java",
+      "table": "im_face_user_item",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "url",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "url",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "width",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "width",
+          "sqlType": "INT"
+        },
+        {
+          "name": "height",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "height",
+          "sqlType": "INT"
+        },
+        {
+          "name": "sort",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "sort",
+          "sqlType": "INT"
+        }
+      ],
+      "sourceSha256": "1d3791a123b9361876934e8a2ad894e73879dbb2807e4ddbcd07cdf22291762f"
+    },
+    {
+      "source": "yudao-module-im/src/main/java/cn/iocoder/yudao/module/im/dal/dataobject/friend/ImFriendDO.java",
+      "table": "im_friend",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "friendUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "friend_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "silent",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "silent",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "displayName",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "display_name",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "addSource",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "add_source",
+          "sqlType": "INT"
+        },
+        {
+          "name": "pinned",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "pinned",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "blocked",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "blocked",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "addTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "add_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "deleteTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "delete_time",
+          "sqlType": "DATETIME(3)"
+        }
+      ],
+      "sourceSha256": "7f3061987176258c9c6c76a9eff8409c2f905fa30562692d6648be8655bdc1d6"
+    },
+    {
+      "source": "yudao-module-im/src/main/java/cn/iocoder/yudao/module/im/dal/dataobject/friend/ImFriendRequestDO.java",
+      "table": "im_friend_request",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "fromUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "from_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "toUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "to_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "applyContent",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "apply_content",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "displayName",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "display_name",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "addSource",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "add_source",
+          "sqlType": "INT"
+        },
+        {
+          "name": "handleResult",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "handle_result",
+          "sqlType": "INT"
+        },
+        {
+          "name": "handleContent",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "handle_content",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "handleTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "handle_time",
+          "sqlType": "DATETIME(3)"
+        }
+      ],
+      "sourceSha256": "760f2483e9221bc8facb042e1a4b0cecb5a0814971c69b9e09ba699afb4ca8b6"
+    },
+    {
+      "source": "yudao-module-im/src/main/java/cn/iocoder/yudao/module/im/dal/dataobject/group/ImGroupDO.java",
+      "table": "im_group",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "name",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "name",
+          "sqlType": "VARCHAR(255)"
+        },
+        {
+          "name": "ownerUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "owner_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "avatar",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "avatar",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "notice",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "notice",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "joinApproval",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "join_approval",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "banned",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "banned",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "bannedReason",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "banned_reason",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "bannedTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "banned_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "dissolvedTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "dissolved_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "mutedAll",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "muted_all",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "pinnedMessageIds",
+          "javaType": "List<Long>",
+          "handler": "LongListTypeHandler",
+          "annotations": "@TableField(typeHandler = LongListTypeHandler.class)",
+          "column": "pinned_message_ids",
+          "sqlType": "LONGTEXT"
+        }
+      ],
+      "sourceSha256": "5ee448e1882dafae2fbe5dc19f667d9b9ed4c16a3aa592ea9c9d05c08262c7bf"
+    },
+    {
+      "source": "yudao-module-im/src/main/java/cn/iocoder/yudao/module/im/dal/dataobject/group/ImGroupMemberDO.java",
+      "table": "im_group_member",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "groupId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "group_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "displayUserName",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "display_user_name",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "groupRemark",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "group_remark",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "silent",
+          "javaType": "Boolean",
+          "handler": null,
+          "annotations": "",
+          "column": "silent",
+          "sqlType": "BIT(1)"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "role",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "role",
+          "sqlType": "INT"
+        },
+        {
+          "name": "joinTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "join_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "addSource",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "add_source",
+          "sqlType": "INT"
+        },
+        {
+          "name": "inviterUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "inviter_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "quitTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "quit_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "muteEndTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "mute_end_time",
+          "sqlType": "DATETIME(3)"
+        }
+      ],
+      "sourceSha256": "65eedd9a11fd99c0e6f148c2edac51a1e35fa7f90efd89ce6c6ff60af6a67496"
+    },
+    {
+      "source": "yudao-module-im/src/main/java/cn/iocoder/yudao/module/im/dal/dataobject/group/ImGroupRequestDO.java",
+      "table": "im_group_request",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "groupId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "group_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "inviterUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "inviter_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "applyContent",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "apply_content",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "addSource",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "add_source",
+          "sqlType": "INT"
+        },
+        {
+          "name": "handleResult",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "handle_result",
+          "sqlType": "INT"
+        },
+        {
+          "name": "handleUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "handle_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "handleContent",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "handle_content",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "handleTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "handle_time",
+          "sqlType": "DATETIME(3)"
+        }
+      ],
+      "sourceSha256": "4fd2191757a3c42c5303fcebf747453f09d19bf28889de75d8907b7f9f0b812d"
+    },
+    {
+      "source": "yudao-module-im/src/main/java/cn/iocoder/yudao/module/im/dal/dataobject/message/ImChannelMessageDO.java",
+      "table": "im_channel_message",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "channelId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "channel_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "materialId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "material_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "content",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "content",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "receiverUserIds",
+          "javaType": "List<Long>",
+          "handler": "LongListTypeHandler",
+          "annotations": "@TableField(typeHandler = LongListTypeHandler.class)",
+          "column": "receiver_user_ids",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "sendTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "send_time",
+          "sqlType": "DATETIME(3)"
+        }
+      ],
+      "sourceSha256": "7d0309fcef7efd299b4e7d61eb0e9be2ffe6ea0bb84313e0d3c0bc34ad54d846"
+    },
+    {
+      "source": "yudao-module-im/src/main/java/cn/iocoder/yudao/module/im/dal/dataobject/message/ImGroupMessageDO.java",
+      "table": "im_group_message",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "clientMessageId",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "client_message_id",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "senderId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "sender_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "groupId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "group_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "content",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "content",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "sendTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "send_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "receiverUserIds",
+          "javaType": "List<Long>",
+          "handler": "LongListTypeHandler",
+          "annotations": "@TableField(typeHandler = LongListTypeHandler.class)",
+          "column": "receiver_user_ids",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "atUserIds",
+          "javaType": "List<Long>",
+          "handler": "LongListTypeHandler",
+          "annotations": "@TableField(typeHandler = LongListTypeHandler.class)",
+          "column": "at_user_ids",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "receiptStatus",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "receipt_status",
+          "sqlType": "INT"
+        }
+      ],
+      "sourceSha256": "80b0a50eca23a1f245a16df8db0ff9c24c8365f845e742240e7f421d0579c0f6",
+      "excludedTransientFields": [
+        {
+          "name": "readCount",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "@TableField(exist = false)"
+        }
+      ]
+    },
+    {
+      "source": "yudao-module-im/src/main/java/cn/iocoder/yudao/module/im/dal/dataobject/message/ImPrivateMessageDO.java",
+      "table": "im_private_message",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "clientMessageId",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "client_message_id",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "senderId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "sender_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "receiverId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "receiver_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "type",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "content",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "content",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "receiptStatus",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "receipt_status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "sendTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "send_time",
+          "sqlType": "DATETIME(3)"
+        }
+      ],
+      "sourceSha256": "72b81a640bc2cfa0552bcd782b249f893c93e3a3571d8b41240a0abcb64afa57"
+    },
+    {
+      "source": "yudao-module-im/src/main/java/cn/iocoder/yudao/module/im/dal/dataobject/rtc/ImRtcCallDO.java",
+      "table": "im_rtc_call",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "room",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "room",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "conversationType",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "conversation_type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "mediaType",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "media_type",
+          "sqlType": "INT"
+        },
+        {
+          "name": "inviterUserId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "inviter_user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "groupId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "group_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "endReason",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "end_reason",
+          "sqlType": "INT"
+        },
+        {
+          "name": "startTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "start_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "acceptTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "accept_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "endTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "end_time",
+          "sqlType": "DATETIME(3)"
+        }
+      ],
+      "sourceSha256": "8790e06acfb7412e2a78b41fe39fa853980abe971b2b509b0c7f07361fc47c27"
+    },
+    {
+      "source": "yudao-module-im/src/main/java/cn/iocoder/yudao/module/im/dal/dataobject/rtc/ImRtcParticipantDO.java",
+      "table": "im_rtc_participant",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "callId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "call_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "room",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "room",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "userId",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "",
+          "column": "user_id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "role",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "role",
+          "sqlType": "INT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        },
+        {
+          "name": "inviteTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "invite_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "acceptTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "accept_time",
+          "sqlType": "DATETIME(3)"
+        },
+        {
+          "name": "leaveTime",
+          "javaType": "LocalDateTime",
+          "handler": null,
+          "annotations": "",
+          "column": "leave_time",
+          "sqlType": "DATETIME(3)"
+        }
+      ],
+      "sourceSha256": "0ab3f4e244d2afa2eecb4cbbaa9abd4f4ad09aa0cfd0477839650c431c0f3a57"
+    },
+    {
+      "source": "yudao-module-im/src/main/java/cn/iocoder/yudao/module/im/dal/dataobject/sensitiveword/ImSensitiveWordDO.java",
+      "table": "im_sensitive_word",
+      "fields": [
+        {
+          "name": "id",
+          "javaType": "Long",
+          "handler": null,
+          "annotations": "@TableId",
+          "column": "id",
+          "sqlType": "BIGINT"
+        },
+        {
+          "name": "word",
+          "javaType": "String",
+          "handler": null,
+          "annotations": "",
+          "column": "word",
+          "sqlType": "LONGTEXT"
+        },
+        {
+          "name": "status",
+          "javaType": "Integer",
+          "handler": null,
+          "annotations": "",
+          "column": "status",
+          "sqlType": "INT"
+        }
+      ],
+      "sourceSha256": "be77fd3fb84f80ff1e0a31fdc02cc04577823ad414310d1cdf7ba4300cc67425"
+    }
+  ],
+  "verification": {
+    "compile": ".runtime/im-compile-result.json",
+    "compileExitCode": 0,
+    "ddl": ".runtime/im-schema-check.json",
+    "schema": "jss_im_verify_979484c87e64",
+    "tables": 17,
+    "nativePersistentFields": 146,
+    "csvFields": 4,
+    "excludedTransientFields": 1,
+    "messageContentDtosNotExpanded": 12,
+    "remainingRandomSchemas": 0,
+    "scope": "No tests, full Flyway/context, browser, actual IM messaging/offline cache/read/group/channel/RTC/LiveKit or role/tenant/device acceptance in this rapid migration preparation."
+  }
+}

@@ -1,6 +1,8 @@
 # JSS 商城运行组合
 
-`jss-mall` Maven profile 将 pay、product、promotion、trade、statistics 加入已有 system/infra/gym/member/JSS 容器。它不启用无关 CRM/BPM 等模块，也不执行数据库迁移。
+`jss-mall` Maven profile 当前包含 system/infra/gym/member/JSS、pay/product/promotion/trade/statistics，以及 CRM/BPM、ERP、HRM、FMS、MES、WMS、OA、PMS、IM、IoT biz、AI 和公众号完整模块；不在应用启动时执行数据库迁移。外部时序提供商的明确可用性模式和最新运行边界见[完整运行组合说明](jss-runtime-integration.md)。
+
+以下为最初商城组合的历史构建及分模块持久化记录，不代表当前完整组合的全部业务已经验收。
 
 ```sh
 mvn -Pjss-mall -pl yudao-server -am package -DskipTests

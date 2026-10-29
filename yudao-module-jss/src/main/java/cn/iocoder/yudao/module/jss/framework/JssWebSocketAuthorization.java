@@ -14,6 +14,7 @@ import cn.iocoder.yudao.module.jss.service.JssWorkspaceService;
 import cn.iocoder.yudao.module.system.api.permission.PermissionApi;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServletServerHttpRequest;
@@ -27,6 +28,7 @@ import java.util.Set;
 /** Keeps a workspace socket subject to the same live identity and RBAC checks as HTTP. */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JssWebSocketAuthorization implements WebSocketSessionAuthorization {
     static final String CREDENTIAL = JssWebSocketAuthorization.class.getName() + ".credential";
     private static final Set<String> KEFU_READ =
@@ -99,7 +101,8 @@ public class JssWebSocketAuthorization implements WebSocketSessionAuthorization 
                 || !(value instanceof String token)
                 || token.isBlank()
                 || user.getTenantId() == null) return null;
-        return TenantUtils.execute(
+        try {
+            return TenantUtils.execute(
                 user.getTenantId(),
                 () -> {
                     OAuth2AccessTokenCheckRespDTO current = tokens.checkAccessToken(token);
@@ -110,5 +113,18 @@ public class JssWebSocketAuthorization implements WebSocketSessionAuthorization 
                             ? current
                             : null;
                 });
+        } catch (RuntimeException denied) {
+            // Never log the bearer/parent credential or exception messages that may contain it.
+            Throwable reason = denied;
+            for (int depth = 0; depth < 16 && reason.getCause() != null
+                    && reason.getCause() != reason; depth++) {
+                reason = reason.getCause();
+            }
+            log.debug("[checked][socket={} user={} tenant={} rejection={} code={} trace={}]",
+                    session.getId(), user.getId(), user.getTenantId(), reason.getClass().getSimpleName(),
+                    reason instanceof cn.iocoder.yudao.framework.common.exception.ServiceException service ? service.getCode() : null,
+                    java.util.Arrays.stream(reason.getStackTrace()).limit(8).toList());
+            throw denied;
+        }
     }
 }

@@ -28,11 +28,14 @@ def main():
                         help='Run workspace security or mall catalog/cart/order acceptance')
     parser.add_argument('--crm-bpm', action='store_true', help='Also verify native CRM/BPM HTTP behavior in the standard complete JSS build')
     parser.add_argument('--smoke', action='store_true', help='Only boot the complete server and verify the latest public/member integration entry')
+    parser.add_argument('--im', action='store_true', help='Only verify the internal IM private-message HTTP/WebSocket lifecycle')
     args = parser.parse_args()
     if args.crm_bpm and args.suite != 'workspace':
         raise ValueError('CRM/BPM verification uses the workspace suite')
     if args.smoke and (args.suite != 'workspace' or args.browser or args.crm_bpm):
         raise ValueError('The focused startup smoke uses workspace without browser or CRM/BPM suites')
+    if args.im and (args.suite != 'workspace' or args.browser or args.crm_bpm or args.smoke):
+        raise ValueError('The focused IM flow uses workspace without browser, startup-smoke or CRM/BPM suites')
     runtime = ROOT / ('.runtime/jss-http' if args.suite == 'workspace' else '.runtime/jss-mall-http')
     test_class = 'JssWorkspaceHttpIT' if args.suite == 'workspace' else 'JssMallHttpIT'
     sys.stdout.reconfigure(encoding='utf8', errors='replace')
@@ -101,6 +104,9 @@ def main():
                            JSS_TEST_RUNTIME_DIR=run_directory.as_posix())
         if args.crm_bpm:
             environment['JSS_TEST_CRM_BPM'] = '1'
+        environment.pop('JSS_TEST_IM', None)
+        if args.im:
+            environment['JSS_TEST_IM'] = '1'
         if args.browser:
             frontend = ROOT.parent / 'JSS-uniapp'
             browser_config = 'playwright.authenticated.config.ts' if args.suite == 'workspace' else 'playwright.mall.config.ts'
@@ -111,6 +117,8 @@ def main():
         if not maven:
             maven = str(ROOT.parent / '.tools/apache-maven-3.9.11/bin' / ('mvn.cmd' if os.name == 'nt' else 'mvn'))
         selection = test_class + ('#latestModulesBootAndPublicMemberFlowsUseRealHttp' if args.smoke else '')
+        if args.im:
+            selection = test_class + '#internalImPrivateMessageFlow'
         command = [maven, '-B', '-ntp', '-q', '-Pjss-mall', '-pl', 'yudao-server', '-am', 'test',
                    f'-Dtest={selection}', '-Dsurefire.failIfNoSpecifiedTests=false', '-Dspotless.skip=true']
         started = time.time()
@@ -132,12 +140,13 @@ def main():
         assert all(secret not in server_log for secret in [password, redis_password, http_password]), 'Server log exposed a test credential'
         assert report.stat().st_mtime >= started
         suite = ET.parse(report).getroot()
-        expected = '1' if args.smoke else (str((14 if args.browser else 13) + (1 if args.crm_bpm else 0)) if args.suite == 'workspace' else ('14' if args.browser else '13'))
+        expected = '1' if args.smoke or args.im else (str((14 if args.browser else 13) + (1 if args.crm_bpm else 0)) if args.suite == 'workspace' else ('14' if args.browser else '13'))
         assert suite.attrib['tests'] == expected and all(suite.attrib[k] == '0' for k in ['errors', 'failures', 'skipped']), suite.attrib
-        (run_directory / 'verification.json').write_text(json.dumps({'schema': schema, 'suite': args.suite, 'startupSmoke': args.smoke, 'timeSeriesMode': 'disabled', 'crmBpm': True, 'crmBpmScenario': args.crm_bpm, 'browser': args.browser, 'jssMigrationVersions': len(jss_versions), 'junit': suite.attrib}, indent=2), encoding='utf8')
+        (run_directory / 'verification.json').write_text(json.dumps({'schema': schema, 'suite': args.suite, 'startupSmoke': args.smoke, 'imPrivateMessageFlow': args.im, 'timeSeriesMode': 'disabled', 'crmBpm': True, 'crmBpmScenario': args.crm_bpm, 'browser': args.browser, 'jssMigrationVersions': len(jss_versions), 'junit': suite.attrib}, indent=2), encoding='utf8')
         for case in suite.findall('testcase'):
             print('PASS ' + case.attrib['name'])
-        print(f'Full server {args.suite} ' + ('focused startup/public/member HTTP entry' if args.smoke else 'HTTP suite') + ' verified with real MySQL and Redis; IoT time-series explicitly unavailable')
+        label = 'focused IM private-message HTTP/WebSocket flow' if args.im else ('focused startup/public/member HTTP entry' if args.smoke else 'HTTP suite')
+        print(f'Full server {args.suite} ' + label + ' verified with real MySQL and Redis; IoT time-series explicitly unavailable')
     finally:
         os.environ.clear()
         os.environ.update(saved_environment)

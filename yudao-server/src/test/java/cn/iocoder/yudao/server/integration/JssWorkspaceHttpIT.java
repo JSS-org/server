@@ -65,6 +65,7 @@ import javax.sql.DataSource;
             "spring.data.redis.password=${JSS_TEST_REDIS_PASSWORD}",
             "logging.file.name=${JSS_TEST_RUNTIME_DIR}/server.log",
             "logging.file.path=${JSS_TEST_RUNTIME_DIR}",
+            "logging.level.cn.iocoder.yudao.module.jss.framework.JssWebSocketAuthorization=DEBUG",
             "mybatis-plus.configuration.log-impl=org.apache.ibatis.logging.nologging.NoLoggingImpl"
         })
 class JssWorkspaceHttpIT {
@@ -1115,6 +1116,163 @@ class JssWorkspaceHttpIT {
 
     @Autowired
     private cn.iocoder.yudao.framework.websocket.core.sender.WebSocketMessageSender socketSender;
+
+    @Autowired
+    private cn.iocoder.yudao.framework.websocket.core.session.WebSocketSessionManager socketSessions;
+
+    /** Explicit opt-in: one coherent private-message flow, never added to the default full suite. */
+    @TestFactory
+    Stream<DynamicTest> internalImPrivateMessageFlow() {
+        if (!"1".equals(System.getenv("JSS_TEST_IM"))) return Stream.empty();
+        return Stream.of(DynamicTest.dynamicTest("realImPrivateSendPullReadRecallAndWorkspaceOwnership", () -> {
+            String reviewer = login("admin", "jssitreviewer");
+            String member = login("member", "13800009001");
+            String peerMember = login("member", "13800009002");
+            for (long user : List.of(23001L, 23002L)) {
+                expectCode(api("POST", "/admin-api/jss/identity/bind",
+                        Map.of("memberUserId", user, "adminUserId", user,
+                                "reason", "Reviewed isolated IM private-message identity"), reviewer, 1), 0);
+            }
+            String senderToken = issueWorkspace(member), peerToken = issueWorkspace(peerMember);
+            try (var connection = datasource.getConnection(); var statement = connection.createStatement()) {
+                assertTrue(connection.getMetaData().getURL().startsWith(
+                        "jdbc:mysql://127.0.0.1:13316/" + System.getenv("JSS_TEST_HTTP_SCHEMA") + "?"));
+                statement.executeUpdate("INSERT INTO im_friend (user_id,friend_user_id,status,silent,pinned,blocked,tenant_id,add_time) VALUES (23001,23002,0,b'0',b'0',b'0',1,NOW()),(23002,23001,0,b'0',b'0',b'0',1,NOW())");
+                statement.executeUpdate("ALTER TABLE im_private_message AUTO_INCREMENT=9007199254740993");
+            }
+            var senderProbe = new SocketProbe();
+            var peerProbe = new SocketProbe();
+            var senderSocket = connectSocket(senderToken, 1, senderProbe);
+            var peerSocket = connectSocket(peerToken, 1, peerProbe);
+            try {
+                senderSocket.sendText("ping", true).join();
+                peerSocket.sendText("ping", true).join();
+                assertEquals("pong", senderProbe.frames.poll(5, TimeUnit.SECONDS));
+                assertEquals("pong", peerProbe.frames.poll(5, TimeUnit.SECONDS));
+                writeImSocketState("connected", senderProbe, peerProbe);
+                var request = Map.of("clientMessageId", "jss-isolated-im-01", "receiverId", "23002",
+                        "type", 101, "content", "{\"content\":\"JSS internal IM message\"}", "receipt", true);
+                expectCode(api("POST", "/admin-api/im/message/private/send", request, member, 1), 403);
+                expectCode(api("GET", "/admin-api/im/message/private/pull?minId=0&size=10", null, senderToken, 91001), 401);
+                writeImSocketState("after-domain-rejections", senderProbe, peerProbe);
+                var sent = data(api("POST", "/admin-api/im/message/private/send", request, senderToken, 1));
+                assertInstanceOf(String.class, sent.get("id"));
+                String id = sent.get("id").toString();
+                assertTrue(Long.parseLong(id) > 9_007_199_254_740_991L);
+                assertEquals("23001", sent.get("senderId").toString());
+                assertEquals("23002", sent.get("receiverId").toString());
+                assertEquals(id, assertImNotification(senderProbe, 101, id).get("id"));
+                assertEquals(id, assertImNotification(peerProbe, 101, id).get("id"));
+                var duplicate = data(api("POST", "/admin-api/im/message/private/send", request, senderToken, 1));
+                assertEquals(id, duplicate.get("id"));
+                try (var connection = datasource.getConnection(); var statement = connection.createStatement();
+                        var rows = statement.executeQuery("SELECT COUNT(*) FROM im_private_message WHERE client_message_id='jss-isolated-im-01' AND tenant_id=1")) {
+                    assertTrue(rows.next());
+                    assertEquals(1, rows.getInt(1));
+                }
+                var pulled = expectCode(api("GET", "/admin-api/im/message/private/pull?minId=0&size=10", null, peerToken, 1), 0);
+                assertTrue(pulled.get("data").toString().contains(id));
+                expectCode(api("PUT", "/admin-api/im/message/private/read?receiverId=23001&messageId=" + id, null, peerToken, 1), 0);
+                assertEquals(id, assertImNotification(senderProbe, 2200, id).get("id"));
+                assertEquals(id, assertImNotification(peerProbe, 2201, id).get("readId"));
+                assertEquals(id, expectCode(api("GET", "/admin-api/im/message/private/max-read-message-id?peerId=23002", null, senderToken, 1), 0).get("data"));
+                var history = expectCode(api("GET", "/admin-api/im/message/private/list?receiverId=23001&limit=10", null, peerToken, 1), 0);
+                assertEquals(2, ((Number) ((Map<?, ?>) ((List<?>) history.get("data")).getFirst()).get("receiptStatus")).intValue());
+                expectCode(api("DELETE", "/admin-api/im/message/private/recall?id=" + id, null, peerToken, 1),
+                        cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.MESSAGE_RECALL_DENIED.getCode());
+                var recalled = data(api("DELETE", "/admin-api/im/message/private/recall?id=" + id, null, senderToken, 1));
+                assertEquals(2101, ((Number) recalled.get("type")).intValue());
+                assertEquals(recalled.get("id"), assertImNotification(senderProbe, 2101, id).get("id"));
+                assertEquals(recalled.get("id"), assertImNotification(peerProbe, 2101, id).get("id"));
+                try (var connection = datasource.getConnection(); var statement = connection.createStatement();
+                        var rows = statement.executeQuery("SELECT status,receipt_status FROM im_private_message WHERE id=" + Long.parseLong(id))) {
+                    assertTrue(rows.next());
+                    assertEquals(2, rows.getInt("status"));
+                    assertEquals(2, rows.getInt("receipt_status"));
+                }
+                // A short concurrent burst diagnoses a missing echo without rerunning other modules.
+                var burst = java.util.stream.IntStream.range(0, 8)
+                        .mapToObj(index -> java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+                            try {
+                                return data(api("POST", "/admin-api/im/message/private/send",
+                                        Map.of("clientMessageId", "jss-im-burst-" + index, "receiverId", "23002",
+                                                "type", 101, "content", "{\"content\":\"JSS concurrent IM message\"}"), senderToken, 1));
+                            } catch (Exception error) {
+                                throw new java.util.concurrent.CompletionException(error);
+                            }
+                        })).toList();
+                var burstIds = new LinkedHashSet<String>();
+                for (var response : burst) {
+                    var message = response.join();
+                    assertInstanceOf(String.class, message.get("id"));
+                    assertTrue(burstIds.add(message.get("id").toString()));
+                }
+                assertImBurst(senderProbe, burstIds);
+                assertImBurst(peerProbe, burstIds);
+                writeImSocketState("after-burst", senderProbe, peerProbe);
+                cn.iocoder.yudao.framework.tenant.core.util.TenantUtils.execute(91001L,
+                        () -> socketSender.send(2, 23001L, "im-notification", "{\"foreignTenant\":true}"));
+                assertNull(senderProbe.frames.poll(250, TimeUnit.MILLISECONDS));
+                expectCode(api("POST", "/app-api/jss/auth/logout", null, member, 1), 0);
+                expectCode(api("GET", "/admin-api/im/message/private/pull?minId=0&size=10", null, senderToken, 1), 401);
+                try { senderSocket.sendText("ping", true).join(); } catch (java.util.concurrent.CompletionException ignored) { }
+                assertEquals(1008, senderProbe.closed.get(5, TimeUnit.SECONDS));
+            } finally {
+                writeImSocketState("before-close", senderProbe, peerProbe);
+                senderSocket.abort();
+                peerSocket.abort();
+            }
+        }));
+    }
+
+    @SuppressWarnings("unchecked")
+    private void assertImBurst(SocketProbe probe, java.util.Set<String> expected) throws Exception {
+        var pending = new LinkedHashSet<>(expected);
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        while (!pending.isEmpty() && System.nanoTime() < deadline) {
+            String frame = probe.frames.poll(Math.max(1, deadline - System.nanoTime()), TimeUnit.NANOSECONDS);
+            if (frame == null) break;
+            var outer = JsonUtils.parseObject(frame, new TypeReference<Map<String, Object>>() {});
+            if (!"im-notification".equals(outer.get("type"))) continue;
+            var body = JsonUtils.parseObject(outer.get("content").toString(), new TypeReference<Map<String, Object>>() {});
+            if (((Number) body.get("contentType")).intValue() != 101) continue;
+            var payload = (Map<String, Object>) body.get("payload");
+            assertInstanceOf(String.class, payload.get("id"));
+            assertTrue(pending.remove(payload.get("id")), "Duplicate or unexpected private message notification");
+        }
+        assertTrue(pending.isEmpty(), "Missing concurrent IM notifications: " + pending + "; closed=" + probe.closed.getNow(-1));
+    }
+
+    private void writeImSocketState(String stage, SocketProbe sender, SocketProbe peer) throws Exception {
+        Map<String, Object> users = new HashMap<>();
+        for (long id : List.of(23001L, 23002L)) {
+            users.put(String.valueOf(id), socketSessions.getSessionList(2, id).stream()
+                    .map(session -> Map.of("sessionId", session.getId(), "open", session.isOpen(),
+                            "tenant", cn.iocoder.yudao.framework.websocket.core.util.WebSocketFrameworkUtils.getTenantId(session)))
+                    .toList());
+        }
+        Files.writeString(Path.of(System.getenv("JSS_TEST_RUNTIME_DIR"), "im-sockets-" + stage + ".json"),
+                JsonUtils.toJsonString(Map.of("users", users, "senderClosed", sender.closed.getNow(-1),
+                        "peerClosed", peer.closed.getNow(-1), "senderQueued", sender.frames.size(), "peerQueued", peer.frames.size())));
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> assertImNotification(SocketProbe probe, int contentType, String marker)
+            throws Exception {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        while (System.nanoTime() < deadline) {
+            String frame = probe.frames.poll(Math.max(1, deadline - System.nanoTime()), TimeUnit.NANOSECONDS);
+            assertNotNull(frame, "Expected actual IM websocket notification " + contentType + "; closed=" + probe.closed.getNow(-1));
+            var outer = JsonUtils.parseObject(frame, new TypeReference<Map<String, Object>>() {});
+            if (!"im-notification".equals(outer.get("type"))) continue;
+            var body = JsonUtils.parseObject(outer.get("content").toString(), new TypeReference<Map<String, Object>>() {});
+            if (((Number) body.get("contentType")).intValue() != contentType) continue;
+            var payload = (Map<String, Object>) body.get("payload");
+            if (payload.toString().contains(marker)) return payload;
+        }
+        fail("Expected actual IM websocket notification " + contentType);
+        return Map.of();
+    }
 
     private static class SocketProbe implements java.net.http.WebSocket.Listener {
         final java.util.concurrent.BlockingQueue<String> frames =

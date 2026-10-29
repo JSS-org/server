@@ -9,3 +9,5 @@
 独立 JVM 的确定性捕获复现：子任务捕获权限后等待，父线程先出栈，原代码导致子任务权限消失（`.runtime/data-permission-capture-before.log/.exit`，退出 1）；修复后同一程序通过（`data-permission-capture-after.*`，退出 0）。正式定向 `DataPermissionContextHolderTest` 共 6 项通过，失败/错误/跳过 0：既有三项及新增父线程退出后捕获保留、两个捕获之间及父/工作线程入出栈隔离/工作线程恢复、返回列表不能修改上下文。证据 `.runtime/data-permission-context-tests.log/.exit/.xml`。
 
 上述是真实线程/TTL 行为检查，数据库无参与；不能代替修复后真实 IM 流程。完整服务在确定根因的失败运行中加载的是修复前 class；源码编辑与独立 `.runtime` javac 不改变该运行的产物。仅在其终止和清理后才运行相关 Maven 定向检查。修复后的同一 HTTP/WS 流程结果另行记录，不以此前通过轮次代替。
+
+fb3a1f8444 提交后，同一 --im 真实流程只运行一次，证据 `.runtime/jss-http/jss_http_verify_0fd368a3cab9`：JUnit 1、185.146 秒，失败/错误/跳过 0，发送/读回执/撤回/8 条短并发/异租户发布拒绝/父会话退出失效全部断言通过。并发后双端仍 open，唯一拒绝日志为主动退出后的 ServiceException 401，无共享栈异常；schema 残留 0、所属 Redis 关闭。原五轮记录保留，本次没有扩为完整回归、长期压测、前端原页浏览器、群组/频道/RTC 或真机验收。

@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.iot.framework.storage.config;
 
 import cn.iocoder.yudao.module.iot.dal.storage.IotDeviceMessageDAO;
 import cn.iocoder.yudao.module.iot.dal.storage.IotDevicePropertyDAO;
+import cn.iocoder.yudao.module.iot.framework.storage.core.enums.IotStorageTypeEnum;
 
 import com.baomidou.dynamic.datasource.DynamicRoutingDataSource;
 
@@ -19,7 +20,7 @@ import javax.sql.DataSource;
 /**
  * IoT 时序存储的初始化 Runner：校验数据源、前提条件，并创建消息表
  *
- * 只初始化 yudao.iot.storage.type 选中的存储后端。失败时退出系统，避免带着不可用的存储运行
+ * 只初始化 yudao.iot.storage.type 选中的存储后端。显式 disabled 时不提供时序读写；其他模式失败则中止启动。
  *
  * @author 芋道源码
  */
@@ -35,19 +36,18 @@ public class IotStorageInitRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        try {
-            initialize();
-        } catch (Exception ex) {
-            // 初始化失败时打印错误消息并退出系统
-            log.error("[run][IoT 时序存储({}) 初始化失败，系统无法正常运行，即将退出]", storageProperties.getType(), ex);
-            System.exit(1);
-        }
+        // Let Spring own startup failure and orderly cleanup; never terminate the host JVM here.
+        initialize();
     }
 
     /**
      * 初始化选中的存储后端
      */
     public void initialize() {
+        if (storageProperties.getType() == IotStorageTypeEnum.DISABLED) {
+            log.warn("[initialize][IoT 时序存储已显式禁用，属性历史和消息日志读写不可用]");
+            return;
+        }
         // 1. 校验数据源已配置：dynamic-datasource 找不到数据源时，会回退到 master，必须提前拦截
         validateDataSourceExists();
         // 2. 初始化 DAO

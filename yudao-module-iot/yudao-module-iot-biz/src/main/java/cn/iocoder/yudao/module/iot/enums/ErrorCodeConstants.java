@@ -9,6 +9,8 @@ import cn.iocoder.yudao.framework.common.exception.ErrorCode;
  */
 public interface ErrorCodeConstants {
 
+    ErrorCode TIME_SERIES_STORAGE_DISABLED = new ErrorCode(1_050_000_000, "IoT 时序存储未启用");
+
     // ========== 产品相关 1-050-001-000 ============
     ErrorCode PRODUCT_NOT_EXISTS = new ErrorCode(1_050_001_000, "产品不存在");
     ErrorCode PRODUCT_KEY_EXISTS = new ErrorCode(1_050_001_001, "产品标识已经存在");

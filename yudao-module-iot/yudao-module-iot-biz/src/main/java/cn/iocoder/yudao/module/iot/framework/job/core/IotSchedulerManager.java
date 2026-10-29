@@ -35,7 +35,9 @@ public class IotSchedulerManager {
         SpringBeanJobFactory jobFactory = new SpringBeanJobFactory();
         jobFactory.setApplicationContext(applicationContext);
         schedulerFactoryBean.setJobFactory(jobFactory);
-        schedulerFactoryBean.setAutoStartup(true);
+        schedulerFactoryBean.setAutoStartup(
+                applicationContext.getEnvironment()
+                        .getProperty("spring.quartz.auto-startup", Boolean.class, true));
         schedulerFactoryBean.setSchedulerName(SCHEDULER_NAME);
         schedulerFactoryBean.setDataSource(dataSource);
         schedulerFactoryBean.setWaitForJobsToCompleteOnShutdown(true);
@@ -63,15 +65,17 @@ public class IotSchedulerManager {
         log.info("[start][Scheduler 初始化开始]");
         // 初始化
         schedulerFactoryBean.afterPropertiesSet();
-        schedulerFactoryBean.start();
+        if (schedulerFactoryBean.isAutoStartup()) {
+            schedulerFactoryBean.start();
+        }
         // 获得 Scheduler 对象
         this.scheduler = schedulerFactoryBean.getScheduler();
         log.info("[start][Scheduler 初始化完成]");
     }
 
-    public void stop() {
+    public void stop() throws SchedulerException {
         log.info("[stop][Scheduler 关闭开始]");
-        schedulerFactoryBean.stop();
+        schedulerFactoryBean.destroy();
         this.scheduler = null;
         log.info("[stop][Scheduler 关闭完成]");
     }

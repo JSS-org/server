@@ -12,7 +12,9 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum IotStorageTypeEnum {
     TDENGINE("tdengine", "tdengine"),
-    IOTDB("iotdb", "iotdb");
+    IOTDB("iotdb", "iotdb"),
+    /** Explicitly unavailable: metadata remains usable, but time-series operations fail closed. */
+    DISABLED("disabled", null);
 
     /**
      * 类型，对应 yudao.iot.storage.type 配置项

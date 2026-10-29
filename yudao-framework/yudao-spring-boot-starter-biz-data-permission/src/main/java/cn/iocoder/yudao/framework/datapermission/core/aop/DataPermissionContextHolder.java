@@ -35,7 +35,10 @@ public class DataPermissionContextHolder {
      * @param dataPermission DataPermission 注解
      */
     public static void add(DataPermission dataPermission) {
-        DATA_PERMISSIONS.get().addLast(dataPermission);
+        // TTL capture and child threads may retain the same value. Never mutate a published stack.
+        LinkedList<DataPermission> permissions = new LinkedList<>(DATA_PERMISSIONS.get());
+        permissions.addLast(dataPermission);
+        DATA_PERMISSIONS.set(permissions);
     }
 
     /**
@@ -44,10 +47,13 @@ public class DataPermissionContextHolder {
      * @return DataPermission 注解
      */
     public static DataPermission remove() {
-        DataPermission dataPermission = DATA_PERMISSIONS.get().removeLast();
+        LinkedList<DataPermission> permissions = new LinkedList<>(DATA_PERMISSIONS.get());
+        DataPermission dataPermission = permissions.removeLast();
         // 无元素时，清空 ThreadLocal
-        if (DATA_PERMISSIONS.get().isEmpty()) {
+        if (permissions.isEmpty()) {
             DATA_PERMISSIONS.remove();
+        } else {
+            DATA_PERMISSIONS.set(permissions);
         }
         return dataPermission;
     }
@@ -58,7 +64,7 @@ public class DataPermissionContextHolder {
      * @return DataPermission 队列
      */
     public static List<DataPermission> getAll() {
-        return DATA_PERMISSIONS.get();
+        return new LinkedList<>(DATA_PERMISSIONS.get());
     }
 
     /**

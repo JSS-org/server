@@ -13,6 +13,7 @@ import jakarta.annotation.Resource;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -24,6 +25,16 @@ public class MemberFeedbackServiceImpl implements MemberFeedbackService {
     public static final int MAX_IMAGE_SIZE = 5 * 1024 * 1024;
     @Resource private MemberFeedbackMapper feedbackMapper;
     @Resource private MemberFeedbackAttachmentMapper attachmentMapper;
+
+    @Override
+    public int cleanUnclaimedAttachments(LocalDateTime cutoff, int limit) {
+        Long tenantId = TenantContextHolder.getRequiredTenantId();
+        if (cutoff == null || cutoff.isAfter(LocalDateTime.now().minusHours(24)) || limit < 1 || limit > 100) {
+            throw new IllegalArgumentException("反馈附件清理需至少保留24小时，每批1至100张");
+        }
+        List<Long> ids = attachmentMapper.selectExpiredUnclaimedIds(tenantId, cutoff, limit);
+        return ids.isEmpty() ? 0 : attachmentMapper.deleteExpiredUnclaimedIds(ids, tenantId, cutoff);
+    }
 
     private Long tenant(Long userId) {
         if (userId == null) throw exception(UNAUTHORIZED);

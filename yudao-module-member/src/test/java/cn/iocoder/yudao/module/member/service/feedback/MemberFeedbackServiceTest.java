@@ -9,13 +9,18 @@ import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
 import cn.iocoder.yudao.module.member.controller.app.feedback.vo.AppMemberFeedbackCreateReqVO;
 import cn.iocoder.yudao.module.member.dal.mysql.feedback.MemberFeedbackMapper;
+import cn.iocoder.yudao.module.member.dal.mysql.feedback.MemberFeedbackAttachmentMapper;
 import jakarta.annotation.Resource;
 import java.util.List;
+import java.time.LocalDateTime;
+import java.sql.Timestamp;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.jdbc.core.JdbcTemplate;
+import javax.sql.DataSource;
 
 @Import(MemberFeedbackServiceImpl.class)
 class MemberFeedbackServiceTest extends BaseDbUnitTest {
@@ -23,8 +28,55 @@ class MemberFeedbackServiceTest extends BaseDbUnitTest {
     private static final byte[] PNG = {(byte)137,80,78,71,13,10,26,10,0,1,2,3};
     @Resource private MemberFeedbackService service;
     @Resource private MemberFeedbackMapper mapper;
+    @Resource private MemberFeedbackAttachmentMapper attachmentMapper;
+    @Resource private DataSource dataSource;
+    private JdbcTemplate jdbc;
 
-    @BeforeEach void tenant() { TenantContextHolder.setTenantId(1L); }
+    private void age(Long id) {
+        jdbc.update("UPDATE member_feedback_attachment SET create_time = ? WHERE id = ?",
+                Timestamp.valueOf(LocalDateTime.now().minusDays(8)), id);
+    }
+
+    @Test void cleanupPhysicallyRemovesOnlyExpiredUnclaimedImagesInTheCurrentTenantAndBatch() throws Exception {
+        Long first = upload(), second = upload(), claimed = upload(), fresh = upload();
+        age(first); age(second); age(claimed);
+        Long feedback = service.createFeedback(USER, request(claimed));
+        TenantContextHolder.setTenantId(2L); Long otherTenant = upload(); age(otherTenant);
+        TenantContextHolder.setTenantId(1L);
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(7);
+        assertEquals(1, service.cleanUnclaimedAttachments(cutoff, 1));
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM member_feedback_attachment WHERE id = ?", Integer.class, first));
+        assertEquals(1, service.cleanUnclaimedAttachments(cutoff, 20));
+        assertEquals(0, service.cleanUnclaimedAttachments(cutoff, 20));
+        assertArrayEquals(PNG, service.getAttachment(USER, claimed).getContent());
+        assertArrayEquals(PNG, service.getAttachment(USER, fresh).getContent());
+        assertEquals(List.of(claimed), service.getFeedback(USER, feedback).getAttachmentIds());
+        TenantContextHolder.setTenantId(2L); assertArrayEquals(PNG, service.getAttachment(USER, otherTenant).getContent());
+    }
+
+    @Test void cleanupRechecksClaimAndTenantWhenDeletingPreviouslySelectedCandidates() throws Exception {
+        Long image = upload(); age(image);
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(7);
+        List<Long> candidates = attachmentMapper.selectExpiredUnclaimedIds(1L, cutoff, 20);
+        assertEquals(List.of(image), candidates);
+        Long feedback = service.createFeedback(USER, request(image));
+        assertEquals(0, attachmentMapper.deleteExpiredUnclaimedIds(candidates, 1L, cutoff));
+        assertArrayEquals(PNG, service.getAttachment(USER, image).getContent());
+        assertEquals(List.of(image), service.getFeedback(USER, feedback).getAttachmentIds());
+        Long unclaimed = upload(); age(unclaimed);
+        assertEquals(0, attachmentMapper.deleteExpiredUnclaimedIds(List.of(unclaimed), 2L, cutoff));
+        assertArrayEquals(PNG, service.getAttachment(USER, unclaimed).getContent());
+    }
+
+    @Test void cleanupRejectsMissingTenantUnsafeRetentionAndUnboundedBatches() {
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(7);
+        for (int limit : new int[]{0, -1, 101}) assertThrows(IllegalArgumentException.class, () -> service.cleanUnclaimedAttachments(cutoff, limit));
+        assertThrows(IllegalArgumentException.class, () -> service.cleanUnclaimedAttachments(LocalDateTime.now(), 20));
+        assertThrows(IllegalArgumentException.class, () -> service.cleanUnclaimedAttachments(null, 20));
+        TenantContextHolder.clear(); assertThrows(NullPointerException.class, () -> service.cleanUnclaimedAttachments(cutoff, 20));
+    }
+
+    @BeforeEach void tenant() { TenantContextHolder.setTenantId(1L); jdbc = new JdbcTemplate(dataSource); }
     @AfterEach void clearTenant() { TenantContextHolder.clear(); }
 
     private Long upload() throws Exception {

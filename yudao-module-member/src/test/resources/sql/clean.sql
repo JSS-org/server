@@ -1,4 +1,6 @@
 DELETE FROM "member_user";
+DELETE FROM "member_feedback_attachment";
+DELETE FROM "member_feedback";
 DELETE FROM "member_address";
 DELETE FROM "member_tag";
 DELETE FROM "member_level";

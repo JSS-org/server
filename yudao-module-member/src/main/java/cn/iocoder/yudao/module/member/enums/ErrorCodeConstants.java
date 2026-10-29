@@ -63,6 +63,12 @@ public interface ErrorCodeConstants {
     ErrorCode EXPERIENCE_BIZ_ID_INVALID = new ErrorCode(1_004_011_204, "用户经验业务编号须为1至64字符且无首尾空白");
     ErrorCode EXPERIENCE_BIZ_CONFLICT = new ErrorCode(1_004_011_205, "用户经验业务编号已使用且变动值不一致");
 
+    // ========== 会员意见反馈 1-004-013-000 ==========
+    ErrorCode FEEDBACK_CONTENT_INVALID = new ErrorCode(1_004_013_000, "反馈内容须为10至500个字符");
+    ErrorCode FEEDBACK_ATTACHMENT_INVALID = new ErrorCode(1_004_013_001, "反馈图片不存在、已使用或不属于当前会员");
+    ErrorCode FEEDBACK_NOT_EXISTS = new ErrorCode(1_004_013_002, "反馈不存在");
+    ErrorCode FEEDBACK_IMAGE_INVALID = new ErrorCode(1_004_013_003, "请选择5MB以内的PNG、JPEG、GIF或WebP图片");
+
     // ========== 用户分组 1-004-012-000 ==========
     ErrorCode GROUP_NOT_EXISTS = new ErrorCode(1_004_012_000, "用户分组不存在");
     ErrorCode GROUP_HAS_USER = new ErrorCode(1_004_012_001, "用户分组下存在用户，无法删除");

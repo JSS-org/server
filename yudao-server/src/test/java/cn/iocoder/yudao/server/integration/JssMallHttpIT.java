@@ -59,6 +59,7 @@ import javax.sql.DataSource;
             "spring.profiles.active=local",
             "server.address=127.0.0.1",
             "spring.quartz.auto-startup=false",
+            "yudao.iot.storage.type=disabled",
             "spring.boot.admin.client.enabled=false",
             "xxl.job.enabled=false",
             "yudao.captcha.enable=false",

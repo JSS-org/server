@@ -52,6 +52,7 @@ import javax.sql.DataSource;
             "spring.profiles.active=local,jss-http-fixture",
             "server.address=127.0.0.1",
             "spring.quartz.auto-startup=false",
+            "yudao.iot.storage.type=disabled",
             "spring.boot.admin.client.enabled=false",
             "xxl.job.enabled=false",
             "yudao.captcha.enable=false",
@@ -86,12 +87,70 @@ class JssWorkspaceHttpIT {
     @Autowired private StringRedisTemplate redis;
     @Autowired private SecurityProperties security;
     @Autowired private JssProperties workspace;
+    @Autowired private cn.iocoder.yudao.module.iot.dal.storage.IotDeviceMessageDAO timeSeriesMessages;
+    @Autowired private cn.iocoder.yudao.module.iot.framework.job.core.IotSchedulerManager iotSchedulerManager;
     private final HttpClient http =
             HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
 
     private record OwnedToken(String domain, String token, long tenant) {}
 
     private final List<OwnedToken> tokens = new ArrayList<>();
+
+    @Test
+    void latestModulesBootAndPublicMemberFlowsUseRealHttp() throws Exception {
+        assertEquals("disabled", environment.getProperty("yudao.iot.storage.type"));
+        var scheduler = (org.quartz.Scheduler) org.springframework.test.util.ReflectionTestUtils.getField(iotSchedulerManager, "scheduler");
+        assertNotNull(scheduler);
+        assertTrue(scheduler.isInStandbyMode(), "Explicit Quartz startup=false must also stop IoT dispatch");
+        assertEquals(1_050_000_000, assertThrows(
+                cn.iocoder.yudao.framework.common.exception.ServiceException.class,
+                () -> timeSeriesMessages.selectCountByCreateTime(null)).getCode());
+
+        try (var connection = datasource.getConnection(); var statement = connection.createStatement()) {
+            // Fixed fixture metadata exists only in the wrapper-owned disposable schema.
+            statement.executeUpdate("INSERT INTO infra_config(category,type,name,config_key,value,visible) VALUES "
+                    + "('JSS HTTP',2,'Public name','jss.app.public.1.name','Owned application',b'1'),"
+                    + "('JSS HTTP',2,'Hidden phone','jss.app.public.1.support-phone','13800000000',b'0'),"
+                    + "('JSS HTTP',2,'Foreign name','jss.app.public.91001.name','Foreign application',b'1')");
+        }
+        var profile = data(api("GET", "/app-api/infra/config/app-public", null, null, 1));
+        assertEquals("Owned application", profile.get("appName"));
+        assertEquals("", profile.get("supportPhone"));
+        assertEquals("Foreign application", data(api("GET", "/app-api/infra/config/app-public", null, null, 91001)).get("appName"));
+        expectCode(api("GET", "/app-api/member/feedback/get?id=1", null, null, 1), 401);
+
+        String member = login("member", "13800009001");
+        String other = login("member", "13800009002");
+        byte[] image = java.util.Base64.getDecoder().decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=");
+        String boundary = "jss-owned-feedback-boundary";
+        byte[] prefix = ("--" + boundary + "\r\nContent-Disposition: form-data; name=\"file\"; filename=\"owned.png\"\r\nContent-Type: image/png\r\n\r\n").getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        byte[] suffix = ("\r\n--" + boundary + "--\r\n").getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        var bytes = new java.io.ByteArrayOutputStream();
+        bytes.write(prefix); bytes.write(image); bytes.write(suffix);
+        String root = "http://127.0.0.1:" + environment.getRequiredProperty("local.server.port");
+        var upload = HttpRequest.newBuilder(URI.create(root + "/app-api/member/feedback/upload"))
+                .timeout(Duration.ofSeconds(15)).header("tenant-id", "1").header("Authorization", "Bearer " + member)
+                .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                .POST(HttpRequest.BodyPublishers.ofByteArray(bytes.toByteArray())).build();
+        Map<String,Object> uploaded = JsonUtils.parseObject(http.send(upload, HttpResponse.BodyHandlers.ofString()).body(), new TypeReference<>() {});
+        String attachment = expectCode(uploaded, 0).get("data").toString();
+        var created = expectCode(api("POST", "/app-api/member/feedback/create",
+                Map.of("content", "Owned HTTP feedback with private image", "attachmentIds", List.of(attachment)), member, 1), 0);
+        String id = created.get("data").toString();
+        assertEquals("Owned HTTP feedback with private image", data(api("GET", "/app-api/member/feedback/get?id=" + id, null, member, 1)).get("content"));
+        expectCode(api("GET", "/app-api/member/feedback/get?id=" + id, null, other, 1), 1_004_013_002);
+        String foreign = login("member", "13800009101", 91001);
+        expectCode(api("GET", "/app-api/member/feedback/get?id=" + id, null, foreign, 91001), 1_004_013_002);
+        var download = HttpRequest.newBuilder(URI.create(root + "/app-api/member/feedback/attachment?id=" + attachment))
+                .timeout(Duration.ofSeconds(15)).header("tenant-id", "1").header("Authorization", "Bearer " + member).GET().build();
+        var saved = http.send(download, HttpResponse.BodyHandlers.ofByteArray());
+        assertEquals(200, saved.statusCode());
+        assertArrayEquals(image, saved.body());
+        assertEquals("private, no-store", saved.headers().firstValue("Cache-Control").orElseThrow());
+        expectCode(api("GET", "/app-api/member/feedback/attachment?id=" + attachment, null, other, 1), 1_004_013_001);
+        expectCode(api("POST", "/app-api/member/feedback/create",
+                Map.of("content", "Attempt duplicate private image claim", "attachmentIds", List.of(attachment)), member, 1), 1_004_013_001);
+    }
 
     @TestFactory
     Stream<DynamicTest> actualCrmBpmAcceptance() {

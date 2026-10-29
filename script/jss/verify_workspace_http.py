@@ -27,9 +27,12 @@ def main():
     parser.add_argument('--suite', choices=['workspace', 'mall'], default='workspace',
                         help='Run workspace security or mall catalog/cart/order acceptance')
     parser.add_argument('--crm-bpm', action='store_true', help='Also verify native CRM/BPM HTTP behavior in the standard complete JSS build')
+    parser.add_argument('--smoke', action='store_true', help='Only boot the complete server and verify the latest public/member integration entry')
     args = parser.parse_args()
     if args.crm_bpm and args.suite != 'workspace':
         raise ValueError('CRM/BPM verification uses the workspace suite')
+    if args.smoke and (args.suite != 'workspace' or args.browser or args.crm_bpm):
+        raise ValueError('The focused startup smoke uses workspace without browser or CRM/BPM suites')
     runtime = ROOT / ('.runtime/jss-http' if args.suite == 'workspace' else '.runtime/jss-mall-http')
     test_class = 'JssWorkspaceHttpIT' if args.suite == 'workspace' else 'JssMallHttpIT'
     sys.stdout.reconfigure(encoding='utf8', errors='replace')
@@ -107,8 +110,9 @@ def main():
         maven = os.environ.get('JSS_MAVEN_COMMAND') or shutil.which('mvn')
         if not maven:
             maven = str(ROOT.parent / '.tools/apache-maven-3.9.11/bin' / ('mvn.cmd' if os.name == 'nt' else 'mvn'))
+        selection = test_class + ('#latestModulesBootAndPublicMemberFlowsUseRealHttp' if args.smoke else '')
         command = [maven, '-B', '-ntp', '-q', '-Pjss-mall', '-pl', 'yudao-server', '-am', 'test',
-                   f'-Dtest={test_class}', '-Dsurefire.failIfNoSpecifiedTests=false', '-Dspotless.skip=true']
+                   f'-Dtest={selection}', '-Dsurefire.failIfNoSpecifiedTests=false', '-Dspotless.skip=true']
         started = time.time()
         result = subprocess.run(command, cwd=ROOT, env=environment, capture_output=True,
                                 text=True, encoding='utf8', errors='replace')
@@ -116,22 +120,24 @@ def main():
         for secret in [password, redis_password, http_password]:
             output = output.replace(secret, '<redacted>')
         (runtime / f'{args.suite}-http-test.log').write_text(output, encoding='utf8')
+        (run_directory / 'full-maven.log').write_text(output, encoding='utf8')
+        report = ROOT / f'yudao-server/target/surefire-reports/TEST-cn.iocoder.yudao.server.integration.{test_class}.xml'
+        if report.is_file() and report.stat().st_mtime >= started:
+            shutil.copy2(report, run_directory / 'junit.xml')
         if result.returncode:
             print('Run logs: ' + str(run_directory))
             print('\n'.join(output.splitlines()[-65:]))
             raise RuntimeError('Full server HTTP tests failed; inspect the ignored runtime log')
         server_log = (run_directory / 'server.log').read_text(encoding='utf8')
         assert all(secret not in server_log for secret in [password, redis_password, http_password]), 'Server log exposed a test credential'
-        report = ROOT / f'yudao-server/target/surefire-reports/TEST-cn.iocoder.yudao.server.integration.{test_class}.xml'
         assert report.stat().st_mtime >= started
         suite = ET.parse(report).getroot()
-        expected = str((13 if args.browser else 12) + (1 if args.crm_bpm else 0)) if args.suite == 'workspace' else ('14' if args.browser else '13')
+        expected = '1' if args.smoke else (str((14 if args.browser else 13) + (1 if args.crm_bpm else 0)) if args.suite == 'workspace' else ('14' if args.browser else '13'))
         assert suite.attrib['tests'] == expected and all(suite.attrib[k] == '0' for k in ['errors', 'failures', 'skipped']), suite.attrib
-        shutil.copy2(report, run_directory / 'junit.xml')
-        (run_directory / 'verification.json').write_text(json.dumps({'schema': schema, 'suite': args.suite, 'crmBpm': True, 'crmBpmScenario': args.crm_bpm, 'browser': args.browser, 'junit': suite.attrib}, indent=2), encoding='utf8')
+        (run_directory / 'verification.json').write_text(json.dumps({'schema': schema, 'suite': args.suite, 'startupSmoke': args.smoke, 'timeSeriesMode': 'disabled', 'crmBpm': True, 'crmBpmScenario': args.crm_bpm, 'browser': args.browser, 'jssMigrationVersions': len(jss_versions), 'junit': suite.attrib}, indent=2), encoding='utf8')
         for case in suite.findall('testcase'):
             print('PASS ' + case.attrib['name'])
-        print(f'Full server {args.suite} HTTP acceptance verified with real MySQL and Redis')
+        print(f'Full server {args.suite} ' + ('focused startup/public/member HTTP entry' if args.smoke else 'HTTP suite') + ' verified with real MySQL and Redis; IoT time-series explicitly unavailable')
     finally:
         os.environ.clear()
         os.environ.update(saved_environment)
@@ -143,6 +149,9 @@ def main():
             current = json.loads(redis.STATE.read_text(encoding='utf8'))
             if current['runId'] == owned['runId']:
                 redis.stop()
+            remaining = int(mysql.sql(f"SELECT COUNT(*) FROM information_schema.schemata WHERE schema_name='{schema}'"))
+            (run_directory / 'cleanup.json').write_text(json.dumps({'remainingSchemas': remaining, 'ownedRedisShutdownRequested': current['runId'] == owned['runId']}, indent=2), encoding='utf8')
+            assert remaining == 0, 'Disposable HTTP schema was not removed'
 
 
 if __name__ == '__main__':

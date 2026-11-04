@@ -80,6 +80,8 @@ def start(home, port):
                '--collation-server=utf8mb4_unicode_ci', '--innodb-buffer-pool-size=64M',
                '--log-error=' + str(RUNTIME / 'server.log'),
                '--pid-file=' + str(RUNTIME / 'mysqld.pid')]
+    if os.name != 'nt':
+        command.append('--socket=' + str(RUNTIME / 'mysql.sock'))
     if initfile.exists():
         command.append('--init-file=' + str(initfile))
     with (RUNTIME / 'console.log').open('a', encoding='utf8') as log:

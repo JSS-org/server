@@ -200,19 +200,29 @@ def main():
         assert upgrade.sql(f'SELECT MAX(CAST(version AS UNSIGNED)) FROM {HISTORY} WHERE success=1') == '15'
         upgrade.sql("INSERT INTO member_user (id,tenant_id,mobile,status,register_ip) VALUES (9007199254740993,1,'13800000002',0,'127.0.0.1')")
         prior_tables = {table: upgrade.sql(f'SELECT * FROM {table} ORDER BY id') for table in ['member_user','system_menu','system_role_menu','system_tenant_package','member_experience_record','member_experience_event']}
-        upgrade.execute('migrate')
-        upgrade.execute('validate')
+        migrate_through(17)
         assert upgrade.sql(f'SELECT MAX(CAST(version AS UNSIGNED)) FROM {HISTORY} WHERE success=1') == '17'
         assert all(upgrade.sql(f'SELECT * FROM {table} ORDER BY id') == value for table, value in prior_tables.items())
         assert upgrade.sql("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name REGEXP '^(crm_|bpm_)'") == '29'
         assert upgrade.sql("SELECT VALUE_ FROM ACT_GE_PROPERTY WHERE NAME_='schema.version'") == '8.0.0.0'
         checks.append('managed V015 upgrades through V016/V017 preserving Long members, menus, grants, packages and experience history')
         upgrade.sql("INSERT INTO crm_customer (id,tenant_id,name) VALUES (9007199254740993,1,'Preserved customer'); INSERT INTO bpm_user_group (id,tenant_id,name,user_ids) VALUES (9007199254740995,1,'Preserved group','[9007199254740993]');")
-        upgrade.execute('migrate')
-        upgrade.execute('validate')
+        migrate_through(17)
         assert upgrade.sql('SELECT id,name FROM crm_customer') == '9007199254740993\tPreserved customer'
         assert upgrade.sql("SELECT id,JSON_UNQUOTE(JSON_EXTRACT(user_ids,'$[0]')) FROM bpm_user_group") == '9007199254740995\t9007199254740993'
         checks.append('repeated V017 migrate/validate preserve CRM records, BPM JSON Long IDs and native engine metadata')
+        migrate_through(29)
+        assert upgrade.sql(f'SELECT MAX(CAST(version AS UNSIGNED)) FROM {HISTORY} WHERE success=1') == '29'
+        upgrade.execute('migrate')
+        upgrade.execute('validate')
+        assert upgrade.sql(f'SELECT MAX(CAST(version AS UNSIGNED)) FROM {HISTORY} WHERE success=1') == str(max(map(int, versions)))
+        assert upgrade.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND "
+                           "((table_name='ai_model' AND column_name='input_modalities') OR "
+                           "(table_name='hrm_performance_plan' AND column_name='assessment_config') OR "
+                           "(table_name='iot_product' AND column_name IN ('script_content','script_enabled')))") == '4'
+        assert upgrade.sql('SELECT id,name FROM crm_customer') == '9007199254740993\tPreserved customer'
+        assert all(upgrade.sql(f'SELECT * FROM {table} ORDER BY id') == value for table, value in prior_tables.items())
+        checks.append('managed V029 upgrades through V030 with four repaired columns while preserving prior business records and grants')
         os.environ['JSS_DB_NAME'] = database
         try:
             managed.execute('init')

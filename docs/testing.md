@@ -2100,3 +2100,12 @@ JDK 25.0.2 验证命令与结果：
 ## 2026-11-04 赠券回收竞争与回滚
 
 `mvn -o -B -ntp -Pjss-mall -pl yudao-module-mall/yudao-module-trade -am test -Dtest=CouponServiceImplTest,CouponTemplateServiceImplTest,TradeCouponPriceCalculatorTest -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true`，本机Mockito agent同前。10+8+1共19项全过、零失败/错误/跳过，/tmp/server-fix-coupon-final.log。五个新用例包含未使用/过期两种回收、已使用保护、用券先提交后的条件删除拒绝、两旧快照回收只减一次及后置计数异常的事务回滚。执行实际H2 Mapper和Spring事务，供应商/RBAC输入为替身；不替代真实退款HTTP与MySQL验收。
+
+
+## 2026-11-04 V030真实迁移及六项审查问题联合回归
+
+在归属MySQL9.7.1:13316执行 `python script/jss/verify_native_schema_repairs.py`，12项全过，/tmp/server-fix-native-schema-final.log、忽略目录.runtime/jss-mysql/native-schema-repairs.json。仅复制V019/V026/V027中的三表原DDL到随机库，测试baseline29后经真实Flyway应用V030；修复前缺列、每个旧字段/大Long/审计保留、四列类型与安全默认值、新值往返和重复迁移通过。`python script/jss/verify_migrations.py` 26项全过，/tmp/server-fix-verify_migrations-final.log，包含完整fresh/升级/校验和保护。原V017专项曾错误调用全量升级后断言17，现固定演练到17，新增V029→最新版本验证。POSIX专用Unix socket实连通过；随机库残留0，测试实例关闭，已有MySQL未操作。
+
+最终联合命令：`mvn -o -B -ntp -Pjss-mall -pl yudao-server -am test -Dtest=Gym*Test,Jss*Test,SmsCodeServiceImplTest,MemberRegistrationBoundaryTest,MemberUserRegistrationTest,CouponServiceImplTest,CouponTemplateServiceImplTest,TradeCouponPriceCalculatorTest -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true`，沿用显式Mockito5.23.0 javaagent。新鲜报告73类、1141项全部通过，0失败/错误/跳过，/tmp/server-review-fixes-regression.log。`mvn -o -B -ntp -Pjss-mall -pl yudao-server -am package -DskipTests -Dspotless.skip=true`全45模块成功；该命令跳过测试，/tmp/server-review-fixes-package.log。
+
+587个实体使用实际MyBatis元数据与JSS/Gym迁移列比对已无缺列；三个旧迁移文件与HEAD字节相同。Python AST、根Spotless检查和差异检查通过。以上不登记为真实认证HTTP/Redis、业务库升级或提供商验收，也未部署运行jar。

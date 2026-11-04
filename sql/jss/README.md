@@ -105,3 +105,12 @@ server与原IoT gateway reactor跳过测试的compile退出0；归属MySQL8.4.9:
 标准jss-mall和yudao-server纳入完整原yudao-module-ai与yudao-module-mp，保留模型/向量库/工作流及微信提供商依赖。V027保留14张原AI表、149外层持久字段、4JSON和5CSV；V028保留8张原公众号表、118外层持久字段、3JSON和1CSV。内层工具/模型/文章配置继续使用原类型处理器，不展开为SQL列；来源SHA与逐字段映射见docs/jss-ai-schema.json、docs/jss-mp-schema.json。
 
 包含完整AI/MP的server reactor跳过测试compile退出0。归属MySQL8.4.9:13316随机库jss_ai_verify_ef5402488627和jss_mp_verify_c0840cb62861实际DDL、全部列与类型核对通过，finally清理后均残留0。开发库未改，没有启动模型生成、消息发送或公众号发布；完整Flyway/context、实际模型/向量库/SSE、微信素材/消息/发布与归属/租户及设备另列待验。前端下一62源页整组正在迁入，仅做必要类型/资源/来源检查。
+
+
+## V030：补齐 AI、HRM、IoT 持久字段
+
+V030以前向迁移追加 `ai_model.input_modalities`（LONGTEXT，StringListTypeHandler CSV）、`hrm_performance_plan.assessment_config`（JSON）以及 `iot_product.script_content`（LONGTEXT）和 `script_enabled`（BIT，默认0）。V019/V026/V027保持原文及校验和；原schema JSON是当时的基线快照，不代表合并后所有字段。旧模态和考核快照保留NULL，不伪造历史配置，旧产品脚本保持禁用。
+
+已有受管库部署前，通过原显式配置入口运行 `python script/jss/database.py migrate` 和 `python script/jss/database.py validate`；新库的原init链会执行到V030。该脚本不随应用启动自动运行，不创建账号、种子、角色授权或提供商配置。MySQL DDL可能隐式提交，失败时核查结构和Flyway历史，按原手册处理，不通过改旧脚本或repair跳过校验。
+
+专项 `python script/jss/verify_native_schema_repairs.py` 仅在工具确认归属的MySQL上创建随机三表夹具库，以测试专用baseline29运行实际V030。覆盖修复前三个缺列查询、四列类型/默认值、原字段及大Long/审计保留、CSV/JSON/脚本往返、重复migrate/validate和清理。测试夹具的baseline不是业务库接管入口。另用 `verify_migrations.py` 验证完整新库初始化及受管V029升级；实际结果见docs/testing.md。

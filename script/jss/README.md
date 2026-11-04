@@ -2,7 +2,7 @@
 
 ## 公告备注与V010升级验证
 
-`verify_migrations.py` 现包含十一项真实Flyway检查：框架基座及全部JSS版本初始化、已有V009升级V010、旧公告正文与新备注保留、重复migrate/validate、历史校验和拒绝漂移及初始化前置保护。所有操作仅在工具确认归属的13316随机库，结束清理；V001–V009未改写。新增前置表system_notice，部署包含备注字段的新服务器前必须执行并验证V010，开发库不会自动升级。
+`verify_migrations.py` 当前包含26项真实Flyway检查（包括后续版本专项）：框架基座及全部JSS版本初始化、已有V009升级V010、旧公告正文与新备注保留、重复migrate/validate、历史校验和拒绝漂移及初始化前置保护。所有操作仅在工具确认归属的13316随机库，结束清理；V001–V009未改写。新增前置表system_notice，部署包含备注字段的新服务器前必须执行并验证V010，开发库不会自动升级。
 
 `verify_notice_services.py` 在原始system_notice DDL上应用V010，再装配生产Notice Service/Mapper、租户/分页与Spring事务。五项实际MySQL覆盖备注新增/显式清空/旧客户端null保留、富文本原文、筛选分页、外租户读写/混合批次、缺失整批拒绝和重复ID/外层回滚；无Redis、HTTP或WebSocket发送。当前实际证据及H2/序列化专项见docs/testing.md，不代替授权或在线消息验收。
 
@@ -108,3 +108,17 @@ python script/jss/mysql_sandbox.py stop
 `verify_promotion_campaign_mappers.py` 在随机库执行三项真实 Mapper 测试：优惠券商品范围 CSV 与并发单张领取数量上限、满减嵌套规则及赠券映射、秒杀配置图片 JSON/场次 CSV 与商品并发库存扣减及回补。均验证租户隔离；运行后核对最新报告并删除测试库，日志为 `.runtime/jss-mysql/campaign-mapper-test.log`。测试曾复现秒杀商品读回场次 ID 为 null，现通过 `SeckillProductDO.autoResultMap` 修复。尚未覆盖活动下单的跨表事务或批量发券。
 
 `verify_migrations.py` 在独立随机 schema 中执行真实 Flyway baseline/migrate/validate、校验和漂移拒绝及初始化守卫，连接密码仅从隔离实例的本地配置进入环境变量。正式部署使用 [JSS 迁移命令](../../sql/jss/README.md)，测试工具不会替用户初始化业务库。
+
+
+## V030 原生字段修复专项
+
+在本工具确认归属的 MySQL 测试实例上运行：
+
+```bash
+python script/jss/verify_native_schema_repairs.py
+python script/jss/verify_migrations.py
+```
+
+前者只建随机三表夹具库，验证 V030 对 AI 模态、HRM 考核快照和 IoT 脚本字段的真实 Flyway 升级、旧数据保留、类型及往返和重复执行；finally 删除该库。输出明细位于 `.runtime/jss-mysql/native-schema-repairs.json`。后者保留 V017 专项版本演练，另覆盖最新新库初始化及 V029→V030。测试夹具的显式 baseline29 不用于业务库自动接管。
+
+macOS/Linux 上 `mysql_sandbox.py` 自动为测试进程指定独立 Unix socket `.runtime/jss-mysql/mysql.sock`，避免与已有服务的默认 socket 冲突；默认业务端口和既有实例不得停止。本轮隔离实例只用于验证并在结束后关闭，没有向开发库应用迁移。

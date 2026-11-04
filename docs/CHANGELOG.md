@@ -5196,3 +5196,38 @@ Long显式主键会提升该临时库后续会员自增编号，预期用于发�
 ### 未做 / 后续
 
 本批并发/事务测试使用H2，不宣称真实MySQL/RBAC、完整退款HTTP或外部支付提供商验收；未部署或操作业务库。
+
+
+## [2026-11-04 19:38 ~ 19:38] 追加V030补齐三模块持久字段并验证真实升级
+
+### 意图
+
+修复AI模型、HRM考核计划和IoT产品代码已依赖、但JSS受管表缺失的四列，保留既有Flyway历史与业务数据。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| V030__ai_hrm_iot_missing_columns.sql | 新增 | AI模态LONGTEXT/HRM快照JSON/IoT脚本文本及默认禁用BIT |
+| verify_native_schema_repairs.py | 新增 | 受控随机三表旧库夹具，真实V030迁移、保留/类型/往返/重复及清理检查 |
+| verify_migrations.py | 修正/扩充 | V017专项固定在17，保留其验证并增加受管V029升级到最新版本 |
+| mysql_sandbox.py | 修正 | POSIX测试实例使用自己的Unix socket，避免与已有MySQL冲突 |
+| sql/jss/README.md / script/jss/README.md / docs/testing.md | 更新 | 前向部署入口、隔离验证及实际证据边界 |
+
+### 结构关系
+
+原显式JSS Flyway迁移追加V030；V019/V026/V027逐字保持。旧模态/考核快照留NULL，旧产品脚本默认为0；没有伪造旧快照或启用脚本。专项只复制旧三表DDL到随机测试库，测试专用baseline29后执行单独V030；完整生命周期另走全部真实迁移。
+
+### 验证证据
+
+真实MySQL9.7.1:13316上，新增专项12项全部通过：前三种缺列先复现，升级保留每个旧字段、大Long/审计数据；四列类型、NULL/禁用默认值、CSV/JSON/脚本往返及重复migrate/validate通过，随机库残留0。完整Flyway生命周期26项全过，含新库初始化、V017专项、V029→V030、旧权限/套餐/经验保留与旧脚本校验和拒绝。原生命周期首次暴露把最新升级误认17的断言，已改为固定版本专项而非放宽该断言。日志 /tmp/server-fix-native-schema-final.log、/tmp/server-fix-verify_migrations-final.log；专属socket实连通过，所有归属测试库残留0且实例关闭。
+
+本轮四组修复联合离线jss-mall服务器reactor测试73类、1141项，零失败/错误/跳过，/tmp/server-review-fixes-regression.log；全45模块server package成功（跳过测试，测试证据来自前一命令），/tmp/server-review-fixes-package.log。587个实际MyBatis映射实体与迁移列重新交叉检查无缺失；Python AST、根Spotless检查和git diff --check通过。
+
+### 影响面 / 风险
+
+新服务器部署前须在已有受管业务库显式migrate/validate到V030；本次只生成并验证迁移，没有应用业务库。MySQL DDL可能隐式提交；失败后按原手册核对结构/历史并前向恢复，不修改旧迁移或repair掩盖差异。
+
+### 未做 / 后续
+
+没有部署、替换运行jar、变更开发账号或角色；真实MySQL/Flyway证据仅覆盖隔离迁移，不代表真实HTTP/RBAC/Redis、外部短信/支付/AI/设备或完整小程序验收。

@@ -5231,3 +5231,30 @@ Long显式主键会提升该临时库后续会员自增编号，预期用于发�
 ### 未做 / 后续
 
 没有部署、替换运行jar、变更开发账号或角色；真实MySQL/Flyway证据仅覆盖隔离迁移，不代表真实HTTP/RBAC/Redis、外部短信/支付/AI/设备或完整小程序验收。
+
+
+## [2026-11-04 19:53 ~ 19:55] 移植旧分支 Modbus 必填参数业务错误码
+
+### 意图
+
+独立演进前检查旧远程分支，将当前 JDK25 仍缺少的 Modbus 必填参数修复纳入 main。
+
+### 改了什么
+
+IoT ErrorCodeConstants新增六个协议参数错误码；IotDeviceModbusConfigServiceImpl将六处参数Assert改为ServiceException；新增IotDeviceModbusConfigServiceImplTest九项，docs/testing.md记录复现与验证。来源上游 f0b321cd3ca72f5f3bf96cb4531527f87c4e38b4，与旧origin/master合入的PR1262同一问题。
+
+### 结构关系
+
+沿用设备→产品→协议校验→配置新增/更新链路；保留JDK25/jakarta和原产品存在校验，只移植业务补丁，未整体合并旧JDK8运行时和构建配置。
+
+### 验证证据
+
+旧Service同一九项测试实际六失败，修复后九项全过。IoT定向reactor共48类472项，467通过、5项既有跳过，零失败/错误；根Spotless apply/check及差异检查通过。命令和日志见docs/testing.md。
+
+### 影响面 / 风险
+
+Modbus Client四种、Server两种缺失参数返回受控错误码；配置写入分支及其他协议行为保持。接口调用方可识别具体必填项。
+
+### 未做 / 后续
+
+未连接实际设备、调用业务HTTP或部署。分支审计与清理另行记录。

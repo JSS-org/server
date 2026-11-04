@@ -2109,3 +2109,8 @@ JDK 25.0.2 验证命令与结果：
 最终联合命令：`mvn -o -B -ntp -Pjss-mall -pl yudao-server -am test -Dtest=Gym*Test,Jss*Test,SmsCodeServiceImplTest,MemberRegistrationBoundaryTest,MemberUserRegistrationTest,CouponServiceImplTest,CouponTemplateServiceImplTest,TradeCouponPriceCalculatorTest -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true`，沿用显式Mockito5.23.0 javaagent。新鲜报告73类、1141项全部通过，0失败/错误/跳过，/tmp/server-review-fixes-regression.log。`mvn -o -B -ntp -Pjss-mall -pl yudao-server -am package -DskipTests -Dspotless.skip=true`全45模块成功；该命令跳过测试，/tmp/server-review-fixes-package.log。
 
 587个实体使用实际MyBatis元数据与JSS/Gym迁移列比对已无缺列；三个旧迁移文件与HEAD字节相同。Python AST、根Spotless检查和差异检查通过。以上不登记为真实认证HTTP/Redis、业务库升级或提供商验收，也未部署运行jar。
+
+
+## 2026-11-04 独立演进前 Modbus 参数校验补丁
+
+从上游 JDK8 分支修复 `f0b321cd3ca72f5f3bf96cb4531527f87c4e38b4` 移植业务错误码和九项回归，保留当前 JDK25/jakarta 实现。先补错误码、保持旧 Service 运行同一测试，9项中6项失败（实际 IllegalArgumentException，预期 ServiceException），日志 `/tmp/server-independent-modbus-baseline.log`；修复后执行 `mvn -o -B -ntp -Pjss-mall -pl yudao-module-iot/yudao-module-iot-biz -am test '-Dtest=Iot*Test' -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true`，显式 Mockito5.23.0 javaagent同前，48类472项、467通过/5项既有跳过、零失败/错误，其中新增9项全过，日志 `/tmp/server-independent-iot-final.log`。根 Spotless apply/check、git diff --check通过。本次为服务单元/模块回归，没有真实设备或业务HTTP验收。

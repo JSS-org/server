@@ -4,6 +4,7 @@ import static cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeC
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.module.gym.enums.ErrorCodeConstants.*;
 
+import cn.iocoder.yudao.framework.security.core.service.SecurityFrameworkService;
 import cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileWorkFileUploadReqVO;
 import cn.iocoder.yudao.module.gym.dal.dataobject.contract.GymContractDO;
 import cn.iocoder.yudao.module.gym.dal.dataobject.file.GymFileDO;
@@ -20,7 +21,6 @@ import cn.iocoder.yudao.module.gym.service.common.GymDataScope;
 import cn.iocoder.yudao.module.gym.service.file.*;
 import cn.iocoder.yudao.module.gym.service.file.dto.GymFileContentDTO;
 import cn.iocoder.yudao.module.infra.api.file.FileApi;
-import cn.iocoder.yudao.module.system.api.permission.PermissionApi;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 
@@ -47,7 +47,7 @@ public class GymMobileWorkFilesService {
     @Resource private GymStoreMapper stores;
     @Resource private GymFileService legacyFiles;
     @Resource private GymDataScope scope;
-    @Resource private PermissionApi permissions;
+    @Resource private SecurityFrameworkService security;
     @Resource private FileApi storage;
     @Resource private Validator validator;
 
@@ -56,8 +56,8 @@ public class GymMobileWorkFilesService {
 
     public record UploadedFile(String fileId, String name, String mimeType, long byteSize) {}
 
-    private void permission(Long user, String name) {
-        if (!permissions.hasAnyPermissions(user, name)) throw exception(FORBIDDEN);
+    private void permission(String name) {
+        if (!security.hasPermission(name)) throw exception(FORBIDDEN);
     }
 
     private static String category(String purpose) {
@@ -72,16 +72,16 @@ public class GymMobileWorkFilesService {
         }
         if ("body_report".equals(purpose) || "training_plan".equals(purpose)) {
             if (member == null) throw exception(MOBILE_REQUEST_INVALID);
-            permission(user, "gym:measurements:" + (write ? "write" : "read"));
+            permission("gym:measurements:" + (write ? "write" : "read"));
             access.member(member, store);
             return;
         }
         if ("contract".equals(purpose)) {
             if (member == null) {
-                permission(user, "gym:contracts:templates");
+                permission("gym:contracts:templates");
                 scope.check(store);
             } else {
-                permission(user, "gym:contracts:" + (write ? "write" : "read"));
+                permission("gym:contracts:" + (write ? "write" : "read"));
                 access.member(member, store);
             }
             return;
@@ -94,7 +94,7 @@ public class GymMobileWorkFilesService {
         var errors = validator.validate(req);
         if (!errors.isEmpty()) throw new ConstraintViolationException(errors);
         Long user = access.requireAdmin();
-        permission(user, "gym:files:upload");
+        permission("gym:files:upload");
         if (stores.selectById(req.getStoreId()) == null) throw exception(STORE_NOT_EXISTS);
         business(user, req.getPurpose(), req.getStoreId(), req.getMemberId(), true);
         Long employee =
@@ -166,15 +166,15 @@ public class GymMobileWorkFilesService {
     public GymFileContentDTO content(Long id) {
         if (id == null || id <= 0) throw exception(MOBILE_REQUEST_INVALID);
         Long user = access.requireAdmin();
-        permission(user, "gym:files:read");
+        permission("gym:files:read");
         var file = files.selectById(id);
         if (file == null) throw exception(FILE_NOT_EXISTS);
         var link = bindings.find(id);
         if (link == null) {
             if ("image".equals(file.getCategory())) return coachProfiles.content(id);
             if (Set.of("body_report", "training_plan").contains(file.getCategory()))
-                permission(user, "gym:measurements:read");
-            else if ("contract".equals(file.getCategory())) permission(user, "gym:contracts:read");
+                permission("gym:measurements:read");
+            else if ("contract".equals(file.getCategory())) permission("gym:contracts:read");
             else throw exception(FILE_NOT_EXISTS);
             legacyFiles.getFile(id);
         } else {

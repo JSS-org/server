@@ -3,12 +3,12 @@ package cn.iocoder.yudao.module.gym.service.mobile;
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.module.gym.enums.ErrorCodeConstants.*;
 
+import cn.iocoder.yudao.framework.security.core.service.SecurityFrameworkService;
 import cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileDeviceCommandVO;
 import cn.iocoder.yudao.module.gym.dal.mysql.device.GymDeviceCommandMapper;
 import cn.iocoder.yudao.module.gym.dal.mysql.device.GymDeviceMapper;
 import cn.iocoder.yudao.module.gym.service.common.GymDataScope;
 import cn.iocoder.yudao.module.gym.service.common.GymDateRange;
-import cn.iocoder.yudao.module.system.api.permission.PermissionApi;
 
 import jakarta.annotation.Resource;
 
@@ -29,7 +29,7 @@ public class GymMobileDeviceCommandsService {
                     "模拟设备未接入真实控制，未发送指令");
     @Resource private GymMobileWorkAccess access;
     @Resource private GymDataScope scope;
-    @Resource private PermissionApi permissions;
+    @Resource private SecurityFrameworkService security;
     @Resource private GymDeviceCommandMapper commands;
     @Resource private GymDeviceMapper devices;
 
@@ -40,7 +40,7 @@ public class GymMobileDeviceCommandsService {
         var row = commands.selectById(id);
         if (row == null) throw exception(DEVICE_COMMAND_NOT_EXISTS);
         if (!user.equals(row.getRequesterId())) {
-            if (!permissions.hasAnyPermissions(user, "gym:devices:read"))
+            if (!security.hasPermission("gym:devices:read"))
                 throw exception(DEVICE_COMMAND_NOT_EXISTS);
             var device = devices.selectById(row.getDeviceId());
             if (device == null) throw exception(DEVICE_COMMAND_NOT_EXISTS);

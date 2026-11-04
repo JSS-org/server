@@ -5102,3 +5102,34 @@ Long显式主键会提升该临时库后续会员自增编号，预期用于发�
 ### 未做 / 后续
 
 尚未部署、迁移开发库、修改角色或运行jar；无新真实HTTP/Redis/H5或支付提供商结果。继续cashier权限/返回URL、原页分页/样式依赖和整批UI/真实业务验收，保留全量页面范围及原整合验收版本。
+
+
+## [2026-11-04 19:20 ~ 19:20] 使小程序工作台服务层补充授权遵守凭证上限
+
+### 意图
+
+修复文件下载仅检查原生管理员权限、忽略工作台凭证上限的问题，并清理当前操作者的同类服务层检查。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| GymMobileWorkFilesService.java 等八个 mobile Service | 修改 | 文件、看板、通知、审批列表、风控、私信及设备检查当前操作者时复用 SecurityFrameworkService |
+| GymMobileWorkspacePermissionTest.java | 新增 | 三种文件业务权限交集、原生凭证兼容和空上限看板回归 |
+| docs/testing.md / docs/jss-auth.md | 更新 | 验证范围及补充授权边界 |
+
+### 结构关系
+
+原 Controller 和 Service 的当前操作者补充校验统一调用现有 SecurityFrameworkService，逐项与 permissionLimits 及原生 RBAC 求交；门店、会员责任和文件归属检查保留。审批候选人、二维码签发人等针对其他账号的资格校验仍使用原 PermissionApi，不将请求人的凭证上限套到另一主体。
+
+### 验证证据
+
+离线 Maven reactor 运行 GymOrganizationServiceTest 的610项通过；修正新增测试的门店范围替身设置后，GymMobileWorkspacePermissionTest四项全部通过、零失败/错误/跳过。三个文件用例均覆盖仅原生允许仍拒绝、仅上限允许仍拒绝、双重允许和原生无上限兼容；空上限看板不读取聚合数据。根 Spotless apply/check及git diff --check通过。日志 /tmp/server-fix-workspace-permissions.log、/tmp/server-fix-workspace-boundaries.log、/tmp/server-fix-permissions-format.log。
+
+### 影响面 / 风险
+
+原生无上限凭证沿用原授权策略；工作台仅有文件权限但缺少具体业务权限时现在拒绝访问。看板及通知不再展示超出上限的数据；没有授予角色或改变租户数据范围。
+
+### 未做 / 后续
+
+本批使用H2和RBAC/外部存储替身，不代表真实HTTP、Redis或完整业务验收；没有部署、迁移业务数据库或修改开发账号。

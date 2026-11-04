@@ -6,6 +6,7 @@ import static cn.iocoder.yudao.module.gym.enums.ErrorCodeConstants.*;
 
 import cn.iocoder.yudao.framework.common.pojo.*;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
+import cn.iocoder.yudao.framework.security.core.service.SecurityFrameworkService;
 import cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileRiskVO.*;
 import cn.iocoder.yudao.module.gym.dal.dataobject.risk.*;
 import cn.iocoder.yudao.module.gym.dal.mysql.file.GymFileMapper;
@@ -15,7 +16,6 @@ import cn.iocoder.yudao.module.gym.framework.file.core.utils.GymFileTypeUtils;
 import cn.iocoder.yudao.module.gym.service.common.*;
 import cn.iocoder.yudao.module.gym.service.file.dto.GymFileContentDTO;
 import cn.iocoder.yudao.module.infra.api.file.FileApi;
-import cn.iocoder.yudao.module.system.api.permission.PermissionApi;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 
@@ -32,7 +32,7 @@ import java.util.*;
 public class GymMobileRiskService {
     @Resource private GymMobileWorkAccess access;
     @Resource private GymDataScope scope;
-    @Resource private PermissionApi permissions;
+    @Resource private SecurityFrameworkService security;
     @Resource private GymStoreMapper stores;
     @Resource private GymRiskAlertMapper alerts;
     @Resource private GymRiskResolutionMapper resolutions;
@@ -49,9 +49,8 @@ public class GymMobileRiskService {
 
     private Long authorize(boolean write) {
         Long user = access.requireAdmin();
-        if (!permissions.hasAnyPermissions(user, "gym:risk:read")
-                || write && !permissions.hasAnyPermissions(user, "gym:risk:resolve"))
-            throw exception(FORBIDDEN);
+        if (!security.hasPermission("gym:risk:read")
+                || write && !security.hasPermission("gym:risk:resolve")) throw exception(FORBIDDEN);
         return user;
     }
 

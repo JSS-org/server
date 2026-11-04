@@ -5,6 +5,7 @@ import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionU
 import static cn.iocoder.yudao.module.gym.enums.ErrorCodeConstants.*;
 
 import cn.iocoder.yudao.framework.common.exception.ErrorCode;
+import cn.iocoder.yudao.framework.security.core.service.SecurityFrameworkService;
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
 import cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymActionConfirmationVO.*;
 import cn.iocoder.yudao.module.gym.dal.dataobject.device.*;
@@ -13,7 +14,6 @@ import cn.iocoder.yudao.module.gym.dal.mysql.store.GymStoreMapper;
 import cn.iocoder.yudao.module.gym.framework.mobile.GymActionConfirmationProperties;
 import cn.iocoder.yudao.module.gym.service.common.*;
 import cn.iocoder.yudao.module.gym.service.device.GymActionTotp;
-import cn.iocoder.yudao.module.system.api.permission.PermissionApi;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 
@@ -35,7 +35,7 @@ import java.util.*;
 public class GymMobileActionConfirmationsService {
     @Resource private GymMobileWorkAccess access;
     @Resource private GymDataScope scope;
-    @Resource private PermissionApi permissions;
+    @Resource private SecurityFrameworkService security;
     @Resource private GymDeviceMapper devices;
     @Resource private GymDeviceCompartmentMapper compartments;
     @Resource private GymStoreMapper stores;
@@ -53,7 +53,7 @@ public class GymMobileActionConfirmationsService {
 
     private Long authorize() {
         Long user = access.requireAdmin();
-        if (!permissions.hasAnyPermissions(user, "gym:devices:command")) throw exception(FORBIDDEN);
+        if (!security.hasPermission("gym:devices:command")) throw exception(FORBIDDEN);
         return user;
     }
 

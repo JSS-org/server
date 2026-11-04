@@ -4,13 +4,13 @@ import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionU
 import static cn.iocoder.yudao.module.gym.enums.ErrorCodeConstants.*;
 
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.security.core.service.SecurityFrameworkService;
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
 import cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileNotificationsVO.*;
 import cn.iocoder.yudao.module.gym.dal.dataobject.mobile.*;
 import cn.iocoder.yudao.module.gym.dal.mysql.mobile.*;
 import cn.iocoder.yudao.module.gym.service.common.*;
 import cn.iocoder.yudao.module.gym.service.member.GymMemberCoachService;
-import cn.iocoder.yudao.module.system.api.permission.PermissionApi;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -32,7 +32,7 @@ public class GymMobileNotificationsService {
     @Resource private GymMobileIdentityService identities;
     @Resource private GymMobileWorkAccess work;
     @Resource private GymMemberCoachService coaches;
-    @Resource private PermissionApi permissions;
+    @Resource private SecurityFrameworkService security;
     @Resource private GymBusinessClock clock;
     @Resource private GymBusinessMutex mutex;
     @Resource private Validator validator;
@@ -64,7 +64,7 @@ public class GymMobileNotificationsService {
         // Currently staff notifications originate only from their teaching bookings. Re-evaluate
         // the original read permission and BOTH member responsibility and coach scope before
         // paging.
-        if (!permissions.hasAnyPermissions(user, "gym:bookings:read")) return q.apply("1=0");
+        if (!security.hasPermission("gym:bookings:read")) return q.apply("1=0");
         return q.eq(GymMobileNotificationDO::getSourceType, "booking")
                 .apply(
                         coaches.predicate(

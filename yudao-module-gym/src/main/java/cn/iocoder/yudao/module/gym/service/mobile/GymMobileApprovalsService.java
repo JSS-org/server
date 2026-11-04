@@ -6,6 +6,7 @@ import static cn.iocoder.yudao.module.gym.enums.ErrorCodeConstants.*;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.framework.datapermission.core.util.DataPermissionUtils;
+import cn.iocoder.yudao.framework.security.core.service.SecurityFrameworkService;
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
 import cn.iocoder.yudao.module.gym.controller.admin.approval.vo.GymApprovalDecisionReqVO;
 import cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileApprovalsVO.*;
@@ -37,6 +38,7 @@ public class GymMobileApprovalsService {
     @Resource private GymMobileWorkAccess access;
     @Resource private GymDataScope scope;
     @Resource private PermissionApi permissions;
+    @Resource private SecurityFrameworkService security;
     @Resource private GymApprovalMapper approvals;
     @Resource private GymApprovalTaskMapper tasks;
     @Resource private GymApprovalTemplateMapper templates;
@@ -103,7 +105,7 @@ public class GymMobileApprovalsService {
         switch (req.getView()) {
             case "mine" -> q.eq(GymApprovalDO::getApplicantUserId, user);
             case "pending" -> {
-                if (!permissions.hasAnyPermissions(user, "gym:approvals:decide"))
+                if (!security.hasPermission("gym:approvals:decide"))
                     return new PageResult<>(List.of(), 0L);
                 q.apply(broad())
                         .eq(GymApprovalDO::getStatus, "pending")

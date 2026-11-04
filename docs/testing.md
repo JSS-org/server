@@ -2085,3 +2085,8 @@ JDK 25.0.2 验证命令与结果：
 - IoT 网关独立 `mvn -f yudao-module-iot/yudao-module-iot-gateway/pom.xml test -Dspotless.skip=true`（同一 Mockito agent）：300 项中 214 通过、86 既有禁用跳过，0 失败/错误；日志 `/tmp/server-jdk25-gateway-tests.log`。
 - 在 `sql/tools` 执行 `PYTHONDONTWRITEBYTECODE=1 uv run --with simple-ddl-parser python -m unittest test_convertor -v`：19 项全部通过；日志 `/tmp/server-jdk25-sql-tests.log`。
 - 撤回全局格式化对本轮无关文件的修改，最终仅对合并涉及的 Java 文件执行 `mvn -B -ntp -N spotless:check -DspotlessFiles=...`；差异和未解决冲突检查通过。未将以上结果记为真实业务 HTTP、MySQL/Redis、外部 AI/支付服务或部署验收。
+
+
+## 2026-11-04 小程序补充业务权限上限回归
+
+`mvn -o -B -ntp -pl yudao-module-gym -am test -Dtest=GymMobileWorkspacePermissionTest,GymOrganizationServiceTest -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true`，沿用本机 Mockito 5.23.0 javaagent。原610项业务回归通过；新增看板夹具首次未声明全门店范围而失败，补正夹具后单独运行 GymMobileWorkspacePermissionTest 四项全过。文件三个参数场景验证原生/上限授权交集，原生凭证兼容；看板空上限不查聚合。Spotless apply/check通过。使用H2及RBAC/存储替身，无新真实HTTP/Redis结果。

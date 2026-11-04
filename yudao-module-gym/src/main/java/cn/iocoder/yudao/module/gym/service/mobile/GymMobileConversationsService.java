@@ -4,6 +4,7 @@ import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionU
 import static cn.iocoder.yudao.module.gym.enums.ErrorCodeConstants.*;
 
 import cn.iocoder.yudao.framework.common.pojo.*;
+import cn.iocoder.yudao.framework.security.core.service.SecurityFrameworkService;
 import cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileConversationsVO.*;
 import cn.iocoder.yudao.module.gym.dal.dataobject.card.GymMemberStoreDO;
 import cn.iocoder.yudao.module.gym.dal.dataobject.mobile.*;
@@ -13,7 +14,6 @@ import cn.iocoder.yudao.module.gym.dal.mysql.mobile.*;
 import cn.iocoder.yudao.module.gym.dal.mysql.store.GymStoreMapper;
 import cn.iocoder.yudao.module.gym.service.common.*;
 import cn.iocoder.yudao.module.gym.service.member.GymMemberService;
-import cn.iocoder.yudao.module.system.api.permission.PermissionApi;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 
@@ -40,7 +40,7 @@ public class GymMobileConversationsService {
     @Resource private GymMemberMapper members;
     @Resource private GymStoreMapper stores;
     @Resource private GymMemberStoreMapper memberships;
-    @Resource private PermissionApi permissions;
+    @Resource private SecurityFrameworkService security;
     @Resource private GymMobileIdempotency idempotency;
     @Resource private GymBusinessMutex mutex;
     @Resource private GymBusinessClock clock;
@@ -63,8 +63,8 @@ public class GymMobileConversationsService {
 
     private Long staff(boolean writing) {
         Long user = work.requireAdmin();
-        if (!permissions.hasAnyPermissions(user, "gym:messages:read")
-                || writing && !permissions.hasAnyPermissions(user, "gym:messages:send"))
+        if (!security.hasPermission("gym:messages:read")
+                || writing && !security.hasPermission("gym:messages:send"))
             throw new AccessDeniedException("No permission to access member conversations");
         return user;
     }

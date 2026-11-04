@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.gym.service.mobile;
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.module.gym.enums.ErrorCodeConstants.*;
 
+import cn.iocoder.yudao.framework.security.core.service.SecurityFrameworkService;
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
 import cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileDashboardVO.*;
 import cn.iocoder.yudao.module.gym.dal.dataobject.employee.GymEmployeeStoreDO;
@@ -32,6 +33,7 @@ public class GymMobileDashboardService {
     @Resource private GymMobileWorkAccess access;
     @Resource private GymDataScope scope;
     @Resource private PermissionApi permissions;
+    @Resource private SecurityFrameworkService security;
     @Resource private GymBusinessClock clock;
     @Resource private GymStoreMapper stores;
     @Resource private GymEmployeeStoreMapper employments;
@@ -104,22 +106,22 @@ public class GymMobileDashboardService {
         Lessons lessons = null;
         Members members = null;
         Long pending = null;
-        if (permissions.hasAnyPermissions(user, "gym:reports:read")) {
+        if (security.hasPermission("gym:reports:read")) {
             if (ids.isEmpty()) performance = new Performance("0.00", "0.00");
             else {
                 var r = mapper.amounts(q);
                 performance = new Performance(money(r.getTodayAmount()), money(r.getMonthAmount()));
             }
         }
-        if (permissions.hasAnyPermissions(user, "gym:checkins:read")) {
+        if (security.hasPermission("gym:checkins:read")) {
             var r = ids.isEmpty() ? new Counts() : mapper.checkins(q);
             checkins = new Checkins(r.getTodayCount(), r.getYesterdayCount());
         }
-        if (permissions.hasAnyPermissions(user, "gym:lessons:read")) {
+        if (security.hasPermission("gym:lessons:read")) {
             var r = ids.isEmpty() ? new Counts() : mapper.lessons(q);
             lessons = new Lessons(r.getTodayCount(), r.getYesterdayCount(), r.getMonthCount());
         }
-        if (permissions.hasAnyPermissions(user, "gym:members:read")) {
+        if (security.hasPermission("gym:members:read")) {
             var r = ids.isEmpty() ? new Population() : mapper.members(q);
             members =
                     new Members(
@@ -128,8 +130,8 @@ public class GymMobileDashboardService {
                             employee == null ? r.getTotal() : null);
         }
         if (employee == null
-                && permissions.hasAnyPermissions(user, "gym:approvals:read")
-                && permissions.hasAnyPermissions(user, "gym:approvals:decide"))
+                && security.hasPermission("gym:approvals:read")
+                && security.hasPermission("gym:approvals:decide"))
             pending = ids.isEmpty() ? 0L : mapper.pending(q);
         return new Dashboard(
                 new Scope(

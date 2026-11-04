@@ -84,7 +84,7 @@ public interface CouponTemplateMapper extends BaseMapperX<CouponTemplateDO> {
         // 构建可领取的查询条件
         Consumer<LambdaQueryWrapper<CouponTemplateDO>> canTakeConsumer =
                 buildCanTakeQueryConsumer(canTakeTypes);
-        return selectList(
+        return selectListLimitN(
                 new LambdaQueryWrapperX<CouponTemplateDO>()
                         .eqIfPresent(CouponTemplateDO::getProductScope, productScope)
                         .and(
@@ -94,8 +94,8 @@ public interface CouponTemplateMapper extends BaseMapperX<CouponTemplateDO> {
                                                 MyBatisUtils.findInSet("product_scope_values"),
                                                 productScopeValue))
                         .and(canTakeConsumer != null, canTakeConsumer)
-                        .last(" LIMIT " + count)
-                        .orderByDesc(CouponTemplateDO::getId));
+                        .orderByDesc(CouponTemplateDO::getId),
+                count);
     }
 
     static Consumer<LambdaQueryWrapper<CouponTemplateDO>> buildCanTakeQueryConsumer(

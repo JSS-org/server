@@ -45,9 +45,7 @@ public interface MesProWorkOrderMapper extends BaseMapperX<MesProWorkOrderDO> {
                 null,
                 new LambdaUpdateWrapper<MesProWorkOrderDO>()
                         .eq(MesProWorkOrderDO::getId, id)
-                        .setSql(
-                                "quantity_produced = IFNULL(quantity_produced, 0) + "
-                                        + incrQuantityProduced));
+                        .setIncrBy(MesProWorkOrderDO::getQuantityProduced, incrQuantityProduced));
     }
 
     default Long selectCountByVendorId(Long vendorId) {

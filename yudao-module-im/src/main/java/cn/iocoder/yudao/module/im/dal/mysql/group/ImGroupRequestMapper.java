@@ -74,10 +74,10 @@ public interface ImGroupRequestMapper extends BaseMapperX<ImGroupRequestDO> {
                                                     n.eq(ImGroupRequestDO::getUpdateTime, lastTime)
                                                             .gt(ImGroupRequestDO::getId, lastId)));
         }
-        return selectList(
+        return selectListLimitN(
                 query.orderByAsc(ImGroupRequestDO::getUpdateTime)
-                        .orderByAsc(ImGroupRequestDO::getId)
-                        .last("LIMIT " + limit));
+                        .orderByAsc(ImGroupRequestDO::getId),
+                limit);
     }
 
     default int updateByIdAndHandleResult(

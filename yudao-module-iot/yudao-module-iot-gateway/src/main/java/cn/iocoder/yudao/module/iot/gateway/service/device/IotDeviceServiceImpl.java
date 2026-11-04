@@ -25,7 +25,7 @@ import java.time.Duration;
  *
  * @author 芋道源码
  */
-@Service
+@Service("iotGatewayDeviceServiceImpl") // 显式 bean 名：避免与 biz 的 IotDeviceServiceImpl 同名冲突
 @Slf4j
 public class IotDeviceServiceImpl implements IotDeviceService {
 

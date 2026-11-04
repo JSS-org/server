@@ -2,9 +2,11 @@ package cn.iocoder.yudao.module.iot.gateway.protocol.udp.handler.downstream;
 
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.gateway.protocol.udp.IotUdpProtocol;
+import cn.iocoder.yudao.module.iot.gateway.protocol.udp.handler.upstream.IotUdpUpstreamHandler;
 import cn.iocoder.yudao.module.iot.gateway.protocol.udp.manager.IotUdpSessionManager;
 import cn.iocoder.yudao.module.iot.gateway.serialize.IotMessageSerializer;
 
+import io.vertx.core.Future;
 import io.vertx.core.datagram.DatagramSocket;
 
 import lombok.RequiredArgsConstructor;
@@ -78,5 +80,20 @@ public class IotUdpDownstreamHandler {
                     message,
                     e);
         }
+    }
+
+    /**
+     * 处理透传下行（raw.push 或编码脚本的输出）：原始字节按透传下行格式包装后发送，不等待
+     * <p>
+     * 会话不存在（或已过期）、UDP Socket 不可用时，由 {@link IotUdpSessionManager#sendToDeviceAsync} 返回失败
+     *
+     * @param message 下行消息
+     * @param bytes   要写出的原始字节
+     * @return 真实的发送结果
+     */
+    public Future<Void> handleRawMessage(IotDeviceMessage message, byte[] bytes) {
+        DatagramSocket socket = protocol.getUdpSocket();
+        return sessionManager.sendToDeviceAsync(
+                message.getDeviceId(), IotUdpUpstreamHandler.encodeRawDownstream(bytes), socket);
     }
 }

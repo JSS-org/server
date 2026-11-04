@@ -43,7 +43,6 @@ public interface MesCalPlanMapper extends BaseMapperX<MesCalPlanDO> {
         return selectList(
                 new LambdaQueryWrapperX<MesCalPlanDO>()
                         .eq(MesCalPlanDO::getStatus, status)
-                        // TODO @AI：dayend 获取下？应该有方法，这样可以 le，更统一点；
                         .lt(MesCalPlanDO::getStartDate, day.plusDays(1).atStartOfDay())
                         .ge(MesCalPlanDO::getEndDate, day.atStartOfDay())
                         .orderByAsc(MesCalPlanDO::getId));

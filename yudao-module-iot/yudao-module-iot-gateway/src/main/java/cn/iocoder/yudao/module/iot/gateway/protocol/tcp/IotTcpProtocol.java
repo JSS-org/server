@@ -54,7 +54,7 @@ public class IotTcpProtocol implements IotProtocol {
     /**
      * Vert.x 实例
      */
-    private Vertx vertx;
+    @Getter private Vertx vertx;
 
     /**
      * TCP 服务器

@@ -40,7 +40,8 @@ public class IdTypeEnvironmentPostProcessor implements EnvironmentPostProcessor 
                     DbType.POSTGRE_SQL,
                     DbType.KINGBASE_ES,
                     DbType.DB2,
-                    DbType.H2);
+                    DbType.H2,
+                    DbType.OSCAR);
 
     @Override
     public void postProcessEnvironment(
@@ -60,7 +61,7 @@ public class IdTypeEnvironmentPostProcessor implements EnvironmentPostProcessor 
         if (idType != IdType.NONE) {
             return;
         }
-        // 情况一，用户输入 ID，适合 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库
+        // 情况一，用户输入 ID，适合 Oracle、PostgreSQL、Kingbase、DB2、H2、神通数据库
         if (INPUT_ID_TYPES.contains(dbType)) {
             setIdType(environment, IdType.INPUT);
             return;

@@ -2065,3 +2065,23 @@ V014只新增隐藏按钮元数据，不给角色/套餐授权，不重启用现
 H5覆盖商品列表/购物车结算下单及取消恢复库存、真实领券/优惠结算/取消返券/余额付款/按实付退款、余额支付后取消售后并重新申请退款。领取、价格、库存、券状态、钱包流水和通知任务仍走原实际API断言。此前两项通过/领券一项失败的报告保留；前端修正实际按钮目标、区分页脚与SKU弹层，并用独立商品深链建立每次结算的页面栈，未减少业务断言或强制点击。
 
 该定向运行使用已合入145管理源页的前端ba8a552。既有工作台9 HTTP/21 H5也已实际全过，但先前组合未包含最新营销源码；仍需在当前版本执行完整all并取新鲜两套成功报告，不能以本次mall单独成功更新整合版本或宣布全量完成。支付为隔离库内的实际余额/测试通道，不是外部提供商、生产资金或原生设备验收。
+
+
+## 2026-11-04 main 同步 JDK 25 上游
+
+将 `upstream/master-jdk25` 的 `947f986e0fc605538caa668b243910fd3320c3d5` 合入本地 `main`（原 HEAD `dc9a7e4cad`，包含尚未推送的 `docs/uniapp/uniapp.md` 提交）。GitHub 与 Gitee 的 JDK 25 分支头一致，本轮合入 77 条上游提交，项目版本随上游更新为 `2026.10-jdk25-SNAPSHOT`。
+
+196 个初始冲突文件中，186 个经统一三方 Java 格式后确认本地仅有格式变化，8 个完成规范化三方合并；手工合并权限上下文测试，保留本地三个异步隔离回归并加入上游线程池/子线程测试，通义模型示例测试跟随上游多模态接口配置。保留本地私有文件策略、订单调价与券库存校验、通知归属及禁用时序存储模式。原 `uniapp.md` blob `f0d467e0917938f52589164fe0f246c4b674ca23` 字节不变。
+
+验证过程中修复三处整合问题：财务账套的两个直接锁定读测试显式开启事务；报表模板测试改从 classpath 加载固定 SQL 夹具（原文来自上游历史提交 `152036a7ab`，原升级脚本此前已删除）；本地 `IotDisabledTimeSeriesDAO` 补齐上游新增的 `deleteProductPropertyTable` 接口，仍抛出存储禁用错误，并纳入原拒绝操作回归。没有放宽生产事务校验或执行业务数据库升级。
+
+JDK 25.0.2 验证命令与结果：
+
+- 先执行 `mvn -B -ntp -f yudao-dependencies/pom.xml install -DskipTests` 安装新版本 BOM，解决根项目单独 `-N` 检查时新 BOM 尚未进入本地缓存的问题。
+- 服务端 45 模块范围先运行 `mvn -B -ntp -Pjss-mall -pl yudao-server -am spotless:apply spotless:check test`，使用本机 Mockito 5.23.0 javaagent。首轮在 FMS 的旧测试条件处失败；修复后用相同 reactor 加 `-rf :yudao-module-fms -Dspotless.skip=true` 继续完成回归。按测试类取最终结果去重：610 类、6418 项，6182 通过、236 既有/条件跳过、0 失败/错误。权限上下文 10 项、文件服务 45 项、财务账套 13 项、财务模板 10 项、禁用存储模式 3 项均通过。日志 `/tmp/server-jdk25-tests.log`、`/tmp/server-jdk25-tests-resume.log`。
+- `mvn -B -ntp -Pjss-mall -pl yudao-server -am install -DskipTests -Dspotless.skip=true` 打包并安装。首轮暴露上述 IoT 接口缺失，补齐后从 `:yudao-module-iot-biz` 恢复，全部 45 模块分段成功，生成服务端 jar；此阶段跳过测试。日志 `/tmp/server-jdk25-package.log`、`/tmp/server-jdk25-package-resume.log`。
+- 报表模块独立 `mvn -f yudao-module-report/pom.xml test -Dspotless.skip=true`（同一 Mockito agent）：113 项全部通过，含新增 UReport2；日志 `/tmp/server-jdk25-report-tests.log`。
+- AI1 独立定向运行 `Ai1LlmModelFactoryTest,Ai1HomeServiceImplTest,Ai1SessionMessageServiceImplTest`：44 项全部通过；日志 `/tmp/server-jdk25-ai1-tests.log`。
+- IoT 网关独立 `mvn -f yudao-module-iot/yudao-module-iot-gateway/pom.xml test -Dspotless.skip=true`（同一 Mockito agent）：300 项中 214 通过、86 既有禁用跳过，0 失败/错误；日志 `/tmp/server-jdk25-gateway-tests.log`。
+- 在 `sql/tools` 执行 `PYTHONDONTWRITEBYTECODE=1 uv run --with simple-ddl-parser python -m unittest test_convertor -v`：19 项全部通过；日志 `/tmp/server-jdk25-sql-tests.log`。
+- 撤回全局格式化对本轮无关文件的修改，最终仅对合并涉及的 Java 文件执行 `mvn -B -ntp -N spotless:check -DspotlessFiles=...`；差异和未解决冲突检查通过。未将以上结果记为真实业务 HTTP、MySQL/Redis、外部 AI/支付服务或部署验收。

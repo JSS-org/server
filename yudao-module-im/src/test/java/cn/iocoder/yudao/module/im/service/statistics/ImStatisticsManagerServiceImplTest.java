@@ -75,21 +75,21 @@ public class ImStatisticsManagerServiceImplTest extends BaseMockitoUnitTest {
 
     @Test
     public void testGetNewUserDailyCountMap_dateConvert() {
-        // 准备：date 字段以 SQL Date / String 混入，count 混入多种 Number
+        // 准备：statDate 字段以 SQL Date / String 混入，count 混入多种 Number
         when(statisticsMapper.selectNewUserDailyCount(eq(BEGIN), eq(END)))
                 .thenReturn(
                         Arrays.asList(
                                 row(
-                                        "date",
+                                        "statDate",
                                         java.sql.Date.valueOf("2026-01-10"),
                                         "count",
                                         BigInteger.valueOf(5)),
-                                row("date", "2026-01-11", "count", 8)));
+                                row("statDate", "2026-01-11", "count", 8)));
 
         // 调用
         Map<LocalDateTime, Long> result = service.getNewUserDailyCountMap(BEGIN, END);
 
-        // 断言：date → LocalDateTime 起始零点
+        // 断言：statDate → LocalDateTime 起始零点
         assertEquals(2, result.size());
         assertEquals(5L, result.get(LocalDate.of(2026, 1, 10).atStartOfDay()));
         assertEquals(8L, result.get(LocalDate.of(2026, 1, 11).atStartOfDay()));
@@ -98,7 +98,7 @@ public class ImStatisticsManagerServiceImplTest extends BaseMockitoUnitTest {
     @Test
     public void testGetActiveUserDailyCountMap_dateConvert() {
         when(statisticsMapper.selectActiveUserDailyCount(any(), any()))
-                .thenReturn(Arrays.asList(row("date", "2026-01-10", "count", 3L)));
+                .thenReturn(Arrays.asList(row("statDate", "2026-01-10", "count", 3L)));
 
         Map<LocalDateTime, Long> result = service.getActiveUserDailyCountMap(BEGIN, END);
         assertEquals(3L, result.get(LocalDate.of(2026, 1, 10).atStartOfDay()));
@@ -107,7 +107,7 @@ public class ImStatisticsManagerServiceImplTest extends BaseMockitoUnitTest {
     @Test
     public void testGetPrivateMessageDailyCountMap_dateConvert() {
         when(statisticsMapper.selectPrivateMessageDailyCount(any(), any()))
-                .thenReturn(Arrays.asList(row("date", "2026-01-10", "count", 7L)));
+                .thenReturn(Arrays.asList(row("statDate", "2026-01-10", "count", 7L)));
         assertEquals(
                 7L,
                 service.getPrivateMessageDailyCountMap(BEGIN, END)
@@ -117,7 +117,7 @@ public class ImStatisticsManagerServiceImplTest extends BaseMockitoUnitTest {
     @Test
     public void testGetGroupMessageDailyCountMap_dateConvert() {
         when(statisticsMapper.selectGroupMessageDailyCount(any(), any()))
-                .thenReturn(Arrays.asList(row("date", "2026-01-10", "count", 9L)));
+                .thenReturn(Arrays.asList(row("statDate", "2026-01-10", "count", 9L)));
         assertEquals(
                 9L,
                 service.getGroupMessageDailyCountMap(BEGIN, END)
@@ -131,8 +131,8 @@ public class ImStatisticsManagerServiceImplTest extends BaseMockitoUnitTest {
         when(statisticsMapper.selectGroupSizeDistribution())
                 .thenReturn(
                         Arrays.asList(
-                                row("range", "1-9 人", "count", BigInteger.valueOf(3)),
-                                row("range", "10-49 人", "count", 2)));
+                                row("sizeRange", "1-9 人", "count", BigInteger.valueOf(3)),
+                                row("sizeRange", "10-49 人", "count", 2)));
 
         Map<String, Long> result = service.getGroupSizeCountMap();
         assertEquals(3L, result.get("1-9 人"));

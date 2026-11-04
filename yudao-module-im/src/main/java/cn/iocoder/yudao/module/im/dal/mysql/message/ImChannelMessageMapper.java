@@ -32,7 +32,7 @@ public interface ImChannelMessageMapper extends BaseMapperX<ImChannelMessageDO> 
      */
     default List<ImChannelMessageDO> selectListByUserAndMinId(
             Long userId, Long minId, Integer size) {
-        return selectList(
+        return selectListLimitN(
                 new LambdaQueryWrapperX<ImChannelMessageDO>()
                         .gt(ImChannelMessageDO::getId, minId)
                         .and(
@@ -46,8 +46,8 @@ public interface ImChannelMessageMapper extends BaseMapperX<ImChannelMessageDO> 
                                                 .apply(
                                                         MyBatisUtils.findInSet("receiver_user_ids"),
                                                         userId))
-                        .orderByAsc(ImChannelMessageDO::getId)
-                        .last("LIMIT " + size));
+                        .orderByAsc(ImChannelMessageDO::getId),
+                size);
     }
 
     default Long selectCountByMaterialId(Long materialId) {

@@ -36,6 +36,7 @@ import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -203,6 +204,7 @@ public class FmsAccountSetServiceImplTest extends BaseDbUnitTest {
     }
 
     @Test
+    @Transactional
     public void testLockAccountSet_success() {
         // mock 数据
         FmsAccountSetDO accountSet = buildAccountSetDO("WK001", true);
@@ -216,6 +218,7 @@ public class FmsAccountSetServiceImplTest extends BaseDbUnitTest {
     }
 
     @Test
+    @Transactional
     public void testLockAccountSet_notExists() {
         // 调用，并断言异常
         assertServiceException(

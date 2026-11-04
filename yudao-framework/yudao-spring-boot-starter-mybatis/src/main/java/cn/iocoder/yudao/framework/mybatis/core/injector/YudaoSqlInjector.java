@@ -17,7 +17,8 @@ import java.util.List;
  * 自定义 SQL 注入器
  *
  * 在 MyBatis Plus Join 的 {@link MPJSqlInjector} 基础上，将 selectMaps 的结果行替换为 {@link CaseInsensitiveResultMap}，
- * 解决 PostgreSQL、Oracle 等数据库列标签大小写折叠，导致按固定 key 取不到值的问题
+ * 解决 PostgreSQL、Oracle 等数据库列标签大小写折叠，导致按固定 key 取不到值的问题；
+ * 并增加锁定读使用的内置查询 {@link SelectForUpdateMethod}
  *
  * @author 芋道源码
  */
@@ -29,6 +30,9 @@ public class YudaoSqlInjector extends MPJSqlInjector {
         List<AbstractMethod> methods = super.getMethodList(configuration, mapperClass, tableInfo);
         methods.replaceAll(
                 method -> method instanceof SelectMaps ? new CaseInsensitiveSelectMaps() : method);
+        for (SelectForUpdateMethod.Kind kind : SelectForUpdateMethod.Kind.values()) {
+            methods.add(new SelectForUpdateMethod(kind));
+        }
         return methods;
     }
 

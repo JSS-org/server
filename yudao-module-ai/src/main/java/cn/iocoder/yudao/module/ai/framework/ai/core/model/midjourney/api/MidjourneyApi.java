@@ -41,6 +41,7 @@ public class MidjourneyApi {
                     reqParam ->
                             response ->
                                     response.bodyToMono(String.class)
+                                            .defaultIfEmpty("")
                                             .handle(
                                                     (responseBody, sink) -> {
                                                         HttpRequest request = response.request();
@@ -70,6 +71,11 @@ public class MidjourneyApi {
                                 httpHeaders -> {
                                     httpHeaders.setContentType(MediaType.APPLICATION_JSON);
                                     httpHeaders.setBearerAuth(apiKey);
+                                    // 兼容 novicezk/midjourney-proxy：开启 mj.api-secret 后，通过
+                                    // mj-api-secret 请求头鉴权
+                                    if (StrUtil.isNotEmpty(apiKey)) {
+                                        httpHeaders.set("mj-api-secret", apiKey);
+                                    }
                                 })
                         .build();
         this.notifyUrl = notifyUrl;

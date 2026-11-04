@@ -5,7 +5,6 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
-import cn.iocoder.yudao.framework.mybatis.core.query.QueryWrapperX;
 import cn.iocoder.yudao.module.ai1.controller.admin.session.vo.message.Ai1SessionMessagePageReqVO;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.session.Ai1SessionMessageDO;
 
@@ -58,12 +57,12 @@ public interface Ai1SessionMessageMapper extends BaseMapperX<Ai1SessionMessageDO
      */
     default List<Ai1SessionMessageDO> selectListBySessionIdAndIdLessThan(
             Long sessionId, Long id, Integer limit) {
-        return selectList(
-                new QueryWrapperX<Ai1SessionMessageDO>()
-                        .limitN(limit)
-                        .eq("session_id", sessionId)
-                        .lt("id", id)
-                        .orderByDesc("id"));
+        return selectListLimitN(
+                new LambdaQueryWrapperX<Ai1SessionMessageDO>()
+                        .eq(Ai1SessionMessageDO::getSessionId, sessionId)
+                        .lt(Ai1SessionMessageDO::getId, id)
+                        .orderByDesc(Ai1SessionMessageDO::getId),
+                limit);
     }
 
     /**
@@ -71,13 +70,12 @@ public interface Ai1SessionMessageMapper extends BaseMapperX<Ai1SessionMessageDO
      */
     default Ai1SessionMessageDO selectFirstBySessionIdsAndStatusAndIdGt(
             Collection<Long> sessionIds, Integer status, Long id) {
-        return selectOne(
-                new QueryWrapperX<Ai1SessionMessageDO>()
-                        .limitN(1)
-                        .in("session_id", sessionIds)
-                        .eq("status", status)
-                        .gt("id", id)
-                        .orderByAsc("id"));
+        return selectFirstOne(
+                new LambdaQueryWrapperX<Ai1SessionMessageDO>()
+                        .in(Ai1SessionMessageDO::getSessionId, sessionIds)
+                        .eq(Ai1SessionMessageDO::getStatus, status)
+                        .gt(Ai1SessionMessageDO::getId, id)
+                        .orderByAsc(Ai1SessionMessageDO::getId));
     }
 
     /**
@@ -85,14 +83,14 @@ public interface Ai1SessionMessageMapper extends BaseMapperX<Ai1SessionMessageDO
      */
     default List<Ai1SessionMessageDO> selectListBySessionIdsAndStatusAndIdBetween(
             Collection<Long> sessionIds, Integer status, Long minId, Long maxId, Integer limit) {
-        return selectList(
-                new QueryWrapperX<Ai1SessionMessageDO>()
-                        .limitN(limit)
-                        .in("session_id", sessionIds)
-                        .eq("status", status)
-                        .gt("id", minId)
-                        .lt(maxId != null, "id", maxId)
-                        .orderByAsc("id"));
+        return selectListLimitN(
+                new LambdaQueryWrapperX<Ai1SessionMessageDO>()
+                        .in(Ai1SessionMessageDO::getSessionId, sessionIds)
+                        .eq(Ai1SessionMessageDO::getStatus, status)
+                        .gt(Ai1SessionMessageDO::getId, minId)
+                        .lt(maxId != null, Ai1SessionMessageDO::getId, maxId)
+                        .orderByAsc(Ai1SessionMessageDO::getId),
+                limit);
     }
 
     default Long selectCountBySessionId(Long sessionId) {

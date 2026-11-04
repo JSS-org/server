@@ -33,7 +33,7 @@ public interface OAuth2RefreshTokenMapper extends BaseMapperX<OAuth2RefreshToken
      * @return 删除条数
      */
     @Delete(
-            "DELETE FROM system_oauth2_refresh_token WHERE expires_time < #{expiresTime} LIMIT #{limit}")
+            "${@cn.iocoder.yudao.framework.mybatis.core.util.SqlDialectUtils@deleteBatchByLessThan('system_oauth2_refresh_token', 'expires_time', 'expiresTime', 'limit')}")
     Integer deleteByExpiresTimeLt(
             @Param("expiresTime") LocalDateTime expiresTime, @Param("limit") Integer limit);
 }

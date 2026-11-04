@@ -263,8 +263,7 @@ public class OaOfficialDocReceiveServiceImpl implements OaOfficialDocReceiveServ
         // 1.2 校验收文归属
         validateOfficialDocReceiveOwner(receive, userId);
         // 1.3 未提交、审批不通过和已取消的单据允许删除
-        // TODO @AI：notEqualsAny
-        if (!ObjectUtils.equalsAny(
+        if (ObjectUtils.notEqualsAny(
                 receive.getStatus(),
                 BpmProcessInstanceStatusEnum.NOT_START.getStatus(),
                 BpmProcessInstanceStatusEnum.REJECT.getStatus(),

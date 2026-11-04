@@ -96,7 +96,7 @@ public interface BrokerageRecordMapper extends BaseMapperX<BrokerageRecordDO> {
     @Select(
             "SELECT SUM(price) FROM trade_brokerage_record "
                     + "WHERE user_id = #{userId} AND biz_type = #{bizType} AND status = #{status} "
-                    + "AND unfreeze_time BETWEEN #{beginTime} AND #{endTime} AND deleted = FALSE")
+                    + "AND unfreeze_time BETWEEN #{beginTime} AND #{endTime} AND deleted = 0")
     Integer selectSummaryPriceByUserIdAndBizTypeAndCreateTimeBetween(
             @Param("userId") Long userId,
             @Param("bizType") Integer bizType,
@@ -107,7 +107,7 @@ public interface BrokerageRecordMapper extends BaseMapperX<BrokerageRecordDO> {
     // TODO @芋艿：收敛掉 @Select 注解操作，统一成 MyBatis-Plus 的方式，或者 xml
     @Select(
             "SELECT user_id AS id, SUM(price) AS brokeragePrice FROM trade_brokerage_record "
-                    + "WHERE biz_type = #{bizType} AND status = #{status} AND deleted = FALSE "
+                    + "WHERE biz_type = #{bizType} AND status = #{status} AND deleted = 0 "
                     + "AND unfreeze_time BETWEEN #{beginTime} AND #{endTime} "
                     + "GROUP BY user_id "
                     + "ORDER BY brokeragePrice DESC")
@@ -120,7 +120,7 @@ public interface BrokerageRecordMapper extends BaseMapperX<BrokerageRecordDO> {
 
     @Select(
             "SELECT COUNT(1) FROM trade_brokerage_record "
-                    + "WHERE biz_type = #{bizType} AND status = #{status} AND deleted = FALSE "
+                    + "WHERE biz_type = #{bizType} AND status = #{status} AND deleted = 0 "
                     + "AND unfreeze_time BETWEEN #{beginTime} AND #{endTime} "
                     + "GROUP BY user_id HAVING SUM(price) > #{brokeragePrice}")
     Integer selectCountByPriceGt(

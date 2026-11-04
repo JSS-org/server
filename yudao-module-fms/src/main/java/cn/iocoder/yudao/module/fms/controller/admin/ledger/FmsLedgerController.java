@@ -22,6 +22,7 @@ import cn.iocoder.yudao.module.fms.controller.admin.ledger.vo.multicolumn.FmsLed
 import cn.iocoder.yudao.module.fms.controller.admin.ledger.vo.quantitydetail.FmsLedgerQuantityDetailRespVO;
 import cn.iocoder.yudao.module.fms.controller.admin.ledger.vo.quantitygeneral.FmsLedgerQuantityGeneralRespVO;
 import cn.iocoder.yudao.module.fms.controller.admin.ledger.vo.subjectbalance.FmsLedgerSubjectBalanceRespVO;
+import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsSubjectDO;
 import cn.iocoder.yudao.module.fms.service.ledger.FmsLedgerService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -63,10 +64,10 @@ public class FmsLedgerController {
     @Operation(summary = "获得指定期间有发生额的明细账科目")
     public CommonResult<List<FmsSubjectRespVO>> getDetailSubjectList(
             @Valid FmsLedgerListReqVO listReqVO) {
-        // TODO @AI：先查询出来，list 变量；然后在去 convert；字段不多，倒是可以考虑 beanutils 去 copy 下？
+        List<FmsSubjectDO> list = ledgerService.getDetailSubjectList(listReqVO, getLoginUserId());
         return success(
                 convertList(
-                        ledgerService.getDetailSubjectList(listReqVO, getLoginUserId()),
+                        list,
                         subject ->
                                 new FmsSubjectRespVO()
                                         .setId(subject.getId())

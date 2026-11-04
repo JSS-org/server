@@ -87,12 +87,13 @@ public interface BargainActivityMapper extends BaseMapperX<BargainActivityDO> {
      * @return 活动分页
      */
     default List<BargainActivityDO> selectList(Integer count, Integer status, LocalDateTime now) {
-        return selectList(
+        return selectListLimitN(
                 new LambdaQueryWrapperX<BargainActivityDO>()
                         .eq(BargainActivityDO::getStatus, status)
                         .le(BargainActivityDO::getStartTime, now)
                         .ge(BargainActivityDO::getEndTime, now)
-                        .last("LIMIT " + count));
+                        .orderByAsc(BargainActivityDO::getId),
+                count);
     }
 
     default BargainActivityDO selectBySpuIdAndStatusAndNow(Long spuId, Integer status) {

@@ -76,10 +76,10 @@ public interface ImConversationReadMapper extends BaseMapperX<ImConversationRead
                                                                     ImConversationReadDO::getId,
                                                                     lastId)));
         }
-        return selectList(
+        return selectListLimitN(
                 query.orderByAsc(ImConversationReadDO::getUpdateTime)
-                        .orderByAsc(ImConversationReadDO::getId)
-                        .last("LIMIT " + limit));
+                        .orderByAsc(ImConversationReadDO::getId),
+                limit);
     }
 
     /**

@@ -1,6 +1,6 @@
 package cn.iocoder.yudao.module.hrm.dal.dataobject.salary.slip;
 
-import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
+import cn.iocoder.yudao.framework.tenant.core.db.TenantBaseDO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryOptionDO;
 import cn.iocoder.yudao.module.hrm.enums.salary.slip.HrmSalarySlipTemplateOptionTypeEnum;
 
@@ -22,6 +22,8 @@ import java.util.List;
 /**
  * HRM 工资条模板 DO
  *
+ * 平台级默认模板保存在 {@link cn.iocoder.yudao.framework.tenant.core.util.TenantUtils#GLOBAL_TENANT_ID} 下，由所有租户只读共享
+ *
  * @author 芋道源码
  */
 @TableName(value = "hrm_salary_slip_template", autoResultMap = true)
@@ -32,7 +34,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class HrmSalarySlipTemplateDO extends BaseDO {
+public class HrmSalarySlipTemplateDO extends TenantBaseDO {
 
     /**
      * 编号

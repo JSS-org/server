@@ -68,21 +68,21 @@ public interface CombinationRecordMapper extends BaseMapperX<CombinationRecordDO
      * @return 拼团记录列表
      */
     default List<CombinationRecordDO> selectLatestList(int count) {
-        return selectList(
+        return selectListLimitN(
                 new LambdaQueryWrapperX<CombinationRecordDO>()
-                        .orderByDesc(CombinationRecordDO::getId)
-                        .last("LIMIT " + count));
+                        .orderByDesc(CombinationRecordDO::getId),
+                count);
     }
 
     default List<CombinationRecordDO> selectListByActivityIdAndStatusAndHeadId(
             Long activityId, Integer status, Long headId, Integer count) {
-        return selectList(
+        return selectListLimitN(
                 new LambdaQueryWrapperX<CombinationRecordDO>()
                         .eqIfPresent(CombinationRecordDO::getActivityId, activityId)
                         .eqIfPresent(CombinationRecordDO::getStatus, status)
                         .eq(CombinationRecordDO::getHeadId, headId)
-                        .orderByDesc(CombinationRecordDO::getId)
-                        .last("LIMIT " + count));
+                        .orderByDesc(CombinationRecordDO::getId),
+                count);
     }
 
     default Map<Long, Integer> selectCombinationRecordCountMapByActivityIdAndStatusAndHeadId(

@@ -288,6 +288,10 @@ public class CrmReceivableServiceImpl implements CrmReceivableService {
             subType = CRM_RECEIVABLE_SUBMIT_SUB_TYPE,
             bizNo = "{{#id}}",
             success = CRM_RECEIVABLE_SUBMIT_SUCCESS)
+    @CrmPermission(
+            bizType = CrmBizTypeEnum.CRM_RECEIVABLE,
+            bizId = "#id",
+            level = CrmPermissionLevelEnum.WRITE)
     public void submitReceivable(Long id, Long userId) {
         // 1. 校验回款是否在审批
         CrmReceivableDO receivable = validateReceivableExists(id);

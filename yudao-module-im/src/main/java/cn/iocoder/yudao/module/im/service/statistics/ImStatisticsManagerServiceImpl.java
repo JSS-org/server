@@ -75,7 +75,9 @@ public class ImStatisticsManagerServiceImpl implements ImStatisticsManagerServic
     public Map<String, Long> getGroupSizeCountMap() {
         List<Map<String, Object>> rows = statisticsMapper.selectGroupSizeDistribution();
         return convertMap(
-                rows, row -> (String) row.get("range"), row -> Convert.toLong(row.get("count")));
+                rows,
+                row -> (String) row.get("sizeRange"),
+                row -> Convert.toLong(row.get("count")));
     }
 
     // ==================== 消息 ====================
@@ -129,12 +131,12 @@ public class ImStatisticsManagerServiceImpl implements ImStatisticsManagerServic
     }
 
     /**
-     * 把 [{date, count}] 行映射为 {LocalDateTime -> Long}；
+     * 把 [{statDate, count}] 行映射为 {LocalDateTime -> Long}；
      */
     private static Map<LocalDateTime, Long> toDailyCountMap(List<Map<String, Object>> rows) {
         return convertMap(
                 rows,
-                row -> Convert.convert(LocalDate.class, row.get("date")).atStartOfDay(),
+                row -> Convert.convert(LocalDate.class, row.get("statDate")).atStartOfDay(),
                 row -> Convert.toLong(row.get("count")));
     }
 }

@@ -93,6 +93,7 @@ public class AiModelController {
                                         .setId(model.getId())
                                         .setName(model.getName())
                                         .setModel(model.getModel())
-                                        .setPlatform(model.getPlatform())));
+                                        .setPlatform(model.getPlatform())
+                                        .setInputModalities(model.getInputModalities())));
     }
 }

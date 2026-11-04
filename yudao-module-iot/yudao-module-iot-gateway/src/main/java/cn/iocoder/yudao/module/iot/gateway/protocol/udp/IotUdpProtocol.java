@@ -50,7 +50,7 @@ public class IotUdpProtocol implements IotProtocol {
     /**
      * Vert.x 实例
      */
-    private Vertx vertx;
+    @Getter private Vertx vertx;
 
     /**
      * UDP 服务器

@@ -32,7 +32,7 @@ import jakarta.annotation.Resource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -350,12 +350,11 @@ public class FmsReportTemplateServiceTest extends BaseDbUnitTest {
     }
 
     /**
-     * 执行报表模板升级脚本
+     * 加载固定的报表模板测试数据
      */
     private void initializeTemplates() {
         new ResourceDatabasePopulator(
-                        new FileSystemResource(
-                                "../sql/mysql/upgrade/20260926-fms-report-template.sql"))
+                        new ClassPathResource("sql/report_templates.sql"))
                 .execute(dataSource);
     }
 

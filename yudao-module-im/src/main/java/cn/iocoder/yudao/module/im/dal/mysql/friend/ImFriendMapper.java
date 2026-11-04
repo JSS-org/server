@@ -60,10 +60,8 @@ public interface ImFriendMapper extends BaseMapperX<ImFriendDO> {
                                                     n.eq(ImFriendDO::getUpdateTime, lastTime)
                                                             .gt(ImFriendDO::getId, lastId)));
         }
-        return selectList(
-                query.orderByAsc(ImFriendDO::getUpdateTime)
-                        .orderByAsc(ImFriendDO::getId)
-                        .last("LIMIT " + limit));
+        return selectListLimitN(
+                query.orderByAsc(ImFriendDO::getUpdateTime).orderByAsc(ImFriendDO::getId), limit);
     }
 
     default List<ImFriendDO> selectListByUserIdAndStatus(Long userId, Integer status) {

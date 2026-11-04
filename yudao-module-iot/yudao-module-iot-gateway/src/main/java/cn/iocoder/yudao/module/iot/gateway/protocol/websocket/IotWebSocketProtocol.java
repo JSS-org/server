@@ -53,7 +53,7 @@ public class IotWebSocketProtocol implements IotProtocol {
     /**
      * Vert.x 实例
      */
-    private Vertx vertx;
+    @Getter private Vertx vertx;
 
     /**
      * WebSocket 服务器

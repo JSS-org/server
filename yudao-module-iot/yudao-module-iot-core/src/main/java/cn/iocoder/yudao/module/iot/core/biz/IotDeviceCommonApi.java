@@ -6,6 +6,8 @@ import cn.iocoder.yudao.module.iot.core.topic.auth.IotDeviceRegisterReqDTO;
 import cn.iocoder.yudao.module.iot.core.topic.auth.IotDeviceRegisterRespDTO;
 import cn.iocoder.yudao.module.iot.core.topic.auth.IotSubDeviceRegisterRespDTO;
 
+import jakarta.validation.Valid;
+
 import java.util.List;
 
 /**
@@ -56,4 +58,12 @@ public interface IotDeviceCommonApi {
      */
     CommonResult<List<IotModbusDeviceConfigRespDTO>> getModbusDeviceConfigList(
             IotModbusDeviceConfigListReqDTO listReqDTO);
+
+    /**
+     * 续期网关协议实例的存活标记
+     *
+     * @param reqDTO 各协议实例的启动时间
+     * @return 是否全部续期成功；部分失败时为 false
+     */
+    CommonResult<Boolean> keepAliveGatewayServers(@Valid IotGatewayServerAliveReqDTO reqDTO);
 }

@@ -46,7 +46,7 @@ class IotExplicitStorageModeTest {
         List<Runnable> operations = List.of(dao::initialize, () -> dao.insert((cn.iocoder.yudao.module.iot.dal.dataobject.device.IotDeviceMessageDO) null),
                 () -> dao.selectPage(null), () -> dao.selectListByRequestIdsAndReply(null, null, null),
                 () -> dao.selectCountByCreateTime(null), () -> dao.selectDeviceMessageCountGroupByDate(null, null),
-                () -> dao.defineProductPropertyTable(null, null), () -> dao.insert(null, null, null, null),
+                () -> dao.defineProductPropertyTable(null, null), () -> dao.deleteProductPropertyTable(1L), () -> dao.insert(null, null, null, null),
                 () -> dao.selectHistoryList(null, null));
         for (var operation : operations) {
             assertEquals(1_050_000_000, assertThrows(ServiceException.class, operation::run).getCode());

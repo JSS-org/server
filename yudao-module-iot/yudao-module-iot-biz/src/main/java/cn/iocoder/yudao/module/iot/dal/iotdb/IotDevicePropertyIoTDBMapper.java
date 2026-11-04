@@ -43,6 +43,8 @@ public interface IotDevicePropertyIoTDBMapper {
 
     void dropColumn(@Param("productId") Long productId, @Param("columnName") String columnName);
 
+    void dropTable(@Param("productId") Long productId);
+
     void insert(
             @Param("productId") Long productId,
             @Param("deviceId") String deviceId,

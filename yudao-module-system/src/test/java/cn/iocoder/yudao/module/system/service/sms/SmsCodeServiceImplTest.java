@@ -84,7 +84,9 @@ public class SmsCodeServiceImplTest extends BaseDbUnitTest {
     public void sendSmsCode_tooFast() {
         // mock 数据
         SmsCodeDO smsCodeDO =
-                randomPojo(SmsCodeDO.class, o -> o.setMobile("15601691300").setTodayIndex(1));
+                randomPojo(
+                        SmsCodeDO.class,
+                        o -> o.setMobile("15601691300").setTodayIndex(1).setUsed(false));
         smsCodeMapper.insert(smsCodeDO);
         // 准备参数
         SmsCodeSendReqDTO reqDTO =
@@ -108,6 +110,7 @@ public class SmsCodeServiceImplTest extends BaseDbUnitTest {
                         o ->
                                 o.setMobile("15601691300")
                                         .setTodayIndex(10)
+                                        .setUsed(false)
                                         .setCreateTime(LocalDateTime.now()));
         smsCodeMapper.insert(smsCodeDO);
         // 准备参数

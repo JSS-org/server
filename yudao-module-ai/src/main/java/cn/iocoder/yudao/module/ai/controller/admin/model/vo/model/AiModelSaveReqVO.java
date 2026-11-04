@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.ai.controller.admin.model.vo.model;
 
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
+import cn.iocoder.yudao.module.ai.enums.model.AiModelInputModalityEnum;
 import cn.iocoder.yudao.module.ai.enums.model.AiModelTypeEnum;
 import cn.iocoder.yudao.module.ai.enums.model.AiPlatformEnum;
 
@@ -11,6 +12,8 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 import lombok.Data;
+
+import java.util.List;
 
 @Schema(description = "管理后台 - API 模型新增/修改 Request VO")
 @Data
@@ -64,4 +67,8 @@ public class AiModelSaveReqVO {
 
     @Schema(description = "上下文的最大 Message 数量", example = "8192")
     private Integer maxContexts;
+
+    @Schema(description = "输入模态数组", example = "[\"text\", \"image\"]")
+    @InEnum(AiModelInputModalityEnum.class)
+    private List<String> inputModalities;
 }

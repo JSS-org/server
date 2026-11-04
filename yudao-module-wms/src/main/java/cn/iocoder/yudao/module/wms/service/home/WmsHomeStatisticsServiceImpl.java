@@ -85,7 +85,7 @@ public class WmsHomeStatisticsServiceImpl implements WmsHomeStatisticsService {
                 homeStatisticsMapper.selectDailyOrderTrend(beginTime, endTime, warehouseId);
         Map<String, Map<Integer, Long>> dateMap = new LinkedHashMap<>();
         for (Map<String, Object> row : dbData) {
-            String date = MapUtil.getStr(row, "date");
+            String date = MapUtil.getStr(row, "statDate");
             Integer orderType = MapUtil.getInt(row, "orderType");
             Long count = MapUtil.getLong(row, "count", 0L);
             dateMap.computeIfAbsent(date, key -> new HashMap<>()).put(orderType, count);

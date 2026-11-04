@@ -357,6 +357,10 @@ public class CrmContractServiceImpl implements CrmContractService {
             subType = CRM_CONTRACT_SUBMIT_SUB_TYPE,
             bizNo = "{{#id}}",
             success = CRM_CONTRACT_SUBMIT_SUCCESS)
+    @CrmPermission(
+            bizType = CrmBizTypeEnum.CRM_CONTRACT,
+            bizId = "#id",
+            level = CrmPermissionLevelEnum.WRITE)
     public void submitContract(Long id, Long userId) {
         // 1. 校验合同是否在审批
         CrmContractDO contract = validateContractExists(id);

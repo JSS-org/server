@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.iot.gateway.protocol.emqx.handler.downstream;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.iot.gateway.enums.ErrorCodeConstants.DEVICE_OFFLINE_OR_WRITE_FAILED;
+
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.iocoder.yudao.module.iot.core.biz.dto.IotDeviceRespDTO;
@@ -9,6 +12,8 @@ import cn.iocoder.yudao.module.iot.gateway.protocol.emqx.IotEmqxProtocol;
 import cn.iocoder.yudao.module.iot.gateway.service.device.IotDeviceService;
 import cn.iocoder.yudao.module.iot.gateway.service.device.message.IotDeviceMessageService;
 import cn.iocoder.yudao.module.iot.gateway.util.IotMqttTopicUtils;
+
+import io.vertx.core.Future;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -61,6 +66,28 @@ public class IotEmqxDownstreamHandler {
 
         // 3. 发布消息
         protocol.publishMessage(topic, payload);
+    }
+
+    /**
+     * 处理透传下行（raw.push 或编码脚本的输出）：原始字节发布到 raw/push 主题
+     *
+     * @param message 下行消息
+     * @param bytes   要写出的原始字节
+     * @return 真实的发布结果
+     */
+    public Future<Void> handleRawMessage(IotDeviceMessage message, byte[] bytes) {
+        // 1. 获取设备信息
+        IotDeviceRespDTO deviceInfo = deviceService.getDeviceFromCache(message.getDeviceId());
+        if (deviceInfo == null) {
+            log.error("[handleRawMessage][设备信息({})不存在]", message.getDeviceId());
+            return Future.failedFuture(exception(DEVICE_OFFLINE_OR_WRITE_FAILED));
+        }
+
+        // 2. 发布到 raw/push 主题
+        String topic =
+                IotMqttTopicUtils.buildRawPushTopic(
+                        deviceInfo.getProductKey(), deviceInfo.getDeviceName());
+        return protocol.publishMessageAsync(topic, bytes);
     }
 
     /**

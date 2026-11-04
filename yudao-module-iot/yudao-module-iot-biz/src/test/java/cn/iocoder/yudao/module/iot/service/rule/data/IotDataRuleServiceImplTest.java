@@ -3,15 +3,24 @@ package cn.iocoder.yudao.module.iot.service.rule.data;
 import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
 import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import static java.util.Collections.singletonList;
 
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.iot.core.enums.IotDeviceMessageMethodEnum;
@@ -27,9 +36,14 @@ import cn.iocoder.yudao.module.iot.service.thingmodel.IotThingModelService;
 import jakarta.annotation.Resource;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.QueryTimeoutException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -43,6 +57,7 @@ class IotDataRuleServiceImplTest extends BaseDbUnitTest {
     @Resource private IotDataRuleServiceImpl dataRuleService;
 
     @Resource private IotDataRuleMapper dataRuleMapper;
+    @Resource private PlatformTransactionManager transactionManager;
 
     @MockitoBean private IotDataSinkService dataSinkService;
     @MockitoBean private IotDataRuleAction dataRuleAction;
@@ -223,6 +238,126 @@ class IotDataRuleServiceImplTest extends BaseDbUnitTest {
         verify(dataRuleAction).execute(eq(message), eq(sink));
     }
 
+    // ========== executeDataRule：状态事务内的数据访问异常 ==========
+
+    @Test
+    public void testExecuteDataRule_actionDataAccessException() {
+        // 准备参数
+        Long deviceId = randomLongId();
+        String identifier = "temperature";
+        IotDeviceMessage message =
+                createPropertyPostMessage(
+                        deviceId, MapUtil.<String, Object>builder().put(identifier, 25.5).build());
+        // mock 数据
+        Long sinkId = randomLongId();
+        insertEnabledRule(
+                deviceId, IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod(), identifier, sinkId);
+        // mock 方法：数据目的访问数据失败
+        IotDataSinkDO sink = mockEnabledSink(sinkId);
+        doThrow(new QueryTimeoutException("data access failed"))
+                .when(dataRuleAction)
+                .execute(eq(message), eq(sink));
+
+        // 调用，并断言异常：状态事务内，数据访问异常不吞掉，交给事务回滚
+        new TransactionTemplate(transactionManager)
+                .executeWithoutResult(
+                        status ->
+                                assertThrows(
+                                        QueryTimeoutException.class,
+                                        () -> dataRuleService.executeDataRule(message)));
+        // 调用：非事务内，与原逻辑一致，记录日志后结束
+        assertDoesNotThrow(() -> dataRuleService.executeDataRule(message));
+    }
+
+    @Test
+    public void testExecuteDataRule_sinkDataAccessException() {
+        // 准备参数
+        Long deviceId = randomLongId();
+        String identifier = "temperature";
+        IotDeviceMessage message =
+                createPropertyPostMessage(
+                        deviceId, MapUtil.<String, Object>builder().put(identifier, 25.5).build());
+        // mock 数据：一条规则，两个数据目的
+        Long sinkId1 = randomLongId();
+        Long sinkId2 = randomLongId();
+        insertEnabledRule(
+                deviceId,
+                IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod(),
+                identifier,
+                sinkId1,
+                sinkId2);
+        // mock 方法：读取第一个数据目的失败（例如说 Redis 超时）；第二个数据目的正常
+        when(dataSinkService.getDataSinkFromCache(sinkId1))
+                .thenThrow(new QueryTimeoutException("sink query failed"));
+        IotDataSinkDO sink2 = mockEnabledSink(sinkId2);
+
+        // 调用，并断言异常：状态事务内，不吞掉，后续数据目的不再执行
+        new TransactionTemplate(transactionManager)
+                .executeWithoutResult(
+                        status ->
+                                assertThrows(
+                                        QueryTimeoutException.class,
+                                        () -> dataRuleService.executeDataRule(message)));
+        verify(dataRuleAction, never()).execute(any(), any());
+        // 调用：非事务内，与原逻辑一致，记录日志后继续执行第二个数据目的
+        assertDoesNotThrow(() -> dataRuleService.executeDataRule(message));
+        verify(dataRuleAction, times(1)).execute(eq(message), eq(sink2));
+    }
+
+    @Test
+    public void testExecuteDataRule_matchDataAccessException() {
+        // 准备参数
+        IotDeviceMessage message =
+                createPropertyPostMessage(
+                        randomLongId(),
+                        MapUtil.<String, Object>builder().put("temperature", 25.5).build());
+        // mock 方法：匹配规则时访问数据失败（getSelf 的缓存方法）
+        IotDataRuleServiceImpl self = mock(IotDataRuleServiceImpl.class);
+        when(self.getDataRuleListByConditionFromCache(anyLong(), anyString(), any()))
+                .thenThrow(new QueryTimeoutException("rule query failed"));
+
+        try (MockedStatic<SpringUtil> springUtilMock = mockStatic(SpringUtil.class)) {
+            springUtilMock
+                    .when(() -> SpringUtil.getBean(IotDataRuleServiceImpl.class))
+                    .thenReturn(self);
+            // 调用，并断言异常：状态事务内，不吞掉
+            new TransactionTemplate(transactionManager)
+                    .executeWithoutResult(
+                            status ->
+                                    assertThrows(
+                                            QueryTimeoutException.class,
+                                            () -> dataRuleService.executeDataRule(message)));
+            // 调用：非事务内，与原逻辑一致，记录日志后结束
+            assertDoesNotThrow(() -> dataRuleService.executeDataRule(message));
+        }
+        verify(dataRuleAction, never()).execute(any(), any());
+    }
+
+    @Test
+    public void testExecuteDataRule_otherExceptionInTransaction() {
+        // 准备参数
+        Long deviceId = randomLongId();
+        String identifier = "temperature";
+        IotDeviceMessage message =
+                createPropertyPostMessage(
+                        deviceId, MapUtil.<String, Object>builder().put(identifier, 25.5).build());
+        // mock 数据
+        Long sinkId = randomLongId();
+        insertEnabledRule(
+                deviceId, IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod(), identifier, sinkId);
+        // mock 方法：数据目的的其它异常（例如说参数错误）
+        IotDataSinkDO sink = mockEnabledSink(sinkId);
+        doThrow(new IllegalArgumentException("config invalid"))
+                .when(dataRuleAction)
+                .execute(eq(message), eq(sink));
+
+        // 调用：与原逻辑一致，记录日志后继续
+        new TransactionTemplate(transactionManager)
+                .executeWithoutResult(
+                        status ->
+                                assertDoesNotThrow(() -> dataRuleService.executeDataRule(message)));
+    }
+
     // ========== 辅助方法 ==========
 
     private IotDeviceMessage createPropertyPostMessage(Long deviceId, Map<String, Object> params) {
@@ -236,9 +371,10 @@ class IotDataRuleServiceImplTest extends BaseDbUnitTest {
     }
 
     /**
-     * 向 H2 中插入一条启用状态的数据流转规则，命中后会路由到 {@code sinkId}
+     * 向 H2 中插入一条启用状态的数据流转规则，命中后会路由到 {@code sinkIds}
      */
-    private void insertEnabledRule(Long deviceId, String method, String identifier, Long sinkId) {
+    private void insertEnabledRule(
+            Long deviceId, String method, String identifier, Long... sinkIds) {
         IotDataRuleDO.SourceConfig config =
                 randomPojo(
                         IotDataRuleDO.SourceConfig.class,
@@ -254,7 +390,7 @@ class IotDataRuleServiceImplTest extends BaseDbUnitTest {
                             o.setId(null);
                             o.setStatus(CommonStatusEnum.ENABLE.getStatus());
                             o.setSourceConfigs(singletonList(config));
-                            o.setSinkIds(singletonList(sinkId));
+                            o.setSinkIds(Arrays.asList(sinkIds));
                         });
         dataRuleMapper.insert(rule);
     }

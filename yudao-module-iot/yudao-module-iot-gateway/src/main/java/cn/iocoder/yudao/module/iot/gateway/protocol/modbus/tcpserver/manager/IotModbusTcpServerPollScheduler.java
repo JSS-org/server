@@ -13,10 +13,7 @@ import cn.iocoder.yudao.module.iot.gateway.protocol.modbus.tcpserver.manager.Iot
 
 import io.vertx.core.Vertx;
 
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * IoT Modbus TCP Server 轮询调度器：编码读请求帧，通过 TCP 连接发送到设备，注册 PendingRequest 等待响应
@@ -32,25 +29,18 @@ public class IotModbusTcpServerPollScheduler extends AbstractIotModbusPollSchedu
     private final IotModbusTcpServerConfigCacheService configCacheService;
     private final int requestTimeout;
 
-    /**
-     * TCP 事务 ID 自增器（与 DownstreamHandler 共享）
-     */
-    @Getter private final AtomicInteger transactionIdCounter;
-
     public IotModbusTcpServerPollScheduler(
             Vertx vertx,
             IotModbusTcpServerConnectionManager connectionManager,
             IotModbusFrameEncoder frameEncoder,
             IotModbusTcpServerPendingRequestManager pendingRequestManager,
             int requestTimeout,
-            AtomicInteger transactionIdCounter,
             IotModbusTcpServerConfigCacheService configCacheService) {
         super(vertx);
         this.connectionManager = connectionManager;
         this.frameEncoder = frameEncoder;
         this.pendingRequestManager = pendingRequestManager;
         this.requestTimeout = requestTimeout;
-        this.transactionIdCounter = transactionIdCounter;
         this.configCacheService = configCacheService;
     }
 
@@ -87,11 +77,9 @@ public class IotModbusTcpServerPollScheduler extends AbstractIotModbusPollSchedu
         Integer slaveId = connection.getSlaveId();
         Assert.notNull(connection.getSlaveId(), "设备 {} 的 slaveId 不能为空", deviceId);
 
-        // 3.1 编码读请求
-        Integer transactionId =
-                frameFormat == IotModbusFrameFormatEnum.MODBUS_TCP
-                        ? (transactionIdCounter.incrementAndGet() & 0xFFFF)
-                        : null;
+        // 3.1 编码读请求（事务号由连接的事务通道分配：跳过本连接仍占用的编号）
+        IotModbusTcpServerTransactionChannel channel = connection.getChannel();
+        Integer transactionId = channel.allocateTransactionId();
         byte[] data =
                 frameEncoder.encodeReadRequest(
                         slaveId,
@@ -111,11 +99,12 @@ public class IotModbusTcpServerPollScheduler extends AbstractIotModbusPollSchedu
                         point.getRegisterAddress(),
                         point.getRegisterCount(),
                         transactionId,
-                        System.currentTimeMillis() + requestTimeout);
+                        System.currentTimeMillis() + requestTimeout,
+                        channel,
+                        null);
         pendingRequestManager.addRequest(pendingRequest);
-        // 3.3 发送读请求
-        connectionManager
-                .sendToDevice(deviceId, data)
+        // 3.3 发送读请求（与登记用同一条连接）
+        channel.send(data)
                 .onSuccess(
                         v ->
                                 log.debug(

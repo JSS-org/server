@@ -64,6 +64,7 @@ public class IotDeviceMessageIoTDBDAO implements IotDeviceMessageDAO {
                     .put("report_time", "STRING")
                     .put("tenant_id", "STRING")
                     .put("code", "STRING")
+                    .put("raw", "STRING")
                     .build();
 
     @Resource private IotDeviceMessageIoTDBMapper deviceMessageMapper;
@@ -179,10 +180,21 @@ public class IotDeviceMessageIoTDBDAO implements IotDeviceMessageDAO {
                 StrUtil.isNotEmpty(reqVO.getIdentifier())
                         ? encodeString(reqVO.getIdentifier())
                         : null;
+        // 是否有原始帧：true 为 v: 开头；false 为 n:
+        Boolean raw = reqVO.getRaw();
+        String rawValuePattern = PREFIX_VALUE + "%";
         try {
             // 2.1 查询总数
             Long total =
-                    deviceMessageMapper.selectCount(deviceId, method, upstream, reply, identifier);
+                    deviceMessageMapper.selectCount(
+                            deviceId,
+                            method,
+                            upstream,
+                            reply,
+                            identifier,
+                            raw,
+                            PREFIX_NULL,
+                            rawValuePattern);
             if (total == null || total == 0) {
                 return PageResult.empty();
             }
@@ -195,6 +207,9 @@ public class IotDeviceMessageIoTDBDAO implements IotDeviceMessageDAO {
                             upstream,
                             reply,
                             identifier,
+                            raw,
+                            PREFIX_NULL,
+                            rawValuePattern,
                             pageable ? PageUtils.getStart(reqVO) : null,
                             pageable ? reqVO.getPageSize() : null);
             return new PageResult<>(convertList(rows, IotDeviceMessageIoTDBCodec::decode), total);

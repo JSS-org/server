@@ -61,6 +61,11 @@ public class IotDisabledTimeSeriesDAO implements IotDeviceMessageDAO, IotDeviceP
     }
 
     @Override
+    public void deleteProductPropertyTable(Long productId) {
+        throw exception(TIME_SERIES_STORAGE_DISABLED);
+    }
+
+    @Override
     public void insert(IotDeviceDO device, Map<String, Object> properties, Long ts, Long reportTime) {
         throw exception(TIME_SERIES_STORAGE_DISABLED);
     }

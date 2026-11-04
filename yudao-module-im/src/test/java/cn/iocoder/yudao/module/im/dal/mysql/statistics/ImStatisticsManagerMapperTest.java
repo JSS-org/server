@@ -166,7 +166,7 @@ public class ImStatisticsManagerMapperTest extends BaseDbUnitTest {
                 dist.stream()
                         .collect(
                                 java.util.stream.Collectors.toMap(
-                                        m -> m.get("range"),
+                                        m -> m.get("sizeRange"),
                                         m -> ((Number) m.get("count")).longValue()));
         assertEquals(1L, byRange.get("1-9 人"));
         assertEquals(1L, byRange.get("10-49 人"));

@@ -10,9 +10,7 @@ import org.apache.ibatis.annotations.Mapper;
 public interface HrmSalaryConfigMapper extends BaseMapperX<HrmSalaryConfigDO> {
 
     default HrmSalaryConfigDO selectFirst() {
-        return selectOne(
-                new LambdaQueryWrapperX<HrmSalaryConfigDO>()
-                        .orderByAsc(HrmSalaryConfigDO::getId)
-                        .last("LIMIT 1"));
+        return selectFirstOne(
+                new LambdaQueryWrapperX<HrmSalaryConfigDO>().orderByAsc(HrmSalaryConfigDO::getId));
     }
 }

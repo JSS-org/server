@@ -15,11 +15,6 @@
     "requestedBranchSpelling": "master-sdk25 does not exist; master-jdk25 verified"
   },
   "mainAfterCodeReview": "c531f32b40de58ade049971a0b139fe62176e4a1",
-  "portedFix": {
-    "source": "f0b321cd3ca72f5f3bf96cb4531527f87c4e38b4",
-    "commit": "c531f32b40de58ade049971a0b139fe62176e4a1",
-    "reason": "旧 master 的 PR1262 修复未进入当前 JDK25：Modbus 必填参数应返回六种受控业务错误；保留 jakarta/JDK25，仅移植补丁。"
-  },
   "branchesBeforeCleanup": [
     {
       "branch": "codex/meituan-retail-group-buy",
@@ -100,7 +95,7 @@
     }
   ],
   "retirementReason": {
-    "master": "旧 JDK8/Spring Boot2 系列。近期非兼容性业务修复按 main 历史交叉核查；Modbus 缺失补丁单独移植。Oracle/JDK8/旧运行时差异不整体合入。完整提交留在本地归档及 bundle。",
+    "master": "旧 JDK8/Spring Boot2 系列。近期非兼容性业务修复按 main 历史和实现交叉核查；Modbus、MoneyUtils 缺失补丁单独移植，邮件quoteReplacement和WebProperties字段@Valid已存在。Oracle/JDK8/旧运行时差异不整体合入。完整提交留在本地归档及bundle。",
     "cursor/agents-markdown-file-0f90": "旧 JDK8 历史附加 AGENTS.md；其 JDK8 约定不适用于现 main，保留当前 JSS/JDK25 协作说明。"
   },
   "backup": {
@@ -125,9 +120,45 @@
     },
     "serverPackage": "45-module jss-mall reactor succeeded; tests skipped in packaging",
     "format": "root Spotless apply/check passed",
-    "ci": "Maven push and pull_request target main; contents read"
+    "ci": "Maven push and pull_request target main; contents read",
+    "moneyBaseline": {
+      "tests": 7,
+      "failures": 3
+    },
+    "commonRegression": {
+      "tests": 71,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
   },
   "cleanupProtocol": "Fresh ls-remote comparison, atomic push of fast-forward main plus ten branch deletions with per-ref expected-SHA leases; verify remote exposes only main. No history rewrite.",
   "forkNetwork": "GitHub fork association is separate from Git branches; this audit does not detach or recreate the repository.",
-  "futureUpstreamPolicy": "本次为最后基线审计；后续以 main 独立演进，不自动合并旧分支。"
+  "futureUpstreamPolicy": "本次为最后基线审计；后续以 main 独立演进，不自动合并旧分支。",
+  "portedFixes": [
+    {
+      "source": "f0b321cd3ca72f5f3bf96cb4531527f87c4e38b4",
+      "commit": "c531f32b40de58ade049971a0b139fe62176e4a1",
+      "reason": "旧 master 的 PR1262 修复未进入当前 JDK25：Modbus 必填参数应返回六种受控业务错误；保留 jakarta/JDK25，仅移植补丁。"
+    },
+    {
+      "source": "2cc5c86cd2009d93947d8776526d2f7676682c87",
+      "file": "yudao-framework/yudao-common/src/main/java/cn/iocoder/yudao/framework/common/util/number/MoneyUtils.java",
+      "reason": "修复整数除法截断小数百分比：先按浮点除100，再由既有BigDecimal逻辑按分向下取整；7项回归覆盖小数、整百分比、无折扣和向下取整。"
+    }
+  ],
+  "cleanupObserved": {
+    "verifiedAt": "2026-11-04T20:00:51.839411+08:00",
+    "firstAtomicPushSha": "696675359272ce468ff7c5a1e3518b6c7b4d19d8",
+    "remoteBranches": [
+      "main"
+    ],
+    "defaultBranch": "main",
+    "deletedRemoteBranches": 10,
+    "localBranches": [
+      "main"
+    ],
+    "fork": true,
+    "evidence": "Git ls-remote --symref 与 GitHub branches/repository API相互验证；本地branch --list仅main。后续补丁正常快进main。"
+  }
 }

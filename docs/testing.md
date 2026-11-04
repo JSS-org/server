@@ -2121,3 +2121,10 @@ JDK 25.0.2 验证命令与结果：
 已解开浅克隆并完整获取历史，`git merge-base --is-ancestor 947f986e0fc605538caa668b243910fd3320c3d5 main`成功，`main..upstream/master-jdk25`为0。远程实际分支名为master-jdk25，master-sdk25不存在。11条origin分支中main保留，8条非main已是main祖先，另2条为旧JDK8系列并存入本地archive refs及已验证完整Git bundle；详见upstream-audit-2026-11-04.json逐分支SHA与处置。
 
 Modbus修复后 `mvn -o -B -ntp -Pjss-mall -pl yudao-server -am package -DskipTests -Dspotless.skip=true` 全45模块成功，日志 `/tmp/server-independent-package.log`；测试证据见上一节。Maven工作流YAML经本机Ruby/Psych解析验证，push/PR均指向main、contents只读。未将本地构建记为GitHub Actions已执行；最终远程变更使用逐ref SHA保护及atomic push，完成后另行查询Git与GitHub分支接口核验。
+
+
+## 2026-11-04 MoneyUtils 旧分支补丁与远程清理复核
+
+移植旧分支 `2cc5c86cd2009d93947d8776526d2f7676682c87` 的小数百分比修复。新MoneyUtilsTest七项先运行旧代码，三项实际失败：1204→1200、1→0、198→197；修复后common模块完整71项全部通过，零失败/错误/跳过。命令 `mvn -o -B -ntp -pl yudao-framework/yudao-common -am test -Dspotless.skip=true`，日志 `/tmp/server-independent-money-baseline.log`、`/tmp/server-independent-common-final.log`；根Spotless apply/check及差异检查通过。
+
+首次原子推送至696675359272ce468ff7c5a1e3518b6c7b4d19d8同时删除十条分支成功，Git ls-remote --symref、GitHub branches与repository API确认远程分支仅main、默认main；本地旧分支清理后branch --list仅main，archive refs及bundle仍保留。GitHub Maven CI已实际触发，首次运行41825188209；这里只记录触发，不将进行中的CI记为通过。fork关联仍为true，未执行脱离。后续补丁沿main正常快进。

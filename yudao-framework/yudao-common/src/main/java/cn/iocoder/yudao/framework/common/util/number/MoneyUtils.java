@@ -58,7 +58,7 @@ public class MoneyUtils {
         if (percent == null) {
             return price;
         }
-        return MoneyUtils.calculateRatePriceFloor(price, (double) (percent / 100));
+        return MoneyUtils.calculateRatePriceFloor(price, percent / 100.0);
     }
 
     /**

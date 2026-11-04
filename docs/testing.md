@@ -2090,3 +2090,8 @@ JDK 25.0.2 验证命令与结果：
 ## 2026-11-04 小程序补充业务权限上限回归
 
 `mvn -o -B -ntp -pl yudao-module-gym -am test -Dtest=GymMobileWorkspacePermissionTest,GymOrganizationServiceTest -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true`，沿用本机 Mockito 5.23.0 javaagent。原610项业务回归通过；新增看板夹具首次未声明全门店范围而失败，补正夹具后单独运行 GymMobileWorkspacePermissionTest 四项全过。文件三个参数场景验证原生/上限授权交集，原生凭证兼容；看板空上限不查聚合。Spotless apply/check通过。使用H2及RBAC/存储替身，无新真实HTTP/Redis结果。
+
+
+## 2026-11-04 短信验证码单次消费
+
+`mvn -o -B -ntp -pl yudao-module-member -am test -Dtest=SmsCodeServiceImplTest,MemberRegistrationBoundaryTest,MemberUserRegistrationTest -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true`，本机Mockito javaagent同前。11+8+2共21项全过、零失败/错误/跳过，/tmp/server-fix-sms-final.log。生产Mapper/H2屏障控制两个未使用快照，仅一请求消费成功；另验证过期条件更新和外层事务回滚后的可重试性。未发送真实短信或运行认证HTTP/Redis链。

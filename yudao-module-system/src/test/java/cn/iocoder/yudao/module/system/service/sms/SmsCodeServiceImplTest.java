@@ -9,6 +9,7 @@ import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -28,19 +29,26 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Import(SmsCodeServiceImpl.class)
 public class SmsCodeServiceImplTest extends BaseDbUnitTest {
 
     @Resource private SmsCodeServiceImpl smsCodeService;
 
-    @Resource private SmsCodeMapper smsCodeMapper;
+    @MockitoSpyBean private SmsCodeMapper smsCodeMapper;
 
     @MockitoBean private SmsCodeProperties smsCodeProperties;
     @MockitoBean private SmsSendService smsSendService;
+
+    @Resource private org.springframework.transaction.PlatformTransactionManager transactionManager;
 
     @BeforeEach
     public void setUp() {
@@ -156,6 +164,107 @@ public class SmsCodeServiceImplTest extends BaseDbUnitTest {
         assertTrue(smsCodeDO.getUsed());
         assertNotNull(smsCodeDO.getUsedTime());
         assertEquals(reqDTO.getUsedIp(), smsCodeDO.getUsedIp());
+    }
+
+    @Test
+    void concurrentConsumersOfTheSameSnapshotHaveExactlyOneWinner() throws Exception {
+        String mobile = "13800000001";
+        String code = "123456";
+        int scene = SmsSceneEnum.MEMBER_LOGIN.getScene();
+        SmsCodeDO row =
+                randomPojo(
+                        SmsCodeDO.class,
+                        value ->
+                                value.setMobile(mobile)
+                                        .setCode(code)
+                                        .setScene(scene)
+                                        .setUsed(false)
+                                        .setCreateTime(LocalDateTime.now()));
+        smsCodeMapper.insert(row);
+        var bothRead = new CyclicBarrier(2);
+        doAnswer(
+                        call -> {
+                            Object snapshot = call.callRealMethod();
+                            bothRead.await(5, TimeUnit.SECONDS);
+                            return snapshot;
+                        })
+                .when(smsCodeMapper)
+                .selectLastByMobile(mobile, code, scene);
+        try (var pool = Executors.newFixedThreadPool(2)) {
+            var first = pool.submit(() -> consumeResult(mobile, code, scene, "127.0.0.1"));
+            var second = pool.submit(() -> consumeResult(mobile, code, scene, "127.0.0.2"));
+            var outcomes =
+                    List.of(first.get(10, TimeUnit.SECONDS), second.get(10, TimeUnit.SECONDS));
+            assertEquals(1, outcomes.stream().filter(value -> value == 0).count());
+            assertEquals(1, outcomes.stream().filter(SMS_CODE_USED.getCode()::equals).count());
+        }
+        var consumed = smsCodeMapper.selectById(row.getId());
+        assertTrue(consumed.getUsed());
+        assertNotNull(consumed.getUsedTime());
+        assertTrue(List.of("127.0.0.1", "127.0.0.2").contains(consumed.getUsedIp()));
+    }
+
+    private int consumeResult(String mobile, String code, int scene, String ip) {
+        try {
+            smsCodeService.useSmsCode(
+                    new SmsCodeUseReqDTO()
+                            .setMobile(mobile)
+                            .setCode(code)
+                            .setScene(scene)
+                            .setUsedIp(ip));
+            return 0;
+        } catch (cn.iocoder.yudao.framework.common.exception.ServiceException failure) {
+            return failure.getCode();
+        }
+    }
+
+    @Test
+    void expiredCodeCannotBeClaimedByTheConditionalUpdate() {
+        SmsCodeDO row =
+                randomPojo(
+                        SmsCodeDO.class,
+                        value ->
+                                value.setUsed(false)
+                                        .setCreateTime(LocalDateTime.now().minusMinutes(6)));
+        smsCodeMapper.insert(row);
+        LocalDateTime now = LocalDateTime.now();
+        assertEquals(0, smsCodeMapper.consume(row.getId(), now.minusMinutes(5), now, "127.0.0.1"));
+        assertFalse(smsCodeMapper.selectById(row.getId()).getUsed());
+    }
+
+    @Test
+    void failedOuterRegistrationTransactionAllowsALaterRetry() {
+        String mobile = "13800000002";
+        String code = "654321";
+        int scene = SmsSceneEnum.MEMBER_LOGIN.getScene();
+        SmsCodeDO row =
+                randomPojo(
+                        SmsCodeDO.class,
+                        value ->
+                                value.setMobile(mobile)
+                                        .setCode(code)
+                                        .setScene(scene)
+                                        .setUsed(false)
+                                        .setUsedTime(null)
+                                        .setUsedIp(null)
+                                        .setCreateTime(LocalDateTime.now()));
+        smsCodeMapper.insert(row);
+        var transaction =
+                new org.springframework.transaction.support.TransactionTemplate(transactionManager);
+        assertThrows(
+                IllegalStateException.class,
+                () ->
+                        transaction.executeWithoutResult(
+                                status -> {
+                                    assertEquals(
+                                            0, consumeResult(mobile, code, scene, "127.0.0.1"));
+                                    throw new IllegalStateException(
+                                            "Later registration write failed");
+                                }));
+        assertFalse(smsCodeMapper.selectById(row.getId()).getUsed());
+        assertNull(smsCodeMapper.selectById(row.getId()).getUsedTime());
+        assertEquals(0, consumeResult(mobile, code, scene, "127.0.0.2"));
+        assertTrue(smsCodeMapper.selectById(row.getId()).getUsed());
     }
 
     @Test

@@ -100,14 +100,16 @@ public class SmsCodeServiceImpl implements SmsCodeService {
         // 检测验证码是否有效
         SmsCodeDO lastSmsCode =
                 validateSmsCode0(reqDTO.getMobile(), reqDTO.getCode(), reqDTO.getScene());
-        // 使用验证码
-        smsCodeMapper.updateById(
-                SmsCodeDO.builder()
-                        .id(lastSmsCode.getId())
-                        .used(true)
-                        .usedTime(LocalDateTime.now())
-                        .usedIp(reqDTO.getUsedIp())
-                        .build());
+        // 校验后的条件更新是唯一消费点，避免并发请求都依据未使用的旧快照通过认证。
+        LocalDateTime usedTime = LocalDateTime.now();
+        LocalDateTime expiresAfter = usedTime.minus(smsCodeProperties.getExpireTimes());
+        if (smsCodeMapper.consume(lastSmsCode.getId(), expiresAfter, usedTime, reqDTO.getUsedIp())
+                != 1) {
+            if (!lastSmsCode.getCreateTime().isAfter(expiresAfter)) {
+                throw exception(SMS_CODE_EXPIRED);
+            }
+            throw exception(SMS_CODE_USED);
+        }
     }
 
     @Override

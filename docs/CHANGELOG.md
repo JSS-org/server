@@ -5258,3 +5258,30 @@ Modbus Client四种、Server两种缺失参数返回受控错误码；配置写�
 ### 未做 / 后续
 
 未连接实际设备、调用业务HTTP或部署。分支审计与清理另行记录。
+
+
+## [2026-11-04 19:50 ~ 20:00] 固定最终上游基线并收敛 main 主线
+
+### 意图
+
+独立演进前完成master-jdk25末次核查，使origin只维护main，保留已有历史和项目来源。
+
+### 改了什么
+
+新增docs/upstream-audit-2026-11-04.json，逐分支记录SHA、包含关系、删除/退役依据及本地恢复入口；README明确JSS main/JDK25与上游来源；Maven工作流push/PR目标改为main并限定contents只读；docs/testing.md补充证据。
+
+### 结构关系
+
+上游最终基线947f986e0fc605538caa668b243910fd3320c3d5已在main，没有待合入JDK25提交。八条旧分支已被main包含，两条JDK8系列只移植适用的Modbus修复，其余历史归档。main默认分支保留，不造孤儿根、不重写历史、不删除历史tag。
+
+### 验证证据
+
+完整历史下祖先检查与远程ls-remote核对通过；本地完整bundle verify成功，报告记录SHA256。IoT472项零失败/错误（5项既有跳过）与45模块server package成功。YAML解析确认main推送/PR触发、最小读取权限；git diff --check通过。删除远程分支时使用原SHA租约及原子推送，随后复核唯一main。
+
+### 影响面 / 风险
+
+十条旧远程分支将按审计清单删除；提交从main或本机archive refs/bundle恢复。本地备份未发布，不能替代异机灾备。保留许可证和上游署名；GitHub fork网络关系与分支整理分别处理。
+
+### 未做 / 后续
+
+本次未脱离GitHub fork网络、删除重建仓库、发布版本或部署。GitHub Actions实际运行结果需推送后观察；本地打包跳过测试，测试证据来自IoT独立回归。

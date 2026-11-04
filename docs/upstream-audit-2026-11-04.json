@@ -1,0 +1,133 @@
+{
+  "auditedAt": "2026-11-04T19:57:05.814749+08:00",
+  "repository": "JSS-org/server",
+  "target": {
+    "onlyRemoteBranch": "main",
+    "defaultBranch": "main",
+    "preserveExistingHistory": true,
+    "preserveTags": true
+  },
+  "upstream": {
+    "url": "https://github.com/YunaiV/ruoyi-vue-pro.git",
+    "branch": "master-jdk25",
+    "sha": "947f986e0fc605538caa668b243910fd3320c3d5",
+    "unmergedCommits": 0,
+    "requestedBranchSpelling": "master-sdk25 does not exist; master-jdk25 verified"
+  },
+  "mainAfterCodeReview": "c531f32b40de58ade049971a0b139fe62176e4a1",
+  "portedFix": {
+    "source": "f0b321cd3ca72f5f3bf96cb4531527f87c4e38b4",
+    "commit": "c531f32b40de58ade049971a0b139fe62176e4a1",
+    "reason": "旧 master 的 PR1262 修复未进入当前 JDK25：Modbus 必填参数应返回六种受控业务错误；保留 jakarta/JDK25，仅移植补丁。"
+  },
+  "branchesBeforeCleanup": [
+    {
+      "branch": "codex/meituan-retail-group-buy",
+      "sha": "1515926021c4c7790948690c2e76f787690fb5cc",
+      "ancestorOfMain": true,
+      "decision": "delete-merged",
+      "archiveRef": "refs/archive/independent-20261104T195038/remotes/origin/codex/meituan-retail-group-buy"
+    },
+    {
+      "branch": "codex/uniapp-135-apis",
+      "sha": "f27ce5ad7f50512766cebc9270bb5b408ee192a0",
+      "ancestorOfMain": true,
+      "decision": "delete-merged",
+      "archiveRef": "refs/archive/independent-20261104T195038/remotes/origin/codex/uniapp-135-apis"
+    },
+    {
+      "branch": "cursor/agents-markdown-file-0f90",
+      "sha": "6420c06250a3dab6e0afea1ad338e1f088bb8fcf",
+      "ancestorOfMain": false,
+      "decision": "archive-and-retire-jdk8",
+      "archiveRef": "refs/archive/independent-20261104T195038/remotes/origin/cursor/agents-markdown-file-0f90"
+    },
+    {
+      "branch": "develop",
+      "sha": "ce610131f4eb9e6d1d40a6163b58a2d9097741a9",
+      "ancestorOfMain": true,
+      "decision": "delete-merged",
+      "archiveRef": "refs/archive/independent-20261104T195038/remotes/origin/develop"
+    },
+    {
+      "branch": "feature/bpm",
+      "sha": "4fbe9fa480b25fde992687399206af5da8ffecc8",
+      "ancestorOfMain": true,
+      "decision": "delete-merged",
+      "archiveRef": "refs/archive/independent-20261104T195038/remotes/origin/feature/bpm"
+    },
+    {
+      "branch": "feature/iot",
+      "sha": "db9c485285d99fef822557582fcf00fd9f26bd7e",
+      "ancestorOfMain": true,
+      "decision": "delete-merged",
+      "archiveRef": "refs/archive/independent-20261104T195038/remotes/origin/feature/iot"
+    },
+    {
+      "branch": "feature/jdk25",
+      "sha": "501c658a3cfff09617d08dec6251d5ec092bc205",
+      "ancestorOfMain": true,
+      "decision": "delete-merged",
+      "archiveRef": "refs/archive/independent-20261104T195038/remotes/origin/feature/jdk25"
+    },
+    {
+      "branch": "main",
+      "sha": "95b75a309dce81a5e230367762393fbb3c488ea9",
+      "ancestorOfMain": true,
+      "decision": "keep-default",
+      "archiveRef": "refs/archive/independent-20261104T195038/remotes/origin/main"
+    },
+    {
+      "branch": "master",
+      "sha": "ac022b15a094cf9cf82903d429b9729e72309da5",
+      "ancestorOfMain": false,
+      "decision": "archive-and-retire-jdk8",
+      "archiveRef": "refs/archive/independent-20261104T195038/remotes/origin/master"
+    },
+    {
+      "branch": "master-jdk17",
+      "sha": "7c397bbfae3e768b26e3ee962c5aa7064e8d7c96",
+      "ancestorOfMain": true,
+      "decision": "delete-merged",
+      "archiveRef": "refs/archive/independent-20261104T195038/remotes/origin/master-jdk17"
+    },
+    {
+      "branch": "master-jdk25",
+      "sha": "9fc825e22b636d09a64437e74475f48fe8016387",
+      "ancestorOfMain": true,
+      "decision": "delete-merged",
+      "archiveRef": "refs/archive/independent-20261104T195038/remotes/origin/master-jdk25"
+    }
+  ],
+  "retirementReason": {
+    "master": "旧 JDK8/Spring Boot2 系列。近期非兼容性业务修复按 main 历史交叉核查；Modbus 缺失补丁单独移植。Oracle/JDK8/旧运行时差异不整体合入。完整提交留在本地归档及 bundle。",
+    "cursor/agents-markdown-file-0f90": "旧 JDK8 历史附加 AGENTS.md；其 JDK8 约定不适用于现 main，保留当前 JSS/JDK25 协作说明。"
+  },
+  "backup": {
+    "localDirectory": ".git/audit-backups/independent-20261104T195038",
+    "bundle": "repository.bundle",
+    "sha256": "5154761f432fdd509e6759900cbd861b3f61eecd755b2d759ef977860f891052",
+    "fullHistoryVerified": true,
+    "refsManifest": "refs.json",
+    "publishedToRemote": false
+  },
+  "validation": {
+    "modbusBaseline": {
+      "tests": 9,
+      "failures": 6
+    },
+    "iotRegression": {
+      "classes": 48,
+      "tests": 472,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 5
+    },
+    "serverPackage": "45-module jss-mall reactor succeeded; tests skipped in packaging",
+    "format": "root Spotless apply/check passed",
+    "ci": "Maven push and pull_request target main; contents read"
+  },
+  "cleanupProtocol": "Fresh ls-remote comparison, atomic push of fast-forward main plus ten branch deletions with per-ref expected-SHA leases; verify remote exposes only main. No history rewrite.",
+  "forkNetwork": "GitHub fork association is separate from Git branches; this audit does not detach or recreate the repository.",
+  "futureUpstreamPolicy": "本次为最后基线审计；后续以 main 独立演进，不自动合并旧分支。"
+}

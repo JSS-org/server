@@ -2114,3 +2114,10 @@ JDK 25.0.2 验证命令与结果：
 ## 2026-11-04 独立演进前 Modbus 参数校验补丁
 
 从上游 JDK8 分支修复 `f0b321cd3ca72f5f3bf96cb4531527f87c4e38b4` 移植业务错误码和九项回归，保留当前 JDK25/jakarta 实现。先补错误码、保持旧 Service 运行同一测试，9项中6项失败（实际 IllegalArgumentException，预期 ServiceException），日志 `/tmp/server-independent-modbus-baseline.log`；修复后执行 `mvn -o -B -ntp -Pjss-mall -pl yudao-module-iot/yudao-module-iot-biz -am test '-Dtest=Iot*Test' -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true`，显式 Mockito5.23.0 javaagent同前，48类472项、467通过/5项既有跳过、零失败/错误，其中新增9项全过，日志 `/tmp/server-independent-iot-final.log`。根 Spotless apply/check、git diff --check通过。本次为服务单元/模块回归，没有真实设备或业务HTTP验收。
+
+
+## 2026-11-04 最终上游与唯一 main 审计
+
+已解开浅克隆并完整获取历史，`git merge-base --is-ancestor 947f986e0fc605538caa668b243910fd3320c3d5 main`成功，`main..upstream/master-jdk25`为0。远程实际分支名为master-jdk25，master-sdk25不存在。11条origin分支中main保留，8条非main已是main祖先，另2条为旧JDK8系列并存入本地archive refs及已验证完整Git bundle；详见upstream-audit-2026-11-04.json逐分支SHA与处置。
+
+Modbus修复后 `mvn -o -B -ntp -Pjss-mall -pl yudao-server -am package -DskipTests -Dspotless.skip=true` 全45模块成功，日志 `/tmp/server-independent-package.log`；测试证据见上一节。Maven工作流YAML经本机Ruby/Psych解析验证，push/PR均指向main、contents只读。未将本地构建记为GitHub Actions已执行；最终远程变更使用逐ref SHA保护及atomic push，完成后另行查询Git与GitHub分支接口核验。

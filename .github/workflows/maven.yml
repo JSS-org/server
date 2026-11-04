@@ -5,10 +5,13 @@ name: Java CI with Maven
 
 on:
   push:
-    branches: [ master, master-jdk17, master-jdk25 ]
-  # pull_request:
-  #   branches: [ master ]
+    branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:

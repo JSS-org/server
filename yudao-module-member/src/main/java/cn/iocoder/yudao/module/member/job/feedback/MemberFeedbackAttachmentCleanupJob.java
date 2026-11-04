@@ -3,9 +3,12 @@ package cn.iocoder.yudao.module.member.job.feedback;
 import cn.iocoder.yudao.framework.quartz.core.handler.JobHandler;
 import cn.iocoder.yudao.framework.tenant.core.job.TenantJob;
 import cn.iocoder.yudao.module.member.service.feedback.MemberFeedbackService;
+
 import jakarta.annotation.Resource;
-import java.time.LocalDateTime;
+
 import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
 
 /** Registered through the existing managed scheduler; no automatic job/data registration. */
 @Component
@@ -18,7 +21,10 @@ public class MemberFeedbackAttachmentCleanupJob implements JobHandler {
     @Override
     @TenantJob
     public String execute(String param) {
-        int hours = param == null || param.isBlank() ? DEFAULT_RETENTION_HOURS : Integer.parseInt(param.trim());
+        int hours =
+                param == null || param.isBlank()
+                        ? DEFAULT_RETENTION_HOURS
+                        : Integer.parseInt(param.trim());
         if (hours < 24 || hours > 8760) throw new IllegalArgumentException("反馈附件保留时间需为24至8760小时");
         LocalDateTime cutoff = LocalDateTime.now().minusHours(hours);
         int total = 0;

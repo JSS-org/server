@@ -7,9 +7,6 @@ import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.*;
 
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
-import com.anji.captcha.model.vo.CaptchaVO;
-import com.anji.captcha.service.CaptchaService;
-import cn.iocoder.yudao.module.system.api.sms.dto.code.SmsCodeUseReqDTO;
 import cn.iocoder.yudao.framework.common.biz.system.oauth2.OAuth2TokenCommonApi;
 import cn.iocoder.yudao.framework.common.biz.system.oauth2.dto.OAuth2AccessTokenCreateReqDTO;
 import cn.iocoder.yudao.framework.common.biz.system.oauth2.dto.OAuth2AccessTokenRespDTO;
@@ -25,6 +22,7 @@ import cn.iocoder.yudao.module.member.service.user.MemberUserService;
 import cn.iocoder.yudao.module.system.api.logger.LoginLogApi;
 import cn.iocoder.yudao.module.system.api.logger.dto.LoginLogCreateReqDTO;
 import cn.iocoder.yudao.module.system.api.sms.SmsCodeApi;
+import cn.iocoder.yudao.module.system.api.sms.dto.code.SmsCodeUseReqDTO;
 import cn.iocoder.yudao.module.system.api.social.SocialClientApi;
 import cn.iocoder.yudao.module.system.api.social.SocialUserApi;
 import cn.iocoder.yudao.module.system.api.social.dto.SocialUserBindReqDTO;
@@ -35,6 +33,9 @@ import cn.iocoder.yudao.module.system.enums.logger.LoginResultEnum;
 import cn.iocoder.yudao.module.system.enums.oauth2.OAuth2ClientConstants;
 import cn.iocoder.yudao.module.system.enums.sms.SmsSceneEnum;
 import cn.iocoder.yudao.module.system.enums.social.SocialTypeEnum;
+
+import com.anji.captcha.model.vo.CaptchaVO;
+import com.anji.captcha.service.CaptchaService;
 
 import jakarta.annotation.Resource;
 
@@ -94,12 +95,21 @@ public class MemberAuthServiceImpl implements MemberAuthService {
         }
         validateCaptchaIfSupplied(reqVO.getCaptchaVerification());
         String userIp = getClientIP();
-        smsCodeApi.useSmsCode(new SmsCodeUseReqDTO()
-                .setMobile(reqVO.getMobile()).setCode(reqVO.getCode())
-                .setScene(SmsSceneEnum.MEMBER_LOGIN.getScene()).setUsedIp(userIp));
-        MemberUserDO user = userService.registerUser(reqVO.getMobile(), reqVO.getPassword(),
-                reqVO.getNickname(), userIp, getTerminal());
-        return createTokenAfterLoginSuccess(user, reqVO.getMobile(), LoginLogTypeEnum.LOGIN_SMS, null);
+        smsCodeApi.useSmsCode(
+                new SmsCodeUseReqDTO()
+                        .setMobile(reqVO.getMobile())
+                        .setCode(reqVO.getCode())
+                        .setScene(SmsSceneEnum.MEMBER_LOGIN.getScene())
+                        .setUsedIp(userIp));
+        MemberUserDO user =
+                userService.registerUser(
+                        reqVO.getMobile(),
+                        reqVO.getPassword(),
+                        reqVO.getNickname(),
+                        userIp,
+                        getTerminal());
+        return createTokenAfterLoginSuccess(
+                user, reqVO.getMobile(), LoginLogTypeEnum.LOGIN_SMS, null);
     }
 
     private void validateCaptchaIfSupplied(String verification) {
@@ -337,13 +347,17 @@ public class MemberAuthServiceImpl implements MemberAuthService {
     }
 
     private void validateMemberSmsScene(Integer scene, Long userId) {
-        if (scene == null || scene < SmsSceneEnum.MEMBER_LOGIN.getScene()
+        if (scene == null
+                || scene < SmsSceneEnum.MEMBER_LOGIN.getScene()
                 || scene > SmsSceneEnum.MEMBER_RESET_PASSWORD.getScene()) {
             throw exception(AUTH_SMS_SCENE_INVALID);
         }
         if ((scene.equals(SmsSceneEnum.MEMBER_UPDATE_MOBILE.getScene())
-                || scene.equals(SmsSceneEnum.MEMBER_UPDATE_PASSWORD.getScene())) && userId == null) {
-            throw exception(cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants.UNAUTHORIZED);
+                        || scene.equals(SmsSceneEnum.MEMBER_UPDATE_PASSWORD.getScene()))
+                && userId == null) {
+            throw exception(
+                    cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants
+                            .UNAUTHORIZED);
         }
     }
 

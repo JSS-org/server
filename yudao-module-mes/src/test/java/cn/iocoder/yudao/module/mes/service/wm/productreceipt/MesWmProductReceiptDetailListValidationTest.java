@@ -3,11 +3,14 @@ package cn.iocoder.yudao.module.mes.service.wm.productreceipt;
 import static org.junit.jupiter.api.Assertions.*;
 
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productreceipt.vo.detail.MesWmProductReceiptDetailListReqVO;
+
 import jakarta.validation.Validation;
+
 import org.junit.jupiter.api.Test;
 
 class MesWmProductReceiptDetailListValidationTest {
-    @Test void requiresARealParentAndPreservesLargeIdentifiers() {
+    @Test
+    void requiresARealParentAndPreservesLargeIdentifiers() {
         try (var factory = Validation.buildDefaultValidatorFactory()) {
             var validator = factory.getValidator();
             var query = new MesWmProductReceiptDetailListReqVO();

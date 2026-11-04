@@ -52,7 +52,8 @@ public class AppAuthController {
     @PostMapping("/register")
     @Operation(summary = "使用手机验证码注册会员并设置密码")
     @PermitAll
-    public CommonResult<AppAuthLoginRespVO> register(@RequestBody @Valid AppAuthRegisterReqVO reqVO) {
+    public CommonResult<AppAuthLoginRespVO> register(
+            @RequestBody @Valid AppAuthRegisterReqVO reqVO) {
         return success(authService.register(reqVO));
     }
 

@@ -103,26 +103,36 @@ public class JssWebSocketAuthorization implements WebSocketSessionAuthorization 
                 || user.getTenantId() == null) return null;
         try {
             return TenantUtils.execute(
-                user.getTenantId(),
-                () -> {
-                    OAuth2AccessTokenCheckRespDTO current = tokens.checkAccessToken(token);
-                    return current != null
-                                    && Objects.equals(current.getUserId(), user.getId())
-                                    && Objects.equals(current.getUserType(), user.getUserType())
-                                    && Objects.equals(current.getTenantId(), user.getTenantId())
-                            ? current
-                            : null;
-                });
+                    user.getTenantId(),
+                    () -> {
+                        OAuth2AccessTokenCheckRespDTO current = tokens.checkAccessToken(token);
+                        return current != null
+                                        && Objects.equals(current.getUserId(), user.getId())
+                                        && Objects.equals(current.getUserType(), user.getUserType())
+                                        && Objects.equals(current.getTenantId(), user.getTenantId())
+                                ? current
+                                : null;
+                    });
         } catch (RuntimeException denied) {
             // Never log the bearer/parent credential or exception messages that may contain it.
             Throwable reason = denied;
-            for (int depth = 0; depth < 16 && reason.getCause() != null
-                    && reason.getCause() != reason; depth++) {
+            for (int depth = 0;
+                    depth < 16 && reason.getCause() != null && reason.getCause() != reason;
+                    depth++) {
                 reason = reason.getCause();
             }
-            log.debug("[checked][socket={} user={} tenant={} rejection={} code={} trace={}]",
-                    session.getId(), user.getId(), user.getTenantId(), reason.getClass().getSimpleName(),
-                    reason instanceof cn.iocoder.yudao.framework.common.exception.ServiceException service ? service.getCode() : null,
+            log.debug(
+                    "[checked][socket={} user={} tenant={} rejection={} code={} trace={}]",
+                    session.getId(),
+                    user.getId(),
+                    user.getTenantId(),
+                    reason.getClass().getSimpleName(),
+                    reason
+                                    instanceof
+                                    cn.iocoder.yudao.framework.common.exception.ServiceException
+                                            service
+                            ? service.getCode()
+                            : null,
                     java.util.Arrays.stream(reason.getStackTrace()).limit(8).toList());
             throw denied;
         }

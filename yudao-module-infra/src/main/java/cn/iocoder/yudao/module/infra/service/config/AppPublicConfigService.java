@@ -3,10 +3,13 @@ package cn.iocoder.yudao.module.infra.service.config;
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
 import cn.iocoder.yudao.module.infra.controller.app.config.vo.AppPublicConfigRespVO;
 import cn.iocoder.yudao.module.infra.dal.dataobject.config.ConfigDO;
+
 import jakarta.annotation.Resource;
+
+import org.springframework.stereotype.Service;
+
 import java.net.URI;
 import java.util.ArrayList;
-import org.springframework.stereotype.Service;
 
 @Service
 public class AppPublicConfigService {
@@ -37,7 +40,8 @@ public class AppPublicConfigService {
             var banner = new AppPublicConfigRespVO.Banner();
             banner.setImageUrl(image);
             String link = value(prefix, "banner." + index + ".link", 500);
-            banner.setLink(link.startsWith("/pages/") && validCharacters(link) ? link : http(link, true));
+            banner.setLink(
+                    link.startsWith("/pages/") && validCharacters(link) ? link : http(link, true));
             banners.add(banner);
         }
         result.setBanners(banners);
@@ -46,17 +50,25 @@ public class AppPublicConfigService {
 
     private String value(String prefix, String suffix, int maximum) {
         ConfigDO config = configService.getConfigByKey(prefix + suffix);
-        if (config == null || !Boolean.TRUE.equals(config.getVisible()) || config.getValue() == null) return "";
+        if (config == null
+                || !Boolean.TRUE.equals(config.getVisible())
+                || config.getValue() == null) return "";
         String value = config.getValue().trim();
         return value.length() <= maximum ? value : "";
     }
 
     private static boolean validCharacters(String value) {
-        return !value.contains("\\") && value.chars().noneMatch(character -> Character.isWhitespace(character) || Character.isISOControl(character));
+        return !value.contains("\\")
+                && value.chars()
+                        .noneMatch(
+                                character ->
+                                        Character.isWhitespace(character)
+                                                || Character.isISOControl(character));
     }
 
     private static String image(String value) {
-        if (value.startsWith("/static/") && validCharacters(value) && !value.contains("..")) return value;
+        if (value.startsWith("/static/") && validCharacters(value) && !value.contains(".."))
+            return value;
         return http(value, false);
     }
 
@@ -68,7 +80,9 @@ public class AppPublicConfigService {
         if (!validCharacters(value) || value.isEmpty()) return "";
         try {
             URI uri = URI.create(value);
-            boolean scheme = "https".equalsIgnoreCase(uri.getScheme()) || (!httpsOnly && "http".equalsIgnoreCase(uri.getScheme()));
+            boolean scheme =
+                    "https".equalsIgnoreCase(uri.getScheme())
+                            || (!httpsOnly && "http".equalsIgnoreCase(uri.getScheme()));
             return scheme && uri.getHost() != null && uri.getUserInfo() == null ? value : "";
         } catch (IllegalArgumentException invalid) {
             return "";

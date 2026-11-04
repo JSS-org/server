@@ -36,7 +36,8 @@ public class IotSchedulerManager {
         jobFactory.setApplicationContext(applicationContext);
         schedulerFactoryBean.setJobFactory(jobFactory);
         schedulerFactoryBean.setAutoStartup(
-                applicationContext.getEnvironment()
+                applicationContext
+                        .getEnvironment()
                         .getProperty("spring.quartz.auto-startup", Boolean.class, true));
         schedulerFactoryBean.setSchedulerName(SCHEDULER_NAME);
         schedulerFactoryBean.setDataSource(dataSource);

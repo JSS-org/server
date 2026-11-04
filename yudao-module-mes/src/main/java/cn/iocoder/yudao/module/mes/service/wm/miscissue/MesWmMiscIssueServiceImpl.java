@@ -29,10 +29,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
+import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
-import java.math.BigDecimal;
 
 /**
  * MES 杂项出库单 Service 实现类
@@ -146,18 +146,23 @@ public class MesWmMiscIssueServiceImpl implements MesWmMiscIssueService {
         }
         Map<Long, BigDecimal> remaining = new HashMap<>();
         for (MesWmMiscIssueLineDO line : lines) {
-            if (line.getId() == null || line.getQuantity() == null
+            if (line.getId() == null
+                    || line.getQuantity() == null
                     || line.getQuantity().signum() <= 0
                     || remaining.put(line.getId(), line.getQuantity()) != null) {
                 return false;
             }
         }
-        for (MesWmMiscIssueDetailDO detail : miscIssueDetailService.getMiscIssueDetailListByIssueId(id)) {
+        for (MesWmMiscIssueDetailDO detail :
+                miscIssueDetailService.getMiscIssueDetailListByIssueId(id)) {
             BigDecimal quantity = detail.getQuantity();
-            if (!remaining.containsKey(detail.getLineId()) || quantity == null || quantity.signum() <= 0) {
+            if (!remaining.containsKey(detail.getLineId())
+                    || quantity == null
+                    || quantity.signum() <= 0) {
                 return false;
             }
-            remaining.computeIfPresent(detail.getLineId(), (lineId, rest) -> rest.subtract(quantity));
+            remaining.computeIfPresent(
+                    detail.getLineId(), (lineId, rest) -> rest.subtract(quantity));
         }
         return remaining.values().stream().allMatch(value -> value.signum() == 0);
     }

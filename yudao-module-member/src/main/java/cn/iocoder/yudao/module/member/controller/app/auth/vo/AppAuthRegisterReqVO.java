@@ -1,10 +1,14 @@
 package cn.iocoder.yudao.module.member.controller.app.auth.vo;
 
 import cn.iocoder.yudao.framework.common.validation.Mobile;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+
 import lombok.Data;
+
 import org.hibernate.validator.constraints.Length;
 
 @Data

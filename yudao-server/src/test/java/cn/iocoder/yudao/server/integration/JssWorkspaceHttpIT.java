@@ -88,8 +88,13 @@ class JssWorkspaceHttpIT {
     @Autowired private StringRedisTemplate redis;
     @Autowired private SecurityProperties security;
     @Autowired private JssProperties workspace;
-    @Autowired private cn.iocoder.yudao.module.iot.dal.storage.IotDeviceMessageDAO timeSeriesMessages;
-    @Autowired private cn.iocoder.yudao.module.iot.framework.job.core.IotSchedulerManager iotSchedulerManager;
+
+    @Autowired
+    private cn.iocoder.yudao.module.iot.dal.storage.IotDeviceMessageDAO timeSeriesMessages;
+
+    @Autowired
+    private cn.iocoder.yudao.module.iot.framework.job.core.IotSchedulerManager iotSchedulerManager;
+
     private final HttpClient http =
             HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
 
@@ -100,93 +105,280 @@ class JssWorkspaceHttpIT {
     @Test
     void latestModulesBootAndPublicMemberFlowsUseRealHttp() throws Exception {
         assertEquals("disabled", environment.getProperty("yudao.iot.storage.type"));
-        var scheduler = (org.quartz.Scheduler) org.springframework.test.util.ReflectionTestUtils.getField(iotSchedulerManager, "scheduler");
+        var scheduler =
+                (org.quartz.Scheduler)
+                        org.springframework.test.util.ReflectionTestUtils.getField(
+                                iotSchedulerManager, "scheduler");
         assertNotNull(scheduler);
-        assertTrue(scheduler.isInStandbyMode(), "Explicit Quartz startup=false must also stop IoT dispatch");
-        assertEquals(1_050_000_000, assertThrows(
-                cn.iocoder.yudao.framework.common.exception.ServiceException.class,
-                () -> timeSeriesMessages.selectCountByCreateTime(null)).getCode());
+        assertTrue(
+                scheduler.isInStandbyMode(),
+                "Explicit Quartz startup=false must also stop IoT dispatch");
+        assertEquals(
+                1_050_000_000,
+                assertThrows(
+                                cn.iocoder.yudao.framework.common.exception.ServiceException.class,
+                                () -> timeSeriesMessages.selectCountByCreateTime(null))
+                        .getCode());
 
-        try (var connection = datasource.getConnection(); var statement = connection.createStatement()) {
+        try (var connection = datasource.getConnection();
+                var statement = connection.createStatement()) {
             // Fixed fixture metadata exists only in the wrapper-owned disposable schema.
-            statement.executeUpdate("INSERT INTO infra_config(category,type,name,config_key,value,visible) VALUES "
-                    + "('JSS HTTP',2,'Public name','jss.app.public.1.name','Owned application',b'1'),"
-                    + "('JSS HTTP',2,'Hidden phone','jss.app.public.1.support-phone','13800000000',b'0'),"
-                    + "('JSS HTTP',2,'Foreign name','jss.app.public.91001.name','Foreign application',b'1')");
+            statement.executeUpdate(
+                    "INSERT INTO infra_config(category,type,name,config_key,value,visible) VALUES "
+                            + "('JSS HTTP',2,'Public name','jss.app.public.1.name','Owned application',b'1'),"
+                            + "('JSS HTTP',2,'Hidden phone','jss.app.public.1.support-phone','13800000000',b'0'),"
+                            + "('JSS HTTP',2,'Foreign name','jss.app.public.91001.name','Foreign application',b'1')");
         }
         var profile = data(api("GET", "/app-api/infra/config/app-public", null, null, 1));
         assertEquals("Owned application", profile.get("appName"));
         assertEquals("", profile.get("supportPhone"));
-        assertEquals("Foreign application", data(api("GET", "/app-api/infra/config/app-public", null, null, 91001)).get("appName"));
+        assertEquals(
+                "Foreign application",
+                data(api("GET", "/app-api/infra/config/app-public", null, null, 91001))
+                        .get("appName"));
         expectCode(api("GET", "/app-api/member/feedback/get?id=1", null, null, 1), 401);
 
         String member = login("member", "13800009001");
         String other = login("member", "13800009002");
-        byte[] image = java.util.Base64.getDecoder().decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=");
+        byte[] image =
+                java.util.Base64.getDecoder()
+                        .decode(
+                                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=");
         String boundary = "jss-owned-feedback-boundary";
-        byte[] prefix = ("--" + boundary + "\r\nContent-Disposition: form-data; name=\"file\"; filename=\"owned.png\"\r\nContent-Type: image/png\r\n\r\n").getBytes(java.nio.charset.StandardCharsets.UTF_8);
-        byte[] suffix = ("\r\n--" + boundary + "--\r\n").getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        byte[] prefix =
+                ("--"
+                                + boundary
+                                + "\r\nContent-Disposition: form-data; name=\"file\"; filename=\"owned.png\"\r\nContent-Type: image/png\r\n\r\n")
+                        .getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        byte[] suffix =
+                ("\r\n--" + boundary + "--\r\n").getBytes(java.nio.charset.StandardCharsets.UTF_8);
         var bytes = new java.io.ByteArrayOutputStream();
-        bytes.write(prefix); bytes.write(image); bytes.write(suffix);
+        bytes.write(prefix);
+        bytes.write(image);
+        bytes.write(suffix);
         String root = "http://127.0.0.1:" + environment.getRequiredProperty("local.server.port");
-        var upload = HttpRequest.newBuilder(URI.create(root + "/app-api/member/feedback/upload"))
-                .timeout(Duration.ofSeconds(15)).header("tenant-id", "1").header("Authorization", "Bearer " + member)
-                .header("Content-Type", "multipart/form-data; boundary=" + boundary)
-                .POST(HttpRequest.BodyPublishers.ofByteArray(bytes.toByteArray())).build();
-        Map<String,Object> uploaded = JsonUtils.parseObject(http.send(upload, HttpResponse.BodyHandlers.ofString()).body(), new TypeReference<>() {});
+        var upload =
+                HttpRequest.newBuilder(URI.create(root + "/app-api/member/feedback/upload"))
+                        .timeout(Duration.ofSeconds(15))
+                        .header("tenant-id", "1")
+                        .header("Authorization", "Bearer " + member)
+                        .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                        .POST(HttpRequest.BodyPublishers.ofByteArray(bytes.toByteArray()))
+                        .build();
+        Map<String, Object> uploaded =
+                JsonUtils.parseObject(
+                        http.send(upload, HttpResponse.BodyHandlers.ofString()).body(),
+                        new TypeReference<>() {});
         String attachment = expectCode(uploaded, 0).get("data").toString();
-        var created = expectCode(api("POST", "/app-api/member/feedback/create",
-                Map.of("content", "Owned HTTP feedback with private image", "attachmentIds", List.of(attachment)), member, 1), 0);
+        var created =
+                expectCode(
+                        api(
+                                "POST",
+                                "/app-api/member/feedback/create",
+                                Map.of(
+                                        "content",
+                                        "Owned HTTP feedback with private image",
+                                        "attachmentIds",
+                                        List.of(attachment)),
+                                member,
+                                1),
+                        0);
         String id = created.get("data").toString();
-        assertEquals("Owned HTTP feedback with private image", data(api("GET", "/app-api/member/feedback/get?id=" + id, null, member, 1)).get("content"));
-        expectCode(api("GET", "/app-api/member/feedback/get?id=" + id, null, other, 1), 1_004_013_002);
+        assertEquals(
+                "Owned HTTP feedback with private image",
+                data(api("GET", "/app-api/member/feedback/get?id=" + id, null, member, 1))
+                        .get("content"));
+        expectCode(
+                api("GET", "/app-api/member/feedback/get?id=" + id, null, other, 1), 1_004_013_002);
         String foreign = login("member", "13800009101", 91001);
-        expectCode(api("GET", "/app-api/member/feedback/get?id=" + id, null, foreign, 91001), 1_004_013_002);
-        var download = HttpRequest.newBuilder(URI.create(root + "/app-api/member/feedback/attachment?id=" + attachment))
-                .timeout(Duration.ofSeconds(15)).header("tenant-id", "1").header("Authorization", "Bearer " + member).GET().build();
+        expectCode(
+                api("GET", "/app-api/member/feedback/get?id=" + id, null, foreign, 91001),
+                1_004_013_002);
+        var download =
+                HttpRequest.newBuilder(
+                                URI.create(
+                                        root
+                                                + "/app-api/member/feedback/attachment?id="
+                                                + attachment))
+                        .timeout(Duration.ofSeconds(15))
+                        .header("tenant-id", "1")
+                        .header("Authorization", "Bearer " + member)
+                        .GET()
+                        .build();
         var saved = http.send(download, HttpResponse.BodyHandlers.ofByteArray());
         assertEquals(200, saved.statusCode());
         assertArrayEquals(image, saved.body());
-        assertEquals("private, no-store", saved.headers().firstValue("Cache-Control").orElseThrow());
-        expectCode(api("GET", "/app-api/member/feedback/attachment?id=" + attachment, null, other, 1), 1_004_013_001);
-        expectCode(api("POST", "/app-api/member/feedback/create",
-                Map.of("content", "Attempt duplicate private image claim", "attachmentIds", List.of(attachment)), member, 1), 1_004_013_001);
+        assertEquals(
+                "private, no-store", saved.headers().firstValue("Cache-Control").orElseThrow());
+        expectCode(
+                api("GET", "/app-api/member/feedback/attachment?id=" + attachment, null, other, 1),
+                1_004_013_001);
+        expectCode(
+                api(
+                        "POST",
+                        "/app-api/member/feedback/create",
+                        Map.of(
+                                "content",
+                                "Attempt duplicate private image claim",
+                                "attachmentIds",
+                                List.of(attachment)),
+                        member,
+                        1),
+                1_004_013_001);
     }
 
     @TestFactory
     Stream<DynamicTest> actualCrmBpmAcceptance() {
         if (!"1".equals(System.getenv("JSS_TEST_CRM_BPM"))) return Stream.empty();
-        return Stream.of(DynamicTest.dynamicTest("nativeCrmAndBpmModulesUseManagedSchemaAndRealHttp", () -> {
-            assertEquals("false", environment.getProperty("flowable.database-schema-update"));
-            String token = login("admin", "jssitreviewer");
-            var category = expectCode(api("POST", "/admin-api/bpm/category/create",
-                    Map.of("name", "Owned BPM category", "code", "jss_owned", "status", 0, "sort", 1), token, 1), 0).get("data").toString();
-            assertEquals("Owned BPM category", data(api("GET", "/admin-api/bpm/category/get?id=" + category, null, token, 1)).get("name"));
-            var group = expectCode(api("POST", "/admin-api/bpm/user-group/create",
-                    Map.of("name", "Owned BPM group", "description", "Native JSON roundtrip", "status", 0, "userIds", List.of(1)), token, 1), 0).get("data").toString();
-            var savedGroup = data(api("GET", "/admin-api/bpm/user-group/get?id=" + group, null, token, 1));
-            assertEquals("Owned BPM group", savedGroup.get("name"));
-            assertEquals(List.of("1"), ((List<?>) savedGroup.get("userIds")).stream().map(Object::toString).toList());
-            var customer = expectCode(api("POST", "/admin-api/crm/customer/create",
-                    Map.of("name", "Owned CRM customer", "ownerUserId", 1, "remark", "Native owner and permissions"), token, 1), 0).get("data").toString();
-            var savedCustomer = data(api("GET", "/admin-api/crm/customer/get?id=" + customer, null, token, 1));
-            assertEquals("Owned CRM customer", savedCustomer.get("name"));
-            assertEquals("1", savedCustomer.get("ownerUserId").toString());
-            var definitions = expectCode(api("GET", "/admin-api/bpm/process-definition/list?suspensionState=1", null, token, 1), 0);
-            assertTrue(definitions.get("data") instanceof List<?>);
-            var processes = data(api("GET", "/admin-api/bpm/process-instance/my-page?pageNo=1&pageSize=10", null, token, 1));
-            assertNotNull(processes.get("list"));
-            // A member sharing the super-admin's numeric ID must not inherit that role.
-            try (var connection = datasource.getConnection(); var statement = connection.createStatement()) {
-                statement.executeUpdate("INSERT INTO member_user (id,tenant_id,mobile,password,nickname,status,register_ip,group_id) SELECT 1,1,'13900009714',password,'Owned ID collision',0,'127.0.0.1',23099 FROM member_user WHERE id=23001");
-            }
-            String member = login("member", "13900009714");
-            assertEquals("1", data(api("GET", "/app-api/member/user/get", null, member, 1)).get("id").toString());
-            var context = data(api("GET", "/app-api/jss/auth/context", null, member, 1));
-            assertEquals(Boolean.FALSE, ((Map<?,?>) context.get("capabilities")).get("workspace"));
-            expectCode(api("GET", "/admin-api/bpm/category/page?pageNo=1&pageSize=10", null, member, 1), 403);
-            expectCode(api("GET", "/admin-api/bpm/category/page?pageNo=1&pageSize=10", null, null, 1), 401);
-        }));
+        return Stream.of(
+                DynamicTest.dynamicTest(
+                        "nativeCrmAndBpmModulesUseManagedSchemaAndRealHttp",
+                        () -> {
+                            assertEquals(
+                                    "false",
+                                    environment.getProperty("flowable.database-schema-update"));
+                            String token = login("admin", "jssitreviewer");
+                            var category =
+                                    expectCode(
+                                                    api(
+                                                            "POST",
+                                                            "/admin-api/bpm/category/create",
+                                                            Map.of(
+                                                                    "name",
+                                                                    "Owned BPM category",
+                                                                    "code",
+                                                                    "jss_owned",
+                                                                    "status",
+                                                                    0,
+                                                                    "sort",
+                                                                    1),
+                                                            token,
+                                                            1),
+                                                    0)
+                                            .get("data")
+                                            .toString();
+                            assertEquals(
+                                    "Owned BPM category",
+                                    data(api(
+                                                    "GET",
+                                                    "/admin-api/bpm/category/get?id=" + category,
+                                                    null,
+                                                    token,
+                                                    1))
+                                            .get("name"));
+                            var group =
+                                    expectCode(
+                                                    api(
+                                                            "POST",
+                                                            "/admin-api/bpm/user-group/create",
+                                                            Map.of(
+                                                                    "name",
+                                                                    "Owned BPM group",
+                                                                    "description",
+                                                                    "Native JSON roundtrip",
+                                                                    "status",
+                                                                    0,
+                                                                    "userIds",
+                                                                    List.of(1)),
+                                                            token,
+                                                            1),
+                                                    0)
+                                            .get("data")
+                                            .toString();
+                            var savedGroup =
+                                    data(
+                                            api(
+                                                    "GET",
+                                                    "/admin-api/bpm/user-group/get?id=" + group,
+                                                    null,
+                                                    token,
+                                                    1));
+                            assertEquals("Owned BPM group", savedGroup.get("name"));
+                            assertEquals(
+                                    List.of("1"),
+                                    ((List<?>) savedGroup.get("userIds"))
+                                            .stream().map(Object::toString).toList());
+                            var customer =
+                                    expectCode(
+                                                    api(
+                                                            "POST",
+                                                            "/admin-api/crm/customer/create",
+                                                            Map.of(
+                                                                    "name",
+                                                                    "Owned CRM customer",
+                                                                    "ownerUserId",
+                                                                    1,
+                                                                    "remark",
+                                                                    "Native owner and permissions"),
+                                                            token,
+                                                            1),
+                                                    0)
+                                            .get("data")
+                                            .toString();
+                            var savedCustomer =
+                                    data(
+                                            api(
+                                                    "GET",
+                                                    "/admin-api/crm/customer/get?id=" + customer,
+                                                    null,
+                                                    token,
+                                                    1));
+                            assertEquals("Owned CRM customer", savedCustomer.get("name"));
+                            assertEquals("1", savedCustomer.get("ownerUserId").toString());
+                            var definitions =
+                                    expectCode(
+                                            api(
+                                                    "GET",
+                                                    "/admin-api/bpm/process-definition/list?suspensionState=1",
+                                                    null,
+                                                    token,
+                                                    1),
+                                            0);
+                            assertTrue(definitions.get("data") instanceof List<?>);
+                            var processes =
+                                    data(
+                                            api(
+                                                    "GET",
+                                                    "/admin-api/bpm/process-instance/my-page?pageNo=1&pageSize=10",
+                                                    null,
+                                                    token,
+                                                    1));
+                            assertNotNull(processes.get("list"));
+                            // A member sharing the super-admin's numeric ID must not inherit that
+                            // role.
+                            try (var connection = datasource.getConnection();
+                                    var statement = connection.createStatement()) {
+                                statement.executeUpdate(
+                                        "INSERT INTO member_user (id,tenant_id,mobile,password,nickname,status,register_ip,group_id) SELECT 1,1,'13900009714',password,'Owned ID collision',0,'127.0.0.1',23099 FROM member_user WHERE id=23001");
+                            }
+                            String member = login("member", "13900009714");
+                            assertEquals(
+                                    "1",
+                                    data(api("GET", "/app-api/member/user/get", null, member, 1))
+                                            .get("id")
+                                            .toString());
+                            var context =
+                                    data(api("GET", "/app-api/jss/auth/context", null, member, 1));
+                            assertEquals(
+                                    Boolean.FALSE,
+                                    ((Map<?, ?>) context.get("capabilities")).get("workspace"));
+                            expectCode(
+                                    api(
+                                            "GET",
+                                            "/admin-api/bpm/category/page?pageNo=1&pageSize=10",
+                                            null,
+                                            member,
+                                            1),
+                                    403);
+                            expectCode(
+                                    api(
+                                            "GET",
+                                            "/admin-api/bpm/category/page?pageNo=1&pageSize=10",
+                                            null,
+                                            null,
+                                            1),
+                                    401);
+                        }));
     }
 
     @TestFactory
@@ -1118,111 +1310,297 @@ class JssWorkspaceHttpIT {
     private cn.iocoder.yudao.framework.websocket.core.sender.WebSocketMessageSender socketSender;
 
     @Autowired
-    private cn.iocoder.yudao.framework.websocket.core.session.WebSocketSessionManager socketSessions;
+    private cn.iocoder.yudao.framework.websocket.core.session.WebSocketSessionManager
+            socketSessions;
 
     /** Explicit opt-in: one coherent private-message flow, never added to the default full suite. */
     @TestFactory
     Stream<DynamicTest> internalImPrivateMessageFlow() {
         if (!"1".equals(System.getenv("JSS_TEST_IM"))) return Stream.empty();
-        return Stream.of(DynamicTest.dynamicTest("realImPrivateSendPullReadRecallAndWorkspaceOwnership", () -> {
-            String reviewer = login("admin", "jssitreviewer");
-            String member = login("member", "13800009001");
-            String peerMember = login("member", "13800009002");
-            for (long user : List.of(23001L, 23002L)) {
-                expectCode(api("POST", "/admin-api/jss/identity/bind",
-                        Map.of("memberUserId", user, "adminUserId", user,
-                                "reason", "Reviewed isolated IM private-message identity"), reviewer, 1), 0);
-            }
-            String senderToken = issueWorkspace(member), peerToken = issueWorkspace(peerMember);
-            try (var connection = datasource.getConnection(); var statement = connection.createStatement()) {
-                assertTrue(connection.getMetaData().getURL().startsWith(
-                        "jdbc:mysql://127.0.0.1:13316/" + System.getenv("JSS_TEST_HTTP_SCHEMA") + "?"));
-                statement.executeUpdate("INSERT INTO im_friend (user_id,friend_user_id,status,silent,pinned,blocked,tenant_id,add_time) VALUES (23001,23002,0,b'0',b'0',b'0',1,NOW()),(23002,23001,0,b'0',b'0',b'0',1,NOW())");
-                statement.executeUpdate("ALTER TABLE im_private_message AUTO_INCREMENT=9007199254740993");
-            }
-            var senderProbe = new SocketProbe();
-            var peerProbe = new SocketProbe();
-            var senderSocket = connectSocket(senderToken, 1, senderProbe);
-            var peerSocket = connectSocket(peerToken, 1, peerProbe);
-            try {
-                senderSocket.sendText("ping", true).join();
-                peerSocket.sendText("ping", true).join();
-                assertEquals("pong", senderProbe.frames.poll(5, TimeUnit.SECONDS));
-                assertEquals("pong", peerProbe.frames.poll(5, TimeUnit.SECONDS));
-                writeImSocketState("connected", senderProbe, peerProbe);
-                var request = Map.of("clientMessageId", "jss-isolated-im-01", "receiverId", "23002",
-                        "type", 101, "content", "{\"content\":\"JSS internal IM message\"}", "receipt", true);
-                expectCode(api("POST", "/admin-api/im/message/private/send", request, member, 1), 403);
-                expectCode(api("GET", "/admin-api/im/message/private/pull?minId=0&size=10", null, senderToken, 91001), 401);
-                writeImSocketState("after-domain-rejections", senderProbe, peerProbe);
-                var sent = data(api("POST", "/admin-api/im/message/private/send", request, senderToken, 1));
-                assertInstanceOf(String.class, sent.get("id"));
-                String id = sent.get("id").toString();
-                assertTrue(Long.parseLong(id) > 9_007_199_254_740_991L);
-                assertEquals("23001", sent.get("senderId").toString());
-                assertEquals("23002", sent.get("receiverId").toString());
-                assertEquals(id, assertImNotification(senderProbe, 101, id).get("id"));
-                assertEquals(id, assertImNotification(peerProbe, 101, id).get("id"));
-                var duplicate = data(api("POST", "/admin-api/im/message/private/send", request, senderToken, 1));
-                assertEquals(id, duplicate.get("id"));
-                try (var connection = datasource.getConnection(); var statement = connection.createStatement();
-                        var rows = statement.executeQuery("SELECT COUNT(*) FROM im_private_message WHERE client_message_id='jss-isolated-im-01' AND tenant_id=1")) {
-                    assertTrue(rows.next());
-                    assertEquals(1, rows.getInt(1));
-                }
-                var pulled = expectCode(api("GET", "/admin-api/im/message/private/pull?minId=0&size=10", null, peerToken, 1), 0);
-                assertTrue(pulled.get("data").toString().contains(id));
-                expectCode(api("PUT", "/admin-api/im/message/private/read?receiverId=23001&messageId=" + id, null, peerToken, 1), 0);
-                assertEquals(id, assertImNotification(senderProbe, 2200, id).get("id"));
-                assertEquals(id, assertImNotification(peerProbe, 2201, id).get("readId"));
-                assertEquals(id, expectCode(api("GET", "/admin-api/im/message/private/max-read-message-id?peerId=23002", null, senderToken, 1), 0).get("data"));
-                var history = expectCode(api("GET", "/admin-api/im/message/private/list?receiverId=23001&limit=10", null, peerToken, 1), 0);
-                assertEquals(2, ((Number) ((Map<?, ?>) ((List<?>) history.get("data")).getFirst()).get("receiptStatus")).intValue());
-                expectCode(api("DELETE", "/admin-api/im/message/private/recall?id=" + id, null, peerToken, 1),
-                        cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.MESSAGE_RECALL_DENIED.getCode());
-                var recalled = data(api("DELETE", "/admin-api/im/message/private/recall?id=" + id, null, senderToken, 1));
-                assertEquals(2101, ((Number) recalled.get("type")).intValue());
-                assertEquals(recalled.get("id"), assertImNotification(senderProbe, 2101, id).get("id"));
-                assertEquals(recalled.get("id"), assertImNotification(peerProbe, 2101, id).get("id"));
-                try (var connection = datasource.getConnection(); var statement = connection.createStatement();
-                        var rows = statement.executeQuery("SELECT status,receipt_status FROM im_private_message WHERE id=" + Long.parseLong(id))) {
-                    assertTrue(rows.next());
-                    assertEquals(2, rows.getInt("status"));
-                    assertEquals(2, rows.getInt("receipt_status"));
-                }
-                // A short concurrent burst diagnoses a missing echo without rerunning other modules.
-                var burst = java.util.stream.IntStream.range(0, 8)
-                        .mapToObj(index -> java.util.concurrent.CompletableFuture.supplyAsync(() -> {
-                            try {
-                                return data(api("POST", "/admin-api/im/message/private/send",
-                                        Map.of("clientMessageId", "jss-im-burst-" + index, "receiverId", "23002",
-                                                "type", 101, "content", "{\"content\":\"JSS concurrent IM message\"}"), senderToken, 1));
-                            } catch (Exception error) {
-                                throw new java.util.concurrent.CompletionException(error);
+        return Stream.of(
+                DynamicTest.dynamicTest(
+                        "realImPrivateSendPullReadRecallAndWorkspaceOwnership",
+                        () -> {
+                            String reviewer = login("admin", "jssitreviewer");
+                            String member = login("member", "13800009001");
+                            String peerMember = login("member", "13800009002");
+                            for (long user : List.of(23001L, 23002L)) {
+                                expectCode(
+                                        api(
+                                                "POST",
+                                                "/admin-api/jss/identity/bind",
+                                                Map.of(
+                                                        "memberUserId",
+                                                        user,
+                                                        "adminUserId",
+                                                        user,
+                                                        "reason",
+                                                        "Reviewed isolated IM private-message identity"),
+                                                reviewer,
+                                                1),
+                                        0);
                             }
-                        })).toList();
-                var burstIds = new LinkedHashSet<String>();
-                for (var response : burst) {
-                    var message = response.join();
-                    assertInstanceOf(String.class, message.get("id"));
-                    assertTrue(burstIds.add(message.get("id").toString()));
-                }
-                assertImBurst(senderProbe, burstIds);
-                assertImBurst(peerProbe, burstIds);
-                writeImSocketState("after-burst", senderProbe, peerProbe);
-                cn.iocoder.yudao.framework.tenant.core.util.TenantUtils.execute(91001L,
-                        () -> socketSender.send(2, 23001L, "im-notification", "{\"foreignTenant\":true}"));
-                assertNull(senderProbe.frames.poll(250, TimeUnit.MILLISECONDS));
-                expectCode(api("POST", "/app-api/jss/auth/logout", null, member, 1), 0);
-                expectCode(api("GET", "/admin-api/im/message/private/pull?minId=0&size=10", null, senderToken, 1), 401);
-                try { senderSocket.sendText("ping", true).join(); } catch (java.util.concurrent.CompletionException ignored) { }
-                assertEquals(1008, senderProbe.closed.get(5, TimeUnit.SECONDS));
-            } finally {
-                writeImSocketState("before-close", senderProbe, peerProbe);
-                senderSocket.abort();
-                peerSocket.abort();
-            }
-        }));
+                            String senderToken = issueWorkspace(member),
+                                    peerToken = issueWorkspace(peerMember);
+                            try (var connection = datasource.getConnection();
+                                    var statement = connection.createStatement()) {
+                                assertTrue(
+                                        connection
+                                                .getMetaData()
+                                                .getURL()
+                                                .startsWith(
+                                                        "jdbc:mysql://127.0.0.1:13316/"
+                                                                + System.getenv(
+                                                                        "JSS_TEST_HTTP_SCHEMA")
+                                                                + "?"));
+                                statement.executeUpdate(
+                                        "INSERT INTO im_friend (user_id,friend_user_id,status,silent,pinned,blocked,tenant_id,add_time) VALUES (23001,23002,0,b'0',b'0',b'0',1,NOW()),(23002,23001,0,b'0',b'0',b'0',1,NOW())");
+                                statement.executeUpdate(
+                                        "ALTER TABLE im_private_message AUTO_INCREMENT=9007199254740993");
+                            }
+                            var senderProbe = new SocketProbe();
+                            var peerProbe = new SocketProbe();
+                            var senderSocket = connectSocket(senderToken, 1, senderProbe);
+                            var peerSocket = connectSocket(peerToken, 1, peerProbe);
+                            try {
+                                senderSocket.sendText("ping", true).join();
+                                peerSocket.sendText("ping", true).join();
+                                assertEquals("pong", senderProbe.frames.poll(5, TimeUnit.SECONDS));
+                                assertEquals("pong", peerProbe.frames.poll(5, TimeUnit.SECONDS));
+                                writeImSocketState("connected", senderProbe, peerProbe);
+                                var request =
+                                        Map.of(
+                                                "clientMessageId",
+                                                "jss-isolated-im-01",
+                                                "receiverId",
+                                                "23002",
+                                                "type",
+                                                101,
+                                                "content",
+                                                "{\"content\":\"JSS internal IM message\"}",
+                                                "receipt",
+                                                true);
+                                expectCode(
+                                        api(
+                                                "POST",
+                                                "/admin-api/im/message/private/send",
+                                                request,
+                                                member,
+                                                1),
+                                        403);
+                                expectCode(
+                                        api(
+                                                "GET",
+                                                "/admin-api/im/message/private/pull?minId=0&size=10",
+                                                null,
+                                                senderToken,
+                                                91001),
+                                        401);
+                                writeImSocketState(
+                                        "after-domain-rejections", senderProbe, peerProbe);
+                                var sent =
+                                        data(
+                                                api(
+                                                        "POST",
+                                                        "/admin-api/im/message/private/send",
+                                                        request,
+                                                        senderToken,
+                                                        1));
+                                assertInstanceOf(String.class, sent.get("id"));
+                                String id = sent.get("id").toString();
+                                assertTrue(Long.parseLong(id) > 9_007_199_254_740_991L);
+                                assertEquals("23001", sent.get("senderId").toString());
+                                assertEquals("23002", sent.get("receiverId").toString());
+                                assertEquals(
+                                        id, assertImNotification(senderProbe, 101, id).get("id"));
+                                assertEquals(
+                                        id, assertImNotification(peerProbe, 101, id).get("id"));
+                                var duplicate =
+                                        data(
+                                                api(
+                                                        "POST",
+                                                        "/admin-api/im/message/private/send",
+                                                        request,
+                                                        senderToken,
+                                                        1));
+                                assertEquals(id, duplicate.get("id"));
+                                try (var connection = datasource.getConnection();
+                                        var statement = connection.createStatement();
+                                        var rows =
+                                                statement.executeQuery(
+                                                        "SELECT COUNT(*) FROM im_private_message WHERE client_message_id='jss-isolated-im-01' AND tenant_id=1")) {
+                                    assertTrue(rows.next());
+                                    assertEquals(1, rows.getInt(1));
+                                }
+                                var pulled =
+                                        expectCode(
+                                                api(
+                                                        "GET",
+                                                        "/admin-api/im/message/private/pull?minId=0&size=10",
+                                                        null,
+                                                        peerToken,
+                                                        1),
+                                                0);
+                                assertTrue(pulled.get("data").toString().contains(id));
+                                expectCode(
+                                        api(
+                                                "PUT",
+                                                "/admin-api/im/message/private/read?receiverId=23001&messageId="
+                                                        + id,
+                                                null,
+                                                peerToken,
+                                                1),
+                                        0);
+                                assertEquals(
+                                        id, assertImNotification(senderProbe, 2200, id).get("id"));
+                                assertEquals(
+                                        id,
+                                        assertImNotification(peerProbe, 2201, id).get("readId"));
+                                assertEquals(
+                                        id,
+                                        expectCode(
+                                                        api(
+                                                                "GET",
+                                                                "/admin-api/im/message/private/max-read-message-id?peerId=23002",
+                                                                null,
+                                                                senderToken,
+                                                                1),
+                                                        0)
+                                                .get("data"));
+                                var history =
+                                        expectCode(
+                                                api(
+                                                        "GET",
+                                                        "/admin-api/im/message/private/list?receiverId=23001&limit=10",
+                                                        null,
+                                                        peerToken,
+                                                        1),
+                                                0);
+                                assertEquals(
+                                        2,
+                                        ((Number)
+                                                        ((Map<?, ?>)
+                                                                        ((List<?>)
+                                                                                        history.get(
+                                                                                                "data"))
+                                                                                .getFirst())
+                                                                .get("receiptStatus"))
+                                                .intValue());
+                                expectCode(
+                                        api(
+                                                "DELETE",
+                                                "/admin-api/im/message/private/recall?id=" + id,
+                                                null,
+                                                peerToken,
+                                                1),
+                                        cn.iocoder.yudao.module.im.enums.ErrorCodeConstants
+                                                .MESSAGE_RECALL_DENIED
+                                                .getCode());
+                                var recalled =
+                                        data(
+                                                api(
+                                                        "DELETE",
+                                                        "/admin-api/im/message/private/recall?id="
+                                                                + id,
+                                                        null,
+                                                        senderToken,
+                                                        1));
+                                assertEquals(2101, ((Number) recalled.get("type")).intValue());
+                                assertEquals(
+                                        recalled.get("id"),
+                                        assertImNotification(senderProbe, 2101, id).get("id"));
+                                assertEquals(
+                                        recalled.get("id"),
+                                        assertImNotification(peerProbe, 2101, id).get("id"));
+                                try (var connection = datasource.getConnection();
+                                        var statement = connection.createStatement();
+                                        var rows =
+                                                statement.executeQuery(
+                                                        "SELECT status,receipt_status FROM im_private_message WHERE id="
+                                                                + Long.parseLong(id))) {
+                                    assertTrue(rows.next());
+                                    assertEquals(2, rows.getInt("status"));
+                                    assertEquals(2, rows.getInt("receipt_status"));
+                                }
+                                // A short concurrent burst diagnoses a missing echo without
+                                // rerunning other modules.
+                                var burst =
+                                        java.util.stream.IntStream.range(0, 8)
+                                                .mapToObj(
+                                                        index ->
+                                                                java.util.concurrent
+                                                                        .CompletableFuture
+                                                                        .supplyAsync(
+                                                                                () -> {
+                                                                                    try {
+                                                                                        return data(
+                                                                                                api(
+                                                                                                        "POST",
+                                                                                                        "/admin-api/im/message/private/send",
+                                                                                                        Map
+                                                                                                                .of(
+                                                                                                                        "clientMessageId",
+                                                                                                                        "jss-im-burst-"
+                                                                                                                                + index,
+                                                                                                                        "receiverId",
+                                                                                                                        "23002",
+                                                                                                                        "type",
+                                                                                                                        101,
+                                                                                                                        "content",
+                                                                                                                        "{\"content\":\"JSS concurrent IM message\"}"),
+                                                                                                        senderToken,
+                                                                                                        1));
+                                                                                    } catch (
+                                                                                            Exception
+                                                                                                    error) {
+                                                                                        throw new java
+                                                                                                .util
+                                                                                                .concurrent
+                                                                                                .CompletionException(
+                                                                                                error);
+                                                                                    }
+                                                                                }))
+                                                .toList();
+                                var burstIds = new LinkedHashSet<String>();
+                                for (var response : burst) {
+                                    var message = response.join();
+                                    assertInstanceOf(String.class, message.get("id"));
+                                    assertTrue(burstIds.add(message.get("id").toString()));
+                                }
+                                assertImBurst(senderProbe, burstIds);
+                                assertImBurst(peerProbe, burstIds);
+                                writeImSocketState("after-burst", senderProbe, peerProbe);
+                                cn.iocoder.yudao.framework.tenant.core.util.TenantUtils.execute(
+                                        91001L,
+                                        () ->
+                                                socketSender.send(
+                                                        2,
+                                                        23001L,
+                                                        "im-notification",
+                                                        "{\"foreignTenant\":true}"));
+                                assertNull(senderProbe.frames.poll(250, TimeUnit.MILLISECONDS));
+                                expectCode(
+                                        api("POST", "/app-api/jss/auth/logout", null, member, 1),
+                                        0);
+                                expectCode(
+                                        api(
+                                                "GET",
+                                                "/admin-api/im/message/private/pull?minId=0&size=10",
+                                                null,
+                                                senderToken,
+                                                1),
+                                        401);
+                                try {
+                                    senderSocket.sendText("ping", true).join();
+                                } catch (java.util.concurrent.CompletionException ignored) {
+                                }
+                                assertEquals(1008, senderProbe.closed.get(5, TimeUnit.SECONDS));
+                            } finally {
+                                writeImSocketState("before-close", senderProbe, peerProbe);
+                                senderSocket.abort();
+                                peerSocket.abort();
+                            }
+                        }));
     }
 
     @SuppressWarnings("unchecked")
@@ -1230,42 +1608,87 @@ class JssWorkspaceHttpIT {
         var pending = new LinkedHashSet<>(expected);
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
         while (!pending.isEmpty() && System.nanoTime() < deadline) {
-            String frame = probe.frames.poll(Math.max(1, deadline - System.nanoTime()), TimeUnit.NANOSECONDS);
+            String frame =
+                    probe.frames.poll(
+                            Math.max(1, deadline - System.nanoTime()), TimeUnit.NANOSECONDS);
             if (frame == null) break;
             var outer = JsonUtils.parseObject(frame, new TypeReference<Map<String, Object>>() {});
             if (!"im-notification".equals(outer.get("type"))) continue;
-            var body = JsonUtils.parseObject(outer.get("content").toString(), new TypeReference<Map<String, Object>>() {});
+            var body =
+                    JsonUtils.parseObject(
+                            outer.get("content").toString(),
+                            new TypeReference<Map<String, Object>>() {});
             if (((Number) body.get("contentType")).intValue() != 101) continue;
             var payload = (Map<String, Object>) body.get("payload");
             assertInstanceOf(String.class, payload.get("id"));
-            assertTrue(pending.remove(payload.get("id")), "Duplicate or unexpected private message notification");
+            assertTrue(
+                    pending.remove(payload.get("id")),
+                    "Duplicate or unexpected private message notification");
         }
-        assertTrue(pending.isEmpty(), "Missing concurrent IM notifications: " + pending + "; closed=" + probe.closed.getNow(-1));
+        assertTrue(
+                pending.isEmpty(),
+                "Missing concurrent IM notifications: "
+                        + pending
+                        + "; closed="
+                        + probe.closed.getNow(-1));
     }
 
-    private void writeImSocketState(String stage, SocketProbe sender, SocketProbe peer) throws Exception {
+    private void writeImSocketState(String stage, SocketProbe sender, SocketProbe peer)
+            throws Exception {
         Map<String, Object> users = new HashMap<>();
         for (long id : List.of(23001L, 23002L)) {
-            users.put(String.valueOf(id), socketSessions.getSessionList(2, id).stream()
-                    .map(session -> Map.of("sessionId", session.getId(), "open", session.isOpen(),
-                            "tenant", cn.iocoder.yudao.framework.websocket.core.util.WebSocketFrameworkUtils.getTenantId(session)))
-                    .toList());
+            users.put(
+                    String.valueOf(id),
+                    socketSessions.getSessionList(2, id).stream()
+                            .map(
+                                    session ->
+                                            Map.of(
+                                                    "sessionId",
+                                                    session.getId(),
+                                                    "open",
+                                                    session.isOpen(),
+                                                    "tenant",
+                                                    cn.iocoder.yudao.framework.websocket.core.util
+                                                            .WebSocketFrameworkUtils.getTenantId(
+                                                            session)))
+                            .toList());
         }
-        Files.writeString(Path.of(System.getenv("JSS_TEST_RUNTIME_DIR"), "im-sockets-" + stage + ".json"),
-                JsonUtils.toJsonString(Map.of("users", users, "senderClosed", sender.closed.getNow(-1),
-                        "peerClosed", peer.closed.getNow(-1), "senderQueued", sender.frames.size(), "peerQueued", peer.frames.size())));
+        Files.writeString(
+                Path.of(System.getenv("JSS_TEST_RUNTIME_DIR"), "im-sockets-" + stage + ".json"),
+                JsonUtils.toJsonString(
+                        Map.of(
+                                "users",
+                                users,
+                                "senderClosed",
+                                sender.closed.getNow(-1),
+                                "peerClosed",
+                                peer.closed.getNow(-1),
+                                "senderQueued",
+                                sender.frames.size(),
+                                "peerQueued",
+                                peer.frames.size())));
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, Object> assertImNotification(SocketProbe probe, int contentType, String marker)
-            throws Exception {
+    private Map<String, Object> assertImNotification(
+            SocketProbe probe, int contentType, String marker) throws Exception {
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
         while (System.nanoTime() < deadline) {
-            String frame = probe.frames.poll(Math.max(1, deadline - System.nanoTime()), TimeUnit.NANOSECONDS);
-            assertNotNull(frame, "Expected actual IM websocket notification " + contentType + "; closed=" + probe.closed.getNow(-1));
+            String frame =
+                    probe.frames.poll(
+                            Math.max(1, deadline - System.nanoTime()), TimeUnit.NANOSECONDS);
+            assertNotNull(
+                    frame,
+                    "Expected actual IM websocket notification "
+                            + contentType
+                            + "; closed="
+                            + probe.closed.getNow(-1));
             var outer = JsonUtils.parseObject(frame, new TypeReference<Map<String, Object>>() {});
             if (!"im-notification".equals(outer.get("type"))) continue;
-            var body = JsonUtils.parseObject(outer.get("content").toString(), new TypeReference<Map<String, Object>>() {});
+            var body =
+                    JsonUtils.parseObject(
+                            outer.get("content").toString(),
+                            new TypeReference<Map<String, Object>>() {});
             if (((Number) body.get("contentType")).intValue() != contentType) continue;
             var payload = (Map<String, Object>) body.get("payload");
             if (payload.toString().contains(marker)) return payload;

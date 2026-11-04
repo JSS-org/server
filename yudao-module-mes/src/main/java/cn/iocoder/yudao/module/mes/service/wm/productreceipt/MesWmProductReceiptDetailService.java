@@ -1,7 +1,7 @@
 package cn.iocoder.yudao.module.mes.service.wm.productreceipt;
 
-import cn.iocoder.yudao.module.mes.controller.admin.wm.productreceipt.vo.detail.MesWmProductReceiptDetailSaveReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productreceipt.vo.detail.MesWmProductReceiptDetailListReqVO;
+import cn.iocoder.yudao.module.mes.controller.admin.wm.productreceipt.vo.detail.MesWmProductReceiptDetailSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productreceipt.MesWmProductReceiptDetailDO;
 
 import jakarta.validation.Valid;
@@ -14,7 +14,8 @@ import java.util.List;
 public interface MesWmProductReceiptDetailService {
 
     /** 按收货单或行编号查询明细；两个编号同时提供时取交集。 */
-    List<MesWmProductReceiptDetailDO> getProductReceiptDetailList(MesWmProductReceiptDetailListReqVO reqVO);
+    List<MesWmProductReceiptDetailDO> getProductReceiptDetailList(
+            MesWmProductReceiptDetailListReqVO reqVO);
 
     /**
      * 创建产品收货单明细

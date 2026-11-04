@@ -1,7 +1,8 @@
 package cn.iocoder.yudao.module.infra.controller.app.config.vo;
 
-import java.util.List;
 import lombok.Data;
+
+import java.util.List;
 
 /** Fixed public display fields. No arbitrary parameter keys or configuration metadata are returned. */
 @Data

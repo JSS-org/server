@@ -2,18 +2,23 @@ package cn.iocoder.yudao.module.member.controller.app.feedback;
 
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.module.member.controller.app.feedback.vo.*;
 import cn.iocoder.yudao.module.member.dal.dataobject.feedback.MemberFeedbackAttachmentDO;
 import cn.iocoder.yudao.module.member.service.feedback.MemberFeedbackService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.io.IOException;
 
 @Tag(name = "用户 App - 意见反馈")
@@ -43,7 +48,8 @@ public class AppMemberFeedbackController {
 
     @GetMapping("/attachment")
     @Operation(summary = "读取本人反馈图片")
-    public void attachment(@RequestParam("id") Long id, HttpServletResponse response) throws IOException {
+    public void attachment(@RequestParam("id") Long id, HttpServletResponse response)
+            throws IOException {
         MemberFeedbackAttachmentDO image = feedbackService.getAttachment(getLoginUserId(), id);
         response.setContentType(image.getContentType());
         response.setHeader("X-Content-Type-Options", "nosniff");

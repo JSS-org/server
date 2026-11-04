@@ -21,7 +21,10 @@ import java.util.Map;
 
 /** Explicit provider absence. Never returns fabricated data or falls back to the primary database. */
 @Repository
-@ConditionalOnProperty(prefix = IotStorageProperties.PREFIX, name = "type", havingValue = "disabled")
+@ConditionalOnProperty(
+        prefix = IotStorageProperties.PREFIX,
+        name = "type",
+        havingValue = "disabled")
 public class IotDisabledTimeSeriesDAO implements IotDeviceMessageDAO, IotDevicePropertyDAO {
 
     @Override
@@ -51,12 +54,14 @@ public class IotDisabledTimeSeriesDAO implements IotDeviceMessageDAO, IotDeviceP
     }
 
     @Override
-    public List<Map<String, Object>> selectDeviceMessageCountGroupByDate(Long startTime, Long endTime) {
+    public List<Map<String, Object>> selectDeviceMessageCountGroupByDate(
+            Long startTime, Long endTime) {
         throw exception(TIME_SERIES_STORAGE_DISABLED);
     }
 
     @Override
-    public void defineProductPropertyTable(Long productId, List<IotThingModelDO> propertyThingModels) {
+    public void defineProductPropertyTable(
+            Long productId, List<IotThingModelDO> propertyThingModels) {
         throw exception(TIME_SERIES_STORAGE_DISABLED);
     }
 
@@ -66,7 +71,8 @@ public class IotDisabledTimeSeriesDAO implements IotDeviceMessageDAO, IotDeviceP
     }
 
     @Override
-    public void insert(IotDeviceDO device, Map<String, Object> properties, Long ts, Long reportTime) {
+    public void insert(
+            IotDeviceDO device, Map<String, Object> properties, Long ts, Long reportTime) {
         throw exception(TIME_SERIES_STORAGE_DISABLED);
     }
 

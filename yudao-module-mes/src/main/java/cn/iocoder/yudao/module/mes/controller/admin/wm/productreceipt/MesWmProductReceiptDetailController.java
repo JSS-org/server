@@ -7,8 +7,8 @@ import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.collection.MapUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
-import cn.iocoder.yudao.module.mes.controller.admin.wm.productreceipt.vo.detail.MesWmProductReceiptDetailRespVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productreceipt.vo.detail.MesWmProductReceiptDetailListReqVO;
+import cn.iocoder.yudao.module.mes.controller.admin.wm.productreceipt.vo.detail.MesWmProductReceiptDetailRespVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productreceipt.vo.detail.MesWmProductReceiptDetailSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.item.MesMdItemDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.unitmeasure.MesMdUnitMeasureDO;
@@ -96,7 +96,8 @@ public class MesWmProductReceiptDetailController {
     @PreAuthorize("@ss.hasPermission('mes:wm-product-receipt:query')")
     public CommonResult<List<MesWmProductReceiptDetailRespVO>> getProductReceiptDetailList(
             @Valid MesWmProductReceiptDetailListReqVO reqVO) {
-        return success(buildRespVOList(productReceiptDetailService.getProductReceiptDetailList(reqVO)));
+        return success(
+                buildRespVOList(productReceiptDetailService.getProductReceiptDetailList(reqVO)));
     }
 
     @GetMapping("/list-by-line")

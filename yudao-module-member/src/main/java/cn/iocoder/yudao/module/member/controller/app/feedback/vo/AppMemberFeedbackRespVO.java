@@ -1,8 +1,9 @@
 package cn.iocoder.yudao.module.member.controller.app.feedback.vo;
 
+import lombok.Data;
+
 import java.time.LocalDateTime;
 import java.util.List;
-import lombok.Data;
 
 @Data
 public class AppMemberFeedbackRespVO {

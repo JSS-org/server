@@ -353,8 +353,7 @@ public class FmsReportTemplateServiceTest extends BaseDbUnitTest {
      * 加载固定的报表模板测试数据
      */
     private void initializeTemplates() {
-        new ResourceDatabasePopulator(
-                        new ClassPathResource("sql/report_templates.sql"))
+        new ResourceDatabasePopulator(new ClassPathResource("sql/report_templates.sql"))
                 .execute(dataSource);
     }
 

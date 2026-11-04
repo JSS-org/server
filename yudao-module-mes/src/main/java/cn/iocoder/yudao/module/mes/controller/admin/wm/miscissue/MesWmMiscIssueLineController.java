@@ -107,7 +107,8 @@ public class MesWmMiscIssueLineController {
     @PreAuthorize("@ss.hasPermission('mes:wm-misc-issue:query')")
     public CommonResult<List<MesWmMiscIssueLineRespVO>> getMiscIssueLineListByIssueId(
             @RequestParam("issueId") Long issueId) {
-        return success(buildRespVOList(miscIssueLineService.getMiscIssueLineListByIssueId(issueId)));
+        return success(
+                buildRespVOList(miscIssueLineService.getMiscIssueLineListByIssueId(issueId)));
     }
 
     // ==================== 拼接 VO ====================

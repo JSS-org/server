@@ -16,10 +16,12 @@ import java.util.List;
 public interface MesWmProductReceiptDetailMapper extends BaseMapperX<MesWmProductReceiptDetailDO> {
 
     default List<MesWmProductReceiptDetailDO> selectList(MesWmProductReceiptDetailListReqVO reqVO) {
-        return selectList(new LambdaQueryWrapperX<MesWmProductReceiptDetailDO>()
-                .eqIfPresent(MesWmProductReceiptDetailDO::getReceiptId, reqVO.getReceiptId())
-                .eqIfPresent(MesWmProductReceiptDetailDO::getLineId, reqVO.getLineId())
-                .orderByAsc(MesWmProductReceiptDetailDO::getId));
+        return selectList(
+                new LambdaQueryWrapperX<MesWmProductReceiptDetailDO>()
+                        .eqIfPresent(
+                                MesWmProductReceiptDetailDO::getReceiptId, reqVO.getReceiptId())
+                        .eqIfPresent(MesWmProductReceiptDetailDO::getLineId, reqVO.getLineId())
+                        .orderByAsc(MesWmProductReceiptDetailDO::getId));
     }
 
     default List<MesWmProductReceiptDetailDO> selectListByRecptId(Long receiptId) {

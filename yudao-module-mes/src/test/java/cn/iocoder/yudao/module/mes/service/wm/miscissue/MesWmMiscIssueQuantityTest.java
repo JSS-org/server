@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.mes.service.wm.miscissue;
 
 import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
 import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_MISC_ISSUE_NOT_EXISTS;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -9,11 +10,13 @@ import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.miscissue.*;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.miscissue.MesWmMiscIssueMapper;
 import cn.iocoder.yudao.module.mes.service.wm.transaction.MesWmTransactionService;
-import java.math.BigDecimal;
-import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 class MesWmMiscIssueQuantityTest extends BaseMockitoUnitTest {
     private static final Long ISSUE_ID = 9007199254740993L;
@@ -25,12 +28,16 @@ class MesWmMiscIssueQuantityTest extends BaseMockitoUnitTest {
     @Mock private MesWmTransactionService transactions;
 
     private MesWmMiscIssueLineDO line(Long id, String quantity) {
-        return new MesWmMiscIssueLineDO().setId(id).setIssueId(ISSUE_ID)
+        return new MesWmMiscIssueLineDO()
+                .setId(id)
+                .setIssueId(ISSUE_ID)
                 .setQuantity(quantity == null ? null : new BigDecimal(quantity));
     }
 
     private MesWmMiscIssueDetailDO detail(Long lineId, String quantity) {
-        return new MesWmMiscIssueDetailDO().setIssueId(ISSUE_ID).setLineId(lineId)
+        return new MesWmMiscIssueDetailDO()
+                .setIssueId(ISSUE_ID)
+                .setLineId(lineId)
                 .setQuantity(quantity == null ? null : new BigDecimal(quantity));
     }
 
@@ -38,9 +45,11 @@ class MesWmMiscIssueQuantityTest extends BaseMockitoUnitTest {
         when(mapper.selectById(ISSUE_ID)).thenReturn(new MesWmMiscIssueDO().setId(ISSUE_ID));
     }
 
-    @Test void sumsSplitAllocationsExactlyWithoutChangingStock() {
+    @Test
+    void sumsSplitAllocationsExactlyWithoutChangingStock() {
         existingIssue();
-        when(lines.getMiscIssueLineListByIssueId(ISSUE_ID)).thenReturn(List.of(line(LINE_ID, "0.3000")));
+        when(lines.getMiscIssueLineListByIssueId(ISSUE_ID))
+                .thenReturn(List.of(line(LINE_ID, "0.3000")));
         when(details.getMiscIssueDetailListByIssueId(ISSUE_ID))
                 .thenReturn(List.of(detail(LINE_ID, "0.1"), detail(LINE_ID, "0.20")));
         assertTrue(service.checkMiscIssueQuantity(ISSUE_ID));
@@ -48,7 +57,8 @@ class MesWmMiscIssueQuantityTest extends BaseMockitoUnitTest {
         verify(mapper, never()).updateById(any(MesWmMiscIssueDO.class));
     }
 
-    @Test void equalDocumentTotalsCannotHideDifferentLineAllocations() {
+    @Test
+    void equalDocumentTotalsCannotHideDifferentLineAllocations() {
         existingIssue();
         when(lines.getMiscIssueLineListByIssueId(ISSUE_ID))
                 .thenReturn(List.of(line(LINE_ID, "1"), line(LINE_ID + 2, "2")));
@@ -57,7 +67,8 @@ class MesWmMiscIssueQuantityTest extends BaseMockitoUnitTest {
         assertFalse(service.checkMiscIssueQuantity(ISSUE_ID));
     }
 
-    @Test void missingOrOrphanedAllocationsDoNotPass() {
+    @Test
+    void missingOrOrphanedAllocationsDoNotPass() {
         existingIssue();
         when(lines.getMiscIssueLineListByIssueId(ISSUE_ID)).thenReturn(List.of(line(LINE_ID, "1")));
         when(details.getMiscIssueDetailListByIssueId(ISSUE_ID)).thenReturn(List.of());
@@ -67,20 +78,25 @@ class MesWmMiscIssueQuantityTest extends BaseMockitoUnitTest {
         assertFalse(service.checkMiscIssueQuantity(ISSUE_ID));
     }
 
-    @Test void invalidQuantitiesDoNotCancelEachOtherOut() {
+    @Test
+    void invalidQuantitiesDoNotCancelEachOtherOut() {
         existingIssue();
         when(lines.getMiscIssueLineListByIssueId(ISSUE_ID)).thenReturn(List.of(line(LINE_ID, "1")));
         when(details.getMiscIssueDetailListByIssueId(ISSUE_ID))
                 .thenReturn(List.of(detail(LINE_ID, "2"), detail(LINE_ID, "-1")));
         assertFalse(service.checkMiscIssueQuantity(ISSUE_ID));
-        when(details.getMiscIssueDetailListByIssueId(ISSUE_ID)).thenReturn(List.of(detail(LINE_ID, null)));
+        when(details.getMiscIssueDetailListByIssueId(ISSUE_ID))
+                .thenReturn(List.of(detail(LINE_ID, null)));
         assertFalse(service.checkMiscIssueQuantity(ISSUE_ID));
-        when(lines.getMiscIssueLineListByIssueId(ISSUE_ID)).thenReturn(List.of(line(LINE_ID, null)));
+        when(lines.getMiscIssueLineListByIssueId(ISSUE_ID))
+                .thenReturn(List.of(line(LINE_ID, null)));
         assertFalse(service.checkMiscIssueQuantity(ISSUE_ID));
     }
 
-    @Test void emptyOrMissingDocumentCannotBeReportedAsValid() {
-        assertServiceException(() -> service.checkMiscIssueQuantity(ISSUE_ID), WM_MISC_ISSUE_NOT_EXISTS);
+    @Test
+    void emptyOrMissingDocumentCannotBeReportedAsValid() {
+        assertServiceException(
+                () -> service.checkMiscIssueQuantity(ISSUE_ID), WM_MISC_ISSUE_NOT_EXISTS);
         verifyNoInteractions(lines, details, transactions);
         existingIssue();
         when(lines.getMiscIssueLineListByIssueId(ISSUE_ID)).thenReturn(List.of());

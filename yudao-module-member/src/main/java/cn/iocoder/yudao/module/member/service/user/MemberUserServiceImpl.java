@@ -116,7 +116,11 @@ public class MemberUserServiceImpl implements MemberUserService {
     }
 
     private MemberUserDO createUser(
-            String mobile, String nickname, String avtar, String registerIp, Integer terminal,
+            String mobile,
+            String nickname,
+            String avtar,
+            String registerIp,
+            Integer terminal,
             String suppliedPassword) {
         String password = suppliedPassword == null ? IdUtil.fastSimpleUUID() : suppliedPassword;
         // 插入用户

@@ -52,7 +52,11 @@ public interface MemberUserService {
 
     /** Insert a new member only; never return or change an existing mobile account. */
     MemberUserDO registerUser(
-            @Mobile String mobile, String password, String nickname, String registerIp, Integer terminal);
+            @Mobile String mobile,
+            String password,
+            String nickname,
+            String registerIp,
+            Integer terminal);
 
     /**
      * 创建用户

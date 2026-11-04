@@ -7,6 +7,7 @@ import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.COUPON_
 import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.COUPON_NOT_EXISTS;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.member.api.user.MemberUserApi;
@@ -24,7 +25,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import javax.sql.DataSource;
@@ -39,7 +46,8 @@ public class CouponServiceImplTest extends BaseDbUnitTest {
 
     @Resource private CouponServiceImpl couponService;
 
-    @Resource private CouponMapper couponMapper;
+    @MockitoSpyBean private CouponMapper couponMapper;
+    @MockitoSpyBean private CouponTemplateServiceImpl couponTemplateService;
     @Resource private CouponTemplateMapper couponTemplateMapper;
 
     @Resource private DataSource dataSource;
@@ -132,6 +140,121 @@ public class CouponServiceImplTest extends BaseDbUnitTest {
 
         // 调用, 并断言异常
         assertServiceException(() -> couponService.deleteCoupon(id), COUPON_NOT_EXISTS);
+    }
+
+    @Test
+    void recallUnusedAndExpiredCouponsDecrementsOnlyDeletedRows() {
+        CouponTemplateDO template = randomCouponTemplateDO(row -> row.setTakeCount(5));
+        couponTemplateMapper.insert(template);
+        for (int status :
+                List.of(CouponStatusEnum.UNUSED.getStatus(), CouponStatusEnum.EXPIRE.getStatus())) {
+            CouponDO coupon = recallCoupon(template, status);
+            couponService.invalidateCoupon(coupon.getId(), coupon.getUserId());
+            assertNull(couponMapper.selectById(coupon.getId()));
+        }
+        assertEquals(3, couponTemplateMapper.selectById(template.getId()).getTakeCount());
+    }
+
+    @Test
+    void recallNeverDeletesAnAlreadyUsedCoupon() {
+        CouponTemplateDO template = randomCouponTemplateDO(row -> row.setTakeCount(5));
+        couponTemplateMapper.insert(template);
+        CouponDO coupon = recallCoupon(template, CouponStatusEnum.USED.getStatus());
+        couponService.invalidateCoupon(coupon.getId(), coupon.getUserId());
+        assertNotNull(couponMapper.selectById(coupon.getId()));
+        assertEquals(5, couponTemplateMapper.selectById(template.getId()).getTakeCount());
+    }
+
+    @Test
+    void committedCheckoutBetweenRecallReadAndDeleteKeepsTheUsedCoupon() throws Exception {
+        CouponTemplateDO template = randomCouponTemplateDO(row -> row.setTakeCount(5));
+        couponTemplateMapper.insert(template);
+        CouponDO coupon = recallCoupon(template, CouponStatusEnum.UNUSED.getStatus());
+        try (var pool = Executors.newSingleThreadExecutor()) {
+            doAnswer(
+                            call -> {
+                                Object locked = call.callRealMethod();
+                                pool.submit(
+                                                () ->
+                                                        couponService.useCoupon(
+                                                                coupon.getId(),
+                                                                coupon.getUserId(),
+                                                                99L))
+                                        .get(5, TimeUnit.SECONDS);
+                                return locked;
+                            })
+                    .when(couponTemplateService)
+                    .getCouponTemplateForUpdate(template.getId());
+            couponService.invalidateCoupon(coupon.getId(), coupon.getUserId());
+        }
+        var used = couponMapper.selectById(coupon.getId());
+        assertNotNull(used);
+        assertEquals(CouponStatusEnum.USED.getStatus(), used.getStatus());
+        assertEquals(99L, used.getUseOrderId());
+        assertEquals(5, couponTemplateMapper.selectById(template.getId()).getTakeCount());
+        couponService.returnUsedCoupon(coupon.getId());
+        assertEquals(
+                CouponStatusEnum.UNUSED.getStatus(),
+                couponMapper.selectById(coupon.getId()).getStatus());
+    }
+
+    @Test
+    void concurrentRecallOfTheSameSnapshotDecrementsTemplateOnce() throws Exception {
+        CouponTemplateDO template = randomCouponTemplateDO(row -> row.setTakeCount(5));
+        couponTemplateMapper.insert(template);
+        CouponDO coupon = recallCoupon(template, CouponStatusEnum.UNUSED.getStatus());
+        var bothRead = new CyclicBarrier(2);
+        doAnswer(
+                        call -> {
+                            Object snapshot = call.callRealMethod();
+                            bothRead.await(5, TimeUnit.SECONDS);
+                            return snapshot;
+                        })
+                .when(couponMapper)
+                .selectByIdAndUserId(coupon.getId(), coupon.getUserId());
+        try (var pool = Executors.newFixedThreadPool(2)) {
+            var first =
+                    pool.submit(
+                            () ->
+                                    couponService.invalidateCoupon(
+                                            coupon.getId(), coupon.getUserId()));
+            var second =
+                    pool.submit(
+                            () ->
+                                    couponService.invalidateCoupon(
+                                            coupon.getId(), coupon.getUserId()));
+            first.get(10, TimeUnit.SECONDS);
+            second.get(10, TimeUnit.SECONDS);
+        }
+        assertNull(couponMapper.selectById(coupon.getId()));
+        assertEquals(4, couponTemplateMapper.selectById(template.getId()).getTakeCount());
+    }
+
+    @Test
+    void countFailureRollsBackTheConditionalRecall() {
+        CouponTemplateDO template = randomCouponTemplateDO(row -> row.setTakeCount(5));
+        couponTemplateMapper.insert(template);
+        CouponDO coupon = recallCoupon(template, CouponStatusEnum.UNUSED.getStatus());
+        doThrow(new IllegalStateException("Later template write failed"))
+                .when(couponTemplateService)
+                .updateCouponTemplateTakeCount(template.getId(), -1);
+        assertThrows(
+                IllegalStateException.class,
+                () -> couponService.invalidateCoupon(coupon.getId(), coupon.getUserId()));
+        assertNotNull(couponMapper.selectById(coupon.getId()));
+        assertEquals(5, couponTemplateMapper.selectById(template.getId()).getTakeCount());
+    }
+
+    private CouponDO recallCoupon(CouponTemplateDO template, int status) {
+        CouponDO coupon =
+                randomCouponDO(
+                        row ->
+                                row.setTemplateId(template.getId())
+                                        .setStatus(status)
+                                        .setValidStartTime(LocalDateTime.now().minusDays(1))
+                                        .setValidEndTime(LocalDateTime.now().plusDays(1)));
+        couponMapper.insert(coupon);
+        return coupon;
     }
 
     /**

@@ -240,9 +240,9 @@ public class CouponServiceImpl implements CouponService {
         if (coupon == null) {
             throw exception(COUPON_NOT_EXISTS);
         }
-        // 1.2 校验模板
+        // 1.2 先锁定模板，再修改券，与领取的模板 -> 优惠券锁顺序一致。
         CouponTemplateDO couponTemplate =
-                couponTemplateService.getCouponTemplate(coupon.getTemplateId());
+                couponTemplateService.getCouponTemplateForUpdate(coupon.getTemplateId());
         if (couponTemplate == null) {
             throw exception(COUPON_TEMPLATE_NOT_EXISTS);
         }
@@ -252,10 +252,17 @@ public class CouponServiceImpl implements CouponService {
             return;
         }
 
-        // 2.1 减少优惠劵模板的领取数量
+        // 2.1 根据数据库当前状态回收；使用或另一回收已先完成时，不删除也不减少计数。
+        if (couponMapper.delete(
+                        couponId,
+                        asList(
+                                CouponStatusEnum.UNUSED.getStatus(),
+                                CouponStatusEnum.EXPIRE.getStatus()))
+                == 0) {
+            return;
+        }
+        // 2.2 与回收在同一事务内，计数失败时回滚券的删除。
         couponTemplateService.updateCouponTemplateTakeCount(couponTemplate.getId(), -1);
-        // 2.2 作废优惠劵
-        couponMapper.deleteById(couponId);
     }
 
     @Override

@@ -2095,3 +2095,8 @@ JDK 25.0.2 验证命令与结果：
 ## 2026-11-04 短信验证码单次消费
 
 `mvn -o -B -ntp -pl yudao-module-member -am test -Dtest=SmsCodeServiceImplTest,MemberRegistrationBoundaryTest,MemberUserRegistrationTest -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true`，本机Mockito javaagent同前。11+8+2共21项全过、零失败/错误/跳过，/tmp/server-fix-sms-final.log。生产Mapper/H2屏障控制两个未使用快照，仅一请求消费成功；另验证过期条件更新和外层事务回滚后的可重试性。未发送真实短信或运行认证HTTP/Redis链。
+
+
+## 2026-11-04 赠券回收竞争与回滚
+
+`mvn -o -B -ntp -Pjss-mall -pl yudao-module-mall/yudao-module-trade -am test -Dtest=CouponServiceImplTest,CouponTemplateServiceImplTest,TradeCouponPriceCalculatorTest -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true`，本机Mockito agent同前。10+8+1共19项全过、零失败/错误/跳过，/tmp/server-fix-coupon-final.log。五个新用例包含未使用/过期两种回收、已使用保护、用券先提交后的条件删除拒绝、两旧快照回收只减一次及后置计数异常的事务回滚。执行实际H2 Mapper和Spring事务，供应商/RBAC输入为替身；不替代真实退款HTTP与MySQL验收。

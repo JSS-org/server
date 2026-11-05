@@ -392,12 +392,27 @@ def main():
         check(db.sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_menu m ON m.id=rm.menu_id WHERE m.type=2 AND rm.deleted=0") == '61',
               'development seed initializes the same 61 demo page grants')
         snapshot = auth_snapshot(db)
+        business_tables = ['gym_store', 'gym_employee', 'gym_employee_store', 'gym_member', 'gym_member_store']
+        business_snapshot = {t: db.sql(f'SELECT * FROM {t} ORDER BY id') for t in business_tables}
+        check(db.sql("SELECT COUNT(*) FROM gym_store s JOIN system_dept d ON d.id=s.id AND d.tenant_id=s.tenant_id WHERE s.creator='gym-seed'") == '2', 'seed stores use real department IDs')
+        check(db.sql("SELECT COUNT(*) FROM gym_employee e JOIN system_users u ON e.user_id=u.id AND e.tenant_id=u.tenant_id WHERE e.creator='gym-seed'") == '2', 'seed headquarters and manager have real employee bindings')
+        check(db.sql("SELECT COUNT(*) FROM gym_member m JOIN gym_member_store ms ON ms.member_id=m.id AND ms.store_id=m.store_id AND ms.tenant_id=m.tenant_id WHERE m.creator='gym-seed' AND m.customer_stage='lead' AND m.gender='unspecified'") == '2', 'seed prospects have valid states and store memberships')
+        check(db.sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code='gym_store_manager' AND m.permission='gym:blacklist:write'") == '0', 'store demo role excludes headquarters blacklist write')
         db.seed()
         check(auth_snapshot(db) == snapshot, 'development seed is fully idempotent for existing principals')
+        check({t: db.sql(f'SELECT * FROM {t} ORDER BY id') for t in business_tables} == business_snapshot, 'business seed is fully idempotent including timestamps and relationships')
         db.sql("DELETE rm FROM system_role_menu rm JOIN system_menu m ON m.id=rm.menu_id WHERE m.permission='gym:blacklist:write'; DELETE FROM system_user_role; UPDATE system_users SET password='custom-password-marker' WHERE username='gymadmin';")
         revoked = auth_snapshot(db)
         db.seed()
         check(auth_snapshot(db) == revoked, 'seed never restores revoked role grants/user bindings or overwrites passwords')
+        db.seed(sync_demo_access=True)
+        check(db.sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code='gym_hq_admin' AND m.permission='gym:blacklist:write' AND rm.deleted=0") == '1', 'explicit demo sync restores headquarters access')
+        check(db.sql("SELECT password FROM system_users WHERE username='gymadmin'") == 'custom-password-marker' and db.sql('SELECT COUNT(*) FROM system_user_role') == '0', 'explicit access sync preserves passwords and account role revocations')
+        db.sql("UPDATE gym_store SET creator='manual' WHERE code='JSS-DEMO-01'")
+        before = auth_snapshot(db)
+        rejects(db.seed, 'business key collision rejects the entire seed')
+        check(auth_snapshot(db) == before, 'business collision rolls back identity changes')
+        db.sql("UPDATE gym_store SET creator='gym-seed' WHERE code='JSS-DEMO-01'")
         os.environ['GYM_SEED_TENANT_ID'] = '2'
         db.seed()
         check(db.sql('SELECT COUNT(*) FROM system_users WHERE tenant_id=2') == '2', 'seed tenant is explicit and not fixed to one')

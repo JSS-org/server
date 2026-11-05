@@ -5334,3 +5334,29 @@ MoneyUtils.calculator将先整数除法后转double改为percent/100.0；新增�
 
 ### 未做 / 后续
 当前联调进程尚未切换；数据库、种子数据和业务 HTTP 回归在后续增量完成。
+
+## [2026-11-05 20:00 ~ 20:09] 开发种子补齐组织与会员关系
+
+### 意图
+原种子只有部门和账号，缺少业务门店、员工、会员关联；旧演示角色也没有后续页面授权。
+
+### 改了什么
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| sql/gym/seed/development/demo.sql | 修改 | 递归获取全部业务菜单，合并重复授权块，排除门店角色总部黑名单写权限 |
+| sql/gym/seed/development/business.sql | 新增 | 两门店、三员工任职、两潜客关系的事务性幂等种子 |
+| script/gym/database.py | 修改 | 合并种子事务；显式 --sync-demo-access 仅补演示角色授权 |
+| script/gym/verify-migrations.py | 修改 | 关系、幂等、冲突、权限同步回归 |
+| script/gym/DATABASE.md、README.md、docs/testing.md | 修改 | 记录操作及实际验证 |
+
+### 结构关系
+部门 ID 等于门店 ID；gymadmin/gymstore 关联员工，任职指向门店；潜客同时建立 gym_member_store。种子仍独立于正式 Flyway 迁移。
+
+### 验证证据
+独立 MySQL 执行 verify-migrations.py：266 检查通过。新库各角色业务页面授权总数仍为 61；没有修改已应用迁移。
+
+### 影响面 / 风险
+普通 seed 保留密码、撤销的权限、账号角色绑定和已有业务编辑。显式同步会补齐演示角色的权限，应只用于开发样例。任何非种子同键冲突使整批回滚。
+
+### 未做 / 后续
+空库完整初始化、新库 HTTP/浏览器验收与本地环境替换继续单独提交。

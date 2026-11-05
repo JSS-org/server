@@ -87,9 +87,11 @@ export GYM_SEED_TENANT_ID=1
 bash script/gym/seed.sh development
 ```
 
-seed 位于 `sql/gym/seed/development/demo.sql`，不在 Flyway 扫描目录中；生产发布不运行此命令。它创建示范部门、gymadmin/gymstore 账号及角色，首次创建的演示账号密码为 `Gym@123456`，不修改 admin。
+seed 位于 `sql/gym/seed/development/demo.sql`，不在 Flyway 扫描目录中；生产发布不运行此命令。它创建示范总部、两家门店、gymadmin/gymstore 账号及角色、三名员工及任职关系、两名潜客及会员门店关系，首次创建的演示账号密码为 `Gym@123456`，不修改 admin。
 
-重复执行保留已有密码、角色授权和用户绑定，不恢复人工撤销的权限。同名非种子身份冲突时拒绝并回滚。环境声明、租户或迁移状态不满足要求时也会停止。
+重复执行保留已有密码、角色授权和用户绑定，不恢复人工撤销的权限。同名非种子身份或业务键冲突时拒绝并回滚。业务样例在同一事务内执行 `business.sql`，只为新样例建立关联，不恢复已删除的任职或会员门店关系。
+
+对于旧开发库缺少后续页面权限的情况，可显式执行 `python3 script/gym/database.py seed-development --sync-demo-access`：仅补齐 `gym-seed` 拥有的两个演示角色权限，不改密码、账号角色绑定或数据范围。普通 seed 与迁移仍不恢复已撤销权限。环境声明、租户或迁移状态不满足要求时也会停止。
 
 旧的 `seed.sh` 无参数、`--schema-only`、`--menus-only` 模式已停用。建表和必要菜单变更统一通过版本迁移管理。
 

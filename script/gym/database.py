@@ -126,7 +126,7 @@ class Database:
             raise RuntimeError('备份失败，未接管：' + result.stderr.decode())
         print('接管前完整备份：' + str(file), flush=True)
 
-    def seed(self):
+    def seed(self, sync_demo_access=False):
         if os.environ.get('GYM_DB_ENV') != 'development':
             raise ValueError('开发seed只允许显式 GYM_DB_ENV=development')
         tenant = os.environ.get('GYM_SEED_TENANT_ID', '')
@@ -149,15 +149,22 @@ class Database:
             raise ValueError('请先执行 migrate 完成当前迁移')
         if baseline > max(files) or any(item > max(files) for item in applied):
             raise ValueError('当前代码落后于数据库版本，请先更新代码')
-        self.sql('SET @tenant_id=' + tenant + ';\n' + (ASSETS / 'seed/development/demo.sql').read_text())
-        print('开发seed完成；既有密码、角色授权与用户绑定保持不变')
+        seed = (ASSETS / 'seed/development/demo.sql').read_text().replace(
+            '-- BUSINESS_FIXTURES', (ASSETS / 'seed/development/business.sql').read_text())
+        self.sql(f'SET @tenant_id={tenant}; SET @gym_sync_demo_access={int(sync_demo_access)};\n' + seed)
+        print('开发seed完成；既有密码与用户绑定保持不变；' +
+              ('已显式补齐演示角色权限' if sync_demo_access else '既有角色权限保持不变'))
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('command', choices=['init', 'adopt-legacy', 'check-legacy',
                                             'migrate', 'info', 'validate', 'seed-development'])
+    parser.add_argument('--sync-demo-access', action='store_true',
+                        help='仅在 seed-development 时显式补齐 gym-seed 拥有的演示角色权限')
     args = parser.parse_args()
+    if args.sync_demo_access and args.command != 'seed-development':
+        parser.error('--sync-demo-access 只适用于 seed-development')
     db = Database()
     db.require_framework()
     if args.command == 'init':
@@ -176,7 +183,7 @@ def main():
     elif args.command == 'check-legacy':
         db.check_legacy()
     elif args.command == 'seed-development':
-        db.seed()
+        db.seed(sync_demo_access=args.sync_demo_access)
     else:
         if args.command != 'info':
             db.require_managed()

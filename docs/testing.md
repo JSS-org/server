@@ -2128,3 +2128,7 @@ Modbus修复后 `mvn -o -B -ntp -Pjss-mall -pl yudao-server -am package -DskipTe
 移植旧分支 `2cc5c86cd2009d93947d8776526d2f7676682c87` 的小数百分比修复。新MoneyUtilsTest七项先运行旧代码，三项实际失败：1204→1200、1→0、198→197；修复后common模块完整71项全部通过，零失败/错误/跳过。命令 `mvn -o -B -ntp -pl yudao-framework/yudao-common -am test -Dspotless.skip=true`，日志 `/tmp/server-independent-money-baseline.log`、`/tmp/server-independent-common-final.log`；根Spotless apply/check及差异检查通过。
 
 首次原子推送至696675359272ce468ff7c5a1e3518b6c7b4d19d8同时删除十条分支成功，Git ls-remote --symref、GitHub branches与repository API确认远程分支仅main、默认main；本地旧分支清理后branch --list仅main，archive refs及bundle仍保留。GitHub Maven CI已实际触发，首次运行41825188209；这里只记录触发，不将进行中的CI记为通过。fork关联仍为true，未执行脱离。后续补丁沿main正常快进。
+
+## 2026-11-05：开发种子关联与授权
+
+独立 MySQL 8.4.10 上运行 `script/gym/verify-migrations.py`：266 项检查通过，随机测试库已清理。验证双门店部门 ID、两账号员工绑定、三名员工任职、两名潜客门店关系、重复执行连时间戳都不变、业务键冲突回滚、普通 seed 不恢复撤权、显式同步仅恢复演示角色权限。正式历史 SQL 校验和不变。

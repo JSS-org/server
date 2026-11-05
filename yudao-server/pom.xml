@@ -204,6 +204,17 @@
     <profiles>
         <profile>
             <id>jss-mall</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <testExcludes combine.self="override" />
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
             <dependencies>
                 <dependency>
                     <groupId>cn.iocoder.boot</groupId>
@@ -303,6 +314,16 @@
         <!-- 设置构建的 jar 包名 -->
         <finalName>${jss.build.final-name}</finalName>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <!-- This full workspace test requires the optional IoT module. -->
+                    <testExcludes>
+                        <testExclude>**/JssWorkspaceHttpIT.java</testExclude>
+                    </testExcludes>
+                </configuration>
+            </plugin>
             <!-- 打包 -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>

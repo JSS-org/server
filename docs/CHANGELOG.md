@@ -5312,3 +5312,25 @@ MoneyUtils.calculator将先整数除法后转double改为percent/100.0；新增�
 ### 未做 / 后续
 
 未执行真实订单HTTP、部署或GitHub脱离fork操作；CI运行状态以实际Actions结果为准。未把旧JDK8构建及依赖分支整体合入。
+
+## [2026-11-05 19:55 ~ 19:59] 恢复默认 JSS 健身服务的可重复构建
+
+### 意图
+默认打包在测试编译阶段引用未启用的 IoT 模块，阻止从旧 JAR 升级到当前业务实现。
+
+### 改了什么
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| yudao-server/pom.xml | 修改 | 默认编译排除依赖扩展模块的 JssWorkspaceHttpIT；jss-mall 显式恢复该测试编译 |
+
+### 结构关系
+运行依赖不变；完整工作台 HTTP 测试仍由现有 jss-mall 验证入口编译和执行。
+
+### 验证证据
+`mvn -B -ntp -T 2 -DskipTests -pl yudao-server -am package` 成功；`mvn -B -ntp -T 2 -Pjss-mall -DskipTests -pl yudao-server -am test-compile` 成功。两条都是编译验证，没有运行测试。
+
+### 影响面 / 风险
+默认构建不再要求 IoT 依赖。调用完整 HTTP 测试必须保留现有 -Pjss-mall 参数。
+
+### 未做 / 后续
+当前联调进程尚未切换；数据库、种子数据和业务 HTTP 回归在后续增量完成。

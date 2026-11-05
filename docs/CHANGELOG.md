@@ -5387,3 +5387,32 @@ JSS 先初始化完整 member schema，Gym 后迁移；两套历史分别校验�
 
 ### 未做 / 后续
 当前本地旧库替换、业务场景 seed 和全部模块验收继续推进；正式环境仍使用增量迁移。
+
+## [2026-11-05 20:10 ~ 20:42] 业务回归脱离旧数据库固定 ID
+
+### 意图
+旧 HTTP 测试依赖门店 125/126、历史员工编号和共享 /tmp 夹具，不能验收从空库创建的系统。
+
+### 改了什么
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| script/gym/verify-dashboard-api.py | 新增 | 明确测试地址与开发环境后，按依赖执行 17 组真实业务回归 |
+| script/gym/verify-salary-api.py | 修改 | 共用真实门店范围、图片上传和每轮夹具目录 |
+| script/gym/verify-approval-template-api.py、verify-contract-flow-api.py | 修改 | 审批员工由种子业务键 / 当前账号绑定确定 |
+| script/gym/verify-card-report-api.py、verify-content-api.py、verify-sales-records-api.py | 修改 | 本店/异店来自实际授权，跨店文件使用真实独立上传 |
+| script/gym/verify-device-api.py、verify-gym-storage-api.py、verify-marketing-api.py、verify-sales-settings-api.py、verify-settlement-api.py | 修改 | 每轮隔离夹具文件 |
+| script/gym/verify-payroll-api.py | 修改 | 用并发完成后的实际工资版本验证重算失败回滚，避免比较已被合法重算替换的旧条目 ID |
+| script/gym/verify-api-coverage.py | 修改 | 通过校验后可显式更新前端接口清单 |
+| script/gym/README.md、docs/testing.md | 修改 | 可复现入口和本轮证据 |
+
+### 结构关系
+仅改验证工具及清单生成，不改变业务服务规则；夹具均经真实授权 API 建立，各模块数据按真实关联进入报表。
+
+### 验证证据
+17 组 HTTP、686 断言全部通过；1066 Gym 测试通过；35 浏览器页面通过。127 前端操作与 376 字段检查无缺失。
+
+### 影响面 / 风险
+HTTP 回归会创建并保留测试业务数据，必须指向一次性开发服务。外部渠道不伪造成功；日志清除所用登录密码。
+
+### 未做 / 后续
+不包含厂商真实硬件、电子签、支付和通知链路验收；日常本地环境只加载可重复场景 seed，不导入这批压力/错误回归夹具。

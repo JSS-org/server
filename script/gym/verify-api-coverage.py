@@ -11,6 +11,7 @@ from pathlib import Path
 parser = argparse.ArgumentParser(description="Read-only frontend route/OpenAPI coverage; does not validate business behavior.")
 parser.add_argument('--dashboard-root', type=Path, default=Path(__file__).resolve().parents[3] / 'dashboard')
 parser.add_argument('--openapi-url', default='http://127.0.0.1:48080/v3/api-docs')
+parser.add_argument('--write-inventory', type=Path, help='Explicitly refresh the dashboard operation inventory after successful route validation')
 args = parser.parse_args()
 root = args.dashboard_root / 'apps/web-jss/src'
 if not root.is_dir():
@@ -47,6 +48,13 @@ for method, path in [('POST','qr-codes'),('GET','franchise-inquiries/{id}'),
  ('PATCH','franchise-inquiries/{id}'),('POST','files'),('GET','files/{id}'),('GET','files/{id}/content')]:
  add(method,path,'generic editor and file helper (manual resolution)')
 missing=[{'method':m,'path':p,'source':sorted(src)} for (m,p),src in required.items() if (m,p) not in known]
+if args.write_inventory and not missing:
+ previous = json.loads(args.write_inventory.read_text())
+ previous.update(status='当前 dashboard 源码与运行 server OpenAPI 路由核对通过；业务验收见 verification.md',
+                 operations=[{'method':m.lower(),'path':'/admin-api/gym/'+p,'sources':sorted(src)} for (m,p),src in sorted(required.items())],
+                 serverOperationCount=len(known),
+                 dynamicOperationsResolvedByGenericEditor=[{'method':m,'path':p,'source':source} for m,p,source in skipped])
+ args.write_inventory.write_text(json.dumps(previous,ensure_ascii=False,indent=2)+'\n')
 print(json.dumps({'openapiOperations':len(known),'extractedOperations':len(required),'missing':missing,'dynamicForManualReview':skipped},ensure_ascii=False,indent=2))
 
 raise SystemExit(1 if missing else 0)

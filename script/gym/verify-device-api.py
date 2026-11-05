@@ -89,7 +89,7 @@ def main():
             readable = response.headers.get('Content-Type', '').startswith(('image/', 'video/')) and bool(response.read())
     except urllib.error.HTTPError:
         pass
-    Path('/tmp/gym-device-fixture.json').write_text(json.dumps({'storeId': sid, 'doorId': did, 'lockerId': lid, 'equipmentId': eid, 'equipmentStoreId': eq_store, 'tutorialId': tid, 'fileId': file_id, 'existingMediaReadable': readable, 'tutorialPositiveVerified': tutorial_positive}, ensure_ascii=False))
+    api.fixture_path('gym-device-fixture.json').write_text(json.dumps({'storeId': sid, 'doorId': did, 'lockerId': lid, 'equipmentId': eid, 'equipmentStoreId': eq_store, 'tutorialId': tid, 'fileId': file_id, 'existingMediaReadable': readable, 'tutorialPositiveVerified': tutorial_positive}, ensure_ascii=False))
     ok('POST', '/system/auth/logout', token=reviewer); ok('POST', '/system/auth/logout', token=token)
     print(f'设备器械HTTP验证：{api.count}断言通过；deviceId={did}/{lid}, equipmentId={eid}；同店教学正向验证={tutorial_positive}，既有媒体内容可读={readable}。未发送硬件指令或伪造上传。')
 

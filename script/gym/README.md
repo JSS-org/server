@@ -821,3 +821,9 @@ yudao:
 令牌120秒过期，5次连续无效/重放验证码锁定300秒，均为固定服务端规则。密钥或时钟异常时明确拒绝；不能降级成任意验证码通过。API请求、返回及异常回显均避开敏感值；反向代理/配置中心也不得记录密钥、动态码或完整token。返回前导0必须保留为字符串。
 
 后续实际指令实现须调用内部事务消费者并保留已用token记录，不能只验证token字符串形状；当前没有生产消费入口，125仅读取内部真实记录，124/132/133仍暂缓。完整接口字段和错误码见[接口文档](../../docs/uniapp/uniapp-api.md#设备操作二次确认v035总表126)。
+
+## dashboard 全业务回归（2026-11-05）
+
+先对随机空库执行 bootstrap 并启动独立 server，再设置 `GYM_DB_ENV=development`、`GYM_BASE_URL`、`GYM_TEST_PASSWORD`、`GYM_APPROVER_PASSWORD`，运行 `python3 script/gym/verify-dashboard-api.py`。维护账号固定 admin，审批账号 gymstore；测试需要创建用户绑定和组织业务，使用 bootstrap 开发账号。该脚本执行 17 组真实 HTTP 回归并写入测试数据，仅指向一次性测试服务；不要在日常演示库反复运行。每轮 /tmp/jss-dashboard-http-* 保存独立夹具和脱敏日志。
+
+只读前端契约：`python3 script/gym/verify-api-coverage.py` 与 `python3 script/gym/verify-frontend-fields.py`。需要刷新前端清单时向前者显式传 `--write-inventory ../dashboard/apps/web-jss/integration/api-inventory.json`；路由有缺失时不会写清单。静态路径/字段检查不代替业务回归。

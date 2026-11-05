@@ -57,7 +57,7 @@ def main():
         check(request('GET', base + kind, token=reviewer)['code'] != 0, '跨门店读取拒绝' + kind)
     check(request('PUT', base + 'verification-settings', verification, reviewer)['code'] != 0, '跨门店保存拒绝')
     ok('POST', '/system/auth/logout', token=reviewer)
-    Path('/tmp/gym-sales-settings-fixture.json').write_text(json.dumps({'storeId': sid, 'storeName': store['name'], 'templateId': tid}, ensure_ascii=False))
+    api.fixture_path('gym-sales-settings-fixture.json').write_text(json.dumps({'storeId': sid, 'storeName': store['name'], 'templateId': tid}, ensure_ascii=False))
     ok('POST', '/system/auth/logout', token=token)
     print(f'售卡核销设置HTTP验证：{api.count}断言通过；停用开发storeId={sid}/templateId={tid}保留，未发卡或扣款。')
 

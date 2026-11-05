@@ -66,7 +66,7 @@ def main():
     for method, path, value in [('GET', '/gym/payment-accounts', None), ('POST', '/gym/payment-accounts/' + aid + '/bindings', {}), ('GET', '/gym/stores/' + sid + '/settlement-rules', None), ('PATCH', '/gym/settlement-rules/' + rid, {'status': 'active'}), ('GET', '/gym/settlements', None)]:
         check(request(method, path, value, reviewer)['code'] != 0, '未授权门店角色拒绝' + path)
     ok('POST', '/system/auth/logout', token=reviewer)
-    Path('/tmp/gym-settlement-fixture.json').write_text(json.dumps({'storeId': sid, 'storeName': store['name'], 'accountIds': [aid, bid], 'ruleId': rid}, ensure_ascii=False))
+    api.fixture_path('gym-settlement-fixture.json').write_text(json.dumps({'storeId': sid, 'storeName': store['name'], 'accountIds': [aid, bid], 'ruleId': rid}, ensure_ascii=False))
     ok('POST', '/system/auth/logout', token=token)
     print(f'收款分账HTTP验证：{api.count}断言通过；storeId={sid}/ruleId={rid}开发资料保留，未绑定渠道或划款。')
 

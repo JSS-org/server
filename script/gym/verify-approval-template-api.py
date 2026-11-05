@@ -15,7 +15,7 @@ def main():
     try:
         api.check(api.request('GET','/gym/approval-templates')['code']==401,'未登录拒绝')
         employees=api.ok('GET','/gym/employees?pageSize=100',token=token)['list']
-        approver=next(e for e in employees if e.get('employeeNo','').startswith('HTTPAPPROVER-') and e.get('userId') and e['status']=='active')
+        approver=next(e for e in employees if (e.get('employeeNo','') == 'JSS-DEMO-MGR' or e.get('employeeNo','').startswith('HTTPAPPROVER-')) and e.get('userId') and e['status']=='active')
         body={'name':'HTTP联调开卡审批-'+str(time.time_ns())[-12:],'businessType':'card_opening',
               'steps':[{'stepNo':1,'approverEmployeeId':approver['id']}]}
         row=api.ok('POST','/gym/approval-templates',body,token);tid=row['id']

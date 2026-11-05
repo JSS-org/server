@@ -19,8 +19,8 @@ def template(type,employee,token,suffix):
 def main():
  admin=api.ok('POST','/system/auth/login',{'username':'admin','password':os.environ['GYM_TEST_PASSWORD']})['accessToken'];reviewer=None
  try:
-  reviewer=api.ok('POST','/system/auth/login',{'username':'gymstore','password':os.environ['GYM_APPROVER_PASSWORD']})['accessToken']
-  employee=next(e for e in api.ok('GET','/gym/employees?pageSize=100',token=reviewer)['list'] if e['employeeNo'].startswith('HTTPAPPROVER-'))
+  reviewer_login=api.ok('POST','/system/auth/login',{'username':'gymstore','password':os.environ['GYM_APPROVER_PASSWORD']}); reviewer=reviewer_login['accessToken']
+  employee=next(e for e in api.ok('GET','/gym/employees?pageSize=100',token=reviewer)['list'] if str(e.get('userId'))==str(reviewer_login['userId']))
   store=employee['storeAssignments'][0]['storeId'];suffix=str(time.time_ns())[-12:]
   pdf=fixture.fixture_pdf();file=fixture.upload(pdf,admin)
   contract_template=api.ok('POST','/gym/contract-templates',{'name':'HTTP合同实例模板-'+suffix,'applicableType':'card','reminderDays':3,'fileId':file['id'],'status':'published'},admin)

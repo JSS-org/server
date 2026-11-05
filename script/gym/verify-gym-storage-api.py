@@ -28,11 +28,11 @@ def content(id, token):
 
 
 def main():
-    fixture = json.loads(Path('/tmp/gym-device-fixture.json').read_text())
+    fixture = json.loads(api.fixture_path('gym-device-fixture.json').read_text())
     sid, eid = fixture['equipmentStoreId'], fixture['equipmentId']
     token = ok('POST', '/system/auth/login', {'username': 'admin', 'password': os.environ['GYM_TEST_PASSWORD']})['accessToken']
     reviewer = ok('POST', '/system/auth/login', {'username': 'gymstore', 'password': os.environ['GYM_APPROVER_PASSWORD']})['accessToken']
-    data = png(); Path('/tmp/gym-storage-real.png').write_bytes(data)
+    data = png(); api.fixture_path('gym-storage-real.png').write_bytes(data)
     boundary = 'gym-storage-' + str(time.time_ns())
     body = (f'--{boundary}\r\nContent-Disposition: form-data; name="storeId"\r\n\r\n{sid}\r\n--{boundary}\r\nContent-Disposition: form-data; name="category"\r\n\r\nimage\r\n--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="real-tutorial.png"\r\nContent-Type: image/png\r\n\r\n').encode() + data + f'\r\n--{boundary}--\r\n'.encode()
     req = urllib.request.Request(api.BASE + '/gym/files', data=body, method='POST', headers={'tenant-id': api.TENANT, 'Authorization': 'Bearer ' + token, 'Content-Type': 'multipart/form-data; boundary=' + boundary})
@@ -51,7 +51,7 @@ def main():
     ok('PATCH', '/gym/equipment/' + eid + '/tutorials/' + tid, {'status': 'inactive'}, token)
     ok('PATCH', '/gym/equipment/' + eid + '/tutorials/' + tid, {'status': 'active'}, token)
     check(content(fid, token)[1] == data, '教学启停不改变文件内容')
-    Path('/tmp/gym-storage-fixture.json').write_text(json.dumps({'fileId': fid, 'storeId': sid, 'equipmentId': eid, 'tutorialId': tid, 'bytes': len(data)}))
+    api.fixture_path('gym-storage-fixture.json').write_text(json.dumps({'fileId': fid, 'storeId': sid, 'equipmentId': eid, 'tutorialId': tid, 'bytes': len(data)}))
     ok('POST', '/system/auth/logout', token=reviewer); ok('POST', '/system/auth/logout', token=token)
     print(f'gym独立存储HTTP验证：{api.count}断言通过，真实fileId={fid}/tutorialId={tid}，字节数{len(data)}。')
 

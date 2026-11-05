@@ -8,10 +8,42 @@ import os
 import time
 import urllib.request
 import urllib.error
+import base64
+import uuid
+from pathlib import Path
 
 BASE = os.getenv('GYM_BASE_URL', 'http://127.0.0.1:48080') + '/admin-api'
 TENANT = os.getenv('GYM_TENANT_ID', '1')
 count = 0
+
+
+def fixture_path(name):
+    directory = Path(os.environ.get('GYM_TEST_ARTIFACT_DIR', '/tmp'))
+    directory.mkdir(parents=True, exist_ok=True)
+    return directory / name
+
+
+def store_scope(admin, reviewer):
+    own = ok('GET', '/gym/stores?pageSize=100', token=reviewer)['list']
+    all_stores = ok('GET', '/gym/stores?pageSize=100', token=admin)['list']
+    check(bool(own), 'reviewer has a real store assignment')
+    own_ids = {row['id'] for row in own}
+    foreign = next(row for row in all_stores if row['id'] not in own_ids and row['status'] == 'active')
+    return own[0]['id'], foreign['id']
+
+
+def upload_image(token, store_id=None):
+    data = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=')
+    boundary = 'gym-image-' + uuid.uuid4().hex
+    fields = {'category': 'image', **({'storeId': store_id} if store_id else {})}
+    body = b''.join((f'--{boundary}\r\nContent-Disposition: form-data; name="{key}"\r\n\r\n{value}\r\n').encode() for key, value in fields.items())
+    body += (f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="integration.png"\r\nContent-Type: image/png\r\n\r\n').encode() + data + f'\r\n--{boundary}--\r\n'.encode()
+    req = urllib.request.Request(BASE + '/gym/files', data=body, method='POST', headers={
+        'tenant-id': TENANT, 'Authorization': 'Bearer ' + token, 'Content-Type': 'multipart/form-data; boundary=' + boundary})
+    with urllib.request.urlopen(req, timeout=20) as response:
+        result = json.load(response)
+    check(result['code'] == 0, 'real image upload: ' + str(result.get('msg')))
+    return result['data']
 
 def request(method, path, body=None, token=None):
     headers = {'tenant-id': TENANT, 'Content-Type': 'application/json'}

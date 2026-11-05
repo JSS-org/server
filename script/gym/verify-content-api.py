@@ -11,10 +11,12 @@ api = importlib.util.module_from_spec(spec); spec.loader.exec_module(api)
 ok, request, check = api.ok, api.request, api.check
 
 def main():
-    fixture = json.loads(Path('/tmp/gym-storage-fixture.json').read_text())
+    fixture = json.loads(api.fixture_path('gym-storage-fixture.json').read_text())
     sid, fid = fixture['storeId'], fixture['fileId']
     token = ok('POST', '/system/auth/login', {'username': 'admin', 'password': os.environ['GYM_TEST_PASSWORD']})['accessToken']
     reviewer = ok('POST', '/system/auth/login', {'username': 'gymstore', 'password': os.environ['GYM_APPROVER_PASSWORD']})['accessToken']
+    _, foreign_store = api.store_scope(token, reviewer)
+    foreign_file = api.upload_image(token, foreign_store)['id']
     check(request('GET', '/gym/client-settings?platform=miniapp')['code'] == 401, '未登录不能获取配置')
     check(request('GET', '/gym/client-settings?platform=miniapp', token=reviewer)['code'] != 0, '门店角色没有内容管理权限')
     path = '/gym/client-settings?platform=miniapp&storeId=' + sid
@@ -33,7 +35,7 @@ def main():
     check(ok('GET', path, token=token)['contentHtml'] == saved['contentHtml'], '保存后重新读取内容一致')
     other = ok('GET', '/gym/client-settings?platform=app&storeId=' + sid, token=token)
     check(other['platform'] == 'app' and other['contentHtml'] != saved['contentHtml'], '平台独立配置')
-    foreign = dict(body, contentHtml='<img src="gym-file:1">')
+    foreign = dict(body, contentHtml='<img src="gym-file:' + foreign_file + '">')
     check(request('PUT', '/gym/client-settings', foreign, token)['code'] == 1070019002, '总部旧文件不能绑定门店展示')
     foreign['contentHtml'] = '<img src="https://example.test/a.png">'
     check(request('PUT', '/gym/client-settings', foreign, token)['code'] == 1070019002, '拒绝未受控外部图片')
@@ -60,18 +62,18 @@ def main():
     check(request('POST', '/gym/qr-codes', dict(qr, sceneType='course', sceneId='999999999'), token)['code'] == 1070019003, '未知排课不能生成码')
     app = ok('POST', '/gym/qr-codes', dict(qr, platform='app'), token)
     check(app['id'] != qid and app['status'] == 'failed', 'App独立场景也未伪造生成')
-    foreign_code = ok('POST', '/gym/qr-codes', dict(qr, storeId='126'), token)
+    foreign_code = ok('POST', '/gym/qr-codes', dict(qr, storeId=foreign_store), token)
     check(request('GET', '/gym/qr-codes/' + foreign_code['id'], token=reviewer)['code'] != 0, '门店不能读取其他门店码结果')
-    check(request('POST', '/gym/qr-codes', dict(qr, storeId='126'), reviewer)['code'] != 0, '门店不能创建其他门店场景')
+    check(request('POST', '/gym/qr-codes', dict(qr, storeId=foreign_store), reviewer)['code'] != 0, '门店不能创建其他门店场景')
     sessions = ok('GET', '/gym/course-sessions?storeId=' + sid + '&pageSize=100', token=token)['list']
     course_verified = False
     if sessions:
         session = sessions[0]
         course = ok('POST', '/gym/qr-codes', dict(qr, sceneType='course', sceneId=session['id']), token)
         check(course['sceneId'] == session['id'] and course['status'] == 'failed', '真实排课引用仍遵循渠道未配置状态')
-        check(request('POST', '/gym/qr-codes', dict(qr, storeId='126', sceneType='course', sceneId=session['id']), token)['code'] == 1070019003, '不能跨店引用排课')
+        check(request('POST', '/gym/qr-codes', dict(qr, storeId=foreign_store, sceneType='course', sceneId=session['id']), token)['code'] == 1070019003, '不能跨店引用排课')
         course_verified = True
-    Path('/tmp/gym-content-fixture.json').write_text(json.dumps({'storeId': sid, 'fileId': fid, 'qrCodeId': qid, 'settingsRevision': final['revision'], 'realCourseVerified': course_verified, 'initialRevision': original['revision']}))
+    api.fixture_path('gym-content-fixture.json').write_text(json.dumps({'storeId': sid, 'fileId': fid, 'qrCodeId': qid, 'settingsRevision': final['revision'], 'realCourseVerified': course_verified, 'initialRevision': original['revision']}))
     ok('POST', '/system/auth/logout', token=reviewer); ok('POST', '/system/auth/logout', token=token)
     print(f'展示与二维码HTTP验证：{api.count}断言通过，storeId={sid}/qrCodeId={qid}，真实排课引用验证={course_verified}。')
 

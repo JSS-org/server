@@ -2136,3 +2136,9 @@ Modbus修复后 `mvn -o -B -ntp -Pjss-mall -pl yudao-server -am package -DskipTe
 ## 2026-11-05：全新数据库及重建
 
 MySQL 8.4.10 上 `script/gym/verify-bootstrap.py` 通过：随机带连字符数据库从不存在状态初始化到 695 张表，两套 Flyway 历史均有效，3 个开发账号、2 家门店、3 名员工、2 名潜客，无旧云配置/令牌/日志/交易；重复普通初始化拒绝且保留标记，显式重建先生成权限 600 的完整备份，再重建为同样的初始数据。临时数据库已清理。
+
+## 2026-11-05：dashboard 全业务 HTTP 与浏览器
+
+当前默认 JAR + 从空库建立的 MySQL/Redis：`verify-dashboard-api.py` 17 组全部通过，共 686 项断言；覆盖会员、薪资、卡/课程、审批模板/开卡与改价/预约预占取消签到扣次、合同模板与实例、工资、售卡核销设置、收款分账、营销、设备、文件、展示/二维码、交易拒绝边界和两类报表。真实渠道未配置，测试断言未发送/未绑定/无假交易。证据目录 `/tmp/jss-dashboard-http-9ejlc4p8`，只含隔离开发数据。
+
+`mvn -B -ntp -T 2 -pl yudao-module-gym -am test -Dtest='Gym*Test' -Dsurefire.failIfNoSpecifiedTests=false`：1066 测试通过，无失败、错误或跳过。dashboard 的 35 页面逐页真实浏览器读取、工作台快捷入口、multipart 上传/授权下载字节一致均通过；41 前端测试和定向类型检查通过。OpenAPI 232 个管理业务操作，前端解析 127 个无缺失，376 字段名无差异。

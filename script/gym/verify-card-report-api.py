@@ -67,16 +67,17 @@ def main():
     if len(rows) > 1:
         paged = ok('GET', '/gym/reports/member-cards?pageSize=1&pageNo=2', token=token)
         check(len(paged['list']) == 1 and paged['summary'] == report['summary'] and paged['total'] == report['total'], '分页不改变汇总')
-    scoped = ok('GET', '/gym/reports/member-cards?storeId=125&pageSize=100', token=reviewer)
-    own_stores = {'125'}
+    own_store, foreign_store = api.store_scope(token, reviewer)
+    scoped = ok('GET', '/gym/reports/member-cards?storeId=' + own_store + '&pageSize=100', token=reviewer)
+    own_stores = {own_store}
     own_holders, own_usage, own_unknown = sources(reviewer, own_stores)
     check(own_unknown == 0, '授权门店使用来源可追溯')
     check(all(row['holderCount'] == len(own_holders[row['id']]) and row['usageCount'] == own_usage[row['id']] for row in scoped['list']), '门店范围持卡与课消口径一致')
-    check(request('GET', '/gym/reports/member-cards?storeId=126', token=reviewer)['code'] != 0, '门店不能请求其他店报表')
+    check(request('GET', '/gym/reports/member-cards?storeId=' + foreign_store, token=reviewer)['code'] != 0, '门店不能请求其他店报表')
     check(request('GET', '/gym/reports/member-cards?date=2026-06-01&month=2026-06', token=token)['code'] == 1070004001, '互斥日期方式拒绝')
     check(request('GET', '/gym/reports/member-cards?pageSize=1000', token=token)['code'] != 0, '分页上限生效')
     check(request('POST', '/gym/reports/member-cards', {'netAmount': 100}, token)['code'] != 0, '没有客户端写统计金额的入口')
-    Path('/tmp/gym-card-report-fixture.json').write_text(json.dumps({'total': len(rows), 'netAmount': str(report['summary']['netAmount']), 'holderEntries': sum(row['holderCount'] for row in rows), 'usageUnits': sum(row['usageCount'] for row in rows), 'templateIdWithHolders': next((row['id'] for row in rows if row['holderCount']), None)}))
+    api.fixture_path('gym-card-report-fixture.json').write_text(json.dumps({'total': len(rows), 'netAmount': str(report['summary']['netAmount']), 'holderEntries': sum(row['holderCount'] for row in rows), 'usageUnits': sum(row['usageCount'] for row in rows), 'templateIdWithHolders': next((row['id'] for row in rows if row['holderCount']), None)}))
     ok('POST', '/system/auth/logout', token=reviewer); ok('POST', '/system/auth/logout', token=token)
     print(f'会员卡报表HTTP验证：{api.count}断言通过，{len(rows)}个卡种/历史分组，持卡分组人数{sum(row["holderCount"] for row in rows)}，课消单位{sum(row["usageCount"] for row in rows)}；无新增业务数据。')
 

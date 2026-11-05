@@ -89,13 +89,13 @@ def main():
     for path in ('/gym/activities', '/gym/activities/' + uiid + '/registrations', '/gym/franchise-inquiries', '/gym/franchise-inquiries/' + browser_inquiry['id']):
         check(request('GET', path, token=reviewer)['code'] != 0, '未授权角色拒绝' + path)
     ok('POST', '/system/auth/logout', token=reviewer)
-    Path('/tmp/gym-marketing-fixture.json').write_text(json.dumps({'storeId': sid, 'activityId': uiid, 'activityName': browser_activity['name'], 'inquiryId': browser_inquiry['id'], 'inquiryName': browser_inquiry['contactName']}, ensure_ascii=False))
+    api.fixture_path('gym-marketing-fixture.json').write_text(json.dumps({'storeId': sid, 'activityId': uiid, 'activityName': browser_activity['name'], 'inquiryId': browser_inquiry['id'], 'inquiryName': browser_inquiry['contactName']}, ensure_ascii=False))
     ok('POST', '/system/auth/logout', token=token)
     print(f'活动加盟HTTP验证：{api.count}断言通过；activityId={uiid}/inquiryId={browser_inquiry["id"]}资料保留，未发通知。')
 
 
 def verify_rate():
-    fixture = json.loads(Path('/tmp/gym-marketing-fixture.json').read_text())
+    fixture = json.loads(api.fixture_path('gym-marketing-fixture.json').read_text())
     suffix = fixture['activityName'].split('-')[-1]
     body = {'contactName': 'HTTP加盟意向-' + suffix, 'phone': '13800000000', 'preferredCity': '上海', 'message': '开发接口验证，无需联系'}
     results = [public(body, 'inquiry-' + suffix, {'X-Forwarded-For': '10.0.0.' + str(i + 1)}) for i in range(6)]

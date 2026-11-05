@@ -33,7 +33,10 @@ def main():
         results = list(pool.map(lambda _: request('POST', '/gym/payrolls', body, token), range(8)))
     check(all(r['code'] == 0 for r in results), '8并发计算成功')
     check(len({r['data']['id'] for r in results}) == 1, '并发只有一份月工资')
-    row = results[0]['data']; pid = row['id']
+    pid = results[0]['data']['id']
+    # Concurrent calculations share a payroll but may replace its draft item IDs.
+    # Rollback must preserve the last committed version, not the first response's snapshot.
+    row = ok('GET', '/gym/payrolls/' + pid, token=token)
     check(isinstance(pid, str) and row['storeId'] == sid and row['month'] == '2026-06', '字符串ID与月份')
     check(row['employeeCount'] == 1 and row['netAmount'] == 5050, '底薪固定加扣正确')
     item = row['items'][0]
@@ -50,12 +53,12 @@ def main():
     check(listed['total'] == 1, '列表筛选匹配')
     check(request('POST', '/gym/payrolls', {'storeId': sid, 'month': '2026-13'}, token)['code'] != 0, '拒绝非法月份')
     # 保留可在浏览器点击重算、查看来源并确认的工资。
-    Path('/tmp/gym-payroll-flow-fixture.json').write_text(json.dumps({'storeId': sid, 'storeName': store['name'], 'payrollId': pid, 'month': '2026-06', 'employeeIds': [first_employee['id'], second_employee['id']], 'assignmentIds': [assignment['id'], second_assignment['id']]}, ensure_ascii=False))
+    api.fixture_path('gym-payroll-flow-fixture.json').write_text(json.dumps({'storeId': sid, 'storeName': store['name'], 'payrollId': pid, 'month': '2026-06', 'employeeIds': [first_employee['id'], second_employee['id']], 'assignmentIds': [assignment['id'], second_assignment['id']]}, ensure_ascii=False))
     ok('POST', '/system/auth/logout', token=token)
     print(f'工资HTTP验证：{api.count}断言通过；storeId={sid}, payrollId={pid}，停用开发门店保留供浏览器确认。')
 
 def verify_confirmed():
-    fixture = json.loads(Path('/tmp/gym-payroll-flow-fixture.json').read_text())
+    fixture = json.loads(api.fixture_path('gym-payroll-flow-fixture.json').read_text())
     token = ok('POST', '/system/auth/login', {'username': os.getenv('GYM_TEST_USERNAME', 'admin'), 'password': os.environ['GYM_TEST_PASSWORD']})['accessToken']
     pid, sid = fixture['payrollId'], fixture['storeId']
     saved = ok('GET', '/gym/payrolls/' + pid, token=token)

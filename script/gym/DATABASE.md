@@ -383,3 +383,21 @@ V035追加gym_action_verification_state、gym_action_confirmation，gym表由82�
 账号状态唯一键保证跨设备失败预算串行；令牌摘要、账号/密钥/步数和消费指令唯一键约束一次性使用。数据库同时约束失败次数/锁定时间、设备操作与柜格组合、签发/失效/消费时间和指令引用。密钥和动态码不入表，已接受步数及已用token记录不能随意清理；逻辑删除不释放验证码步数。回滚恢复旧库前先关闭功能，恢复后换发密钥，避免恢复旧防重放状态。应用降级时保持新增表，不自动撤销已经发生的授权事实。配置说明见[认证器运行手册](README.md#设备二次确认认证器配置v035总表126)。
 
 隔离MySQL/Flyway257项检查通过，含新库、旧库升级、唯一性/状态约束、历史表/权限保留；全部临时库已清理。真实设备通信及回调仍未接入。
+
+## 可操作场景种子与本地运行
+
+数据库 bootstrap 完成后，`bash script/gym/run-local.sh` 会把显式的 `GYM_DB_HOST/PORT/NAME/USER/PASSWORD` 映射到 Java 主/从数据源。本机也可保存这些设置到不入库的 `.runtime/gym-local.env`（权限 600）；只有未显式指定数据库连接时才加载该文件。`GYM_LOCAL_ENV_FILE` 可以指定其他本地文件；`GYM_REDIS_DATABASE` 指定专用 Redis database。不要共用其他应用的 Redis database 或批量 FLUSHALL。
+
+然后通过业务 API 导入可重复的示范目录：
+
+```bash
+export GYM_DB_ENV=development
+export GYM_BASE_URL=http://127.0.0.1:48080
+export GYM_TEST_USERNAME=gymadmin
+export GYM_TEST_PASSWORD='Gym@123456'
+python3 script/gym/seed-catalog.py
+```
+
+该步骤需要运行中的当前 server。它只建立不存在的命名示范记录，已有资料不覆盖：2 个已发布卡模板、基础薪资与店长薪资关联、2 个私教产品及排期、2 个审批模板、2 个真实 PDF 合同模板、2 个离线门禁、2 个器械、草稿活动、门店展示/售卡/包月/核销设置，以及固定幂等键的一条待审批开卡申请。API 请求不是跨模块总事务；中断后可重跑，已有记录会复用。如果人工把示范薪资模板改为非发布状态，脚本明确报错，请先处理该模板，避免覆盖人工操作。
+
+看板初始仅显示真实潜客和待办，金额和签到为 0。用 gymstore 在审批记录处理示范申请后，可在会员详情观察实际发卡和未签合同。人工审批不会伪造支付或电子签结果；预约、签到、扣次继续遵守真实课时及权益规则。场景 seed 两次执行创建清单第二次为空，待审批 ID 不变。

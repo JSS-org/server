@@ -2,7 +2,7 @@
 
 日常操作请先看独立的 [数据库迁移与开发 seed 手册](DATABASE.md)；后端开发流程见 [贡献指南](../../CONTRIBUTING.md)。
 
-数据库现由 **Flyway 版本迁移 + 独立开发 seed** 管理。迁移是发布准备命令，不随Java应用启动；前端及应用运行依赖不变。框架基座表仍先由 `sql/mysql/ruoyi-vue-pro.sql` 初始化，本工具只管理gym资产。
+数据库现由 **Flyway 版本迁移 + 独立开发 seed** 管理。迁移是发布准备命令，不随Java应用启动；前端及应用运行依赖不变。日常 Gym 迁移只管理 Gym 资产；从空库开始的开发环境使用 `python3 script/gym/bootstrap.py`，它统一初始化干净框架、JSS 和 Gym，详见数据库手册。
 
 ## 命令入口
 

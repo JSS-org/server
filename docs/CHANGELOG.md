@@ -5360,3 +5360,30 @@ MoneyUtils.calculator将先整数除法后转double改为percent/100.0；新增�
 
 ### 未做 / 后续
 空库完整初始化、新库 HTTP/浏览器验收与本地环境替换继续单独提交。
+
+## [2026-11-05 20:02 ~ 20:35] 从空库完整引导开发环境并支持备份重建
+
+### 意图
+开发环境不能依赖手工导入的旧库；用户明确要求能够删除旧库并从全新状态重建。
+
+### 改了什么
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| script/gym/bootstrap.py | 新增 | 框架、JSS、Gym、种子的有序初始化，非空拒绝及显式备份重建 |
+| sql/gym/seed/development/framework.sql | 新增 | 干净开发租户、OAuth 客户端、本地文件存储和总部维护账号 |
+| script/gym/database.py | 修改 | 备份使用 utf8mb4 与 hex-blob 保留二进制内容 |
+| script/jss/database.py | 修改 | 支持项目默认 ruoyi-vue-pro 形式的连字符库名，仍限制标识符字符集 |
+| script/gym/verify-bootstrap.py | 新增 | 真正随机空库与显式重建回归 |
+| script/gym/DATABASE.md、README.md、docs/architecture.md、testing.md | 修改 | 记录初始化关系、操作与证据 |
+
+### 结构关系
+JSS 先初始化完整 member schema，Gym 后迁移；两套历史分别校验。框架只复用结构和字典/菜单，开发配置单独声明。
+
+### 验证证据
+`verify-bootstrap.py` 在 MySQL 8.4.10 通过空库、非空拒绝、备份和重建回归，结果 695 张表，测试库已清理。真实默认 JAR 已在独立新库启动并完成登录与业务 HTTP 请求。
+
+### 影响面 / 风险
+--recreate 会替换显式指定的开发库，必须停服；备份失败不会删除库。MySQL DDL 不保证整批回滚，失败后保留状态供排查；不自动删除失败库或修复历史。
+
+### 未做 / 后续
+当前本地旧库替换、业务场景 seed 和全部模块验收继续推进；正式环境仍使用增量迁移。

@@ -858,3 +858,7 @@ V012只新建事件表并按原经验历史封存外部事件，包含已逻辑�
 示例订单的page/create/refund分别要求pay:demo-order:query/create/refund，示例提现的page/create/transfer分别要求pay:demo-withdraw:query/create/transfer。生产SecurityFrameworkService继续校验native RBAC与工作台权限上限交集，工作台入口、查询或某一写动作都不代表其他动作。当前管理员编号仍传入原创建/转账Service，不用会员编号替代。
 
 V013只创建六个隐藏按钮权限定义；套餐和角色必须明确配置，不自动授权，也不重启用已有停用节点。三个异步通知方法仍保留原PermitAll及Service业务通知校验路径，不把后台交互权限套到支付通知上。测试执行真实方法鉴权代理，但业务资金/权限存储用替身；通知测试仅证明委托关系保持，不证明真实提供商通知校验或出款。
+
+## 2026-11-05：开发库完整引导
+
+`script/gym/bootstrap.py` 是显式开发入口：从框架 SQL 提取 DDL、字典和菜单，加载独立 framework.sql（租户、OAuth、本地文件存储、维护账号），再按 JSS → Gym 顺序应用两套 Flyway 历史，最后运行组织/会员 seed。业务表不再依赖旧开发库手工导入；JSS 先拥有完整 member schema，Gym 重用 member_user。运行应用不会触发重建，已有库只在明确 --recreate 且完整备份成功后替换。

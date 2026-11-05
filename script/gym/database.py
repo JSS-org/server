@@ -119,6 +119,7 @@ class Database:
         with file.open('xb') as output:
             file.chmod(0o600)
             result = subprocess.run(['mysqldump', *self.connection, '--single-transaction',
+                                     '--hex-blob', '--default-character-set=utf8mb4',
                                      '--routines', '--events', '--triggers', '--no-tablespaces',
                                      '--set-gtid-purged=OFF', self.name],
                                     stdout=output, stderr=subprocess.PIPE, env=self.env)

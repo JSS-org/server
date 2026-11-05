@@ -23,7 +23,7 @@ class Database:
         self.user = os.environ.get('JSS_DB_USER', '')
         self.host = os.environ.get('JSS_DB_HOST', '127.0.0.1')
         self.port = os.environ.get('JSS_DB_PORT', '3306')
-        if not re.fullmatch(r'[A-Za-z0-9_]+', self.name) or not self.user:
+        if not re.fullmatch(r'[A-Za-z0-9_-]+', self.name) or not self.user:
             raise ValueError('Explicit JSS_DB_NAME and JSS_DB_USER are required')
         if 'JSS_DB_PASSWORD' not in os.environ:
             raise ValueError('Explicit JSS_DB_PASSWORD is required (empty only for an explicitly passwordless local account)')

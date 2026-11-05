@@ -2,6 +2,27 @@
 
 数据库采用 **Flyway 版本迁移 + 独立开发 seed**。日常升级只需执行 `db.sh migrate`，Flyway 会按版本执行尚未应用的 SQL，并记录版本与校验和。本文所有命令均在 server 仓库根目录执行。
 
+## 从空库完整初始化 dashboard + server（开发环境）
+
+先设置本页的 `GYM_DB_HOST/PORT/NAME/USER/PASSWORD`，以及 `GYM_DB_ENV=development`、`GYM_SEED_TENANT_ID=1`。账号须能创建目标数据库；重建还需要备份、删除目标库的权限。
+
+```bash
+# 目标库不存在或为空：完整创建框架、JSS、Gym、开发数据
+python3 script/gym/bootstrap.py
+
+# 明确替换已有开发库：先停止连接该库的 server，再执行
+export GYM_DB_BACKUP_DIR=/你管理的持久备份目录
+python3 script/gym/bootstrap.py --recreate
+```
+
+顺序固定为：框架 DDL/字典/菜单及 Quartz → 干净开发框架配置 → JSS 全部迁移 → Gym 全部迁移 → 关联 seed → 校验。JSS 迁移集同时包含可选模块的表定义，实际可用 API 仍由 Maven 构建 profile 决定；不能删减历史迁移来缩小 schema。JSS 必须先于 Gym 初始化，因为两者共用 `member_user`。
+
+只提取框架基线的结构、字典和菜单；不导入其中的历史账号、业务流水、访问日志、云存储配置或第三方凭据。新库使用数据库文件存储；开发维护账号 `admin` 和业务账号 `gymadmin` / `gymstore` 初始密码均为 `Gym@123456`。维护账号和总部业务账号归属总部部门，门店账号归属示范一店。
+
+不带 `--recreate` 时遇到非空库即拒绝。带该参数时，完整备份成功后才删除目标库；备份包含二进制字段的十六进制表示，权限为 600。重建完成后换用专用 Redis database 并重新登录，避免旧账号/授权缓存串入新库。该入口仅开发环境可用；正式升级继续使用各模块 `migrate` / `validate`，不重建数据库。
+
+空库与重建回归：设置 `GYM_TEST_DB_*` 后运行 `python3 script/gym/verify-bootstrap.py`。该脚本只创建随机测试库，验证非空拒绝、完整备份、重建、干净配置与关系，并清理测试库。
+
 ## 1. 配置连接
 
 需要 Java 25、Maven、Python 3、MySQL 客户端；旧库接管还需要 `mysqldump`。首次执行 Maven 需要下载依赖。
